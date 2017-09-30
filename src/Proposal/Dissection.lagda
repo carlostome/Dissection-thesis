@@ -1,3 +1,4 @@
+\begin{code}
 module Proposal.Dissection where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
@@ -8,6 +9,7 @@ module Proposal.Dissection where
 
   open import Proposal.FDesc
   open import Proposal.BiFDesc
+\end{code}
 
   {- SNIPPET Dissection -}
   ∇ : FDesc -> BiFDesc

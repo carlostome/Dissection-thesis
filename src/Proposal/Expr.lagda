@@ -1,6 +1,8 @@
+\begin{code}
 module Proposal.Expr where
 
   open import Data.Nat using (ℕ ; zero; suc; _+_)
+\end{code}
 
   module Naive where
     data Expr : Set where

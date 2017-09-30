@@ -1,4 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+\begin{code}
 module Proposal.BiFDesc where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
@@ -8,6 +9,7 @@ module Proposal.BiFDesc where
   open import Data.Nat     using (ℕ; suc; zero)
 
   open import Proposal.FDesc
+\end{code}
 
   {- SNIPPET BiFDesc -}
   data BiFDesc : Set₁ where

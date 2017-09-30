@@ -10,9 +10,29 @@
 \usepackage{alltt}
 \usepackage{amsthm}
 
+%% lhs2TeX stuff
+
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
 %include polycode.fmt
+
+%% Agda stuff
+
+\usepackage[bw]{agda}
+\usepackage{catchfilebetweentags}
+
+\newcommand{\InsertCodeInline}[2]{
+  % \codeinlinetrue
+  \ExecuteMetaData[../src-tex/#1]{#2}
+}
+\newcommand{\InsertCode}[2]{
+  % \codeinlinefalse
+  \medskip
+  \ExecuteMetaData[../src-tex/#1]{#2}
+  \medskip
+}
+
+\usepackage{newunicodechar}
 
 \title{}
 \date{\today}
