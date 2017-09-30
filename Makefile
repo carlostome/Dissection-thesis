@@ -15,7 +15,7 @@ src-tex/%.tex: $(SRC)/%.lagda
 proposal/%.tex: proposal/%.lagda
 	lhs2TeX --agda -o $@ $<
 
-proposal/main.pdf: $(PROPOSAL_TEX:%=proposal/%.tex) $(PROPOSAL_AGDA:$(SRC)/%.lagda=src-tex/%.tex) proposal/main.bib | src-tex
+proposal/main.pdf: $(PROPOSAL_TEX:%=proposal/%.tex) $(PROPOSAL_AGDA:$(SRC)/%.lagda=src-tex/%.tex) proposal/main.bib proposal.fmt | src-tex
 	cp src-tex/agda.sty proposal
 	cd proposal; latexmk -pdf -xelatex -outdir=out main.tex
 	cp proposal/out/main.pdf proposal/main.pdf

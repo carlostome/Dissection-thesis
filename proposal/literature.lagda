@@ -1,5 +1,6 @@
 %include lhs2TeX.fmt
 %include polycode.fmt
+%include proposal.fmt
 
 \section{Literature review}
 
@@ -9,16 +10,17 @@ Finite functorial types are all those types which having a finite number of inha
 can be described using the grammar
 
 A simple manner to formalize the notion of finite functorial type is to use a
-universe construction. We do so by using the |FDesc| type in Agda.
+universe construction. We do so by using the \AD{FDesc} type in Agda.
 
 \InsertCode{Proposal/FDesc.tex}{FDesc}
+\todo{Do we want full K or just 0 and 1 and some Iso}
 
-The inhabitants of the description type |FDesc| match one-to-one with the
+The inhabitants of the description type \AD{FDesc} match one-to-one with the
 inhabitants of the described type. We can witness such, by defining an
-interpretation function that maps an element of type |FDesc| into an element of
+interpretation function that maps an element of type \AD{FDesc} into an element of
 type |Set -> Set|.
 
-%%% include snippets/Proposal.FDesc.Interpretation
+\InsertCode{Proposal/FDesc.tex}{Interpretation}
 
 As a first example, we recall the usual definition for the type of computations
 that may not succeed.

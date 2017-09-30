@@ -11,22 +11,27 @@ module Proposal.FDesc where
 %<*FDesc>
 \begin{code}
   data FDesc : Set₁ where
-    I₁   :                  FDesc
-    K₁   : (A : Set)     → FDesc
-    _+₁_ : (P Q : FDesc) → FDesc
-    _×₁_ : (P Q : FDesc) → FDesc
+    I₁    :                  FDesc
+    K₁    : (A : Set)      → FDesc
+    _+₁_  : (P Q : FDesc)  → FDesc
+    _×₁_  : (P Q : FDesc)  → FDesc
 \end{code}
-%<*FDesc>
+%</FDesc>
 
 \begin{code}
   infixl 30 _+₁_
   infixl 40 _×₁_
+\end{code}
 
+%<*Interpretation>
+\begin{code}
   ⟦_⟧₁ : FDesc → (Set → Set)
-  ⟦ I₁     ⟧₁ X = X
-  ⟦ K₁ A   ⟧₁ X = A
-  ⟦ P +₁ Q ⟧₁ X = (⟦ P ⟧₁ X) ⊎ (⟦ Q ⟧₁ X)
-  ⟦ P ×₁ Q ⟧₁ X = (⟦ P ⟧₁ X) × (⟦ Q ⟧₁ X)
+  ⟦ I₁      ⟧₁  X  = X
+  ⟦ K₁ A    ⟧₁  X  = A
+  ⟦ P +₁ Q  ⟧₁  X  = (⟦ P ⟧₁ X) ⊎ (⟦ Q ⟧₁ X)
+  ⟦ P ×₁ Q  ⟧₁  X  = (⟦ P ⟧₁ X) × (⟦ Q ⟧₁ X)
+\end{code}
+%</Interpretation>
 
   module Maybe-Example where
 

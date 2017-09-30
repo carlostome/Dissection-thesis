@@ -2,10 +2,11 @@
 # Created by https://www.gitignore.io/api/vim,tex,agda,latex,emacs
 
 ### CUstom ###
-snippets
+src-tex
 documentation
 proposal/*.pdf
 proposal/*.tex
+proposal/*.sty
 dirty
 proposal/out
 ### Agda ###
