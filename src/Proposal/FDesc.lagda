@@ -33,8 +33,12 @@ module Proposal.FDesc where
 \end{code}
 %</Interpretation>
 
+\begin{code}
   module Maybe-Example where
+\end{code}
 
+%<*Maybe>
+\begin{code}
     data Maybe (A : Set) : Set where
       Just     : A → Maybe A
       Nothing  : Maybe A
@@ -55,6 +59,8 @@ module Proposal.FDesc where
     to : ∀ {A : Set} -> Maybe′ A → Maybe A
     to (Just′ x) = Just x
     to Nothing′      = Nothing
+\end{code}
+%</Maybe>
 
   fmap : ∀ {A B : Set} (F : FDesc) → (A -> B) → ⟦ F ⟧₁ A → ⟦ F ⟧₁ B
   fmap I₁       f x        = f x

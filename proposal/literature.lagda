@@ -29,6 +29,10 @@ that may not succeed.
 
 Because |Maybe| is a functorial type, we can describe it using the following |FDesc|.
 
+\begin{framed}
+  We can for a simple type as maybe
+  \InsertCode{Proposal/FDesc.tex}{Maybe}
+\end{framed}
 %%% include snippets/Proposal.FDesc.Maybe-Example-FDesc
 
 \todo{Embbed-projection pair?}

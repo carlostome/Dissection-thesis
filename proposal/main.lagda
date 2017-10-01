@@ -1,14 +1,19 @@
 \documentclass[a4paper]{article}
+\usepackage[top=1in, bottom=1.25in, left=1.25in, right=1.25in]{geometry}
 
 \usepackage[english]{babel}
+% \usepackage{gfsdidot}
+
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage[draft]{todonotes}
 % \usepackage[disable]{todonotes}
 \usepackage{framed,color}
+\usepackage{showframe}
 % \usepackage{multirow}
 \usepackage{alltt}
 \usepackage{amsthm}
+
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
 
@@ -154,6 +159,8 @@
 
 \DeclareTextFontCommand{\textxits}{\xitsfont}
 
+\renewcommand{\familydefault}{\sfdefault}
+
 \usepackage{newunicodechar}
 
 % \newunicodechar{●}{\textxits{•}}
@@ -170,6 +177,8 @@
 \begin{document}
 
 \maketitle
+
+\tableofcontents
 
 \begin{flushright}
 \emph{Supervised by} Wouter Swierstra\\
