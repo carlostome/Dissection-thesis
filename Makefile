@@ -2,7 +2,7 @@ SRC := src
 
 PROPOSAL_MODULES      := Proposal
 PROPOSAL_TEX          := main introduction literature
-PROPOSAL_AGDA         := $(wildcard $(SRC)/$(PROPOSAL_MODULES)/*.lagda)
+PROPOSAL_AGDA         := $(shell find $(SRC)/$(PROPOSAL_MODULES)/ -type f -name '*.lagda')
 
 proposal: proposal/main.pdf
 
