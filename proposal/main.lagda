@@ -3,6 +3,7 @@
 
 \usepackage[english]{babel}
 % \usepackage{gfsdidot}
+\usepackage{lmodern}
 
 \usepackage{graphicx}
 \usepackage{hyperref}
@@ -68,6 +69,7 @@
 \usepackage[conor]{agda}
 % \usepackage{agda}
 \usepackage{catchfilebetweentags}
+\usepackage{autofe}
 
 \newcommand{\AK}{\AgdaKeyword}
 \newcommand{\AS}{\AgdaString}
@@ -163,12 +165,19 @@
 
 \usepackage{newunicodechar}
 
-% \newunicodechar{●}{\textxits{•}}
+\newunicodechar{∇}{\textxits{∇}}
+\newunicodechar{μ}{\textxits{μ}}
+\newunicodechar{φ}{\textxits{φ}}
+\newunicodechar{ϕ}{\textxits{ϕ}}
 % \newunicodechar{⌷}{\textxits{$\vrectangle$}}
 % \newunicodechar{▱}{\textxits{\rotatebox[origin=c]{105}{▱}}}
 \newunicodechar{⊎}{\textxits{⊎}}
+% \newunicodechar{||}{\textxits{||}}
 
 %--------------------------------------------------
+
+\newcommand{\arewesure}[1]{\todo[color=red!40,noline]{#1}}
+\newcommand{\referenceneeded}[1]{\todo[color=green!40,noline]{#1}}
 
 \title{Thesis Proposal}
 \date{\today}

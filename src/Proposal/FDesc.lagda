@@ -53,30 +53,42 @@ module Proposal.FDesc where
     pattern Nothing′ = inj₂ tt
 
     from : ∀ {A : Set} -> Maybe A → Maybe′ A
-    from (Just x) = Just′ x
-    from Nothing  = Nothing′
+    from (Just x)  = Just′ x
+    from Nothing   = Nothing′
 
     to : ∀ {A : Set} -> Maybe′ A → Maybe A
-    to (Just′ x) = Just x
-    to Nothing′      = Nothing
+    to (Just′ x)  = Just x
+    to Nothing′   = Nothing
 \end{code}
 %</Maybe>
 
+%<*fmap>
+\begin{code}
   fmap : ∀ {A B : Set} (F : FDesc) → (A -> B) → ⟦ F ⟧₁ A → ⟦ F ⟧₁ B
-  fmap I₁       f x        = f x
-  fmap (K₁ A)   f x        = x
-  fmap (P +₁ Q) f (inj₁ x) = inj₁ (fmap P f x)
-  fmap (P +₁ Q) f (inj₂ y) = inj₂ (fmap Q f y)
-  fmap (P ×₁ Q) f (x , y)  = fmap P f x , fmap Q f y
+  fmap I₁       f x         = f x
+  fmap (K₁ A)   f x         = x
+  fmap (P +₁ Q) f (inj₁ x)  = inj₁ (fmap P f x)
+  fmap (P +₁ Q) f (inj₂ y)  = inj₂ (fmap Q f y)
+  fmap (P ×₁ Q) f (x , y)   = fmap P f x , fmap Q f y
+\end{code}
+%</fmap>
 
+%<*mu>
+\begin{code}
   data μ (F : FDesc) : Set where
     μ-in : ⟦ F ⟧₁ (μ F) → μ F
 
   μ-out : ∀ {F : FDesc} → μ F → ⟦ F ⟧₁ (μ F)
   μ-out (μ-in x) = x
+\end{code}
+%</mu>
 
+\begin{code}
   module Nat-Example where
+\end{code}
 
+%<*nat>
+\begin{code}
     data Nat : Set where
       zero : Nat
       suc  : Nat → Nat
@@ -97,17 +109,27 @@ module Proposal.FDesc where
     to : Nat′ → Nat
     to zero′    = zero
     to (suc′ x) = suc (to x)
+\end{code}
+%</nat>
 
+%<*cata-nt>
+\begin{code}
   {-# TERMINATING #-}
   cata-nt : ∀ {a} (F : FDesc) → (⟦ F ⟧₁ a -> a) → μ F → a
-  cata-nt F φ (μ-in x) = φ (fmap F (cata-nt F φ) x)
+  cata-nt F ϕ (μ-in x) = ϕ (fmap F (cata-nt F ϕ) x)
+\end{code}
+%</cata-nt>
 
+%<*cata>
+\begin{code}
   mapFold : ∀ {a} (F G : FDesc) → (⟦ G ⟧₁ a -> a) -> ⟦ F ⟧₁ (μ G) -> ⟦ F ⟧₁ a
-  mapFold I₁        G φ x = {!!}
-  mapFold (K₁ A)    G φ x = {!!}
-  mapFold (F +₁ F₁) G φ x = {!!}
-  mapFold (F ×₁ F₁) G φ x = {!!}
+  mapFold I₁        G ϕ (μ-in x)  = ϕ (mapFold G G ϕ x)
+  mapFold (K₁ A)    G ϕ x         = x
+  mapFold (P +₁ Q)  G ϕ (inj₁ x)  = inj₁ (mapFold P G ϕ x)
+  mapFold (P +₁ Q)  G ϕ (inj₂ y)  = inj₂ (mapFold Q G ϕ y)
+  mapFold (P ×₁ Q)  G ϕ (x , y)   = mapFold P G ϕ x , mapFold Q G ϕ y
 
   cata : ∀ {A : Set} (F : FDesc) → (⟦ F ⟧₁ A -> A) → μ F -> A
   cata  F ϕ (μ-in x) = ϕ (mapFold F F ϕ x)
 \end{code}
+%</cata>

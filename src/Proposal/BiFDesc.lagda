@@ -11,7 +11,7 @@ module Proposal.BiFDesc where
   open import Proposal.FDesc
 \end{code}
 
-  {- SNIPPET BiFDesc -}
+\begin{code}
   data BiFDesc : Set₁ where
     K₂   : (A : Set)       -> BiFDesc
     1′   :                    BiFDesc
@@ -20,25 +20,21 @@ module Proposal.BiFDesc where
     _×₂_ : (P Q : BiFDesc) -> BiFDesc
     C    : FDesc           -> BiFDesc
     J    : FDesc           -> BiFDesc
-  {- SNIPPET BiFDesc -}
 
   infixl 30 _+₂_
   infixl 40 _×₂_
 
-  {- SNIPPET Interpretation -}
   ⟦_⟧₂  : BiFDesc -> Set -> Set -> Set
-  ⟦ 1′     ⟧₂ X Y = X
-  ⟦ 2′     ⟧₂ X Y = Y
-  ⟦ K₂ A   ⟧₂ X Y = A
-  ⟦ P +₂ Q ⟧₂ X Y = (⟦ P ⟧₂ X Y) ⊎ (⟦ Q ⟧₂ X Y)
-  ⟦ P ×₂ Q ⟧₂ X Y = (⟦ P ⟧₂ X Y) × (⟦ Q ⟧₂ X Y)
-  ⟦ C P    ⟧₂ X Y = ⟦ P ⟧₁ X
-  ⟦ J Q    ⟧₂ X Y = ⟦ Q ⟧₁ Y
-  {- SNIPPET Interpretation -}
+  ⟦ 1′     ⟧₂  X Y = X
+  ⟦ 2′     ⟧₂  X Y = Y
+  ⟦ K₂ A   ⟧₂  X Y = A
+  ⟦ P +₂ Q ⟧₂  X Y = (⟦ P ⟧₂ X Y) ⊎ (⟦ Q ⟧₂ X Y)
+  ⟦ P ×₂ Q ⟧₂  X Y = (⟦ P ⟧₂ X Y) × (⟦ Q ⟧₂ X Y)
+  ⟦ C P    ⟧₂  X Y = ⟦ P ⟧₁ X
+  ⟦ J Q    ⟧₂  X Y = ⟦ Q ⟧₁ Y
 
   module Either-Example where
 
-    {- SNIPPET Either-Example -}
     data Either (A B : Set) : Set where
       Left  : A -> Either A B
       Right : B -> Either A B
@@ -59,9 +55,7 @@ module Proposal.BiFDesc where
     to : ∀ {A B : Set} -> Either′ A  B -> Either A B
     to (Left′ x)  = Left x
     to (Right′ y) = Right y
-    {- SNIPPET Either-Example -}
 
-  {- SNIPPET bimap -}
   bimap : ∀ {A B C D : Set} (BF : BiFDesc) -> (A -> C) -> (B -> D) -> ⟦ BF ⟧₂ A B -> ⟦ BF ⟧₂ C D
   bimap (K₂ A)   f g x        = x
   bimap 1′       f g x        = f x
@@ -71,18 +65,14 @@ module Proposal.BiFDesc where
   bimap (P ×₂ Q) f g (x , y)  = bimap P f g x , bimap Q f g y
   bimap (C F)    f g x        = fmap F f x
   bimap (J G)    f g x        = fmap G g x
-  {- SNIPPET bimap -}
 
   module Origami where
 
-    {- SNIPPET Origami -}
     data μ₂ ( F : BiFDesc) (A : Set) : Set where
       μ₂-in : ⟦ F ⟧₂ (μ₂ F A) A -> μ₂ F A
-   {- SNIPPET Origami -}
 
     module BTree-Example where
 
-      {- SNIPPET BTree-Example -}
       data BTree ( A : Set) : Set where
         Leaf : A -> BTree A
         Node : BTree A -> BTree A -> BTree A
@@ -103,4 +93,4 @@ module Proposal.BiFDesc where
       to : ∀ {A : Set} -> BTree′ A -> BTree A
       to (Leaf′ x)     = Leaf x
       to (Node′ t₁ t₂) = Node (to t₁) (to t₂)
-      {- SNIPPET BTree-Example -}
+\end{code}

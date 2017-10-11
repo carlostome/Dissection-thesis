@@ -11,52 +11,97 @@ module Proposal.Dissection where
   open import Proposal.BiFDesc
 \end{code}
 
-  {- SNIPPET Dissection -}
+%<*Dissection>
+\begin{code}
   ∇ : FDesc -> BiFDesc
   ∇ I₁        = K₂ ⊤
   ∇ (K₁ A)    = K₂ ⊥
   ∇ (f +₁ g)  = ∇ f +₂ ∇ g
   ∇ (p ×₁ q)  = ∇ p ×₂ J q +₂ C p ×₂ ∇ q
-  {- SNIPPET Dissection -}
+\end{code}
+%</Dissection>
 
-  {- SNIPPET right -}
-  right : ∀ {c j : Set} (P : FDesc) → ⟦ P ⟧₁ j ⊎  ⟦ ∇ P ⟧₂ c j × c → j × ⟦ ∇ P ⟧₂ c j ⊎ ⟦ P ⟧₁ c
-  right I₁ (inj₁ j)         = inj₁ (j , tt)
-  right I₁ (inj₂  (tt , c)) = inj₂ c
-  right (K₁ A) (inj₁ x)     = inj₂ x
-  right (K₁ A) (inj₂ (() , _))
-  right (P +₁ Q) (inj₁ (inj₁ pj))   with right P (inj₁ pj)
-  ... | inj₁ (j , pd) = inj₁ (j , inj₁ pd)
-  ... | inj₂ pc       = inj₂ (inj₁ pc)
-  right (P +₁ Q) (inj₁ (inj₂ qj))   with right Q (inj₁ qj)
-  ... | inj₁ (j , qd′) = inj₁ (j , (inj₂ qd′))
-  ... | inj₂ qc        = inj₂ (inj₂ qc)
-  right (P +₁ Q) (inj₂ (inj₁ pd , c)) with right P (inj₂ (pd , c))
-  ... | inj₁ (j , pd′) = inj₁ (j , inj₁ pd′)
-  ... | inj₂ pc        = inj₂ (inj₁ pc)
-  right (P +₁ Q) (inj₂ (inj₂ qd , c)) with right Q (inj₂ (qd , c) )
-  ... | inj₁ (j , qd′) = inj₁ (j , (inj₂ qd′))
-  ... | inj₂ qc        = inj₂ (inj₂ qc)
-  right (P ×₁ Q) (inj₁ (pj , qj)) with right P (inj₁ pj)
-  ... | inj₁ (j , pd) = inj₁ (j , (inj₁ (pd , qj)))
-  ... | inj₂ y = {!!}
-  right (P ×₁ Q) (inj₂ x) = {!!}
-  {- SNIPPET right -}
-
-  {-# TERMINATING #-}
-  {- SNIPPET tcata -}
+%<*right>
+\begin{code}
   mutual
-    load   : ∀ {A : Set} (F : FDesc) -> (⟦ F ⟧₁ A -> A) -> μ F -> List (⟦ ∇ F ⟧₂ A (μ F)) -> A
-    load F φ (μ-in x) stk = next F φ (right F (inj₁ x)) stk
+    right : ∀ {c j : Set} (P : FDesc)
+          → (⟦ P ⟧₁ j ⊎  (⟦ ∇ P ⟧₂ c j × c)) → ((j × ⟦ ∇ P ⟧₂ c j) ⊎ ⟦ P ⟧₁ c)
+    right I₁ (inj₁ j)         = inj₁ (j , tt)
+    right I₁ (inj₂  (tt , c)) = inj₂ c
 
-    unload : ∀ {A : Set} (F : FDesc) -> (⟦ F ⟧₁ A -> A) -> A -> List (⟦ ∇ F ⟧₂ A (μ F)) -> A
-    unload F φ v []         = v
-    unload F φ v (pd ∷ stk) = next F φ (right F (inj₂ (pd , v))) stk
+    right (K₁ A) (inj₁ x)     = inj₂ x
+    right (K₁ A) (inj₂ (() , _))
 
-    next : ∀ {A : Set} (F : FDesc) -> (⟦ F ⟧₁ A -> A) -> (μ F × ⟦ ∇ F ⟧₂ A (μ F)) ⊎ ⟦ F ⟧₁ A -> List (⟦ ∇ F ⟧₂ A (μ F)) -> A
-    next F φ (inj₁ (t , pd)) stk = load F φ t (pd ∷ stk)
-    next F φ (inj₂ pv) stk       = unload F φ (φ pv) stk
+    right (P +₁ Q) (inj₁ (inj₁ pj))   with right P (inj₁ pj)
+    ... | inj₁ (j , pd)  = inj₁ (j , inj₁ pd)
+    ... | inj₂ pc        = inj₂ (inj₁ pc)
+    right (P +₁ Q) (inj₁ (inj₂ qj))   with right Q (inj₁ qj)
+    ... | inj₁ (j , qd′)  = inj₁ (j , (inj₂ qd′))
+    ... | inj₂ qc         = inj₂ (inj₂ qc)
+    right (P +₁ Q) (inj₂ (inj₁ pd , c)) with right P (inj₂ (pd , c))
+    ... | inj₁ (j , pd′)  = inj₁ (j , inj₁ pd′)
+    ... | inj₂ pc         = inj₂ (inj₁ pc)
+    right (P +₁ Q) (inj₂ (inj₂ qd , c)) with right Q (inj₂ (qd , c) )
+    ... | inj₁ (j , qd′)  = inj₁ (j , (inj₂ qd′))
+    ... | inj₂ qc         = inj₂ (inj₂ qc)
 
-  tcata : ∀ {A : Set} (F : FDesc) -> (⟦ F ⟧₁ A -> A) -> μ F -> A
-  tcata F φ m = load F φ m []
-  {- SNIPPET tcata -}
+    right (P ×₁ Q) (inj₁ (pj , qj)) = goL P Q (right P (inj₁ pj)) qj
+    right (P ×₁ Q) (inj₂ (inj₁ (pd , qj) , c))  = goL P Q (right P (inj₂ (pd , c))) qj
+    right (P ×₁ Q) (inj₂ (inj₂ (pc , qd) , c))  = goR P Q pc (right Q (inj₂ (qd , c)))
+
+    private
+      goL : ∀ {c j : Set} (P Q : FDesc) → ((j × ⟦ ∇ P ⟧₂ c j) ⊎ ⟦ P ⟧₁ c) → ⟦ Q ⟧₁ j
+                                        → ((j × ⟦ ∇ (P ×₁ Q) ⟧₂ c j) ⊎ ⟦ P ×₁ Q ⟧₁ c)
+      goL P Q (inj₁ (j , pd)) qj = inj₁ (j , inj₁ (pd , qj))
+      goL P Q (inj₂ pc)       qj = goR P Q pc (right Q (inj₁ qj))
+
+      goR : ∀ {c j : Set} (P Q : FDesc) → ⟦ P ⟧₁ c → ((j × ⟦ ∇ Q ⟧₂ c j) ⊎ ⟦ Q ⟧₁ c)
+                                        → ((j × ⟦ ∇ (P ×₁ Q) ⟧₂ c j) ⊎ ⟦ P ×₁ Q ⟧₁ c)
+      goR P Q pc (inj₁ (j , qd)) = inj₁ (j , (inj₂ (pc , qd)))
+      goR P Q pc (inj₂ y)        = inj₂ (pc , y)
+\end{code}
+%</right>
+
+\begin{code}
+  mutual
+    left : ∀ {c j : Set} (P : FDesc) → ((j × ⟦ ∇ P ⟧₂ c j) ⊎ ⟦ P ⟧₁ c) → (⟦ P ⟧₁ j ⊎  (⟦ ∇ P ⟧₂ c j × c))
+    left I₁ (inj₁ (j , tt)) = inj₁ j
+    left I₁ (inj₂ y)        = inj₂ (tt , y)
+
+    left (K₁ A) (inj₁ (j , ()))
+    left (K₁ A) (inj₂ a)    = inj₁ a
+
+    left (P +₁ Q) (inj₁ (j , inj₁ pd)) with left P {!!}
+    ... | e = {!!}
+    left (P +₁ Q) (inj₁ (j , inj₂ qd)) = {!!}
+    left (P +₁ Q) (inj₂ (inj₁ pc)) = {!!}
+    left (P +₁ Q) (inj₂ (inj₂ qc)) = {!!}
+
+    left (P ×₁ Q) (inj₁ (j , inj₁ (pd , qj))) = {!!}
+    left (P ×₁ Q) (inj₁ (j , inj₂ (pc , qd))) = {!!}
+    left (P ×₁ Q) (inj₂ (pc , qc))            = {!!}
+\end{code}
+
+%<*tcata>
+\begin{code}
+  module Raw-tcata where
+    {-# TERMINATING #-}
+    mutual
+      load   : ∀ {A : Set} (F : FDesc) -> (⟦ F ⟧₁ A → A) -> μ F → List (⟦ ∇ F ⟧₂ A (μ F)) → A
+      load F φ (μ-in x) stk = next F φ (right F (inj₁ x)) stk
+
+      unload : ∀ {A : Set} (F : FDesc) → (⟦ F ⟧₁ A -> A) → A -> List (⟦ ∇ F ⟧₂ A (μ F)) → A
+      unload F φ v []          = v
+      unload F φ v (pd ∷ stk)  = next F φ (right F (inj₂ (pd , v))) stk
+
+      next : ∀ {A : Set} (F : FDesc) → (⟦ F ⟧₁ A → A)
+          → (μ F × ⟦ ∇ F ⟧₂ A (μ F)) ⊎ ⟦ F ⟧₁ A → List (⟦ ∇ F ⟧₂ A (μ F)) → A
+      next F φ (inj₁ (t , pd)) stk  = load F φ t (pd ∷ stk)
+      next F φ (inj₂ pv) stk        = unload F φ (φ pv) stk
+
+    tcata : ∀ {A : Set} (F : FDesc) -> (⟦ F ⟧₁ A -> A) -> μ F -> A
+    tcata F φ m = load F φ m []
+\end{code}
+
+%</tcata>
+
