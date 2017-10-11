@@ -1,5 +1,5 @@
 \documentclass[a4paper]{article}
-\usepackage[top=1in, bottom=1.25in, left=1.25in, right=1.25in]{geometry}
+\usepackage[top=1in, bottom=1.25in, left=1.30in, right=1.30in]{geometry}
 
 \usepackage[english]{babel}
 % \usepackage{gfsdidot}
@@ -17,6 +17,16 @@
 
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
+
+\usepackage{tikz}
+\usetikzlibrary{fit}
+\usetikzlibrary{shapes}
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+\usetikzlibrary{decorations.pathreplacing,calc}
+
+% \usepackage{tikz-qtree}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
@@ -60,7 +70,7 @@
 \newcommand{\NatList}{\textrm{NatList}}
 \newcommand{\PairOfBools}{\textrm{PairOfBools}}
 \newcommand{\RoseTree}{\textrm{RoseTree}}
-\newcommand{\Tree}{\textrm{Tree}}
+% \newcommand{\Tree}{\textrm{Tree}}
 
 %--------------------------------------------------
 

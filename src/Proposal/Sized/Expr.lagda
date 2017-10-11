@@ -1,3 +1,3 @@
 \begin{code}
-module Proposal.Siz
+module Proposal.Sized.Expr where
 \end{code}

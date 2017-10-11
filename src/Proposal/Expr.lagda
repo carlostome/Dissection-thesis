@@ -51,5 +51,4 @@ module Proposal.Expr where
     load/unload (inj₂ v) (Left r stk)   = load/unload (inj₁ r) (Right v stk)
     --                                                          ^^^^^^^^^^^
     load/unload (inj₂ v) (Right v' stk) = load/unload (inj₂ (v + v')) stk
-
 \end{code}

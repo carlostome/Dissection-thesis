@@ -10,7 +10,7 @@ module Proposal.WellFounded.Fin where
 
   data [_]_<Fin_ (n : ℕ) (fm : Fin (suc n)) : Fin n → Set where
 
-    Base : ∀ {n : ℕ} {fm : Fin n}    → [ n ] fm <Fin fsucc fm
+    -- Base : ∀ {n : ℕ} {fm : Fin n}    → [ n ] fm <Fin fsucc fm
     -- Step : ∀ {n : ℕ} {fn fm : Fin n} → [ n ] fn <Fin fm → [ suc n ] fsucc fm <Fin fsucc fm
 
   -- <Fin-wf : WFIx.Well-founded-Ix [_]_<Fin_

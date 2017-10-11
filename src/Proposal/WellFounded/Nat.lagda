@@ -8,7 +8,7 @@ module Proposal.WellFounded.Nat where
     Base :                    m <ℕ suc m
     Step : {n : ℕ} → m <ℕ n → m <ℕ suc n
 
-  <ℕ-WF : WF.Well-founded _<ℕ_
+  <ℕ-WF : WF.WellFounded _<ℕ_
   <ℕ-WF x = WF.acc (aux x)
     where
       aux : ∀ x y → y <ℕ x → WF.Acc _<ℕ_ y
