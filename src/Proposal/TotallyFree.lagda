@@ -157,9 +157,9 @@ module Proposal.TotallyFree where
   foldl' f (b , x ∷ xs) = tail-call (f b x , xs)
 
 --   -- is input a parameter, an index?
---   data TailRecWF (I : Set) (input : I) (_<_ : I → I → Set) (O : Set) : Set where
---     return-wf     :  O                      → TailRecWF I input _<_ O
---     tail-call-wf  : (rec : I) → rec < input → TailRecWF I input _<_ O
+  data TailRecWF (I : Set) (input : I) (_<_ : I → I → Set) (O : Set) : Set where
+    return-wf     :  O                      → TailRecWF I input _<_ O
+    tail-call-wf  : (rec : I) → rec < input → TailRecWF I input _<_ O
 
 --   _⟶[_]_ : (I : Set) → (I → I → Set) → Set → Set
 --   I ⟶[ R ] O = (i : I) → TailRecWF I i R O
