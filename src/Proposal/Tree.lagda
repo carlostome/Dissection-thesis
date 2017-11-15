@@ -9,6 +9,7 @@ module Proposal.Tree where
   open import Data.Nat
   open import Relation.Binary.PropositionalEquality
   open import Induction.WellFounded
+  open import Induction.Nat
   open import Data.Empty
   open import Data.Maybe
   open import Data.List
@@ -193,13 +194,9 @@ module Proposal.Tree where
     FStack+PTree n = Σ (FStack n) λ fv → PTree (diffFS fv)
 
     plug : ∀ {n} → FStack+PTree n → PTree n
-    plug {zero} (Top , t) = t
-    plug {suc zero} (Top , t) = t
-    plug {suc zero} (Left x Top , t)  = Node t x
-    plug {suc zero} (Right x Top , t) = Node x t
-    plug {suc (suc n)} (Top , t) = t
-    plug {suc (suc n)} (Left x fstk , t)  = Node (plug (fstk , t)) x
-    plug {suc (suc n)} (Right x fstk , t) = Node x (plug (fstk , t))
+    plug (Top , t)         = t
+    plug (Left x stk , t)  = Node (plug (stk , t)) x
+    plug (Right x stk , t) = Node x (plug (stk , t))
 
     _⊳_ : ∀ {n} → (fs : FStack n) → PTree (diffFS fs) → PTree n
     fs ⊳ t = plug (fs , t)
@@ -215,6 +212,13 @@ module Proposal.Tree where
       <S-Right-Base : ∀ {n} {s : FStack n} {t t₁}       → [ 1 + n ] (Right t₁ s , t) <S (Top , Node t₁ (s ⊳ t) )
 
       <S-Left-Base  : ∀ {n} {s : FStack n} {t t₁}       → [ 1 + n ] (Top , Node (s ⊳ t) t₁)    <S (Left t₁ s , t)
+
+    related : ∀ {n} (d₁ d₂ : FStack+PTree n) → [ n ] d₁ <S d₂ → plug d₁ ≡ plug d₂
+    related (Top , t₁) (Top , t₂) ()
+    related (Top , .(Node (plug (s₂ , t₂)) x₁)) (Left x₁ s₂ , t₂) <S-Left-Base = {!!}
+    related (Top , t₁) (Right x₁ s₂ , t₂) x = {!!}
+    related (Left x₁ s₁ , t₁) (s₂ , t₂) x = {!!}
+    related (Right x₁ s₁ , t₁) (s₂ , t₂) x = {!!}
 
     -- and the relation is well founded
     mutual
@@ -237,9 +241,42 @@ module Proposal.Tree where
         where
           aux : (n : ℕ) (x y : FStack+PTree n) → [ n ] y <S x → Acc ([_]_<S_ n) y
           aux zero x y ()
-          aux (suc n) (Top , .(Node _ (plug (_ , y)))) (.(Right _ _) , y) <S-Right-Base = acc (accR n _ _ y (<S-WF n (_ , y)))
-          aux (suc n) (Left x₁ s , t) (_ , _) (<S-Left-Step p)            = acc (accL n x₁ _ _ (aux n (s , t) _ p))
-          aux (suc n) (Left .(plug (_ , _)) s , t) (_ , _) <S-Right-Left = acc (accR n (plug (s , t)) _ _ (<S-WF n (_ , _)))
-          aux (suc n) (Left x₁ s , t) (_ , _) <S-Left-Base                = acc (accT n (Node (plug (s , t)) x₁))
+          aux (suc n) (Top , t) (Top , t′) ()
+          aux (suc n) (Top , t) (Left x₁ stk , t′) ()
+          aux (suc n) (Top , .(Node x₁ (plug (stk , t′)))) (Right x₁ stk , t′) <S-Right-Base = acc (accR n x₁ stk t′ (<S-WF n (stk , t′)))
+
+          aux (suc n) (Left x₁ s , t) (Top , .(Node (plug (s , t)) x₁)) <S-Left-Base                 = acc (accT n (Node (plug (s , t)) x₁))
+          aux (suc n) (Left x₁ s , t) (Left .x₁ stk , t′) (<S-Left-Step p)                           = acc (accL n x₁ stk t′ (aux n (s , t) (stk , t′) p))
+          aux (suc n) (Left .(plug (stk , t′)) s , t) (Right .(plug (s , t)) stk , t′) <S-Right-Left = acc (accR n (plug (s , t)) stk t′ (<S-WF n (stk , t′)))
+
           aux (suc n) (Right x₁ s , t) (_ , _) (<S-Right-Step p) = acc (accR n x₁ _ _ (aux n (s , t) _ p))
+
+    -- we can separate later the proof from the function
+    leftmost : ∀ {n} → (p : PTree n) → Σ (FStack+PTree n) λ d → plug d ≡ p
+    leftmost Tip          = (Top , Tip) , refl
+    leftmost (Node t₁ t₂) with leftmost t₁
+    leftmost (Node .(plug (stk , t′)) t₂) | (stk , t′) , refl = (Left t₂ stk , t′) , refl
+
+    next : ∀ {n} → FStack+PTree n → Maybe (FStack+PTree n)
+    next (Top , Tip)         = nothing
+    next (Top , Node t₁ t₂)  with leftmost t₂
+    ... | ((stk , t′) , _)   = just (Right t₁ stk , t′)
+    next (Left x stk  , t)   = {!!}
+    next (Right x stk , t)   = {!!}
+
+    theorem : ∀ {n} → (d : FStack+PTree n) → (x : FStack+PTree n) → next d ≡ just x → [ n ] x <S d
+    theorem (Top , Tip) x ()
+    theorem (Top , Node t₁ t₂) x p with leftmost t₂
+    theorem (Top , Node t₁ .(plug (stk , t))) .(Right t₁ stk , t) refl | (stk , t) , refl = <S-Right-Base
+    theorem (Left x stk  , t) d p = {!!}
+    theorem (Right x stk , t) d p = {!!}
+
+    fixpoint : ∀ {A : Set} → (_<_ : A → A → Set) → Well-founded _<_ → (f : A → Maybe A) → (∀ a x → f a ≡ just x → x < a) → A → A
+    fixpoint {A} _<_ x f pr a = aux a (x a)
+      where
+        aux : (x : A) → Acc _<_ x → A
+        aux x (acc rs) with f x | inspect f x
+        aux x (acc rs) | just b | Reveal_·_is_.[ eq ]  with pr x b eq
+        ... | z  = aux b (rs b z)
+        aux x (acc rs) | nothing | _ = x
 \end{code}

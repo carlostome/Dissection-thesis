@@ -10,7 +10,7 @@ src-tex:
 	mkdir -p src-tex
 
 src-tex/%.tex: $(SRC)/%.lagda
-	agda -i $(SRC) --latex-dir=src-tex --latex --allow-unsolved-metas $<
+	agda -i $(SRC) --latex-dir=src-tex --latex --allow-unsolved-metas --no-termination-check $<
 
 proposal/%.tex: proposal/%.lagda
 	lhs2TeX --agda -o $@ $<

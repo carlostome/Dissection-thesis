@@ -102,12 +102,12 @@ module Proposal.BitVector where
     decr' x | just xs = just (to xs)
     decr' x | nothing = nothing
 
-    theorem : ∀ {n} (bs : BigE n) → Σ (BigE n) λ xs → decr' bs ≡ just xs → [ n ] xs <BV bs 
-    theorem (#1 ▸)   = (#0 ▸) , λ { refl → BV-Base #0<#1}
-    theorem (#0 ▸)   =  #0 ▸  , λ {()}
-    theorem (x ፥ #1 ▸) = {!!} , {!!}
-    theorem (x ፥ #0 ▸) = {!!}
-    theorem (x ፥ y ፥ bs) = {!!} , {!!}
+    -- theorem : ∀ {n} (bs : BigE n) → Σ (BigE n) λ xs → decr' bs ≡ just xs → [ n ] xs <BV bs 
+    -- theorem (#1 ▸)   = (#0 ▸) , λ { refl → BV-Base #0<#1}
+    -- theorem (#0 ▸)   =  #0 ▸  , λ {()}
+    -- theorem (x ፥ #1 ▸) = {!!} , {!!}
+    -- theorem (x ፥ #0 ▸) = {!!}
+    -- theorem (x ፥ y ፥ bs) = {!!} , {!!}
 
     -- -- little endian representation of BitVectors
     -- data VectorBit : ℕ → Set where
@@ -183,34 +183,34 @@ module Proposal.BitVector where
       BV-Succ-L : ∀ {x}   {bin₂}     → #0 ▸ <BV bin₂       → x ▸ <BV x ፥ bin₂
       BV-Succ-R : ∀ {x}   {bin₁}     → bin₁ <BV #0 ▸       → x ፥ bin₁ <BV x ▸
 
-    p : (#1 ፥ (#0 ▸)) <BV (#1 ▸)
-    p = {!!}
-    mutual
-    --   acc2 : ∀ {n} (b : Bin n) → WF.Acc [ n ]_<Bin_ b
+    -- p : (#1 ፥ (#0 ▸)) <BV (#1 ▸)
+    -- p = {!!}
+    -- mutual
+    -- --   acc2 : ∀ {n} (b : Bin n) → WF.Acc [ n ]_<Bin_ b
 
-    --   acc2 .bin₂ x₁ .(BMore 0′ bin₁) (BStop {n} {.0′} {.1′} {bin₁} {bin₂} 0<1) = WF.acc (acc3 bin₁ (<Bin-wf n bin₁))
-    --   acc2 _ (WF.acc x₁) .(BMore 1′ _) (BStep x₂) = WF.acc (acc2 _ (x₁ _ x₂))
+    -- --   acc2 .bin₂ x₁ .(BMore 0′ bin₁) (BStop {n} {.0′} {.1′} {bin₁} {bin₂} 0<1) = WF.acc (acc3 bin₁ (<Bin-wf n bin₁))
+    -- --   acc2 _ (WF.acc x₁) .(BMore 1′ _) (BStep x₂) = WF.acc (acc2 _ (x₁ _ x₂))
 
-      acc3 : ∀ (b : BitVector) → (∀ y → y <BV (#0 ፥ b) → WF.Acc _<BV_ y)
-      acc3 b .(_ ፥ _) (BV-Stop ())
-      acc3 b .(#0 ፥ _) (BV-Step x₁) = WF.acc (acc3 {!!})
-      acc3 b .(#0 ▸) (BV-Succ-L x₁) = {!!}
+    --   acc3 : ∀ (b : BitVector) → (∀ y → y <BV (#0 ፥ b) → WF.Acc _<BV_ y)
+    --   acc3 b .(_ ፥ _) (BV-Stop ())
+    --   acc3 b .(#0 ፥ _) (BV-Step x₁) = WF.acc (acc3 {!!})
+    --   acc3 b .(#0 ▸) (BV-Succ-L x₁) = {!!}
 
-      acc : ∀ y → y <BV #0 ▸ → WF.Acc _<BV_ y
-      acc .(_ ▸) (BV-Base ())
-      acc .(#0 ፥ _) (BV-Succ-R x) = WF.acc (acc3 _)
-    --   acc3 b x .(BMore _ _) (BStop ())
-    --   acc3 b (WF.acc x) .(BMore 0′ _) (BStep x₁) = WF.acc (acc3 _ (x _ x₁))
+    --   acc : ∀ y → y <BV #0 ▸ → WF.Acc _<BV_ y
+    --   acc .(_ ▸) (BV-Base ())
+    --   acc .(#0 ፥ _) (BV-Succ-R x) = WF.acc (acc3 _)
+    -- --   acc3 b x .(BMore _ _) (BStop ())
+    -- --   acc3 b (WF.acc x) .(BMore 0′ _) (BStep x₁) = WF.acc (acc3 _ (x _ x₁))
 
-      <Bin-WF : WF.WellFounded _<BV_
-      <Bin-WF x = WF.acc (aux x)
-        where
-          aux : (x y : BitVector) →  y <BV x → WF.Acc (_<BV_) y
-          aux (.#1 ▸) .(#0 ▸) (BV-Base #0<#1) = WF.acc λ {y x₁ → {!x₁!}}
-          aux (x ▸) .(x ፥ bin₁) (BV-Succ-R {bin₁ = bin₁} p) = {!!}
-          aux (.#1 ፥ x) .(#0 ፥ _) (BV-Stop #0<#1) = {!!}
-          aux (x₁ ፥ x) .(x₁ ፥ _) (BV-Step p) = {!!}
-          aux (b ፥ .(_ ▸)) .(b ▸) (BV-Succ-L (BV-Base x₁)) = {!!}
-          aux (b ፥ .(#0 ፥ _)) .(b ▸) (BV-Succ-L (BV-Succ-L p₁)) = {!!}
+    --   <Bin-WF : WF.WellFounded _<BV_
+    --   <Bin-WF x = WF.acc (aux x)
+    --     where
+    --       aux : (x y : BitVector) →  y <BV x → WF.Acc (_<BV_) y
+    --       aux (.#1 ▸) .(#0 ▸) (BV-Base #0<#1) = WF.acc λ {y x₁ → {!x₁!}}
+    --       aux (x ▸) .(x ፥ bin₁) (BV-Succ-R {bin₁ = bin₁} p) = {!!}
+    --       aux (.#1 ፥ x) .(#0 ፥ _) (BV-Stop #0<#1) = {!!}
+    --       aux (x₁ ፥ x) .(x₁ ፥ _) (BV-Step p) = {!!}
+    --       aux (b ፥ .(_ ▸)) .(b ▸) (BV-Succ-L (BV-Base x₁)) = {!!}
+    --       aux (b ፥ .(#0 ፥ _)) .(b ▸) (BV-Succ-L (BV-Succ-L p₁)) = {!!}
 
     module Stack where
