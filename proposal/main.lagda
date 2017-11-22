@@ -1,5 +1,5 @@
 \documentclass[a4paper]{article}
-\usepackage[top=1in, bottom=1.25in, left=1.30in, right=1.30in]{geometry}
+% \usepackage[top=1in, bottom=1.25in, left=1.30in, right=1.30in]{geometry}
 
 \usepackage[english]{babel}
 % \usepackage{gfsdidot}
@@ -184,6 +184,8 @@
 \newunicodechar{⊎}{\textxits{⊎}}
 % \newunicodechar{||}{\textxits{||}}
 
+\newcommand{\Agda}{\emph{Agda}}
+
 %--------------------------------------------------
 
 \newcommand{\arewesure}[1]{\todo[color=red!40,noline]{#1}}
@@ -195,9 +197,9 @@
 
 \begin{document}
 
-\maketitle
+% \maketitle
 
-\tableofcontents
+% \tableofcontents
 
 \begin{flushright}
 \emph{Supervised by} Wouter Swierstra\\

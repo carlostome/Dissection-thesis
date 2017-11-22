@@ -62,26 +62,6 @@ module Proposal.Dissection where
 \end{code}
 %</right>
 
-\begin{code}
-  mutual
-    left : ∀ {c j : Set} (P : FDesc) → ((j × ⟦ ∇ P ⟧₂ c j) ⊎ ⟦ P ⟧₁ c) → (⟦ P ⟧₁ j ⊎  (⟦ ∇ P ⟧₂ c j × c))
-    left I₁ (inj₁ (j , tt)) = inj₁ j
-    left I₁ (inj₂ y)        = inj₂ (tt , y)
-
-    left (K₁ A) (inj₁ (j , ()))
-    left (K₁ A) (inj₂ a)    = inj₁ a
-
-    left (P +₁ Q) (inj₁ (j , inj₁ pd)) with left P {!!}
-    ... | e = {!!}
-    left (P +₁ Q) (inj₁ (j , inj₂ qd)) = {!!}
-    left (P +₁ Q) (inj₂ (inj₁ pc)) = {!!}
-    left (P +₁ Q) (inj₂ (inj₂ qc)) = {!!}
-
-    left (P ×₁ Q) (inj₁ (j , inj₁ (pd , qj))) = {!!}
-    left (P ×₁ Q) (inj₁ (j , inj₂ (pc , qd))) = {!!}
-    left (P ×₁ Q) (inj₂ (pc , qc))            = {!!}
-\end{code}
-
 %<*tcata>
 \begin{code}
   module Raw-tcata where
