@@ -12,15 +12,15 @@ tail recursive which means that the size of the stack during execution grows
 proportionally to the size of the input.
 
 A solution to this problem is to make the stack explicit and define a function
-that does tail-recursion over it. The stack reflects the state during the
+that does tail-recursion over it. The stack shall reflect the state during the
 execution of the fold, thus different data types need to use different types of
 stacks.
 
 McBride\cite{McBride:2008:CLM:1328438.1328474} has proposed a method called
-dissection to calculate the type of the stack for any data type built from the
-identity, constant, product and coproduct functors. By dissecting a type he can
-transform a fold into a function that is claimed to be its tail-recursive
-counterpart.
+dissection to calculate the type of the stack for any data type built
+generically from the composition of the identity, constant, product and
+coproduct functors. By dissecting a type he can transform its fold into 
+a function that is claimed to be its tail-recursive counterpart.
 
 However, it is not clear that the resulting function is correct neither that it
 terminates. While in the definition of fold the recursive calls are made over

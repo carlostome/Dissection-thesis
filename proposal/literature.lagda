@@ -31,10 +31,9 @@ of the Maybe type used to representing comptations that may not succeed.
 Maybe is a functor and can be encoded by a a description such as 
 
 
-
 We can witness that Maybe is a functor by implementing a fmap function that
 allows us low lift functions over and proving that they fulfil the functor laws.
-However, 
+However,
 
 % Because |Maybe| is a functorial type, we can describe it using the following |FDesc|.
 
@@ -144,7 +143,7 @@ However,
 
 % Sized types are a type-based termination checkerk
 
-% \subsection{Well founded relation}
+\subsection{Well founded relation}
 
 % \subsection{Bove-Capretta}
 

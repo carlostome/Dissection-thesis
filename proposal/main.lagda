@@ -191,15 +191,15 @@
 \newcommand{\arewesure}[1]{\todo[color=red!40,noline]{#1}}
 \newcommand{\referenceneeded}[1]{\todo[color=green!40,noline]{#1}}
 
-\title{Thesis Proposal}
+\title{Thesis Proposal: Verified tail recursive folds through dissection}
 \date{\today}
 \author{Carlos Tom\'e Corti\~nas}
 
 \begin{document}
 
-% \maketitle
+\maketitle
 
-% \tableofcontents
+\tableofcontents
 
 \begin{flushright}
 \emph{Supervised by} Wouter Swierstra\\
