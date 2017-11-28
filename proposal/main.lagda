@@ -67,6 +67,7 @@
 }
 
 
+\newcommand{\nonterm}[1]{\colorbox{orange!25}{#1}}
 
 \newcommand{\definedin}[1]{\footnote{Module: #1}}
 \newcommand{\args}[1]{\overline{#1}}

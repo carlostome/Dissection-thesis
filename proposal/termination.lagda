@@ -3,39 +3,22 @@
 
 \section{Termination}
 
-Agda is a language of total functions, it is only possible to define functions
-that are total in the sense that terminate and that they are define for every
-possible input value.
+\Agda~is a language of total functions. General recursive functions are not
+allowed as they would render the logic inconsistent. In order to ensure
+that any defined function terminates, \Agda~uses a termination checker, foetus
+\cite{Abel98foetus}, that syntactically checks whether the recursive calls of a
+function are performed in \textbf{structurally} smaller arguments.
 
-General recursion makes the property of termination undecidable in general thus
-Agda has a built in termination checker foetus that 
+Many functions that we would like to define do not conform to the pattern of
+recursing over some argument that is evidently --\Agda~has factual evidence--
+structurally smaller. In the rest of the section we will explore several
+available techniques that overcome this limitation: sized types, Bove-Capretta
+predicate and well founded recursion.
 
+As a running example through the section we will use the quick sort function
+that \Agda's termination checker classifies as non-terminating.
 
-it uses built-in termination checker. that any checks whether the function being defined performs
-recursion in structurally smaller arguments. An argument is structurally smaller
-when is itself an argument to the constructor the function is pattern matching
-on.
-
-
-
-However, it is not always the case that the recursive call is performed on an
-argument that is structurally smaller.
-
-Every function defined in Agda must be total. General unbounded recursion is
-forbidden as would make the logic inconsistent. For this reason, Agda's
-termination checker needs to verify that there is a lexicographic order of
-parameters in recursive calls that decreases.
-
-Because the termination checker is so restrictive, there are several techniques
-have been developed to assist the termination checker.
-
-
-This is specially the case
-where it is not obvious to Agda that the structure of the input is decresing.
-
-The rest of this section is devoted to explain the three main approaches for
-assisting Agda's termination checker: well founded recursion, Bove-Capretta
-predicate and sized types.
+  \InsertCode{Proposal/QuickSort.tex}{QS}
 
 \subsection{Sized types}
 
@@ -45,30 +28,76 @@ track structural information on the type level. Terms can be annotated with a
 of the term being annotated. Functions can quantify over type variables and
 therefore are able to relate the \textit{size} of their input to the output.
 
-\begin{example}
+\todo{say something else about what is Size}
+
+\begin{example}[QuickSort]
   We can define the type of \textit{sized} lists in \Agda~by adding a new index
-  to the type of lists that tracks size information.
+  to the usual type of cons lists that tracks size information. Both the
+  \AI{Nil} and \AI{Cons} constructors need now to explicitly state their
+  \textit{size}.
 
   \InsertCode{Proposal/Sized/List.tex}{List}
 
   The filter function on lists does not add any new constructor to its input,
-  thus we can declare in its type that the function preserves the size bound of
-  its argument.
+  thus we can declare it as a \textit{size} preserving function.
 
   \InsertCode{Proposal/Sized/List.tex}{Filter}
 
-  Quicksort then is a function from list
+  The definition of quick sort is as follows.
 
   \InsertCode{Proposal/Sized/List.tex}{QS}
 
-  QuickSort is a size preserving function but the size in the type of the output
-  list is marked with \AP{ω}
+  Pattern matching on the different constructors refines the \textit{size}
+  argument that combined with the knowledge that \AF{filter} does not increase
+  the \textit{size} ensures that the recursive call after \AF{filter} will
+  terminate.
+
+  Quick sort is a \textit{size} preserving function but we mark the \textit{size} of the
+  output type to be \AP{ω}. The concatenation function used in the definition of
+  quick sort is typed as.
 
   \InsertCode{Proposal/Sized/List.tex}{append}
+
+  Sized types in \Agda~are somewhat limited and currently it is not possible to
+  express on the type that the output \textit{size} should be \AB{i} \AP{+}
+  \AB{j}. The closest approximation is to use the type \AP{ω} which means that
+  we do not now anything about the size of the output.
 
 \end{example}
 
 \todo{say why sized types do not fit our purpose}
+
+\subsection{Bove-Capretta predicate}
+
+The call graph of a given recursive function $f$ of type \AD{A} to \AD{B}
+(\AD{A}\AD{B} : |Set|) can be mechanically reified as a type indexed by
+elements of the input type \AD{A}.
+
+The domain predicate represents the information about the termination of the
+function and enables us to define f by structural recursion on the predicate
+rather than on its input.
+
+\begin{example}[QuickSort]
+
+  We can illustrate the use of \textit{domain} predicate with the quick sort
+  function. Intuitively the domain predicate  states the termination conditions 
+  of the function. 
+  
+  \InsertCode{Proposal/Bove-Capretta/QuickSort.tex}{DP}
+  
+  In the base case, the empty list, quick sort terminates. The inductive case
+  on (x::xs) terminates if quick sort also terminates after filtering out
+  both greater and smaller-or-equal than x elements from xs.
+
+  It is possible now to define quick sort over the structure of its domain
+  predicate which gets smaller in every recursive call.
+
+  \InsertCode{Proposal/Bove-Capretta/QuickSort.tex}{BC}
+
+  Because quick sort is a total function we can prove that the domain predicate
+  holds for any list which means we can use this quicksor.
+
+\end{example}
 
 \subsection{Well founded recursion}
 
@@ -77,11 +106,10 @@ of type \AD{A}, and show that starting from any value of \AD{A} it is possible t
 reach the smallest element in the relation only using a finite number of steps.
 
 Formally, given a binary relation $<$ over \AD{A}, | _<_ : ad( A ) -> ad(A) ->
-Set |, an element $x$ of \AD{A} is accessible if there is no infinite descending chain
-of the form $ x > x_1 > x_2 > x_3 \dots $.
-
-A more constructive characterization of the accessibility predicate due to
-Nordstr{\"o}m \cite{nordstrom1988terminating} is the following type in \Agda.
+Set |, an element $x$ of \AD{A} is accessible if there is no infinite descending
+chain of the form $ x > x_1 > x_2 > x_3 \dots $. A more constructive
+characterization of the accessibility predicate due to Nordstr{\"o}m
+\cite{nordstrom1988terminating} is the following type in \Agda.
 
 \InsertCode{Proposal/WellFounded/WellFounded.tex}{Acc}
 
@@ -102,7 +130,7 @@ over a \emph{well founded} type.
 \end{example}
 
 In order to be able to use the eliminator we must first prove that the relation
-is well founded. amounts to show \Agda that in the proof there is some argument
+is well founded. The proof amounts to show \Agda~ that in there is some argument
 that structurally decreases. It can either be the element of the relation or the
 proof itself.
 
@@ -154,7 +182,7 @@ proof itself.
   \InsertCode{Proposal/WellFounded/Nat.tex}{Proof-2}
 \end{example}
 
-
+\todo{compare the three here?}
 
 
 

@@ -24,29 +24,43 @@ module Proposal.Bove-Capretta.QuickSort where
   zero <ℕ-Bool suc y  = true
   suc x <ℕ-Bool suc y = x <ℕ-Bool y
 
-  filter : (ℕ → Bool) → List ℕ → List ℕ
+  filter : {A : Set} → (A → Bool) → List A → List A
   filter p [] = []
   filter p (x ∷ xs) with p x
   filter p (x ∷ xs) | false = filter p xs
   filter p (x ∷ xs) | true  = x ∷ filter p xs
 
-  length : List ℕ → ℕ
+  length : {A : Set} → List A → ℕ
   length [] = zero
   length (x ∷ xs) = suc (length xs)
+\end{code}
 
-  data qsAcc : List ℕ → Set where
-    qsNil  : qsAcc []
-    qsCons : ∀ x xs → qsAcc (filter (_<ℕ-Bool x) xs) → qsAcc (filter (not ∘ _<ℕ-Bool x) xs) → qsAcc (x ∷ xs)
+%<*DP>
+\begin{code}
+  data qsAcc {A : Set} (p : A → A → Bool) : List A → Set where
+    qsNil  : qsAcc p []
+    qsCons : ∀ x xs → qsAcc p (filter (p x) xs)
+                    → qsAcc p (filter (not ∘ p x) xs) → qsAcc p (x ∷ xs)
+\end{code}
+%</DP>
 
-  quickSort-BC : (inp : List ℕ) → qsAcc inp → List ℕ
-  quickSort-BC .[] qsNil = []
-  quickSort-BC .(x ∷ xs) (qsCons x xs smaller bigger) =
-    quickSort-BC ( (filter (_<ℕ-Bool x) xs)) smaller ++ [ x ] ++ quickSort-BC (filter (not ∘ (_<ℕ-Bool x)) xs) bigger
 
-  module <-on-length-well-founded where
-    open Inverse-image {_<_ = _<ℕ_} length public
+%<*BC>
+\begin{code}
+  quickSort : ∀ {A} (p : A → A → Bool) → (i : List A) → qsAcc p i → List A
+  quickSort p .[] qsNil = []
+  quickSort p .(x ∷ xs) (qsCons x xs smaller bigger) =
+    quickSort p ((filter (p x) xs)) smaller
+    ++ [ x ] ++
+    quickSort p (filter (not ∘ (p x)) xs) bigger
+\end{code}
+%</BC>
 
-    _⊰_ = _<ℕ_ on length
+\begin{code}
+  module <-on-length-well-founded {A : Set} where
+    open Inverse-image {A = List A} {B = ℕ} {_<_ = _<ℕ_}  length public
+
+    _⊰_ = _<ℕ_ on (length {A})
 
     wf : Well-founded (_⊰_)
     wf = well-founded <ℕ-WellFounded
@@ -55,25 +69,30 @@ module Proposal.Bove-Capretta.QuickSort where
   s<ℕs Base     = Base
   s<ℕs (Step n) = Step (s<ℕs n)
 
-  module FilterLemma where
-    _≼_ :  List ℕ → List ℕ → Set
+  module FilterLemma {A : Set} where
+    _≼_ :  List A → List A → Set
     x ≼ y = length x <ℕ suc (length y)
 
-    filter-size : (p : ℕ → Bool) → (xs : List ℕ) → filter p xs ≼ xs
+    filter-size : (p : A → Bool) → (xs : List A) → filter p xs ≼ xs
     filter-size p [] = Base
     filter-size p (x ∷ xs) with p x
     filter-size p (x ∷ xs) | false = Step (filter-size p xs)
     filter-size p (x ∷ xs) | true  = s<ℕs (filter-size p xs)
 
-  open <-on-length-well-founded
-  open FilterLemma
+  module QuickSort {A : Set} where
+    open <-on-length-well-founded
+    open FilterLemma
 
-  DomQuickSort : ∀ (xs : List ℕ) → Acc _⊰_ xs → qsAcc xs
-  DomQuickSort [] _                = qsNil
-  DomQuickSort (x ∷ xs) (acc p) =
-    qsCons x xs (DomQuickSort (filter (_<ℕ-Bool x) xs) (p (filter (λ z → z <ℕ-Bool x) xs) (filter-size (_<ℕ-Bool x) xs)))
-                (DomQuickSort (filter (not ∘ (_<ℕ-Bool x)) xs) (p (filter (not ∘ (_<ℕ-Bool x)) xs) (filter-size (not ∘ (_<ℕ-Bool x)) xs)))
+    DomQuickSort : ∀ (p : A → A → Bool) → (xs : List A) → Acc _⊰_ xs → qsAcc p xs
+    DomQuickSort p [] _                = qsNil
+    DomQuickSort p (x ∷ xs) (acc rs) =
+      qsCons x xs (DomQuickSort p (filter (p x) xs) (rs (filter (λ z → p x z) xs) (filter-size (p x) xs)))
+                  (DomQuickSort p (filter (not ∘ (p x)) xs) (rs (filter (not ∘ (p x)) xs) (filter-size (not ∘ (p x)) xs)))
 
-  quickSort : List ℕ → List ℕ
-  quickSort xs = quickSort-BC xs (DomQuickSort xs (wf xs))
+    well-f = <-on-length-well-founded.wf
+
+  open QuickSort {ℕ}
+
+  -- quickSort : List ℕ → List ℕ
+  -- quickSort xs = quickSort-BC _<ℕ-Bool_ xs (DomQuickSort _<ℕ-Bool_ xs (well-f xs))
 \end{code}
