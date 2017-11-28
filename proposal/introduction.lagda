@@ -1,4 +1,4 @@
-
+%include proposal.fmt
 %include polycode.fmt
 
 \section{Introduction}\label{sec:Introduction}

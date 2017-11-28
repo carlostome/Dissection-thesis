@@ -1,9 +1,9 @@
 \begin{code}
+{-# OPTIONS --allow-unsolved-metas #-}
 module Proposal.WellFounded.List where
 
   open import Data.Nat
   open import Proposal.WellFounded.WellFounded
-  open import Proposal.WellFounded.Nat
 
   open import Data.Product using (_×_; _,_)
   open import Function using (_∘_)
@@ -16,6 +16,13 @@ module Proposal.WellFounded.List where
   filter : {A : Set} → (A → Bool) → List A → List A
   filter p Nil = Nil
   filter p (Cons x xs) = if p x then Cons x (filter p xs) else filter p xs
+
+  length : ∀ {A : Set} → List A → ℕ
+  length Nil         = 0
+  length (Cons x xs) = 1 + length xs
+
+  quickSort : ∀ {A : Set} → (ℕ → ℕ → Bool) → List ℕ → List ℕ
+  quickSort p xs = wfr ? ? ? ?
 
 --   map : ∀ {i : Size} {A B : Set} → (A → B) → List A {i} → List B {i}
 --   map f Nil       =  Nil

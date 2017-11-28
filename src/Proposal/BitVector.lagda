@@ -22,11 +22,11 @@ module Proposal.BitVector where
   data _<Bit_ : Bit → Bit → Set where
     #0<#1 : #0 <Bit #1
 
-  <Bit-WF : WF.WellFounded _<Bit_
-  <Bit-WF x = WF.acc (aux x)
+  <Bit-WF : Well-founded _<Bit_
+  <Bit-WF x = acc (aux x)
     where
-      aux : (x y : Bit) → y <Bit x → WF.Acc _<Bit_ y
-      aux .#1 .#0 #0<#1 = WF.acc λ {_ ()}
+      aux : (x y : Bit) → y <Bit x → Acc _<Bit_ y
+      aux .#1 .#0 #0<#1 = acc λ {_ ()}
 
   module Bound where
     data BitVector : ℕ → Set where

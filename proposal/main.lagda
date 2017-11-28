@@ -1,5 +1,5 @@
 \documentclass[a4paper]{article}
-% \usepackage[top=1in, bottom=1.25in, left=1.30in, right=1.30in]{geometry}
+\usepackage[top=1in, bottom=1.25in, left=1.70in, right=1.70in]{geometry}
 
 \usepackage[english]{babel}
 % \usepackage{gfsdidot}
@@ -9,8 +9,9 @@
 \usepackage{hyperref}
 \usepackage[draft]{todonotes}
 % \usepackage[disable]{todonotes}
-\usepackage{framed,color}
-\usepackage{showframe}
+\usepackage{color}
+\usepackage[framemethod=TikZ]{mdframed}
+% \usepackage{showframe}
 % \usepackage{multirow}
 \usepackage{alltt}
 \usepackage{amsthm}
@@ -41,11 +42,31 @@
 \newtheorem{conjecture}{Conjecture}[section]
 \theoremstyle{definition}
 % \newtheorem{example}{Example}[section]
-\newtheorem{examplex}{Example}[section]
-\newenvironment{example}
-  {\pushQED{\qed}\renewcommand{\qedsymbol}{$\triangle$}\examplex}
-  {\popQED\endexamplex}
+% \newtheorem{examplex}{Example}[section]
+% \newenvironment{example}
+%   {\pushQED{\qed}\renewcommand{\qedsymbol}{$\triangle$}\examplex}
+%   {\popQED\endexamplex}
 \newtheorem{definition}{Definition}[section]
+
+\newcounter{example}[section]
+
+\renewcommand{\theexample}{\thesection.\arabic{example}}
+
+\newenvironment{example}[1][]{%
+    \refstepcounter{example}
+    \begin{mdframed}[%
+        frametitle={Example \theexample\ #1},
+        skipabove=\baselineskip plus 2pt minus 1pt,
+        skipbelow=\baselineskip plus 2pt minus 1pt,
+        linewidth=0.5pt,
+        frametitlerule=true,
+        frametitlebackgroundcolor=gray!30
+    ]%
+}{%
+    \end{mdframed}
+}
+
+
 
 \newcommand{\definedin}[1]{\footnote{Module: #1}}
 \newcommand{\args}[1]{\overline{#1}}
@@ -99,14 +120,11 @@
 \newcommand{\AP}{\AgdaPostulate}
 \newcommand{\APT}{\AgdaPrimitiveType}
 
-\newcommand{\InsertCodeInline}[2][Proposal.tex]{\codeinlinetrue\ExecuteMetaData[../src-tex/#1]{#2}}
-\newcommand{\InsertCode}[2]{
-  % \codeinlinefalse
-  \medskip
-  \ExecuteMetaData[../src-tex/#1]{#2}
+\newcommand{\InsertCodeInline}[2]{\codeinlinetrue\ExecuteMetaData[../src-tex/#1]{#2}}
 
-  \medskip}
-\newcommand{\InsertCodeN}[2][Proposal.tex]{
+\newcommand{\InsertCode}[2]{\ExecuteMetaData[../src-tex/#1]{#2}}
+
+\newcommand{\InsertCodeN}[2]{
   % \codeinlinefalse
   \medskip
   \ExecuteMetaData[../src-tex/#1]{#2}\refstepcounter{codeblock}\begin{center}Listing \thecodeblock\end{center}\label{code:#2}%
@@ -199,17 +217,18 @@
 
 \maketitle
 
-\tableofcontents
-
 \begin{flushright}
 \emph{Supervised by} Wouter Swierstra\\
 \emph{Second supervisor} Alejandro Serrano Mena
 \end{flushright}
 
+\tableofcontents
+
+
 % \listoftodos
 \input{introduction.tex}
 \input{literature.tex}
-% \input{prototype.tex}
+\input{termination.tex}
 % \input{overview.tex}
 % \input{plan.tex}
 

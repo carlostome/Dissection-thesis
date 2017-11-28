@@ -5,16 +5,30 @@ module Proposal.Sized.List where
   open import Data.Product using (_×_; _,_)
   open import Function using (_∘_)
   open import Data.Bool
+\end{code}
 
+%<*List>
+\begin{code}
   data List (A : Set) : {_ : Size} → Set where
     Nil  : ∀ {i : Size} → List A {↑ i}
     Cons : ∀ {i : Size} → A → List A {i} → List A {↑ i}
+\end{code}
+%</List>
 
+\begin{code}
   map : ∀ {i : Size} {A B : Set} → (A → B) → List A {i} → List B {i}
   map f Nil       =  Nil
   map f (Cons x xs) =  Cons (f x) (map f xs)
+\end{code}
 
+
+%<*append>
+\begin{code}
   _++_ : ∀ {i j : Size} {A : Set} → List A {i} → List A {j} → List A {ω}
+\end{code}
+%</append>
+
+\begin{code}
   Nil ++ ys       = ys
   Cons x xs ++ ys = Cons x (xs ++ ys)
 
@@ -44,19 +58,34 @@ module Proposal.Sized.List where
     mergeSort {.(↑ (↑ _))} leq (Cons {.(↑ i)} x (Cons {i} y xs)) with split {i} xs
     ... | xss , yss = merge {ω} leq (mergeSort {↑ i} leq (Cons x xss))
                                     (mergeSort {↑ i} leq (Cons y yss))
+\end{code}
 
+\begin{code}
   module QuickSort-Filter where
+\end{code}
 
+%<*Filter>
+\begin{code}
     filter : ∀ {i : Size} {A : Set} → (A → Bool) → List A {i} → List A {i}
     filter p Nil = Nil
     filter p (Cons x xs) = if p x then Cons x (filter p xs) else filter p xs
+\end{code}
+%</Filter>
 
-    quickSort : ∀ {i : Size} {A : Set} → (A → A → Bool) → List A {i} → List A {ω}
+
+%<*QS>
+\begin{code}
+    quickSort : ∀ {i : Size} {A : Set}
+              → (A → A → Bool) → List A {i} → List A {ω}
     quickSort {.(↑ i)} p (Nil {i})       = Nil
-    quickSort {.(↑ i)} p (Cons {i} x xs) =
-      quickSort {i} p (filter {i} (p x) xs) ++ [ x ] ++ quickSort {i} p (filter {i} (not ∘ p x) xs)
+    quickSort {.(↑ i)} p (Cons {i} x xs) = quickSort {i} p (filter {i} (p x) xs)
+                                             ++ [ x ] ++
+                                           quickSort {i} p (filter {i} (not ∘ p x) xs)
+\end{code}
+%</QS>
 
 
+\begin{code}
   module QuickSort-Partition where
 
     partition : ∀ {i : Size} {A : Set} → (A → Bool) → List A {i} → List A {i} × List A {i}

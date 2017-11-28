@@ -45,7 +45,6 @@ module Proposal.FDesc where
     fmap f (Just x) = Just (f x)
     fmap f Nothing  = Nothing
 
-
     Maybe-FDesc : FDesc
     Maybe-FDesc = I₁ +₁ K₁ ⊤
 
@@ -75,19 +74,11 @@ module Proposal.FDesc where
   fmap (P ×₁ Q) f (x , y)   = fmap P f x , fmap Q f y
 
   law₁ : ∀ (F : FDesc) (X : Set) → ∀ (x : ⟦ F ⟧₁ X) → fmap F id x ≡ x
-  law₁ I₁ X x     = refl
-  law₁ (K₁ A) X x = refl
-  law₁ (F +₁ G) X (inj₁ x)        = cong inj₁ (law₁ F X x)
-  law₁ (F +₁ G) X (inj₂ y)        = cong inj₂ (law₁ G X y)
-  law₁ (F ×₁ G) X (proj₁ , proj₂) = cong₂ _,_ (law₁ F X proj₁) (law₁ G X proj₂)
+  law₁ = {!!}
 
   law₂ : ∀ (F : FDesc) (X Y Z : Set) → ∀ (f : Y → Z) (g : X →  Y)
        → ∀ (x : ⟦ F ⟧₁ X) → fmap F (f ∘′ g) x ≡ (fmap F f ∘′ fmap F g) x
-  law₂ I₁ X Y Z f g x     = refl
-  law₂ (K₁ A) X Y Z f g x = refl
-  law₂ (F +₁ G) X Y Z f g (inj₁ x) = {!!}
-  law₂ (F +₁ G) X Y Z f g (inj₂ y) = {!!}
-  law₂ (F ×₁ G) X Y Z f g (proj₁ , proj₂) = {!!}
+  law₂ = {!!}
 \end{code}
 %</fmap>
 

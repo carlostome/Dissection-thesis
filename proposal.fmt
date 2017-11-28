@@ -2,7 +2,7 @@
 %include polycode.fmt
 
 %format Set = "\APT{Set}"
-%format AD (a) = "\AD{" a "}"
+%format AD a = "\AD{" a "}"
 %format langle = "\langle"
 %format rangle = "\rangle"
-%format AF (a) = "\AF{" a "}"
+%format AF a = "\AF{" a "}"

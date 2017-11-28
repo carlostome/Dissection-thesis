@@ -1,60 +1,78 @@
 \begin{code}
+{-# OPTIONS --allow-unsolved-metas #-}
 module Proposal.WellFounded.Nat where
 
   open import Data.Nat
-  open import Proposal.WellFounded.WellFounded
+  open import Induction.WellFounded
   open import Relation.Binary.PropositionalEquality
   open import Data.Sum
   open import Data.Product
   open import Data.Empty
+\end{code}
 
-  data _<ℕ_ (m : ℕ) : ℕ → Set where
-    Base :                    m <ℕ suc m
-    Step : {n : ℕ} → m <ℕ n → m <ℕ suc n
+%<*Rel>
+\begin{code}
+  data _<₁_ (m : ℕ) : ℕ → Set where
+    Base :                      m <₁ suc m
+    Step : ∀ {n : ℕ} → m <₁ n → m <₁ suc n
 
-  <ℕ-WF : WF.WellFounded _<ℕ_
-  <ℕ-WF x = WF.acc (aux x)
+  data _<₂_ : ℕ → ℕ → Set where
+    Base : ∀ {n : ℕ}   → 0 <₂ suc n
+    Step : ∀ {n m : ℕ} → n <₂ m      → suc n <₂ suc m
+\end{code}
+%</Rel>
+
+%<*Proof-1>
+\begin{code}
+  <₁-WF : Well-founded _<₁_
+  <₁-WF x = acc (aux x)
     where
-      aux : ∀ x y → y <ℕ x → WF.Acc _<ℕ_ y
-      aux .(suc y) y Base     = <ℕ-WF y
+      aux : ∀ x y → y <₁ x → Acc _<₁_ y
+      aux .(suc y) y Base         = <₁-WF y
       aux .(suc n) y (Step {n} p) = aux n y p
+\end{code}
+%</Proof-1>
 
-  data _<ℕ2_ : ℕ → ℕ → Set where
-    B : ∀ {n : ℕ}   → 0 <ℕ2 suc n
-    S : ∀ {n m : ℕ} → n <ℕ2 m      → suc n <ℕ2 suc m
+\begin{code}
+  module Proof-2-incomplete where
+\end{code}
 
-  lemma : ∀ n m → n <ℕ2 suc m → n ≡ m ⊎ n <ℕ2 m
-  lemma .0 zero B = inj₁ refl
-  lemma .0 (suc m) B = inj₂ B
-  lemma .(suc n) zero (S {n} {.0} ())
-  lemma .(suc n) (suc m) (S {n} {.(suc m)} x) with lemma _ _ x
-  lemma .(suc m) (suc m) (S {.m} {.(suc m)} x) | inj₁ refl = inj₁ refl
-  lemma .(suc n) (suc m) (S {n} {.(suc m)} x) | inj₂ y = inj₂ (S y)
+%<*Incomplete>
+\begin{code}
+    <₂-WF : Well-founded _<₂_
+    <₂-WF x = acc (aux x)
+      where
+        aux : (x y : ℕ) → y <₂ x → Acc _<₂_ y
+        aux zero y ()
+        aux (suc x) .0 Base                   = {!<₂-WF 0!}
+        aux (suc x) .(suc y) (Step {n = y} p) = aux {!!} {!!} {!p!}
+\end{code}
+%</Incomplete>
 
-  <ℕ2-WF : WF.WellFounded _<ℕ2_
-  <ℕ2-WF x = WF.acc (aux x)
+%<*Lemma>
+\begin{code}
+  lemma : ∀ n m → n <₂ suc m → n ≡ m ⊎ n <₂ m
+\end{code}
+%</Lemma>
+
+\begin{code}
+  lemma .0 zero Base    = inj₁ refl
+  lemma .0 (suc m) Base = inj₂ Base
+  lemma .(suc n) zero (Step {n} {.0} ())
+  lemma .(suc n) (suc m) (Step {n} {.(suc m)} x) with lemma _ _ x
+  lemma .(suc m) (suc m) (Step {.m} {.(suc m)} x) | inj₁ refl = inj₁ refl
+  lemma .(suc n) (suc m) (Step {n} {.(suc m)} x)  | inj₂ y = inj₂ (Step y)
+\end{code}
+
+%<*Proof-2>
+\begin{code}
+  <₂-WF : Well-founded _<₂_
+  <₂-WF x = acc (aux x)
     where
-      aux : (x y : ℕ) → y <ℕ2 x → WF.Acc _<ℕ2_ y
+      aux : (x y : ℕ) → y <₂ x → Acc _<₂_ y
       aux zero y ()
       aux (suc x) y p with lemma _ _ p
-      aux (suc x) .x p | inj₁ refl = <ℕ2-WF x
+      aux (suc x) .x p | inj₁ refl = <₂-WF x
       aux (suc x) y p  | inj₂ i    = aux x y i
-
-  data _≤ℕ_ : ℕ → ℕ → Set where
-    Base : ∀ {n : ℕ}   → 0 ≤ℕ n
-    Step : ∀ {n m : ℕ} → n ≤ℕ m → suc n ≤ℕ suc m
-
-  _<ℕ3_ : ℕ → ℕ → Set
-  x <ℕ3 y = suc x ≤ℕ y
-
-  -- lemma₁ : ∀ n m → n ≤ℕ m → suc n ≡ m ⊎ suc n <ℕ3 m
-  -- lemma₁ .0 zero Base = {!!}
-  -- lemma₁ .0 (suc m) Base = {!!}
-  -- lemma₁ .(suc _) .(suc _) (Step x) = {!!}
-
-  -- <ℕ3-WF : WF.WellFounded _<ℕ3_
-  -- <ℕ3-WF x = WF.acc (aux x)
-  --   where
-  --     aux : (x y : ℕ) → y <ℕ3 x → WF.Acc _<ℕ3_ y
-  --     aux .(suc m) .n (Step {n} {m} x₂) = {!!}
-  
+\end{code}
+%</Proof-2>
