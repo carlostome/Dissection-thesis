@@ -50,9 +50,9 @@ module Proposal.Bove-Capretta.QuickSort where
   quickSort : ∀ {A} (p : A → A → Bool) → (i : List A) → qsAcc p i → List A
   quickSort p .[] qsNil = []
   quickSort p .(x ∷ xs) (qsCons x xs smaller bigger) =
-    quickSort p ((filter (p x) xs)) smaller
-    ++ [ x ] ++
-    quickSort p (filter (not ∘ (p x)) xs) bigger
+      quickSort p ((filter (p x) xs)) smaller
+      ++ [ x ] ++
+      quickSort p (filter (not ∘ (p x)) xs) bigger
 \end{code}
 %</BC>
 

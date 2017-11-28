@@ -29,23 +29,24 @@ module Proposal.WellFounded.WellFounded  where
 
 %<*Elim>
 \begin{code}
-  wfr : ∀ {A : Set} {_<_ : A → A → Set}
+  wfRec : ∀ {A : Set} {_<_ : A → A → Set}
           (P : A → Set) (a : A) → Acc _<_ a → (∀ x → (∀ y → y < x → P y) → P x) → P a
-  wfr P a (acc x) e = e a λ y p → wfr P y (x y p) e
+  wfRec P a (acc x) e = e a λ y p → wfRec P y (x y p) e
 \end{code}
 %</Elim>
 
-  -- module Inverse-image-Well-founded { A B }
-  --   (_<_ : Rel B)(f : A → B) where
-  --   _⊰_ : Rel A
-  --   x ⊰ y = f x < f y
+\begin{code}
+  module Inverse-image { A B : Set} (_<_ : Rel B) (f : A → B) where
+    _⊰_ : Rel A
+    x ⊰ y = f x < f y
 
-  --   private
-  --     ii-acc : ∀ {x} → WF.Acc _<_ (f x) → WF.Acc _⊰_ x
-  --     ii-acc (WF.acc g) = WF.acc (λ y fy<fx → ii-acc (g (f y) fy<fx))
+    private
+      ii-acc : ∀ {x} → Acc _<_ (f x) → Acc _⊰_ x
+      ii-acc (acc g) = acc (λ y fy<fx → ii-acc (g (f y) fy<fx))
 
-  --   ii-wf : WF.WellFounded _<_ → WF.WellFounded _⊰_
-  --   ii-wf wf x = ii-acc (wf (f x))
+    ii-wf : Well-founded _<_ → Well-founded _⊰_
+    ii-wf wf x = ii-acc (wf (f x))
+\end{code}
 
   -- _/_ : (A : Set) → Rel A → Set₁
   -- A / R = (x : A) → (y : A) → R x y → Set

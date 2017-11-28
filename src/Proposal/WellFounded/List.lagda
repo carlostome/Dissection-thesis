@@ -2,27 +2,53 @@
 {-# OPTIONS --allow-unsolved-metas #-}
 module Proposal.WellFounded.List where
 
-  open import Data.Nat
-  open import Proposal.WellFounded.WellFounded
+  open import Data.Nat hiding (_<_)
+  open import Induction.WellFounded
+  open import Proposal.WellFounded.Nat
+  open import Relation.Binary
 
   open import Data.Product using (_×_; _,_)
-  open import Function using (_∘_)
+  open import Function using (_∘_; _on_)
   open import Data.Bool
+  open import Data.List
 
-  data List (A : Set) : Set where
-    Nil  : List A
-    Cons : A → List A → List A
+  _<_ = _<₁_
+  <-WF = <₁-WF
 
-  filter : {A : Set} → (A → Bool) → List A → List A
-  filter p Nil = Nil
-  filter p (Cons x xs) = if p x then Cons x (filter p xs) else filter p xs
+\end{code}
+\begin{code}
+  module QuickSort {A : Set} where
+    open Inverse-image {A = List A} {B = ℕ} {_<_} length public
 
-  length : ∀ {A : Set} → List A → ℕ
-  length Nil         = 0
-  length (Cons x xs) = 1 + length xs
+    _⊰_ : REL (List A) _ _
+    _⊰_ = _<_ on length
+\end{code}
+%<*lemmas>
+\begin{code}
+    prlt : ∀ (p : A → A → Bool) → (x : A) → (xs : List A) → (filter (p x) xs) ⊰ (x ∷ xs)
+    prlt = {!!}
 
-  quickSort : ∀ {A : Set} → (ℕ → ℕ → Bool) → List ℕ → List ℕ
-  quickSort p xs = wfr ? ? ? ?
+    prgt : ∀ (p : A → A → Bool) → (x : A) → (xs : List A) → (filter (not ∘ p x) xs) ⊰ (x ∷ xs)
+    prgt p x xs = {!!}
+\end{code}
+%</lemmas>
+\begin{code}
+
+    open All (well-founded <-WF)
+\end{code}
+
+%<*QS>
+\begin{code}
+    quickSort : (A → A → Bool) → List A → List A
+    quickSort p xs = wfRec _ (λ _ → List A) qs xs
+      where
+        qs : ∀ (x : List A) → (∀ (y : List A) → y ⊰ x → List A) → List A
+        qs [] _       = []
+        qs (x ∷ xs) h = h (filter (p x) xs) (prlt p x xs)
+                          ++ [ x ] ++
+                        h (filter (not ∘ p x) xs) (prgt p x xs) 
+\end{code}
+%</QS>
 
 --   map : ∀ {i : Size} {A B : Set} → (A → B) → List A {i} → List B {i}
 --   map f Nil       =  Nil

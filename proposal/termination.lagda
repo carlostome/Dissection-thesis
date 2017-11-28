@@ -15,22 +15,31 @@ structurally smaller. In the rest of the section we will explore several
 available techniques that overcome this limitation: sized types, Bove-Capretta
 predicate and well founded recursion.
 
-As a running example through the section we will use the quick sort function
-that \Agda's termination checker classifies as non-terminating.
+As a running example we will use the quick sort function whose definition
+\Agda's termination checker classifies as non-terminating\footnote{With
+\nonterm{this color} \Agda~warns that the termination checker fails.}
 
+  % remember to tweak the .tex file with \nonterm
   \InsertCode{Proposal/QuickSort.tex}{QS}
 
 \subsection{Sized types}
 
 Sized types \cite{abel2010miniagda} is a type system extension that allows to
 track structural information on the type level. Terms can be annotated with a
-\textit{size} index that represents an upper bound of the actual \textit{size}
-of the term being annotated. Functions can quantify over type variables and
-therefore are able to relate the \textit{size} of their input to the output.
+\textit{size} index that represents an \textbf{upper bound} of the actual
+\textit{size} of the term being annotated. Functions can then quantify over size
+variables to relate the \textit{size} of their input arguments to the
+\textit{size} of the result.
 
-\todo{say something else about what is Size}
+% Because sized types are embedded into the type system, they not only serve to
+% assist the termination checker but also they allow the programmer to specify
+% more precisely how the function affects the \textit{size} of its argument.
 
-\begin{example}[QuickSort]
+\todo{say something else about what is Size (maybe not)}
+
+\medskip
+
+\begin{example}
   We can define the type of \textit{sized} lists in \Agda~by adding a new index
   to the usual type of cons lists that tracks size information. Both the
   \AI{Nil} and \AI{Cons} constructors need now to explicitly state their
@@ -62,7 +71,6 @@ therefore are able to relate the \textit{size} of their input to the output.
   express on the type that the output \textit{size} should be \AB{i} \AP{+}
   \AB{j}. The closest approximation is to use the type \AP{ω} which means that
   we do not now anything about the size of the output.
-
 \end{example}
 
 \todo{say why sized types do not fit our purpose}
@@ -82,9 +90,9 @@ rather than on its input.
   We can illustrate the use of \textit{domain} predicate with the quick sort
   function. Intuitively the domain predicate  states the termination conditions 
   of the function. 
-  
+
   \InsertCode{Proposal/Bove-Capretta/QuickSort.tex}{DP}
-  
+
   In the base case, the empty list, quick sort terminates. The inductive case
   on (x::xs) terminates if quick sort also terminates after filtering out
   both greater and smaller-or-equal than x elements from xs.
@@ -126,6 +134,9 @@ over a \emph{well founded} type.
 
 \begin{example}
   QuickSort example
+
+  \InsertCode{Proposal/WellFounded/List.tex}{QS}
+  \InsertCode{Proposal/WellFounded/List.tex}{lemmas}
 
 \end{example}
 
