@@ -121,14 +121,6 @@ module Proposal.Tree.Base where
   convert (t , s) = t , revₛ s
 \end{code}
 %</TDPlug>
--- to-up-right-preserves : ∀ t s t′ s′ → to-up-right t s ≡ just (t′ , s′)  → t ⊳ s ≡ t′ ⊳ s′
--- to-up-right-preserves t (Left t₁ s) .(Node t t₁) .s refl = refl
--- to-up-right-preserves t (Right t₁ s) t′ s′ x = to-up-right-preserves (Node t₁ t) s t′ s′ x
--- to-up-right-preserves t Top t′ s′ ()
-
--- to-left-preserves : ∀ t s t′ s′ → to-left t s ≡ (t′ , s′) → t ⊳ s ≡ t′ ⊳ s′
--- to-left-preserves Tip s .Tip .s refl    = refl
--- to-left-preserves (Node t t₁) s t′ s′ x = to-left-preserves t (Left t₁ s) t′ s′ x
 
 %<*TDRel>
 \begin{code}
@@ -252,16 +244,31 @@ module Proposal.Tree.Base where
   revₛ-r (Right t₁ s) t = cong (λ x → x ++ₛ Right t₁ Top) (revₛ-r s t)
   revₛ-r Top t = refl
 
-  prop : ∀ x s t → (x ⊲ revₛ (s ++ₛ Right t Top)) ≡ Node t (x ⊲ revₛ s)
-  prop x s t = ?
+  revₛ-l : ∀ s t → revₛ (s ++ₛ Left t Top) ≡ Left t (revₛ s)
+  revₛ-l (Left t₁ s) t  = cong (λ x → x ++ₛ Left t₁ Top ) (revₛ-l s t)
+  revₛ-l (Right t₁ s) t = cong (λ x → x ++ₛ Right t₁ Top) (revₛ-l s t)
+  revₛ-l Top t = refl
 
+  prop : ∀ x s t → x ⊲ revₛ (s ++ₛ Right t Top) ≡ Node t (x ⊲ revₛ s)
+  prop x (Left t₁ s) t  = {!!}
+  prop x (Right t₁ s) t = {!!}
+  prop x Top t = refl
+
+  pr2 : ∀ x s t → x ⊳ (s ++ₛ Right t Top) ≡ Node t (x ⊳ s)
+  pr2 x (Left t₁ s) t  = pr2 (Node x t₁) s t
+  pr2 x (Right t₁ s) t = pr2 (Node t₁ x) s t
+  pr2 x Top t          = refl
+
+  pr3 : ∀ x s t → x ⊳ (s ++ₛ Left t Top) ≡ Node (x ⊳ s) t
+  pr3 x (Left t₁ s) t  = pr3 (Node x t₁) s t
+  pr3 x (Right t₁ s) t = pr3 (Node t₁ x) s t
+  pr3 x Top t          = refl
 
   ⊳-to-⊲ : ∀ t s → t ⊳ s ≡ t ⊲ (revₛ s)
   ⊳-to-⊲ x  s with initLastₛ s
   ⊳-to-⊲ x  .Top | Top = refl
-  ⊳-to-⊲ x  .(s ++ₛ Right t Top) | Right s t with revₛ-r s t
-  ... | z = {!!}
-  ⊳-to-⊲ x  .(s ++ₛ Left t Top)  | Left  s t = {!!}
+  ⊳-to-⊲ x  .(s ++ₛ Right t Top) | Right s t rewrite revₛ-r s t  | pr2 x s t = cong (Node t) (⊳-to-⊲ x s)
+  ⊳-to-⊲ x  .(s ++ₛ Left t Top)  | Left  s t rewrite revₛ-l s t  | pr3 x s t = {!!}
 
   ⊲-to-⊳ : ∀ z → plug-⊲ z ≡ plug-⊳ (convert z)
   ⊲-to-⊳ (x , s) with initLastₛ s
