@@ -104,9 +104,9 @@
 \usepackage{autofe}
 
 \newcommand{\AK}{\AgdaKeyword}
-\newcommand{\AS}{\AgdaString}
 \newcommand{\AY}{\AgdaSymbol}
 \newcommand{\AN}{\AgdaNumber}
+\newcommand{\AS}{\AgdaSpace}
 \newcommand{\AB}{\AgdaBound}
 \newcommand{\AO}{\AgdaOperator}
 \newcommand{\AI}{\AgdaInductiveConstructor}
@@ -227,10 +227,11 @@
 
 
 % \listoftodos
-\input{introduction.tex}
-\input{literature.tex}
+\input{problem.tex}
+% \input{introduction.tex}
 \input{termination.tex}
-% \input{overview.tex}
+\input{prototype.tex}
+\input{literature.tex}
 % \input{plan.tex}
 
 \bibliographystyle{plain}

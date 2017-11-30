@@ -1,7 +1,7 @@
 SRC := src
 
 PROPOSAL_MODULES      := Proposal
-PROPOSAL_TEX          := main introduction literature termination
+PROPOSAL_TEX          := main introduction literature termination problem prototype
 PROPOSAL_AGDA         := $(shell find $(SRC)/$(PROPOSAL_MODULES)/ -type f -name '*.lagda')
 
 proposal: proposal/main.pdf
