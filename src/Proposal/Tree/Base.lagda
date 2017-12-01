@@ -57,19 +57,19 @@ module Proposal.Tree.Base where
 
   data InitLastₛ : Stack → Set where
     Top    : InitLastₛ Top
-    Right  : (s : Stack) (t : Tree) → InitLastₛ (s ++ₛ Right t Top)
-    Left   : (s : Stack) (t : Tree) → InitLastₛ (s ++ₛ Left  t Top)
+    Right  : (s : Stack) (t : Tree) → InitLastₛ s → InitLastₛ (s ++ₛ Right t Top)
+    Left   : (s : Stack) (t : Tree) → InitLastₛ s → InitLastₛ (s ++ₛ Left  t Top)
 
   initLastₛ : (s : Stack) → InitLastₛ s
   initLastₛ Top = Top
   initLastₛ (Left t s) with initLastₛ s
-  initLastₛ (Left t .Top) | Top = Left Top t
-  initLastₛ (Left t .(s ++ₛ Right t₁ Top)) | Right s t₁ = Right (Left t s) t₁
-  initLastₛ (Left t .(s ++ₛ Left t₁ Top))  | Left s t₁  = Left  (Left t s) t₁
+  initLastₛ (Left t .Top) | Top = Left Top t Top
+  initLastₛ (Left t .(s ++ₛ Right t₁ Top)) | Right s t₁ s′ = Right (Left t s) t₁ {!!}
+  initLastₛ (Left t .(s ++ₛ Left t₁ Top))  | Left s t₁ s′  = Left  (Left t s) t₁ {!!}
   initLastₛ (Right t s) with initLastₛ s
-  initLastₛ (Right t .Top) | Top = Right Top t
-  initLastₛ (Right t .(s ++ₛ Right t₁ Top)) | Right s t₁ = Right (Right t s) t₁
-  initLastₛ (Right t .(s ++ₛ Left t₁ Top)) | Left s t₁   = Left (Right t s) t₁
+  initLastₛ (Right t .Top) | Top = Right Top t {!!}
+  initLastₛ (Right t .(s ++ₛ Right t₁ Top)) | Right s t₁ s′ = Right (Right t s) t₁ {!!}
+  initLastₛ (Right t .(s ++ₛ Left t₁ Top)) | Left s t₁   s′ = Left (Right t s) t₁ {!!}
 \end{code}
 
 \begin{code}
@@ -207,16 +207,16 @@ module Proposal.Tree.Base where
   just-injective : ∀ {l} {A : Set l} {x y : A} → (Maybe A ∋ just x) ≡ just y → x ≡ y
   just-injective {l} {A} {x} refl = refl
 
+  to-up-right-preserves-⊳ : ∀ t s t′ s′ → to-up-right t s ≡ just (t′ , s′)  → t ⊳ s ≡ t′ ⊳ s′
+  to-up-right-preserves-⊳ t (Left t₁ s) .(Node t t₁) .s refl = refl
+  to-up-right-preserves-⊳ t (Right t₁ s) t′ s′ x = to-up-right-preserves-⊳ (Node t₁ t) s t′ s′ x
+  to-up-right-preserves-⊳ t Top t′ s′ ()
+
+  to-left-preserves-⊳ : ∀ t s t′ s′ → to-left t s ≡ (t′ , s′) → t ⊳ s ≡ t′ ⊳ s′
+  to-left-preserves-⊳ Tip s .Tip .s refl    = refl
+  to-left-preserves-⊳ (Node t t₁) s t′ s′ x = to-left-preserves-⊳ t (Left t₁ s) t′ s′ x
+
   module Preservation where
-    to-up-right-preserves-⊳ : ∀ t s t′ s′ → to-up-right t s ≡ just (t′ , s′)  → t ⊳ s ≡ t′ ⊳ s′
-    to-up-right-preserves-⊳ t (Left t₁ s) .(Node t t₁) .s refl = refl
-    to-up-right-preserves-⊳ t (Right t₁ s) t′ s′ x = to-up-right-preserves-⊳ (Node t₁ t) s t′ s′ x
-    to-up-right-preserves-⊳ t Top t′ s′ ()
-
-    to-left-preserves-⊳ : ∀ t s t′ s′ → to-left t s ≡ (t′ , s′) → t ⊳ s ≡ t′ ⊳ s′
-    to-left-preserves-⊳ Tip s .Tip .s refl    = refl
-    to-left-preserves-⊳ (Node t t₁) s t′ s′ x = to-left-preserves-⊳ t (Left t₁ s) t′ s′ x
-
     right-preserves-⊳ : ∀ z z′ → right z ≡ just z′  → plug-⊳ z ≡ plug-⊳ z′
     right-preserves-⊳ (x , Left t s) .(Node x t , s) refl = refl
     right-preserves-⊳ (Tip , Right t s) (y , s′) eq = to-up-right-preserves-⊳ (Node t Tip) s y s′ eq
@@ -265,20 +265,45 @@ module Proposal.Tree.Base where
   pr3 x Top t          = refl
 
   ⊳-to-⊲ : ∀ t s → t ⊳ s ≡ t ⊲ (revₛ s)
-  ⊳-to-⊲ x  s with initLastₛ s
-  ⊳-to-⊲ x  .Top | Top = refl
-  ⊳-to-⊲ x  .(s ++ₛ Right t Top) | Right s t rewrite revₛ-r s t  | pr2 x s t = cong (Node t) (⊳-to-⊲ x s)
-  ⊳-to-⊲ x  .(s ++ₛ Left t Top)  | Left  s t rewrite revₛ-l s t  | pr3 x s t = {!!}
+  ⊳-to-⊲ t s  = aux t s (initLastₛ s)
+    where aux : ∀ t s → InitLastₛ s → t ⊳ s ≡ t ⊲ (revₛ s)
+          aux x .Top Top = refl
+          aux x .(s ++ₛ Right t Top) (Right s t il)  rewrite revₛ-r s t  | pr2 x s t = cong (Node t) (aux x s il)
+          aux x .(s ++ₛ Left t Top)  (Left  s t il)  rewrite revₛ-l s t  | pr3 x s t = cong (λ x → Node x t) (aux x s il)
 
-  ⊲-to-⊳ : ∀ z → plug-⊲ z ≡ plug-⊳ (convert z)
-  ⊲-to-⊳ (x , s) with initLastₛ s
-  ⊲-to-⊳ (x , .Top) | Top = refl
-  ⊲-to-⊳ (x , .(s ++ₛ Right t Top)) | Right s t = {!!}
-  ⊲-to-⊳ (x , .(s ++ₛ Left t Top))  | Left s t  = {!!}
+  lemma : ∀ t₁ t₂ s₁ s₂ s → (t₁ , s₁) < (t₂ , s₂) → (t₁ , s ++ₛ s₁) < (t₂ , s ++ₛ s₂)
+  lemma t₁ t₂ (Left t₃ s₁) (Left .t₃ s₂) s (<-Left-Step x) = {!!}
+  lemma t₁ t₂ (Right t₃ s₁) (Left t s₂) s x = {!!}
+  lemma t₁ t₂ Top (Left t s₂) s x = {!!}
+  lemma t₁ t₂ s₁ (Right t s₂) s x = {!!}
+  lemma t₁ t₂ (Left t s₁) Top s x = {!!}
+  lemma t₁ t₂ (Right t s₁) Top s x = {!!}
+  lemma t₁ t₂ Top Top s ()
 
-  theorem : ∀ (z z′ : Zipper) → right z ≡ just z′ → convert z′ < convert z
-  theorem (t , Left t₁ s) .(Node t t₁ , s) refl = {!!}
-  theorem (t , Right t₁ s) z′ x = {!!}
-  theorem (t , Top) z′ x = {!!}
+  eq-pair : ∀ {A B : Set} x y a b  → x ≡ y → a ≡ b → ((A × B) ∋ (x , a)) ≡ (y , b)
+  eq-pair _ _ _ _ refl refl = refl
+
+  -- to-left : Tree → Stack → Tree × Stack
+  -- to-left Tip  s          = Tip , s
+  -- to-left (Node t₁ t₂)  s = to-left t₁ (Left t₂ s)
+
+  to-left-l : ∀ t t′ s s′ → to-left t s ≡ (t′ , s′) → ∃ λ s′′ → s′ ≡ s′′ ++ₛ s 
+  to-left-l Tip .Tip s .s refl     = Top , refl
+  to-left-l (Node t₁ t₂) t′ s s′ x with to-left-l t₁ t′ (Left t₂ s) s′ x
+  to-left-l (Node t₁ t₂) t′ s .(ss ++ₛ Left t₂ s) x | ss , refl = ss ++ₛ Left t₂ Top , {!!}
+
+  theorem : ∀ t₁ s₁ t₂ s₂ → right (t₁ , s₁) ≡ just (t₂ , s₂) → (t₂ , revₛ s₂) < (t₁ , revₛ s₁)
+  theorem Tip (Left t s₁) .(Node Tip t) .s₁ refl
+    rewrite (eq-pair (Node Tip t) (Node Tip t) (revₛ s₁) (revₛ s₁ ++ₛ Top) refl (sym (Top-ru (revₛ s₁) ))) = lemma (Node Tip t) Tip Top (Left t Top) (revₛ s₁) <-Left-Base
+  theorem Tip (Right t s₁) t₂ s₂ x = {!!}
+  theorem Tip Top t₂ s₂ ()
+  theorem (Node t₁ t₃) (Left t s₁) .(Node (Node t₁ t₃) t) .s₁ refl
+    rewrite (eq-pair (Node (Node t₁ t₃) t) (Node (Node t₁ t₃) t) (revₛ s₁) (revₛ s₁ ++ₛ Top) refl (sym (Top-ru (revₛ s₁)))) = lemma (Node (Node t₁ t₃) t) (Node t₁ t₃) Top (Left t Top) (revₛ s₁) <-Left-Base
+  theorem (Node t₁ t₃) (Right t s₁) .t₃ .(Right t₁ (Right t s₁)) refl = {!!} -- with the lemma again
+  theorem (Node t₁ t₂) Top t s x with to-left t₂ (Right t₁ Top) | inspect (to-left t₂) (Right t₁ Top)
+  theorem (Node t₁ t₂) Top .t′ .s′ refl | t′ , s′ | [ eq ] with to-left-l t₂ t′ (Right t₁ Top) s′ eq
+  theorem (Node t₁ t₂) Top .t′ .(ss ++ₛ Right t₁ Top) refl | t′ , .(ss ++ₛ Right t₁ Top) | [ eq ] | ss , refl with to-left-preserves-⊳ t₂ (Right t₁ Top) _ _ eq
+  ... | z rewrite pr2 t′ ss t₁ | revₛ-r ss t₁ | ⊳-to-⊲ t′ ss | (proj₂ (Node-Inj z)) = <-Right-Base
+
 \end{code}
 %</Theorem>
