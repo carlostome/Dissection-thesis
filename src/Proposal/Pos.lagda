@@ -321,4 +321,37 @@ module Proposal.Pos where
   -- theo (Node t₁ t₂ , Top) (.t′ , .(Right t₁ s′)) refl | t′ , s′ | [ eq ] with leftmosty-preserves t₂ _ _ eq
   -- theo (Node t₁ .(t′ ⊲ s′) , Top) (.t′ , .(Right t₁ s′)) refl | t′ , s′ | Reveal_·_is_.[ eq ] | refl = <S-Right-Base
 
+  _<<_ : Tree × Stack → Tree × Stack → Set
+  x << y = Σ Tree λ t → plug-⊲ x ≡ t × plug-⊲ y ≡ t × x < y
+
+  mutual
+    acciR : ∀ t₁ x s → Acc (_<<_) (x , s) → WfRec (_<<_) (Acc (_<<_)) (x , Right t₁ s)
+    acciR t₁ x s (acc rs) .(t₂ , Right t₁ s₁) (.(Node t₁ (t₂ ⊲ s₁)) , refl , eq₂ , <-Right-Step {t₁ = t₂} {s₁ = s₁} p)
+      = acc (acciR t₁ t₂ s₁ (rs (t₂ , s₁) ((t₂ ⊲  s₁) , (refl , (proj₂ (Node-Inj eq₂) , p)))))
+
+
+    -- accL : ∀ t t₁ x →  Acc ([ t ]ₛ_<_) x → WfRec ([ Node t t₁ ]ₛ_<_ ) (Acc ([ Node t t₁  ]ₛ_<_ )) (proj₁ x , Left t₁ (proj₂ x))
+    -- accL t .t₂ (x , s) (acc rs) (y , Left t₂ s′) (lt .(y , Left t₂ s′) .(x , Left t₂ s) eq₁ eq₂ (<-Left-Step p))
+    --   = acc (accL t t₂ (y , s′) (rs (y , s′) (lt (y , s′) (x , s) (proj₁ (Node-Inj eq₁)) (proj₁ (Node-Inj eq₂)) p)))
+    -- accL .(x ⊲ s) .(y ⊲ s′) (x , s) (acc rs) (y , Right .(x ⊲ s) s′) (lt .(y , Right (x ⊲ s) s′) .(x , Left (y ⊲ s′) s) refl eq₂ <-Right-Left)
+    --   = acc (accR (y ⊲ s′) (x ⊲ s) (y , s′) (<-WF (y ⊲ s′) (y , s′)))
+    -- accL .(x ⊲ s) t₁ (x , s) (acc rs) (.(Node (x ⊲ s) t₁) , Top) (lt .(Node (x ⊲ s) t₁ , Top) .(x , Left t₁ s) eq₁ refl <-Left-Base)
+    --   = acc (accH (x ⊲ s) t₁)
+
+    -- accH : ∀ t₁ t₂ → WfRec ([ Node t₁ t₂ ]ₛ_<_) (Acc ([ Node t₁ t₂ ]ₛ_<_ )) (Node t₁ t₂ , Top)
+    -- accH t₁ t₂ (y , Left t s) (lt .(y , Left t s) .(Node t₁ t₂ , Top) eq₁ eq₂ ())
+    -- accH t₁ t₂ (y , Top) (lt .(y , Top) .(Node t₁ t₂ , Top) eq₁ eq₂ ())
+    -- accH .t .(y ⊲ s) (y , Right t s) (lt .(y , Right t s) .(Node t (y ⊲ s) , Top) refl eq₂ <-Right-Base)
+    --   = acc (accR (y ⊲ s) t (y , s) (<-WF (y ⊲ s) (y , s)))
+
+  <<-WF : Well-founded (_<<_)
+  <<-WF x = acc (aux x)
+    where aux : ∀ x → WfRec _<<_ (Acc _<<_) x
+          aux (x , Left t₁ s) (y , Left .t₁ s′) (.(Node (y ⊲ s′) t₁) , refl , eq₂ , <-Left-Step p) = {!!}
+          aux (x , Left .(y ⊲ s′) s) (y , Right .(x ⊲ s) s′) (.(Node (x ⊲ s) (y ⊲ s′)) , refl , eq₂ , <-Right-Left)
+            = acc (acciR {!!} {!!} {!!} {!<<-WF!})
+          aux (x , Left t₁ s) (y , Top) (t , eq₁ , eq₂ , p) = {!!}
+          aux (x , Right t₁ s) y (t , eq₁ , eq₂ , p) = {!!}
+          aux (x , Top) y (t , eq₁ , eq₂ , p) = {!!}
 \end{code}
+
