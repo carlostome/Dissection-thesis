@@ -95,3 +95,6 @@ In order to do so, we need to address the following specific problems.
   datatype and show how termination and correctness can be generalized to deal
   with types that can be expressed as polynomial functors.
 
+\subsection{Proposal}
+
+  % This document is organized as follows, i

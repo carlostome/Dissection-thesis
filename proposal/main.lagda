@@ -7,6 +7,7 @@
 
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{cleveref}
 \usepackage[draft]{todonotes}
 % \usepackage[disable]{todonotes}
 \usepackage{color}
@@ -207,8 +208,10 @@
 
 %--------------------------------------------------
 
+\newcommand{\rewrite}[1]{\todo[color=blue!40,noline]{Rewrite}}
 \newcommand{\arewesure}[1]{\todo[color=red!40,noline]{#1}}
 \newcommand{\referenceneeded}[1]{\todo[color=green!40,noline]{#1}}
+\newcommand{\colored}{\todo[color=pink!40,noline]{Color the stuff}}
 
 \title{Thesis Proposal: Verified tail recursive folds through dissection}
 \date{\today}

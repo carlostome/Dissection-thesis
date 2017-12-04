@@ -2,6 +2,7 @@
 %include polycode.fmt
 
 \section{Termination}
+\label{sec:termination}
 
 \Agda~is a language of total functions. General recursive functions are not
 allowed as they would render the logic inconsistent. In order to ensure
@@ -108,6 +109,7 @@ rather than on its input.
 \end{example}
 
 \subsection{Well founded recursion}
+\label{subsec:wf}
 
 The essential idea of \emph{well founded} recursion is to define a relation over terms
 of type \AD{A}, and show that starting from any value of \AD{A} it is possible to
