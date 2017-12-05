@@ -236,7 +236,7 @@ module Proposal.Tree.Base where
 %<*WF>
 \begin{code}
     <-WF : ∀ t → Well-founded ([ t ]ₛ_<_)
-    <-WF t x = acc (aux t x)
+    <-WF t x = ∙∙∙
 \end{code}
 %</WF>
 \begin{code}
@@ -253,6 +253,8 @@ module Proposal.Tree.Base where
             aux .(Node t₁ (y ⊲ s′)) (.(Node t₁ (y ⊲ s′)) , Top) (y , Right t₁ s′) (lt .(y , Right t₁ s′) .(Node t₁ (y ⊲ s′) , Top) eq₁ refl <-Right-Base)
               = acc (accR (y ⊲ s′) t₁ (y , s′) (<-WF (y ⊲ s′) (y , s′)))
             aux t (x , Top) (y , Top) (lt .(y , Top) .(x , Top) eq₁ eq₂ ())
+
+            ∙∙∙ = acc (aux t x)
 \end{code}
 
 \begin{code}
@@ -261,19 +263,19 @@ module Proposal.Tree.Base where
 
   to-up-right-preserves-⊳ : ∀ t s t′ s′ → to-up-right t s ≡ just (t′ , s′)  → t ⊳ s ≡ t′ ⊳ s′
   to-up-right-preserves-⊳ t (Left t₁ s) .(Node t t₁) .s refl = refl
-  to-up-right-preserves-⊳ t (Right t₁ s) t′ s′ x = to-up-right-preserves-⊳ (Node t₁ t) s t′ s′ x
+  to-up-right-preserves-⊳ t (Right t₁ s) t′ s′ x             = to-up-right-preserves-⊳ (Node t₁ t) s t′ s′ x
   to-up-right-preserves-⊳ t Top t′ s′ ()
 
   to-left-preserves-⊳ : ∀ t s t′ s′ → to-left t s ≡ just (t′ , s′) → t ⊳ s ≡ t′ ⊳ s′
-  to-left-preserves-⊳ Tip s .Tip .s refl    = refl
-  to-left-preserves-⊳ (Node t t₁) s t′ s′ x = to-left-preserves-⊳ t (Left t₁ s) t′ s′ x
+  to-left-preserves-⊳ Tip s .Tip .s refl     = refl
+  to-left-preserves-⊳ (Node t t₁) s t′ s′ x  = to-left-preserves-⊳ t (Left t₁ s) t′ s′ x
 
   right-preserves-⊳ : ∀ z z′ → right z ≡ just z′  → plug-⊳ z ≡ plug-⊳ z′
-  right-preserves-⊳ (x , Left t s) .(Node x t , s) refl = refl
-  right-preserves-⊳ (Tip , Right t s) (y , s′) eq = to-up-right-preserves-⊳ (Node t Tip) s y s′ eq
+  right-preserves-⊳ (x , Left t s) .(Node x t , s) refl  = refl
+  right-preserves-⊳ (Tip , Right t s) (y , s′) eq        = to-up-right-preserves-⊳ (Node t Tip) s y s′ eq
   right-preserves-⊳ (Node x x₁ , Right t s) (.x₁ , .(Right x (Right t s))) refl = refl
   right-preserves-⊳ (Tip , Top) z′ ()
-  right-preserves-⊳ (Node x x₁ , Top) (y , s) eq = to-left-preserves-⊳ x₁ (Right x Top) y s eq
+  right-preserves-⊳ (Node x x₁ , Top) (y , s) eq         = to-left-preserves-⊳ x₁ (Right x Top) y s eq
 
   ⊳-++ₛ-Right : ∀ {x} {t} s → x ⊳ (s ++ₛ Right t Top) ≡ Node t (x ⊳ s)
   ⊳-++ₛ-Right (Left t s)   = ⊳-++ₛ-Right s
@@ -331,17 +333,15 @@ module Proposal.Tree.Base where
 \end{code}
 
 \begin{code}
-
-  -- we can prepend any stack and get what we need
-  lemma : ∀ {t₁ t₂ s₁ s₂} → (t₁ , s₁) < (t₂ , s₂) → ∀ s → (t₁ , s ++ₛ s₁) < (t₂ , s ++ₛ s₂)
-  lemma x (Left t s)  = <-Left-Step  (lemma x s)
-  lemma x (Right t s) = <-Right-Step (lemma x s)
-  lemma x Top         = x
+  prepend : ∀ {t₁ t₂ s₁ s₂} → (t₁ , s₁) < (t₂ , s₂) → ∀ s → (t₁ , s ++ₛ s₁) < (t₂ , s ++ₛ s₂)
+  prepend x (Left t s)  = <-Left-Step  (prepend x s)
+  prepend x (Right t s) = <-Right-Step (prepend x s)
+  prepend x Top         = x
 
   eq-pair : ∀ {A B : Set} x y a b  → x ≡ y → a ≡ b → ((A × B) ∋ (x , a)) ≡ (y , b)
   eq-pair _ _ _ _ refl refl = refl
 
-  to-left-l : ∀ t t′ s s′ → to-left t s ≡ just (t′ , s′) → ∃ λ s′′ → s′ ≡ s′′ ++ₛ s 
+  to-left-l : ∀ t t′ s s′ → to-left t s ≡ just (t′ , s′) → ∃ λ s′′ → s′ ≡ s′′ ++ₛ s
   to-left-l Tip .Tip s .s refl     = Top , refl
   to-left-l (Node t₁ t₂) t′ s s′ x with to-left-l t₁ t′ (Left t₂ s) s′ x
   to-left-l (Node t₁ t₂) t′ s .(ss ++ₛ Left t₂ s) x | ss , refl rewrite ++ₛ-assoc ss (Left t₂ Top) s = ss ++ₛ Left t₂ Top , refl
@@ -362,35 +362,56 @@ module Proposal.Tree.Base where
 
   to-u : ∀ t t′ s s′ →  to-up-right t s ≡ just (t′ , s′) → (t′ , revₛ s′) < (t , revₛ s)
   to-u t .(Node t t₁) (Left t₁ s) .s refl
-    rewrite (eq-pair (Node t t₁) (Node t t₁) (revₛ s) (revₛ s ++ₛ Top) refl (sym (Top-ru (revₛ s)))) = lemma <-Left-Base (revₛ s)
+    rewrite (eq-pair (Node t t₁) (Node t t₁) (revₛ s) (revₛ s ++ₛ Top) refl (sym (Top-ru (revₛ s)))) = prepend <-Left-Base (revₛ s)
   to-u t t′ (Right t₁ s) s′ x with to-up-right-l (Node t₁ t) _ s _ x
   to-u t t′ (Right t₁ .(s′′ ++ₛ s′)) s′ x | s′′ , refl with to-u (Node t₁ t) t′ (s′′ ++ₛ s′) s′ x
   ... | z rewrite revₛ-++ₛ-distr s′′ s′ = propi t′ (revₛ s′) t (revₛ s′′) t₁ z
   to-u t t′ Top s′ ()
-
-  theorem : ∀ t₁ s₁ t₂ s₂ → right (t₁ , s₁) ≡ just (t₂ , s₂) → convert (t₂ , s₂) < convert (t₁ , s₁)
-  theorem Tip (Left t s) .(Node Tip t) .s refl
-    rewrite (eq-pair (Node Tip t) (Node Tip t) (revₛ s) (revₛ s ++ₛ Top) refl (sym (Top-ru (revₛ s)))) = lemma <-Left-Base (revₛ s)
-  theorem Tip (Right t s₁) t₂ s₂ x = to-u Tip t₂ (Right t s₁) s₂ x
-  theorem Tip Top t₂ s₂ ()
-  theorem (Node t₁ t₃) (Left t s₁) .(Node (Node t₁ t₃) t) .s₁ refl
-    rewrite (eq-pair (Node (Node t₁ t₃) t) (Node (Node t₁ t₃) t) (revₛ s₁) (revₛ s₁ ++ₛ Top) refl (sym (Top-ru (revₛ s₁)))) = lemma  <-Left-Base (revₛ s₁) 
-  theorem (Node t₁ t₂) (Right t s₁) .t₂ .(Right t₁ (Right t s₁)) refl 
-    rewrite (eq-pair (Node t₁ t₂) (Node t₁ t₂) (revₛ s₁ ++ₛ Right t Top) ((revₛ s₁ ++ₛ Right t Top) ++ₛ Top) refl (sym (Top-ru (revₛ s₁ ++ₛ Right t Top)))) = lemma <-Right-Base (revₛ s₁ ++ₛ Right t Top)
-  theorem = {!!}
-  -- theorem (Node t₁ t₂) Top t s x with to-left t₂ (Right t₁ Top) | inspect (to-left t₂) (Right t₁ Top)
-  -- theorem (Node t₁ t₂) Top .t′ .s′ refl | just (t′ , s′) | [ eq ] with to-left-l t₂ t′ (Right t₁ Top) s′ eq
-  -- theorem (Node t₁ t₂) Top .t′ .(ss ++ₛ Right t₁ Top) refl | t′ , .(ss ++ₛ Right t₁ Top) | [ eq ] | ss , refl with to-left-preserves-⊳ t₂ (Right t₁ Top) _ _ eq
-  -- .
-  -- .. | z rewrite ⊲-++ₛ-Right {t′} {t₁} ss | revₛ-r ss t₁ | ⊳-to-⊲ (t′ , ss) = {!!} -- (proj₂ (Node-Inj z)) = {!!} -- <-Right-Base
-
-  -- rightmostt : Zipper  → Zipper
-  -- rightmostt (t , s) rewrite (sym (⊳-to-⊲ t s)) = aux (t , s) (<-WF (t ⊳ s) (t , revₛ s))
-  --   where aux : ∀ (z : Zipper) → Acc ([ plug-⊳ z ]ₛ_<_) (convert z) → Zipper
-  --         aux z (acc rs) with right z | inspect right z
-  --         aux (t , s) (acc rs) | just (t′ , s′) | [ eq ] with theorem t s t′ s′ eq | right-preserves-⊳ ((t , s)) (t′ , s′) eq
-  --         ... | p | z rewrite z = aux ((t′ , s′)) (rs (t′ , revₛ s′) (lt (t′ , revₛ s′) (t , revₛ s) (sym (⊳-to-⊲ t′ s′)) (trans (sym (⊳-to-⊲ t s)) z)  p))
-  --         aux z (acc rs) | nothing | e = z
-
 \end{code}
-%</Theorem>
+
+%<*to-right>
+\begin{code}
+  to-right-< : ∀ (z z′ : Zipper) → right z ≡ just z′ → convert z′ < convert z
+  to-right-< = ∙∙∙
+\end{code}
+%</to-right>
+
+\begin{code}
+    where aux : ∀ t₁ s₁ t₂ s₂ → right (t₁ , s₁) ≡ just (t₂ , s₂) → convert (t₂ , s₂) < convert (t₁ , s₁)
+          aux Tip (Left t s) .(Node Tip t) .s refl
+            rewrite (eq-pair (Node Tip t) (Node Tip t) (revₛ s) (revₛ s ++ₛ Top) refl (sym (Top-ru (revₛ s)))) = prepend <-Left-Base (revₛ s)
+          aux Tip (Right t s₁) t₂ s₂ x = to-u Tip t₂ (Right t s₁) s₂ x
+          aux Tip Top t₂ s₂ ()
+          aux (Node t₁ t₃) (Left t s₁) .(Node (Node t₁ t₃) t) .s₁ refl
+            rewrite (eq-pair (Node (Node t₁ t₃) t) (Node (Node t₁ t₃) t) (revₛ s₁) (revₛ s₁ ++ₛ Top) refl (sym (Top-ru (revₛ s₁)))) = prepend  <-Left-Base (revₛ s₁) 
+          aux (Node t₁ t₂) (Right t s₁) .t₂ .(Right t₁ (Right t s₁)) refl
+            rewrite (eq-pair (Node t₁ t₂) (Node t₁ t₂) (revₛ s₁ ++ₛ Right t Top)
+                    ((revₛ s₁ ++ₛ Right t Top) ++ₛ Top) refl (sym (Top-ru (revₛ s₁ ++ₛ Right t Top)))) = prepend <-Right-Base (revₛ s₁ ++ₛ Right t Top)
+          aux (Node t₁ t₂) Top t s x with to-left t₂ (Right t₁ Top) | inspect (to-left t₂) (Right t₁ Top)
+          aux (Node t₁ t₂) Top t s refl | just .(t , s) | [ eq ]
+            with to-left-l t₂ t (Right t₁ Top) s eq
+          aux (Node t₁ t₂) Top t .(s′ ++ₛ Right t₁ Top) refl | just .(t , s′ ++ₛ Right t₁ Top) | [ eq ] | s′ , refl
+            with to-left-preserves-⊳ t₂ (Right t₁ Top) _ _ eq
+          ... | pr rewrite revₛ-++ₛ-distr s′ (Right t₁ Top) | ⊳-++ₛ-Right {t} {t₁} s′ | proj₂ (Node-Inj pr) | ⊳-to-⊲ (t , s′) = <-Right-Base
+
+          ∙∙∙ : ∀ (z z′ : Zipper) → right z ≡ just z′ → convert z′ < convert z
+          ∙∙∙ (x , s) (y , s′) eq = aux x s y s′ eq
+\end{code}
+
+%<*Rightmost>
+\begin{code}
+  rightmost : Zipper  → Zipper
+  rightmost (t , s) = aux (t , s) (<-WF (t ⊳ s) (t , revₛ s))
+    where aux : ∀ (z : Zipper) → Acc ([ plug-⊳ z ]ₛ_<_) (convert z) → Zipper
+          aux z (acc rs) with right z | inspect right z
+          aux z (acc rs) | nothing  | eq   = z
+          aux z (acc rs) | just z′ | [ eq ]
+            with right-preserves-⊳ z z′ eq
+          ... | pr-z rewrite pr-z =
+             aux z′ (rs (convert z′)
+                        (lt (convert z′) (convert z) (sym ((⊳-to-⊲ z′)))
+                                                     (trans (sym ((⊳-to-⊲ z))) pr-z)
+                                                     (to-right-< z z′ eq)))
+\end{code}
+%</Rightmost>
+
