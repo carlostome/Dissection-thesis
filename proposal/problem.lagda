@@ -14,6 +14,7 @@ transformation of a fold into its tail-recursive counterpart. However, it is not
 clear that the resulting function is correct neither that it terminates.
 
 \subsection{Description of the problem}
+\label{subsec:problem}
 
 Folds are a well understood formalism in the toolbox of the functional
 programmer. 

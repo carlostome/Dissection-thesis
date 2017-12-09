@@ -13,17 +13,6 @@ module Proposal.Tree.Fold where
   open import Data.Nat hiding (_<_)
   open import Data.Nat.Properties
   open import Data.List
-
-  -- Zipper = Tree × Stack
-
-  -- _⊳_  : Tree → Stack → Tree
-  -- t ⊳ Left  t₁ s  = Node t t₁ ⊳ s
-  -- t ⊳ Right  n s  = Node (Tip n) t ⊳ s
-  -- t ⊳ Top          = t
-
-  -- plug-⊳ : Zipper → Tree
-  -- plug-⊳ (t , s) = t ⊳ s
-
 \end{code}
 
 %<*Tree>
@@ -32,14 +21,16 @@ module Proposal.Tree.Fold where
     Tip   : ℕ → Tree
     Node  : (t₁ t₂ : Tree) → Tree
 \end{code}
-%<*Tree>
+%</Tree>
 
 %<*Stack>
 \begin{code}
   data Stack : Set where
-    Left   : (t : Tree) → Stack → Stack
-    Right  : (n : ℕ)    → Stack → Stack
+    Left   : (t : Tree)  → Stack → Stack
+    Right  : (n : ℕ)     → Stack → Stack
     Top    : Stack
+
+  Zipper = Tree × Stack
 \end{code}
 %</Stack>
 
@@ -56,36 +47,14 @@ module Proposal.Tree.Fold where
   revₛ (Right t s)  = revₛ s ++ₛ Right  t Top
   revₛ Top = Top
 
-  -- forget : Stack → List ℕ
-  -- forget (Left t s)  = forget s
-  -- forget (Right n s) = n ∷ forget s
-  -- forget Top         = []
-
-  -- rebuild : List ℕ → Stack
-  -- rebuild []       = Top
-  -- rebuild (n ∷ ns) = Right n (rebuild ns)
-
-  -- allRight : Stack → Set
-  -- allRight s = rebuild (forget s) ≡ s
-
-  -- _⊲_  : Tree → Stack → Tree
-  -- t ⊲ Left  t₁ s  = Node (t ⊲ s) t₁
-  -- t ⊲ Right n s   = Node (Tip n) (t ⊲ s)
-  -- t ⊲ Top         = t
-
   eval : Tree → ℕ
   eval (Tip x) = x
   eval (Node t t₁) = eval t + eval t₁
+\end{code}
 
-  -- -- right (t , Left t₁ s)           = just (Node t t₁  , s)
 
-  -- -- right (Tip , Right t₁ s)        = to-up-right (Node t₁ Tip) s
-  -- -- right (Node t₁ t₂ , Right t s)  = just (t₂ , Right t₁ (Right t s))
-  -- -- right (Tip , Top)               = nothing
-  -- -- right (Node t₁ t₂ , Top)        = to-left t₂ (Right t₁ Top)
-
-  Zipper = Tree × Stack
-
+%<*Plug>
+\begin{code}
   _⊲_  : Tree → Stack → Tree
   t ⊲ Left  t₁ s  = Node (t ⊲ s) t₁
   t ⊲ Right n s   = Node (Tip n) (t ⊲ s)
@@ -94,14 +63,52 @@ module Proposal.Tree.Fold where
   plug-⊲ : Zipper → Tree
   plug-⊲ (t , s) = t ⊲ s
 
+  _⊳_  : Tree → Stack → Tree
+  t ⊳ Left   t₁ s  = Node t t₁ ⊳ s
+  t ⊳ Right  n s   = Node (Tip n) t ⊳ s
+  t ⊳ Top          = t
+
+  plug-⊳ : Zipper → Tree
+  plug-⊳ (t , s) = t ⊳ s
+\end{code}
+%</Plug>
+
+%<*load-unload>
+\begin{code}
   unload : ℕ → Stack → (ℕ × Tree × Stack) ⊎ ℕ
   unload m Top          = inj₂ m
   unload n (Left t₁ s)  = inj₁ (n , t₁ , s)
   unload m (Right n s)  = unload (m + n) s
 
   load : Tree → Stack → Tree × Stack
-  load (Tip n) s      = Tip n , s
-  load (Node t₁ t₂) s = load t₁ (Left t₂ s)
+  load (Tip n) s       = Tip n , s
+  load (Node t₁ t₂) s  = load t₁ (Left t₂ s)
+
+  load/unload : Zipper → Zipper ⊎ ℕ
+  load/unload (Tip x , s)     with unload x s
+  load/unload (Tip x , s) | inj₁ (n , t , s′)  = inj₁ (Node (Tip n) t , s′)
+  load/unload (Tip x , s) | inj₂ y             = inj₂ y
+  load/unload (Node (Tip n) t₂ , s)  = inj₁ (load t₂ (Right n s))
+  load/unload (Node t₁ t₂ , s)       = inj₁ (load t₁ (Left t₂ s))
+\end{code}
+%</load-unload>
+
+%<*fold>
+\begin{code}
+  _<_ : Zipper → Zipper → Set
+  _<_ = {!!}
+
+  <-WF : Well-founded _<_
+  <-WF = {!!}
+
+  fold : Tree → ℕ
+  fold t = aux (t , Top) (<-WF (t , Top))
+    where aux : (z : Zipper) → Acc _<_ z → ℕ
+          aux z (acc rs) with load/unload z
+          aux z (acc rs) | inj₁ z′  = aux z′ (rs z′ {!!})
+          aux z (acc rs) | inj₂ n   = n
+\end{code}
+%</fold>
 
   data _<_ : Zipper → Zipper → Set where
     <-Right-Step  : ∀ {t t₁ t₂ s₁ s₂}  → (t₁ , s₁) < (t₂ , s₂) → (t₁ , Right t s₁)  < (t₂ , Right t s₂)
@@ -109,13 +116,6 @@ module Proposal.Tree.Fold where
     <-Right-Left  : ∀ {t₁ t₂ s₁ s₂}    → (t₁ , Right (eval (t₂ ⊲ s₂)) s₁)               < (t₂ , Left (t₁ ⊲ s₁) s₂)
     <-Right-Base  : ∀ {t t₁ s₁}        → (t  , Right (eval t₁)        s₁)               < (Node t₁ (t ⊲ s₁) , Top)
     <-Left-Base   : ∀ {t t₁ s₁}        → (Node (Tip (eval (t ⊲ s₁))) t₁  , Top)         < (t , Left t₁ s₁)
-
-  load/unload : Zipper → Zipper ⊎ ℕ
-  load/unload (Tip x , s)     with unload x s
-  load/unload (Tip x , s) | inj₁ (n , t , s′) = inj₁ (Node (Tip n) t , s′)
-  load/unload (Tip x , s) | inj₂ y            = inj₂ y
-  load/unload (Node t₁ t₂ , s) with load t₁ (Left t₂ s)
-  load/unload (Node t₁ t₂ , s) | t′ , s′      = inj₁ (t′ , s′)
 
   -- -- lemma1 : ∀ n m t s s′ → unload n s ≡ inj₁ (m , t , s′)
   -- --        → ∃ λ s′′ → s ≡ s′′ ++ₛ Left t s′ × allRight s′′ × m ≡ n + (sum (forget s′′))
@@ -212,13 +212,6 @@ module Proposal.Tree.Fold where
     isPartialOf-WF : Well-founded _isPartialOf_
     isPartialOf-WF x = acc (aux x)
 
-    _⊳_  : Tree → Stack → Tree
-    t ⊳ Left   t₁ s  = Node t t₁ ⊳ s
-    t ⊳ Right  n s   = Node (Tip n) t ⊳ s
-    t ⊳ Top          = t
-
-    plug-⊳ : Tree × Stack → Tree
-    plug-⊳ (t , s) = t ⊳ s
 
   --   _<_ : Tree × Stack → Tree × Stack → Set
   --   z < z′ = (plug-⊳ z) isPartialOf (plug-⊳ z′)

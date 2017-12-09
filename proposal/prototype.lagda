@@ -47,7 +47,6 @@
   tail-recursive manner.
 
   \InsertCode{Proposal/Tree/Base.tex}{BURight}
-  \todo{maybe I should not include all}
 
   However, it is not possible to write a function that calculates the rightmost
   position of the tree by iterating the \AF{right} function until it yields
@@ -199,32 +198,73 @@
 
 \subsection{Navigating through the tree}
 
-Finally we have developed the necessary machinery to fill the holes of the
-program we proposed in \cref{subsec:preparing}. The definition of \AF{rightmost}
-is more complex than we originally devised due to the change of representation
-that we use. Moreover, the full proof that \AF{right} yields a smaller element
-involves a lot of auxiliary lemmas and a lot of rewriting regarding the
-properties of list concatenation and reversal.
+  Finally we have developed the necessary machinery to fill the holes of the
+  program we proposed in \cref{subsec:preparing}. The definition of \AF{rightmost}
+  is more complex than we originally devised due to the change of representation
+  that we use. Moreover, the full proof that \AF{right} yields a smaller element
+  involves a lot of auxiliary lemmas and a lot of rewriting regarding the
+  properties of list concatenation and reversal.
 
-\InsertCode{Proposal/Tree/Base.tex}{Right-preserves}
-\vspace*{-0.5cm}
-\InsertCode{Proposal/Tree/Base.tex}{to-right}
-\vspace*{-0.5cm}
-\InsertCode{Proposal/Tree/Base.tex}{Rightmost}
+  \InsertCode{Proposal/Tree/Base.tex}{Right-preserves}
+  \vspace*{-0.5cm}
+  \InsertCode{Proposal/Tree/Base.tex}{to-right}
+  \vspace*{-0.5cm}
+  \InsertCode{Proposal/Tree/Base.tex}{Rightmost}
 
-\subsection{Generalizing from the traversal to a fold}
+\subsection{From traverse to fold}
 
-  Once we have shown how it is possible to show in \Agda~ that that traversing
-  the tree from left to right tail-recursively terminates we are ready to extend
-  the work to show that the tail recursive counterpart of a fold also
-  terminates. As a more interesting example we will use in this part the type of
-  binary trees that hold natural numbers in the leafs.
+  Once we have shown how it is possible to prove in \Agda~ that the traversal of
+  a tree from left to right in a tail recursive fashion terminates we are ready
+  to extend the work to show that the tail recursive counterpart of a fold also
+  terminates.
+
+  In this subsection we build the basis for the work on the thesis that will us
+  allow to prove the termination of a tail recursive fold. As a more interesting
+  example we will use the type of binary trees with natural numbers in the
+  leaves which resemble arithmetic expressions.
+
+  \InsertCode{Proposal/Tree/Fold.tex}{Tree}
 
   The fold requires that the stack records not only the structure of the tree
-  that is left to fold over but also the intermediate results. For this reason
-  the \AD{Stack} now will only hold subtrees that are to the right while the
-  computed values have to substitute the left subtrees.
+  that is left to consume but also the intermediate results that have been
+  produced but not yet consumed. For this reason the \AD{Stack} now holds
+  subtrees that are to the right while the computed values have to substitute
+  the left subtrees.
 
+  \InsertCode{Proposal/Tree/Fold.tex}{Stack}
 
+  In the case of the trees we are using we can define an analogous
+  \emph{plugging} operator for both the \textit{backwards} and \textit{forwards}
+  view of the \AD{Stack}. Because the \AD{Stack} does not represent a path on
+  the original tree but is just a partial image on how the evaluation proceed we
+  embed the intermediate results as leaves to be able to output a full tree.
 
-\InsertCode{Proposal/Tree/Structural.tex}{Tree}
+  \InsertCode{Proposal/Tree/Fold.tex}{Plug}
+
+\subsection{Folding} 
+
+  As opposed to McBride's example as was explained in \cref{subsec:problem} we
+  will not consider the tail recursive version of a fold as a pair of functions,
+  \AD{load} and \AF{unload} we will define it as a function that performs one
+  step of the fold. 
+
+  \InsertCode{Proposal/Tree/Fold.tex}{load-unload}
+
+  Again if we define a suitable relation over \AD{Zipper} we should be able to
+  define fold by iterating \AF{load/unload} until it yields a natural number.
+
+  \InsertCode{Proposal/Tree/Fold.tex}{fold}
+
+  The relation is not as straightforward to define as it was in the case of
+  traversing the tree with a \AD{Zipper} because now the structure of the tree
+  changes during the folding process. 
+
+  Two related elements by \AD{\_<\_} need not to reconstruct to the same tree
+  but instead they reconstruct to a \textbf{partial image} of the original tree
+  where some full subtrees have been replaced by the values they denote.
+
+  How the \textbf{partial image} of a \AD{Tree} is defined and how is used to
+  both define the relation \AD{\_<\_} and prove that it is \emph{well founded}
+  will be part of the work of the thesis for which this document serves as a
+  proposal.
+
