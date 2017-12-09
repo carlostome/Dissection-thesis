@@ -269,13 +269,22 @@ module Proposal.Tree.Base where
   to-left-preserves-⊳ : ∀ t s t′ s′ → to-left t s ≡ just (t′ , s′) → t ⊳ s ≡ t′ ⊳ s′
   to-left-preserves-⊳ Tip s .Tip .s refl     = refl
   to-left-preserves-⊳ (Node t t₁) s t′ s′ x  = to-left-preserves-⊳ t (Left t₁ s) t′ s′ x
+\end{code}
 
-  right-preserves-⊳ : ∀ z z′ → right z ≡ just z′  → plug-⊳ z ≡ plug-⊳ z′
-  right-preserves-⊳ (x , Left t s) .(Node x t , s) refl  = refl
-  right-preserves-⊳ (Tip , Right t s) (y , s′) eq        = to-up-right-preserves-⊳ (Node t Tip) s y s′ eq
-  right-preserves-⊳ (Node x x₁ , Right t s) (.x₁ , .(Right x (Right t s))) refl = refl
-  right-preserves-⊳ (Tip , Top) z′ ()
-  right-preserves-⊳ (Node x x₁ , Top) (y , s) eq         = to-left-preserves-⊳ x₁ (Right x Top) y s eq
+%<*Right-preserves>
+\begin{code}
+  right-preserves-⊳ : ∀ (z z′ : Zipper) → right z ≡ just z′ → plug-⊳ z ≡ plug-⊳ z′
+  right-preserves-⊳ = ∙∙∙
+\end{code}
+%</Right-preserves>
+
+\begin{code}
+    where ∙∙∙ : ∀ z z′ → right z ≡ just z′  → plug-⊳ z ≡ plug-⊳ z′
+          ∙∙∙ (x , Left t s) .(Node x t , s) refl  = refl
+          ∙∙∙ (Tip , Right t s) (y , s′) eq        = to-up-right-preserves-⊳ (Node t Tip) s y s′ eq
+          ∙∙∙ (Node x x₁ , Right t s) (.x₁ , .(Right x (Right t s))) refl = refl
+          ∙∙∙ (Tip , Top) z′ ()
+          ∙∙∙ (Node x x₁ , Top) (y , s) eq         = to-left-preserves-⊳ x₁ (Right x Top) y s eq
 
   ⊳-++ₛ-Right : ∀ {x} {t} s → x ⊳ (s ++ₛ Right t Top) ≡ Node t (x ⊳ s)
   ⊳-++ₛ-Right (Left t s)   = ⊳-++ₛ-Right s

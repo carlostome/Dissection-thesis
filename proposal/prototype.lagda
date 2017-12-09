@@ -1,152 +1,230 @@
 \section{Prototype implementation}
 
-As a first approximation to the problem, we restrict our attention to the case
-of traversing a tree-like structure from left to right in a tail-recursive
-fashion. The most simple form of a tree-like structure is the type of skeleton
-binary trees (binary trees without values).
+  The purpose of this thesis is to formalize the notion of dissection and its
+  usage to transform a fold into a tail-recursive function.
 
-\InsertCode{Proposal/Tree/Base.tex}{Tree}
+  The first step is to prove that it is possible to write a function that computes
+  the fold of a non-linear (tree like) structure by tail recursion over a explicit
+  stack and that this function terminates.
 
-Following Huet's idea of a \emph{Zipper}\cite{Huet97thezipper}, any position in
-the tree can be represented as a pair of a subtree and a stack that holds all
-the trees, to the left and to the right, in the path to the root.
+  This section is devoted to show that by using \emph{well founded} recursion we
+  can solve a simplified version of the problem; that of traversing a tree from
+  left to right. This simplification from folding to traversing a tree will not
+  be an impediment to later generalize our results. A traversal can be
+  conceptually thought as a fold that does nothing.
 
-\InsertCode{Proposal/Tree/Base.tex}{Stack}
+  The recursive structure of a inductive type is naturally defined in a top to
+  bottom manner. However, the traversing function has to exploit the left to
+  right inductive structure that is implicit in any tree-like type. For this
+  reason we cannot directly write in \Agda~ the function that performs the
+  traversal. The termination checker warns that it does not terminate because
+  the argument is not --evidently-- structurally smaller.
 
-Given a value of type \AD{Zipper} it is possible to \emph{plug} the subtree and the
-stack together to reconstruct the original tree.
+  In \cref{sec:termination} we reviewed several well known techniques that can
+  be used to assist \Agda's termination checker. \emph{Well founded} recursion
+  is the only one that allows us to make evident the left to right inductive
+  structure providing us with a means for exploiting it.
 
-\InsertCode{Proposal/Tree/Base.tex}{BUPlug}
+\subsection{Trees and Zippers}
 
-Navigating one position to the right on the tree can be easily defined in a
-tail-recursive manner.
+  Any tree-like datatype shares a common branching structure with the type of
+  skeleton binary trees. We will use this type as the basis of our work.
 
-\InsertCode{Proposal/Tree/Base.tex}{BURight}
-\todo{maybe I should not include all}
+  \InsertCode{Proposal/Tree/Base.tex}{Tree}
 
-However, we cannot directly encode a function that calculates the rightmost
-position of the tree by iterating the \AF{right} function until it yields
-\AI{nothing}.
+  Following Huet's idea of a \emph{Zipper}\cite{Huet97thezipper}, any position
+  in the tree can be represented as a pair of a subtree and a stack that holds
+  all the trees, to the left and to the right, in the path to the root.
 
-\InsertCode{Proposal/Tree/Base.tex}{BUIterate}
-\colored
+  \InsertCode{Proposal/Tree/Base.tex}{Stack}
 
-Pattern matching on the result of \AF{right}\AS{}\AB{z} does not reveal any
-structural relation between the input \AB{z} and \AB{z₁}. Thus \Agda~'s
-termination checker correctly classifies the function as non-terminating. It
-does not know in which sense the recursive call is made on a smaller argument.
+  Given a value of type \AD{Zipper} it is possible to \emph{plug} the subtree
+  and the stack together to reconstruct the original tree.
 
-Any position in the tree has a finite number of positions to the right of
-itself. Each time we move one position to the \AF{right} this number decreases.
-Using \emph{well founded} recursion, as explained in \cref{sec:termination}, we
-can define a relation \AD{\_<\_}, over elements of \AD{Zipper}, that exposes the
-decreasing structure of moving to the right.  Additionally, by proving
-\textit{well foundedness} of the relation and the property that whenever the
-evaluation of \AF{right} \AB{z} yields a \AI{just}\AS{}\AB{z₁} then
-\mbox{\AB{z₁}\AS{}\AD{<}\AS{}\AB{z}}, we will be able to define \AF{rightmost}
-by structural recursion on the accessibility predicate of \AD{\_<\_}.
+  \InsertCode{Proposal/Tree/Base.tex}{BUPlug}
 
-\InsertCode{Proposal/Tree/Base.tex}{Skeleton}
+  Navigating one position to the right on the tree can be easily defined in a
+  tail-recursive manner.
 
-The purpose of the following subsections is to show how we can fill
-the open holes and the definition of \AD{\_<\_}.
+  \InsertCode{Proposal/Tree/Base.tex}{BURight}
+  \todo{maybe I should not include all}
 
-\colored
+  However, it is not possible to write a function that calculates the rightmost
+  position of the tree by iterating the \AF{right} function until it yields
+  \AI{nothing}.
+
+  \InsertCode{Proposal/Tree/Base.tex}{BUIterate}
+  \colored
+
+  Pattern matching on the result of \AF{right}\AS{}\AB{z} does not reveal any
+  structural relation between the input \AB{z} and \AB{z₁}. Thus \Agda~'s
+  termination checker correctly classifies the function as non-terminating. It
+  does not know in which sense the recursive call is made on a smaller argument.
+
+\subsection{Preparing the stage}
+\label{subsec:preparing}
+
+  In order to be able to define \AF{rightmost}, we should find the structure
+  that decreases with each call to the function \AF{right} so \AF{rightmost} can
+  be defined by structural recursion over it.
+
+  Any position in the tree has a finite number of positions to the right of
+  itself. A value of type \AD{Zipper} represents a position in the tree and for
+  this reason each time we apply the function \AF{right} to some input the
+  number of positions to the right decreases.
+
+  Using \emph{well founded} recursion, as explained in \cref{sec:termination},
+  we can define a relation \AD{\_<\_} over elements of \AD{Zipper} that exposes
+  the decreasing structure of moving to the right.
+
+  Additionally, by proving \textit{well foundedness} of the relation and the
+  property that whenever the evaluation of \AF{right} \AB{z} yields a
+  \AI{just}\AS{}\AB{z₁} then \mbox{\AB{z₁}\AS{}\AD{<}\AS{}\AB{z}}, we will be
+  able to define \AF{rightmost} by structural recursion on the accessibility
+  predicate of \AD{\_<\_}.
+
+  \InsertCode{Proposal/Tree/Base.tex}{Skeleton}
+
+  The purpose of the following subsections is to show how we can fill
+  the open holes and the definition of \AD{\_<\_}.
+
+  \colored
 
 \subsection{Defining the relation}
 
-The relation we want to define shall consider positions on the left subtree of a
-\AI{Node} bigger than the \AI{Node} itself which at the same time is bigger than
-any position in its right subtree.
+  The relation we need shall consider positions on the left subtree of a
+  \AI{Node} bigger than the \AI{Node} itself which at the same time is bigger
+  than any position in its right subtree.
 
-\todo{a picture here?}
+  \todo{a picture here?}
 
-Following Huet's idea, we regard the \AD{Stack} type as a path going
-\textit{backwards} from the position of the subtree up to the root. The relation
-has to be inductively defined on the \AD{Stack} part of the \AD{Zipper}.
-Removing a constructor from the \AD{Stack} means moving up a position on the
-tree. For any two arbitrary positions on the tree, we cannot determine a priori
-from which one we have to move up on the tree to reach a base case. Because of
-this, we need to consider all the possible situations. This in fact will allow
-us to prove that any two positions of the tree are related in both directions of
-. The relation will then be useless.  Because of this, the \textit{backwards}
-representation is not well suited for the definition of \AD{\_<\_}.
+  Following Huet's idea, we regard the \AD{Stack} type as a path going
+  \textit{backwards} from the position of the subtree up to the root. The
+  relation has to be inductively defined on the \AD{Stack} part of the
+  \AD{Zipper}.  Removing a constructor from the \AD{Stack} means moving up a
+  position on the tree.
 
-\rewrite
+  For any two arbitrary positions on the tree, it is unknown a priori what is
+  the order of removing constructors from the stack, that has to be followed to
+  reach one of the base cases.
+  Because of this, the relation has to be able to handle all possible situations
+  which effectively will lead to a relation that allows us to prove that any two
+  elements are related in both directions. Needless to say that such relation
+  is just useless for our mission: a change of representation is needed.
 
-As an alternative, we can consider the \AD{Stack} as the \textit{forward} path
-from the root to the position where the subtree is located. We can have another
-\emph{plug} operator to reconstruct the original tree.
+  As an alternative, we can consider the \AD{Stack} as the \textit{forward} path
+  from the root to the position where the subtree is located. A \emph{plug} operator
+  that reconstruct the tree from the root can also be defined.
 
-\InsertCode{Proposal/Tree/Base.tex}{TDPlug}
+  \InsertCode{Proposal/Tree/Base.tex}{TDPlug}
 
-The new representation for positions is better suited for defining the relation.
-However, our purpose is to traverse the tree in a tail-recursive manner for
-which the \textit{backward} representation is a more natural fit.  Converting
-from one to the other amounts to reverse the \AD{Stack}. Additionally, plugging
-should yield the same original tree in both directions.
+  The new representation for positions is better suited for defining the
+  relation where positions to the right are considered smaller that positions to
+  the left. However, for the purpose of traversing the tree in a tail-recursive
+  the \textit{backward} representation is a more natural fit.
 
-\InsertCode{Proposal/Tree/Base.tex}{Convert}
+  For this reason it is convenient to keep both representations and have a means
+  of converting from one to the other. The conversion amounts to reverse the
+  \AD{Stack}. To be sure that both representations are equivalent we can prove
+  that plugging in one should yield the same tree as converting and plugging in
+  the other.
 
-The main idea to construct the relation is to look for the point where the left
-and right \AD{Stack} diverge. The manner in how they diverge defines which
-element is smaller.
+  \InsertCode{Proposal/Tree/Base.tex}{Convert}
 
-\InsertCode{Proposal/Tree/Base.tex}{TDRel}
+  We are ready to define the relation between elements of type \AD{Zipper}. The
+  main idea of the relation is to look in the \AD{Stack} part of the \AD{Zipper}
+  for the point where both \AD{Stack} diverge.
 
-Moreover, by including information that relates the subtrees on the \AD{Stack}
-to the original tree it is easily proven that whenever two elements of
-\AD{Zipper} are related by < they represent positions of the same tree.
+  Once this happens, the \AD{Stack} that has a \AI{Left} constructor on top
+  indicates that its position located in the left subtree of the \AI{Node} and
+  therefore should be always considered smaller than the \AI{Node} itself and
+  that any position that is in the right subtree.
 
-\InsertCode{Proposal/Tree/Base.tex}{Related}
+  When the topmost constructor of the \AD{Stack} is \AI{Right} this means that
+  the location is in the right subtree. This position is smaller than the
+  \AI{Node} itself and any other position on the left subtree.
+
+  The relation we defined is formalized in \Agda~as follows.
+
+  \InsertCode{Proposal/Tree/Base.tex}{TDRel}
+
+  Two values of type \AD{Zipper} related by \AD{\_<\_} should represent
+  positions in the same tree. By including the information of how the subtrees
+  are reconstructed from the \AD{Tree} and \AD{Stack} on the other side of the
+  relation this invariant is enforced in the type level.
+  We can indeed prove that any two related elements when \emph{plugged} yield
+  the same tree.
+
+  \InsertCode{Proposal/Tree/Base.tex}{Related}
 
 \subsection{Proving \textit{well foundedness}}
 
-As explained in \ref{subsec:wf}, in order to prove the \emph{well foundedness}
-property for a relation either the input or the proof needs to be structurally
-smaller for the recursive call. 
-The naive approach to prove that \AD{\_<\_} is \textit{well founded} fails. 
+  The relation itself would be useless if we cannot prove that it is \emph{well
+  founded}. As it was explained in \cref{subsec:wf}, the \emph{well foundedness}
+  property for a relation requires us to exploit the recursive structure either
+  of the input, in the base cases, or of the proof , in the inductive cases. If
+  we are not able to show \Agda's termination checker that the argument is
+  --evidently-- structurally smaller then we would not be able to use recursion
+  to prove \emph{well foundedness}.
 
-evidently structurally smaller than the input or 
-\Agda~that some structure isrecursion,as explained in \ref{sec:termination}, requires us to
-show \Agda~that any recursive call to the well-foundedness property we are
-trying to prove has to be made in --evidently-- structurally smaller arguments.
+  The naive approach to the proof fails because in general pattern matching on
+  the \AD{\_<\_} proof does not reveal any information about the structure of
+  the tree for which both elements are positions of.
 
-Because of
-this, if we try to prove directly that \AD{\_<\_} is \textit{well founded} we
-will miserably In the base cases we are not able to make a recursive call
-to the well foundedness property because again is not explicit that the zipper
-is smaller.
+  In the base cases the structure we need to perform recursion is exactly the
+  subtrees of the original tree, however this is not explicit in the proof.
 
-This realisation motivates us to make explicit in the relation the tree for
-which the values of \AD{Zipper} in \AB{z}\AS{}\AD{\_<\_}\AS{}\AB{z₁} plug to.
+  This realisation motivates us to define a new relation over \AD{Zipper} that
+  makes the tree explicit. Even though we proved that related \AD{Zipper} values
+  are positions of the same tree we include the proofs that both trees
+  reconstruct to the same tree in the relation so during the proof we can refine
+  the structure of the tree by pattern matching. This is the crucial step that
+  allows the proof of \emph{well foundedness} to succeed.
 
-\InsertCode{Proposal/Tree/Base.tex}{TDRelIx}
+  \InsertCode{Proposal/Tree/Base.tex}{TDRelIx}
+
+  Because the new relation is indexed by a \AD{Tree} the definition of what
+  means for this relation to be well founded has to change accordingly. The
+  relation is well founded if for any \AD{Tree} any position of it, \AD{Zipper}
+  is accessible.
+
+  \InsertCode{Proposal/Tree/Base.tex}{WF}
+
+  The full proof is omitted but can be found in the accompanying code. It works
+  by induction on the \AD{\_<\_} structure as before, but it uses the equality
+  proofs to discover the smaller structure on which perform recursion.
 
 
-provide an explicit
-- The relation as it is we cannot show it is accesible
-- In the base cases we need to recurse on something Agda can see is structurally
-smaller.
-- Thus we may be tempted to include such information in the proof. However, we
-are not proving well foundedness anymore.
-- Instead we can define a relation over Zipper that has the tree they plug to as
-an index.
-- We rely on the other relation but the proofs are explicit.
-- We can patternmatch on them to show where is the decreasing structure.
-- Thus we can prove well founded ness.
-
-We need also to show that the relation is well founded. In order to do so
-normally we would try to prove directly well foundedness over <. However, the
-definition of Accesibility doesn't know that both trees plug to the same subtree
-and that when we reach the base cases we can perform recursion over some smaller
-tree. To reveal this information to agda we shall encode another relation
-between zippers that makes this connection explicit. Thus in the proof for well
-foundedness the structure is revealed and we can use recursion.
-
-\InsertCode{Proposal/Tree/Base.tex}{WF}
+\todo{include the full proof?}
 
 \subsection{Navigating through the tree}
 
-% \InsertCode{Proposal/Tree/Base.tex}{TDRelIx}
-% This representation allows us to build a new datatype that relates 
+Finally we have developed the necessary machinery to fill the holes of the
+program we proposed in \cref{subsec:preparing}. The definition of \AF{rightmost}
+is more complex than we originally devised due to the change of representation
+that we use. Moreover, the full proof that \AF{right} yields a smaller element
+involves a lot of auxiliary lemmas and a lot of rewriting regarding the
+properties of list concatenation and reversal.
+
+\InsertCode{Proposal/Tree/Base.tex}{Right-preserves}
+\vspace*{-0.5cm}
+\InsertCode{Proposal/Tree/Base.tex}{to-right}
+\vspace*{-0.5cm}
+\InsertCode{Proposal/Tree/Base.tex}{Rightmost}
+
+\subsection{Generalizing from the traversal to a fold}
+
+  Once we have shown how it is possible to show in \Agda~ that that traversing
+  the tree from left to right tail-recursively terminates we are ready to extend
+  the work to show that the tail recursive counterpart of a fold also
+  terminates. As a more interesting example we will use in this part the type of
+  binary trees that hold natural numbers in the leafs.
+
+  The fold requires that the stack records not only the structure of the tree
+  that is left to fold over but also the intermediate results. For this reason
+  the \AD{Stack} now will only hold subtrees that are to the right while the
+  computed values have to substitute the left subtrees.
+
+
+
+\InsertCode{Proposal/Tree/Structural.tex}{Tree}

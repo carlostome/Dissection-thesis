@@ -40,29 +40,34 @@ module Proposal.FDesc where
     data Maybe (A : Set) : Set where
       Just     : A → Maybe A
       Nothing  : Maybe A
+\end{code}
+%</Maybe>
 
+\begin{code}
     fmap : ∀ {A B : Set} → (A → B) → Maybe A → Maybe B
     fmap f (Just x) = Just (f x)
     fmap f Nothing  = Nothing
-
-    Maybe-FDesc : FDesc
-    Maybe-FDesc = I₁ +₁ K₁ ⊤
-
-    Maybe′ : Set -> Set
-    Maybe′ = ⟦ Maybe-FDesc ⟧₁
-
-    pattern Just′ x  = inj₁ x
-    pattern Nothing′ = inj₂ tt
-
-    from : ∀ {A : Set} -> Maybe A → Maybe′ A
-    from (Just x)  = Just′ x
-    from Nothing   = Nothing′
-
-    to : ∀ {A : Set} -> Maybe′ A → Maybe A
-    to (Just′ x)  = Just x
-    to Nothing′   = Nothing
 \end{code}
-%</Maybe>
+
+
+%<*Maybe-Desc>
+\begin{code}
+    Maybe′  : FDesc
+    Maybe′  = I₁ +₁ K₁ ⊤
+\end{code}
+%</Maybe-Desc>
+
+%<*Maybe-Witness>
+\begin{code}
+    from : ∀ {A : Set} -> Maybe A → ⟦ Maybe′ ⟧₁ A
+    from (Just x)  = inj₁ x
+    from Nothing   = inj₂ tt
+
+    to : ∀ {A : Set} -> ⟦ Maybe′ ⟧₁ A → Maybe A
+    to (inj₁ x)   = Just x
+    to (inj₂ tt)  = Nothing
+\end{code}
+%</Maybe-Witness>
 
 %<*fmap>
 \begin{code}
@@ -96,30 +101,32 @@ module Proposal.FDesc where
   module Nat-Example where
 \end{code}
 
-%<*nat>
+%<*Nat>
 \begin{code}
     data Nat : Set where
       zero : Nat
       suc  : Nat → Nat
-
-    NatFDesc : FDesc
-    NatFDesc = I₁ +₁ K₁ ⊤
-
-    Nat′ : Set
-    Nat′ = μ NatFDesc
-
-    pattern suc′ x  = μ-in (inj₁ x)
-    pattern zero′   = μ-in (inj₂ tt)
-
-    from :  Nat → Nat′
-    from zero    = zero′
-    from (suc x) = suc′ (from x)
-
-    to : Nat′ → Nat
-    to zero′    = zero
-    to (suc′ x) = suc (to x)
 \end{code}
-%</nat>
+%</Nat>
+
+%<*Nat-FDesc>
+\begin{code}
+    Nat′ : FDesc
+    Nat′ = I₁ +₁ K₁ ⊤
+\end{code}
+%</Nat-FDesc>
+
+%<*Nat-Witness>
+\begin{code}
+    from :  Nat → μ Nat′
+    from zero    = μ-in (inj₂ tt)
+    from (suc x) = μ-in (inj₁ (from x))
+
+    to : μ Nat′ → Nat
+    to (μ-in (inj₁ x))   = suc (to x)
+    to (μ-in (inj₂ tt))  = zero
+\end{code}
+%</Nat-Witness>
 
 %<*cata-nt>
 \begin{code}
