@@ -6,3 +6,4 @@
 %format langle = "\langle"
 %format rangle = "\rangle"
 %format AF a = "\AF{" a "}"
+%format ~>   = "\leadsto"

@@ -4,6 +4,7 @@
 \usepackage[english]{babel}
 % \usepackage{gfsdidot}
 \usepackage{lmodern}
+\usepackage[firstpage]{draftwatermark}
 
 \usepackage{graphicx}
 \usepackage{hyperref}
@@ -233,9 +234,9 @@
 \input{problem.tex}
 % \input{introduction.tex}
 \input{termination.tex}
+\input{generic.tex}
 \input{prototype.tex}
-\input{literature.tex}
-% \input{plan.tex}
+\input{plan.tex}
 
 \bibliographystyle{plain}
 % \bibliographystyle{alpha}

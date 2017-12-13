@@ -23,7 +23,7 @@
   In \cref{sec:termination} we reviewed several well known techniques that can
   be used to assist \Agda's termination checker. \emph{Well founded} recursion
   is the only one that allows us to make evident the left to right inductive
-  structure providing us with a means for exploiting it.
+  structure and provides us with a means for exploiting it.
 
 \subsection{Trees and Zippers}
 
@@ -119,7 +119,7 @@
 
   The new representation for positions is better suited for defining the
   relation where positions to the right are considered smaller that positions to
-  the left. However, for the purpose of traversing the tree in a tail-recursive
+  the left. However, for our purpose of traversing the tree tail recursively,
   the \textit{backward} representation is a more natural fit.
 
   For this reason it is convenient to keep both representations and have a means
@@ -211,7 +211,7 @@
   \vspace*{-0.5cm}
   \InsertCode{Proposal/Tree/Base.tex}{Rightmost}
 
-\subsection{From traverse to fold}
+\subsection{From traverse to fold}\label{subsec:traverse-to-fold}
 
   Once we have shown how it is possible to prove in \Agda~ that the traversal of
   a tree from left to right in a tail recursive fashion terminates we are ready
@@ -241,30 +241,22 @@
 
   \InsertCode{Proposal/Tree/Fold.tex}{Plug}
 
-\subsection{Folding} 
-
-  As opposed to McBride's example as was explained in \cref{subsec:problem} we
+  As opposed to McBride's example as explained in \cref{subsec:problem} we
   will not consider the tail recursive version of a fold as a pair of functions,
-  \AD{load} and \AF{unload} we will define it as a function that performs one
-  step of the fold. 
+  \AD{load} and \AF{unload}. Instead we will define a function that performs
+  only one step of the computation at a time.
 
   \InsertCode{Proposal/Tree/Fold.tex}{load-unload}
 
-  Again if we define a suitable relation over \AD{Zipper} we should be able to
-  define fold by iterating \AF{load/unload} until it yields a natural number.
+  If we define a suitable relation over \AD{Zipper} we should be able to define
+  fold by iterating \AF{load/unload} until it yields a natural number.
 
   \InsertCode{Proposal/Tree/Fold.tex}{fold}
 
   The relation is not as straightforward to define as it was in the case of
   traversing the tree with a \AD{Zipper} because now the structure of the tree
-  changes during the folding process. 
+  changes during the folding process.
 
   Two related elements by \AD{\_<\_} need not to reconstruct to the same tree
   but instead they reconstruct to a \textbf{partial image} of the original tree
   where some full subtrees have been replaced by the values they denote.
-
-  How the \textbf{partial image} of a \AD{Tree} is defined and how is used to
-  both define the relation \AD{\_<\_} and prove that it is \emph{well founded}
-  will be part of the work of the thesis for which this document serves as a
-  proposal.
-

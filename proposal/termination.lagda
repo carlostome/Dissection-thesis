@@ -1,4 +1,4 @@
-%include proposal.fmt
+
 %include polycode.fmt
 
 \section{Termination}
@@ -17,8 +17,7 @@ available techniques that overcome this limitation: sized types, Bove-Capretta
 predicate and well founded recursion.
 
 As a running example we will use the quick sort function whose definition
-\Agda's termination checker classifies as non-terminating\footnote{With
-\nonterm{this color} \Agda~warns that the termination checker fails.}
+\Agda's termination checker classifies as non-terminating.
 
   % remember to tweak the .tex file with \nonterm
   \InsertCode{Proposal/QuickSort.tex}{QS}
