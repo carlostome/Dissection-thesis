@@ -10,8 +10,8 @@ the prototype, first to prove that a tail recursive fold terminates and then
 that it is extensionally equivalent to the fold induced by the definition of the
 datatype. Once we have solved the concrete problem over binary trees our aim is
 to generalize the result to other tree-like datatypes by exploiting generic
-programming techniques. We present a plan for the next steps to follow for the
-rest of the thesis.
+programming techniques and dissection. We present a plan for the next steps to
+follow for the rest of the thesis.
 
 \subsection{Binary tree - Fold - Termination}
 
@@ -53,7 +53,7 @@ dissection over that universe.
 \subsection{Examples}\label{subsec:examples}
 
 There are many examples in the literature about using a function defined as a
-fold over a datatype to derive an abstract machine with the same semantics. 
-Danvy \cite{Danvy2009}, shows how to derive a tail recursive abstract machine
-starting with a reduction semantics for the type of arithmetic expressions.
-\todo{finish this}
+fold over a datatype to derive an abstract machine with the same semantics. A
+tail recursive fold using a explicit stack can be understood as a stack machine.
+Therefore, we should be able to put to practice our results in a variety of
+examples for example the ones developed by Danvy \cite{Danvy2009}.

@@ -75,9 +75,9 @@ obeys (extensionally) the functor laws.
 
 \begin{example}
   The \AD{Maybe} type for computations that may not succeed is a good example of
-  a functorial type that can be encoded in \AD{Reg}.  The \emph{code} for
-  \AD{Maybe} has to account for two constructors one, \AI{just}, that uses the
-  variable.
+  a functorial type that can be encoded using \AD{Reg}.  The \emph{code} for
+  \AD{Maybe} has to account for two constructors, \AI{just}, that uses the
+  variable and \AI{nothing} that does not.
 
   \InsertCode{Proposal/Regular.tex}{Maybe-Type}
 
@@ -89,17 +89,18 @@ obeys (extensionally) the functor laws.
 \vspace{0.25cm}
 
 Until now we have been somewhat limited in the kind of types that \AD{Reg} can
-represent because recursion can not be encoded yet. In order to do so we need to
-introduce the fixed point of a \AD{Reg}. Fixed points in general do not need to
-terminate so its encoding in \Agda~uses a datatype that serves both as its
+represent because recursion can not be encoded yet. In order to do so, we need
+to introduce the fixed point of a \AD{Reg}. Fixed points in general do not need
+to terminate so its encoding in \Agda~uses a datatype that serves both as its
 syntax and semantics.
 
   \InsertCode{Proposal/Regular.tex}{Mu}
 
-The idea is that the type variable in \AB{R} is used to mark the recursive positions
-and mu ties the knot by interpreting \AB{R} over itself. Our presentation of a
-regular universe differs from Morris et al \cite{Morris2004Exploring}.
-\todo{maybe explain why}
+The idea is that the type variable in \AB{R} is used to mark the recursive
+positions and \AD{μ} ties the knot by interpreting \AB{R} over itself. Our
+presentation of a regular universe differs from Morris et al
+\cite{Morris2004ExploringTR} because we only allow for one variable and the
+fixpoint is fixed over the full expression.
 
 \begin{example}
   As an example of a recursive datatype we can use the type of natural numbers.
@@ -118,7 +119,8 @@ regular universe differs from Morris et al \cite{Morris2004Exploring}.
   \InsertCode{Proposal/Regular.tex}{Nat-from-to}
 \end{example}
 
-\subsection{Differentiation of a \emph{Regular} tree type}
+\subsection{Differentiation of a \emph{Regular} tree
+type}\label{subsec:differentiation}
 
 A functor can be seen as container of elements. The elements are drawn from the
 type that the functor uses as a parameter. The \emph{Regular} universe
@@ -144,9 +146,9 @@ induction over the \emph{code}.
 
 Recursively defined \emph{codes} through the \AD{μ} type, use the variable
 position to mark the occurrence of recursive subtrees. A concrete subtree that
-appears deeply within the structure can be pointed by a list of one hole contexts
-that lead from the root of the tree until its position. Given such list and the
-subtree we can recover the original tree.
+appears deeply within the structure can be pointed by a list of one hole
+contexts that lead from the root of the tree until its position. Given such list
+and the subtree we can recover the original tree.
 
 \InsertCode{Proposal/Regular.tex}{Plug-Mu}
 
@@ -231,24 +233,31 @@ positions are of the same type.
 
 A \AF{right} function defined in this style summarizes both finding the first
 position and moving to the right.
+
 \subsection{Fold and Dissection}\label{subsec:fold-dissection}
 
-A \emph{Regular} tree type comes equipped with a fold for computing a value by
-using recursion over the input structure. In the
+A \emph{Regular} tree type comes equipped with a fold\footnote{In the
 literature\cite{Meijer91functionalprogramming} the fold is usually called
-catamorphism (from the Greek κατά which means from down). Given an F-algebra,
-function that indicates how to compute a value from every constructor in F, we
-can define a fold for \emph{Regular} tree types.
+catamorphism, from the Greek κατά which means down.} for computing a value by
+using recursion over the input structure.  Given an \AB{F}-algebra,
+function that indicates how to compute a value from every different constructor
+in \AB{F}, we can define a fold for \emph{Regular} tree types of
+\mbox{\AD{F}\AS{}\AY{:}\AS{}\AB{F}}.
+
+\InsertCode{Proposal/Regular.tex}{Cata-nt}
+
+\colored
+
+Defining \AF{cata} like this causes \Agda's termination checker to complain
+because it cannot verify that the \AF{fmap} function does not increment the size
+of its input. In order to define \AF{cata} we can use an auxiliary function that
+fuses the fold with the map. 
 
 \InsertCode{Proposal/Regular.tex}{Cata}
 
-The definition of \AF{cata} uses an auxiliary function \AF{mapFold} because
-without sized types \Agda~'s termination checker cannot understand that
-\AF{fmap} is a size preserving function.
-
-The problem with the catamorphism defined this way is that is not tail
-recursive, the F-algebra \AB{ϕ} expects the result of the function applied to
-smaller subtrees to compute the final result.
+The catamorphism defined like this not tail recursive, the \AB{F}-algebra \AB{ϕ}
+expects the result of the function applied to smaller subtrees before it can
+compute the final result.
 
 With dissection we can write a generic version of a fold that its tail
 recursive. We use a list of \textit{dissections} of the input type to record the
@@ -261,3 +270,14 @@ non-terminating.
 \InsertCode{Proposal/Regular.tex}{tcata}
 
 \colored
+
+The code is analogous to the \AF{load}/\AF{unload} functions used to define a
+tail-recusive \AF{eval} function as we explained in \cref{subsec:problem}. Now
+the right function is used to move gradually to the right while the result is
+being computed.
+
+Showing that \AF{cata} and \AF{tcata} are equivalent means proving the following
+theorem.
+
+\InsertCode{Proposal/Regular.tex}{theorem}
+

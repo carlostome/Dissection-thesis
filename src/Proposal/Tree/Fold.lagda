@@ -229,7 +229,7 @@ module Proposal.Tree.Fold where
 
 
 
-Left (Tip 1) (Right (5) (Left (Tip 4) Top)))
+eft (Tip 1) (Right (5) (Left (Tip 4) Top)))
 
   --   lemmasss : ∀ n m s t′ s′ → eval-step (n , s) ≡ inj₁ (m , t′ , s′) → (Node (Tip m) t′ , s′) < (Tip n , s)
   --   lemmasss n m (Left (Tip x₁) s) t′ s′ x = {!!}

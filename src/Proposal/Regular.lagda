@@ -288,6 +288,17 @@ module Proposal.Regular where
             ∙∙∙ = {!!}
 \end{code}
 
+\begin{code}
+  module Cata where
+    {-# TERMINATING #-}
+\end{code}
+%<*Cata-nt>
+\begin{code}
+    cata : ∀ {A : Set} (F : Reg) → (⟦ F ⟧ A -> A) → μ F -> A
+    cata F ϕ (In x) = ϕ (fmap F (cata F ϕ) x)
+\end{code}
+%</Cata-nt>
+
 %<*Cata>
 \begin{code}
   cata : ∀ {A : Set} (F : Reg) → (⟦ F ⟧ A -> A) → μ F -> A
@@ -416,7 +427,7 @@ module Proposal.Regular where
 \end{code}
 %<*tcata>
 \begin{code}
-    tcata : ∀ {A : Set} (F : Reg) -> (⟦ F ⟧ A -> A) -> μ F -> A
+    tcata : ∀ {A : Set} (F : Reg) → (⟦ F ⟧ A → A) → μ F → A
     tcata R φ m = load R φ m []
       where
         mutual
@@ -436,3 +447,11 @@ module Proposal.Regular where
 
 \end{code}
 %</tcata>
+
+%<*theorem>
+\begin{code}
+    theorem : ∀ {A : Set} (F : Reg) → (ϕ : ⟦ F ⟧ A → A) → (x : μ F)
+            → cata F ϕ x ≡ tcata F ϕ x
+    theorem = {!!}
+\end{code}
+%</theorem>
