@@ -1,4 +1,4 @@
-\section{Prototype implementation}
+\section{Prototype implementation}\label{sec:prototype}
 
   The purpose of this thesis is to formalize the notion of dissection and its
   usage to transform a fold into a tail-recursive function.

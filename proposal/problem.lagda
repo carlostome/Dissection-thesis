@@ -1,5 +1,5 @@
 %include proposal.fmt
-%include polycode.fmt
+%include lhs2TeX.fmt
 
 \section{Introduction}\label{sec:Introduction}
 
@@ -50,7 +50,7 @@ At each step, the size of the expression reflects faithfully the size of the
 underlying stack. Using a tail recursive function --where the last call is to
 the function itself--, an optimizing compiler can directly pass the control to
 the recursive call without needing to allocate a stack frame. Without
-postprocessing there is no need to save intermediate results.  For the list
+post processing there is no need to save intermediate results.  For the list
 type, the problem can be solved by using a left fold\footnote{Imposing further
 restrictions on the function |f : (a -> b -> b)|} (|foldl|). However, for
 non-linear structures, is not as straightforward to recover a tail-recursive
@@ -102,7 +102,7 @@ smaller than the input.  Moreover, without proof we have no evidence that the
 result computed by the function is the same as the original \AF{eval} for any
 possible input.
 
-\subsection{Research question}
+\subsection{Research objective}
 
 The master thesis that this documents serves as a proposal aims to investigate
 whether it would be possible to use MCBride's notion of dissection for
@@ -147,7 +147,7 @@ In order to do so, we need to address the following specific problems.
   explore common techniques used in type theory to prove that a function
   terminates (can be defined) even though is not defined by structural induction
   over its input. \cref{sec:generic} explores how generic programming can be
-  exploided to define a tail-recursive fold through the notion of dissection.
+  exploited to define a tail-recursive fold through the notion of dissection.
   \cref{sec:prototype} describes the preliminar work done during the proposal
   phase, showing that it is possible to prove termination through \emph{well
   founded} recursion of a tail recursive traversal --left to right-- over binary

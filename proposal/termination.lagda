@@ -1,5 +1,5 @@
-
-%include polycode.fmt
+%include proposal.fmt
+%include lhs2TeX.fmt
 
 \section{Termination}
 \label{sec:termination}
@@ -10,39 +10,37 @@ that any defined function terminates, \Agda~uses a termination checker, foetus
 \cite{Abel98foetus}, that syntactically checks whether the recursive calls of a
 function are performed in \textbf{structurally} smaller arguments.
 
+
 Many functions that we would like to define do not conform to the pattern of
 recursing over some argument that is evidently --\Agda~has factual evidence--
-structurally smaller. In the rest of the section we will explore several
-available techniques that overcome this limitation: sized types, Bove-Capretta
-predicate and well founded recursion.
+structurally smaller. In the rest of the section, we will explore several
+available techniques that overcome this limitation: \emph{sized types},
+\emph{Bove-Capretta} predicate and \emph{well founded} recursion.
 
-As a running example we will use the quick sort function whose definition
+As a running example, we will use the quicksort function whose definition
 \Agda's termination checker classifies as non-terminating.
 
   % remember to tweak the .tex file with \nonterm
   \InsertCode{Proposal/QuickSort.tex}{QS}
 
-\subsection{Sized types}
+\subsection{Sized types} \label{subsec:sized}
 
 Sized types \cite{abel2010miniagda} is a type system extension that allows to
 track structural information on the type level. Terms can be annotated with a
-\textit{size} index that represents an \textbf{upper bound} of the actual
-\textit{size} of the term being annotated. Functions can then quantify over size
-variables to relate the \textit{size} of their input arguments to the
-\textit{size} of the result.
+type index that represents an \textbf{upper bound} of the actual \textit{size}
+of the term being annotated. By \textit{size} of an inductive datatype we
+understand the number of constructors used to build a value of the type.
 
-% Because sized types are embedded into the type system, they not only serve to
-% assist the termination checker but also they allow the programmer to specify
-% more precisely how the function affects the \textit{size} of its argument.
-
-\todo{say something else about what is Size (maybe not)}
+Functions can quantify over size variables to relate the \textit{size} of their
+input arguments to the \textit{size} of the result. The type system ensures
+during type checking that the \textit{size} of the values conform with its type.
 
 \medskip
 
 \begin{example}
   We can define the type of \textit{sized} lists in \Agda~by adding a new index
   to the usual type of cons lists that tracks size information. Both the
-  \AI{Nil} and \AI{Cons} constructors need now to explicitly state their
+  \AI{Nil} and \AI{Cons} constructors now explicitly state their
   \textit{size}.
 
   \InsertCode{Proposal/Sized/List.tex}{List}
@@ -52,7 +50,7 @@ variables to relate the \textit{size} of their input arguments to the
 
   \InsertCode{Proposal/Sized/List.tex}{Filter}
 
-  The definition of quick sort is as follows.
+  The definition of quicksort is as follows.
 
   \InsertCode{Proposal/Sized/List.tex}{QS}
 
@@ -63,58 +61,66 @@ variables to relate the \textit{size} of their input arguments to the
 
   Quick sort is a \textit{size} preserving function but we mark the \textit{size} of the
   output type to be \AP{ω}. The concatenation function used in the definition of
-  quick sort is typed as.
+  quicksort is typed as.
 
   \InsertCode{Proposal/Sized/List.tex}{append}
 
   Sized types in \Agda~are somewhat limited and currently it is not possible to
-  express on the type that the output \textit{size} should be \AB{i} \AP{+}
-  \AB{j}. The closest approximation is to use the type \AP{ω} which means that
-  we do not now anything about the size of the output.
+  express on the type that the output \textit{size} should be
+  \mbox{\AB{i}\AS{}\AP{+}\AS{}\AB{j}}. The closest approximation is to use the
+  type \AP{ω} which subsumes any other \textit{size} value. It means that we do not now
+  anything about the \textit{size} of the output.
 \end{example}
 
-\todo{say why sized types do not fit our purpose}
+\subsection{Bove-Capretta predicate}\label{subsec:bove}
 
-\subsection{Bove-Capretta predicate}
+Even though a function may not recurse on structurally smaller arguments, the
+call graph of the function is it.  Given a recursive function
+\mbox{\AF{f}\AS{}\AY{:}\AD{A}\AS{}\AY{→}\AS{}\AD{B}}
+(\mbox{\AD{A}\AS{}\AD{B}\AS{}\AY{:}\AS{}\AP{Set}}) its graph can be mechanically
+reified as a type indexed by elements of the input type \AD{A}.
 
-The call graph of a given recursive function $f$ of type \AD{A} to \AD{B}
-(\AD{A}\AD{B} : |Set|) can be mechanically reified as a type indexed by
-elements of the input type \AD{A}.
+Because the call graph structurally decreases in each recursive call it can be
+used to define \AF{f} by recursion over it instead of the input. Intuitively the
+domain predicate outlines the conditions for which the function terminates as a
+predicate.
 
-The domain predicate represents the information about the termination of the
-function and enables us to define f by structural recursion on the predicate
-rather than on its input.
+Nevertheless, in order to show that the function terminates for any input is
+necessary to provide a proof that it is possible to construct the domain
+predicate for any possible input. The termination issue therefore is decoupled
+from the definition of the function but still has to be proved.
 
-\begin{example}[QuickSort]
+\begin{example}
 
-  We can illustrate the use of \textit{domain} predicate with the quick sort
-  function. Intuitively the domain predicate  states the termination conditions 
-  of the function. 
+  The domain predicate for the quicksort function is an \Agda~predicate type
+  over lists, \mbox{\AD{List A}\AS{}\AY{→}\AS{}\AP{Set}}. The base case, when
+  the list is empty quicksort terminates. In the inductive case, quicksort
+  terminates if it  terminates both on the list that results from filtering out
+  smaller elements and greater elements.
 
   \InsertCode{Proposal/Bove-Capretta/QuickSort.tex}{DP}
 
-  In the base case, the empty list, quick sort terminates. The inductive case
-  on (x::xs) terminates if quick sort also terminates after filtering out
-  both greater and smaller-or-equal than x elements from xs.
-
-  It is possible now to define quick sort over the structure of its domain
-  predicate which gets smaller in every recursive call.
+  A terminating quicksort is defined over the structure of the domain predicate
+  which at each recursive call is structurally smaller, thus accepted by the
+  termination checker.
 
   \InsertCode{Proposal/Bove-Capretta/QuickSort.tex}{BC}
 
-  Because quick sort is a total function we can prove that the domain predicate
-  holds for any list which means we can use this quicksor.
-
+  However, we are left now with the requirement of showing that the domain
+  predicate holds for any possible list. In order to show it we will have to
+  resort to the method of \emph{well founded} recursion that is explained in the
+  next section.
 \end{example}
 
 \subsection{Well founded recursion}
 \label{subsec:wf}
 
-The essential idea of \emph{well founded} recursion is to define a relation over terms
-of type \AD{A}, and show that starting from any value of \AD{A} it is possible to
-reach the smallest element in the relation only using a finite number of steps.
+The essential idea of \emph{well founded} recursion is to define a relation over
+terms of type \AD{A}, and show that starting from any value of \AD{A} it is
+possible to reach the smallest element in the relation only using a finite
+number of steps.
 
-Formally, given a binary relation $<$ over \AD{A}, | _<_ : ad( A ) -> ad(A) ->
+Formally, given a binary relation $<$ over \AD{A}, | _<_ : AD(A) -> AD(A) ->
 Set |, an element $x$ of \AD{A} is accessible if there is no infinite descending
 chain of the form $ x > x_1 > x_2 > x_3 \dots $. A more constructive
 characterization of the accessibility predicate due to Nordstr{\"o}m
@@ -129,22 +135,50 @@ element of \AD{A} is accessible.
 \InsertCode{Proposal/WellFounded/WellFounded.tex}{WF}
 
 The eliminator associated to this type serves us to define recursive functions
-over a \emph{well founded} type.
+over a \emph{well founded} relation.
 
 \InsertCode{Proposal/WellFounded/WellFounded.tex}{Elim}
 
 \begin{example}
-  QuickSort example
+  For encoding the quicksort function using \emph{well founded} recursion, we
+  have to define a suitable relation over lists that we can use to show that the
+  result of applying \AF{filter} yields a smaller element. We can either use the
+  eliminator for \emph{well founded} recursion or define the function by
+  explicit recursion over the accessibility predicate. For this matter the proof
+  that the relation is \emph{well founded} is mandatory.
+
+  \InsertCode{Proposal/WellFounded/List.tex}{relation}
+
+  We use the relation less-than over natural numbers to create a new relation
+  over lists by appealing to their length. We can lift the proof that less-than
+  is \emph{well founded}.
+
+  \InsertCode{Proposal/WellFounded/List.tex}{WF}
+  
+  A couple of lemmas that relate the length of the input list
+  to \AF{filter} with the length of the output are also needed.
+
+  \InsertCode{Proposal/WellFounded/List.tex}{lemma1}
+  \vspace*{-0.5cm}
+  \InsertCode{Proposal/WellFounded/List.tex}{lemma2}
+
+  Finally, we can describe quicksort using an auxiliary function that explicitly
+  uses the accessibility as the structure in the recursion.
 
   \InsertCode{Proposal/WellFounded/List.tex}{QS}
-  \InsertCode{Proposal/WellFounded/List.tex}{lemmas}
 
 \end{example}
 
-In order to be able to use the eliminator we must first prove that the relation
-is well founded. The proof amounts to show \Agda~ that in there is some argument
-that structurally decreases. It can either be the element of the relation or the
-proof itself.
+\medskip
+
+The most important part when working with \emph{well founded} recursion is to
+show that the relation is \emph{well founded}, otherwise we would have to
+construct a proof that the accessibility predicate holds for any input we want
+to apply the function to. The proof amounts to show \Agda~ that in there is some
+argument that structurally decreases. It can either be the element of the
+relation or the proof itself.
+
+\medskip
 
 \begin{example}
 
@@ -193,11 +227,6 @@ proof itself.
   \vspace*{-0.75cm} % remove space between blocks
   \InsertCode{Proposal/WellFounded/Nat.tex}{Proof-2}
 \end{example}
-
-\todo{compare the three here?}
-
-
-
 
 % to add size annotations to the constructors of
 % a type. The size of a value represents an upper bound on the number of

@@ -16,37 +16,64 @@ module Proposal.WellFounded.List where
   <-WF = <₁-WF
 
 \end{code}
+
 \begin{code}
   module QuickSort {A : Set} where
     open Inverse-image {A = List A} {B = ℕ} {_<_} length public
+\end{code}
 
-    _⊰_ : REL (List A) _ _
+%<*relation>
+\begin{code}
+    _⊰_ : List A → List A → Set
     _⊰_ = _<_ on length
 \end{code}
-%<*lemmas>
-\begin{code}
-    prlt : ∀ (p : A → A → Bool) → (x : A) → (xs : List A) → (filter (p x) xs) ⊰ (x ∷ xs)
-    prlt = {!!}
+%</relation>
 
-    prgt : ∀ (p : A → A → Bool) → (x : A) → (xs : List A) → (filter (not ∘ p x) xs) ⊰ (x ∷ xs)
-    prgt p x xs = {!!}
-\end{code}
-%</lemmas>
+%<*lemma1>
 \begin{code}
-
-    open All (well-founded <-WF)
+    prlt : ∀ (p : A → A → Bool) → (x : A)
+         → (xs : List A) → (filter (p x) xs) ⊰ (x ∷ xs)
+    prlt = ∙∙∙
 \end{code}
+%</lemma1>
+
+\begin{code}
+      where ∙∙∙ : ∀ (p : A → A → Bool) → (x : A) → (xs : List A) → (filter (p x) xs) ⊰ (x ∷ xs)
+            ∙∙∙ = {!!}
+\end{code}
+
+%<*lemma2>
+\begin{code}
+    prgt : ∀ (p : A → A → Bool) → (x : A) → (xs : List A)
+         → (filter (not ∘ p x) xs) ⊰ (x ∷ xs)
+    prgt = ∙∙∙
+\end{code}
+%</lemma2>
+
+\begin{code}
+      where ∙∙∙ : ∀ (p : A → A → Bool) → (x : A) → (xs : List A) → (filter (not ∘ p x) xs) ⊰ (x ∷ xs)
+            ∙∙∙ = {!!}
+
+\end{code}
+
+%<*WF>
+\begin{code}
+    ⊰-WF : Well-founded _⊰_
+    ⊰-WF = well-founded <-WF
+\end{code}
+%</WF>
 
 %<*QS>
 \begin{code}
     quickSort : (A → A → Bool) → List A → List A
-    quickSort p xs = wfRec _ (λ _ → List A) qs xs
+    quickSort p xs = qs xs (⊰-WF xs)
       where
-        qs : ∀ (x : List A) → (∀ (y : List A) → y ⊰ x → List A) → List A
-        qs [] _       = []
-        qs (x ∷ xs) h = h (filter (p x) xs) (prlt p x xs)
-                          ++ [ x ] ++
-                        h (filter (not ∘ p x) xs) (prgt p x xs) 
+        qs : ∀ (x : List A) → Acc _⊰_ x → List A
+        qs [] _              = []
+        qs (x ∷ xs) (acc rs) =
+          qs (filter (p x) xs) (rs _ (prlt p x xs))
+            ++ [ x ] ++
+          qs (filter (not ∘ p x) xs)  (rs _ (prgt p x xs))
 \end{code}
 %</QS>
 
