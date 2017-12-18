@@ -16,6 +16,8 @@
 % \usepackage{showframe}
 % \usepackage{multirow}
 \usepackage{alltt}
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{amsthm}
 
 \usepackage{ucs}
@@ -69,7 +71,8 @@
 }
 
 
-\newcommand{\nonterm}[1]{\colorbox{orange!25}{#1}}
+% find a solution for hspace -- crappy crappy--
+\newcommand{\nonterm}[1]{\hspace*{-0.1cm}\colorbox{orange!25}{#1}}
 
 \newcommand{\definedin}[1]{\footnote{Module: #1}}
 \newcommand{\args}[1]{\overline{#1}}
@@ -123,6 +126,31 @@
 \newcommand{\AP}{\AgdaPostulate}
 \newcommand{\APT}{\AgdaPrimitiveType}
 
+%% And a non-numbered variant
+\newenvironment{agda*}{%
+%\par\addvspace{1em}
+\noindent%
+\begin{samepage}%
+\normalsize%
+}{%
+\end{samepage}%
+\noindent%
+%\par\addvspace{1em}%
+}
+
+%% Multiple columns of agda code.
+%% Optional argument represents percentage of
+%% \textwidth that the minipage will use.
+\newenvironment{agdaCol}[1][0.49]{%
+\begin{minipage}[t]{#1\textwidth}
+}{%
+\end{minipage}
+}
+
+%% standard vertical spacing
+\newcommand{\stdvspace}{%
+\par\addvspace{0.8em}
+}
 \newcommand{\InsertCodeInline}[2]{\codeinlinetrue\ExecuteMetaData[../src-tex/#1]{#2}}
 
 \newcommand{\InsertCode}[2]{\ExecuteMetaData[../src-tex/#1]{#2}}
@@ -230,7 +258,7 @@
 \tableofcontents
 
 
-% \listoftodos
+\listoftodos
 \input{problem.tex}
 % \input{introduction.tex}
 \input{termination.tex}
