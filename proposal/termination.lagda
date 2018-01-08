@@ -5,23 +5,39 @@
 \label{sec:termination}
 
 \Agda~is a language of total functions. General recursive functions are not
-allowed as they would render the logic inconsistent. In order to ensure
-that any defined function terminates, \Agda~uses a termination checker, foetus
+allowed as they would render the logic inconsistent. To ensure that any defined
+function terminates, \Agda~uses a termination checker based on foetus
 \cite{Abel98foetus}, that syntactically checks whether the recursive calls of a
 function are performed in \textbf{structurally} smaller arguments.
 
-
 Many functions that we would like to define do not conform to the pattern of
-recursing over some argument that is evidently --\Agda~has factual evidence--
-structurally smaller. In the rest of the section, we will explore several
-available techniques that overcome this limitation: \emph{sized types},
-\emph{Bove-Capretta} predicate and \emph{well founded} recursion.
+recursing over some argument that is evidently structurally smaller. In the rest
+of the section, we will explore several available techniques that overcome this
+limitation: \emph{sized types}, \emph{Bove-Capretta} predicates and \emph{well
+founded} recursion.
 
-As a running example, we will use the quicksort function whose definition
-\Agda's termination checker classifies as non-terminating.
+%{
+%format quickSort   = "\AF{quickSort}"
+%format filter   = "\AF{filter}"
+%format not      = "\AF{not}"
+%format quickSortN  = "\nonterm{" quickSort "}"
+%format A           = "\AD{A}"
+%format x           = "\AB{x}"
+%format xs          = "\AB{xs}"
 
-  % remember to tweak the .tex file with \nonterm
-  \InsertCode{Proposal/QuickSort.tex}{QS}
+As a running example, we will use the quicksort function:
+
+  \begin{code}
+    quickSortN : (A -> A -> Bool) -> List A -> List A
+    quickSortN p [] = []
+    quickSortN p (x :: xs) =  quickSortN p (filter (p x) xs)
+                                ++ [ x ] ++
+                              quickSortN p (filter (not . (p x)) xs)
+  \end{code}
+
+As the recursive call is not made on a structurally smaller list, |xs|, we need
+to do extra work to convince the termination checker.
+%}
 
 \subsection{Sized types} \label{subsec:sized}
 

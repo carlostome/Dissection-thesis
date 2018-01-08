@@ -78,7 +78,7 @@ module Proposal.Tree.Fold where
   unload : ℕ → Stack → (ℕ × Tree × Stack) ⊎ ℕ
   unload m Top          = inj₂ m
   unload n (Left t₁ s)  = inj₁ (n , t₁ , s)
-  unload m (Right n s)  = unload (m + n) s
+  unload m (Right n s)  = unload (n + m) s
 
   load : Tree → Stack → Tree × Stack
   load (Tip n) s       = Tip n , s
@@ -110,6 +110,17 @@ module Proposal.Tree.Fold where
 \end{code}
 %</fold>
 
+\begin{code}
+  Rel : Zipper → Zipper → Set
+  Rel = {!!}
+
+  unload-preserves-⊳ : ∀ (n m : ℕ)
+                      → (s s′ : Stack) → (t′ : Tree)
+                      → unload n s ≡ inj₁ (m , t′ , s′)
+                      → Rel (Tip n , s) (Node (Tip m) t′ , s′)
+  unload-preserves-⊳ n m s s′ t′ x = {!!}
+
+\end{code}
   data _<_ : Zipper → Zipper → Set where
     <-Right-Step  : ∀ {t t₁ t₂ s₁ s₂}  → (t₁ , s₁) < (t₂ , s₂) → (t₁ , Right t s₁)  < (t₂ , Right t s₂)
     <-Left-Step   : ∀ {t t₁ t₂ s₁ s₂}  → (t₁ , s₁) < (t₂ , s₂) → (t₁ , Left t s₁)   < (t₂ , Left t s₂)
@@ -157,20 +168,56 @@ module Proposal.Tree.Fold where
   -- -- lemmass n m t Top s′ ()
 
   -- -- unload′ : (n : ℕ) → (s : Stack) → (∃ λ n′ → ∃₂ λ t s′ → (Node (Tip n′) t , revₛ s′) < (Tip n , revₛ s)) ⊎ ℕ
-  -- -- unload′ n s with unload n s | inspect (unload n) s4)  How to Twist Pointers without Breaking them
+  -- -- unload′ n s with unload n s | inspect (unload n) s4)
   -- -- unload′ n s | inj₁ (n′ , t , s′) | [ eq ] = inj₁ (n′ , (t , s′ , lemma n n′ t s s′ eq))
   -- -- unload′ n s | inj₂ y | _ = inj₂ y
 
 
 
+\begin{code}
+  -- what is the right notion of a partial image?
+  -- what does unload preserves on the structure?
+  data _↜_ : Tree → Tree → Set where
+    base   : ∀ {n m}              → Tip (n + m)     ↜ Node (Tip n) (Tip m)
+    step-l : ∀ t₁ t₂ t → t₂ ↜ t₁  → Node t₂ t       ↜ Node t₁ t
+    step-r : ∀ t₁ t₂ n → t₂ ↜ t₁  → Node (Tip n) t₂ ↜ Node (Tip n) t₁
+
+  mutual
+    accR : ∀ n t → Acc _↜_ t → WfRec _↜_ (Acc _↜_) (Node (Tip n) t)
+    accR n .(Tip _) x (Tip .(n + _)) base = acc λ {_ ()}
+    accR n t x (Node y .t) (step-l .(Tip n) .y .t ())
+    accR n t (acc rs) (Node .(Tip n) y₁) (step-r .t .y₁ .n p) = acc (accR n y₁ (rs y₁ p))
+
+    accL : ∀ t₁ t₂ → Acc _↜_ t₁ → Acc _↜_ t₂ → WfRec _↜_ (Acc _↜_) (Node t₁ t₂)
+    accL .(Tip n) .(Tip m) ac1 ac2 (Tip .(n + m)) (base {n = n} {m = m}) = acc λ { _ ()}
+    accL t₁ t₂ (acc rs) ac2 (Node y .t₂) (step-l .t₁ .y .t₂ p) = acc (accL y t₂ (rs y p) ac2)
+    accL .(Tip n) t₂ (acc rs) (acc rs₁) (Node .(Tip n) y₁) (step-r .t₂ .y₁ n p) = acc (accR n y₁ (rs₁ y₁ p))
+
+    ↜-WF : Well-founded _↜_
+    ↜-WF x = acc (aux x)
+      where aux : ∀ x → WfRec _↜_ (Acc _↜_) x
+            aux (Tip n) y ()
+            aux (Node .(Tip n) .(Tip m)) (Tip .(n + m)) (base {n = n} {m = m}) = acc λ { _ ()}
+            aux (Node t₁ t₂) (Node y₁ .t₂)              (step-l .t₁ .y₁ .t₂ p) = acc (accL y₁ t₂ (aux t₁ y₁ p) (↜-WF t₂))
+            aux (Node .(Tip n) t₂) (Node .(Tip n) y₂)   (step-r .t₂ .y₂ n p)   = acc (accR n y₂ (aux t₂ y₂ p))
 
 
-  data _isPartialOf_ : Tree → Tree → Set where
-    base-l : ∀ {t₁ t₂ t₃ n} → eval (Node t₁ t₂) ≡ n → (Node (Tip n) t₃) isPartialOf (Node (Node t₁ t₂) t₃)
-    base-r : ∀ {t₁ t₂ t₃ n} → eval (Node t₁ t₂) ≡ n → (Node t₃ (Tip n)) isPartialOf (Node t₃ (Node t₁ t₂))
-    step   : ∀ {t₁ t₂ t₃  } → t₁ isPartialOf t₂ → Node t₁ t₃ isPartialOf Node t₂ t₃
-    step-r : ∀ {n t₁ t₂   } → t₁ isPartialOf t₂ → Node (Tip n) t₁ isPartialOf Node (Tip n) t₂
+  data _⋖_ : Tree → Tree → Set where
+    base-l : ∀ {t₁ t₂ t₃ n} → eval (Node t₁ t₂) ≡ n → (Node (Tip n) t₃) ⋖ (Node (Node t₁ t₂) t₃)
+    base-r : ∀ {t₁ t₂ t₃ n} → eval (Node t₁ t₂) ≡ n → (Node t₃ (Tip n)) ⋖ (Node t₃ (Node t₁ t₂))
+    step   : ∀ {t₁ t₂ t₃  } → t₁ ⋖ t₂ → Node t₁ t₃      ⋖ Node t₂ t₃
+    step-r : ∀ {n t₁ t₂   } → t₁ ⋖ t₂ → Node (Tip n) t₁ ⋖ Node (Tip n) t₂
 
+  -- unload-preserves-⊳ : ∀ (n m : ℕ) (s s′ : Stack) (t t′ : Tree)
+  --                    → unload n s ≡ inj₁ (m , t′ , s′)
+  --                    → (Tip n ⊳ s) ↝ t → (Node (Tip m) t′ ⊳ s′) ↝ t
+  -- unload-preserves-⊳ n .n (Left t₁ s) .s t .t₁ refl p = p
+  -- unload-preserves-⊳ n m (Right n₁ s) s′ t t′ x p     with unload (n₁ + n) s | inspect (unload (n₁ + n)) s
+  -- unload-preserves-⊳ n m (Right n₁ s) s′ t t′ refl p | inj₁ .(m , t′ , s′) | Reveal_·_is_.[ eq ] = {!!}
+  -- unload-preserves-⊳ n m (Right n₁ s) s′ t t′ () p | inj₂ _ | Reveal_·_is_.[ eq ]
+  -- unload-preserves-⊳ n m Top s′ t t′ () x₁
+
+\end{code}
   isPartial : ∀ z z′ → z < z′ → (plug-⊲ z) isPartialOf (plug-⊲ z′)
   isPartial (t , Left t₁ s) z′ x = {!!}
   isPartial (t , Right n s) z′ x = {!!}

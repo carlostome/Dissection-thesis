@@ -1,4 +1,3 @@
-%include lhs2TeX.fmt
 %include polycode.fmt
 
 %% Agda keywords
@@ -19,12 +18,12 @@
 %format Set    = "\AP{Set}"
 %format Set1   = "\AP{Set$_1$}"
 %format Nat    = "\AD{\ensuremath{\mathbb{N}}}"
-%format Bool   = "AD{Bool}"
-%format List   = "AD{List}"
-%format Vec    = "AD{Vec}"
-%format Maybe  = "AD{Maybe}"
-%format Fin    = "AD{Fin}"
-%format Dec    = "AD{Dec}"
+%format Bool   = "\AD{Bool}"
+%format List   = "\AD{List}"
+%format Vec    = "\AD{Vec}"
+%format Maybe  = "\AD{Maybe}"
+%format Fin    = "\AD{Fin}"
+%format Dec    = "\AD{Dec}"
 %format ==     = "\AD{$\equiv$}"
 %format =?=    = "\AD{$\deceq$}"
 %format =~=    = "\AD{$\cong$}"
@@ -36,8 +35,10 @@
 %format Sigma  = "\AD{$\Sigma$}"
 
 %% Constructors of the above types
-%format ::       = "\hspace{.4em}\AI{:\hspace{-.5em}:}\hspace{.4em}"
+%format ::       = "\hspace{.4em}\AI{:\hspace{-.1em}:}\hspace{.4em}"
 %format []       = "\AI{[]}"
+%format [        = "\AF{[}"
+%format ]        = "\AF{]}"
 %format just     = "\AI{just}"
 %format nothing  = "\AI{nothing}"
 %format yes      = "\AI{yes}"
@@ -54,13 +55,13 @@
 %% Some standard functions
 %format lookup = "\AF{lookup}"
 %format length = "\AF{length}"
-%format map    = "\AF{map}"
+% format map    = "\AF{map}"       % Disabled
 %format id     = "\AF{id}"
 %format return = "\AF{return}"
 %format uncurry = "\AF{uncurry}"
 %format <$$>   = "\AF{$<\hspace{-.1em}\$\hspace{-.1em}>$}"
 %format <**>   = "\AF{$<\hspace{-.1em}*\hspace{-.1em}>$}"
-%format ++     = "\AF{$++$}"
+%format ++     = "\AF{\ensuremath{++}}"
 %format >>=    = "\AF{$>>=$}"
 %format Delta  = "\AF{$\Delta$}"
 

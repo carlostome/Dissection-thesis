@@ -23,6 +23,9 @@
 \usepackage{ucs}
 \usepackage[utf8x]{inputenc}
 
+% \usepackage{apalike}
+\usepackage{natbib}
+
 \usepackage{tikz}
 \usetikzlibrary{fit}
 \usetikzlibrary{shapes}

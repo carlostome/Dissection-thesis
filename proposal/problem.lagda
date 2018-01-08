@@ -1,4 +1,4 @@
-%include lhs2TeX.fmt
+
 %include polycode.fmt
 %include proposal.fmt
 
@@ -14,11 +14,14 @@
 %format Right = "\AD{Right}"
 %format load  = "\AF{load}"
 %format unload  = "\AF{unload}"
+%format foldr = "\AF{foldr}"
+%format foldl = "\AF{foldl}"
+
+%format plusOp = "\AF{\_+\_}"
 
 %format n     = "\AB{n}"
 %format e1    = "\AB{\ensuremath{e_1}}"
 %format e2    = "\AB{\ensuremath{e_2}}"
-
 
 
 \section{Introduction}\label{sec:Introduction}
@@ -34,7 +37,6 @@ fold into its tail-recursive counterpart. Nevertheless, it is not clear why the
 resulting function terminates, nor it is clear that the transformation preserves
 the fold's semantics.
 
-\todo{rephrase}
 \subsection{Description of the problem}\label{subsec:problem}
 
 The |foldr| function is one of the first higher-order functions that any
@@ -45,9 +47,9 @@ with a stack overflow. To understand the problem let us review its definition.
 From now on, all code snippets will use \Agda~notation.
 
 \begin{code}
-  foldr :: (a -> b -> b) -> b -> [a] -> b
-  foldr f z []     = z
-  foldr f z (x:xs) = f x (foldr f z xs)
+  foldr : (a -> b -> b) -> b -> List a -> b
+  foldr f z []         = z
+  foldr f z (x :: xs)  = f x (foldr f z xs)
 \end{code}
 
 In the second clause of the definition, the parameter function |f| needs to wait
@@ -71,17 +73,15 @@ foldr (+) 0 [1..1000000] ~>
 %}
 
 At each step, the size of the expression matches the size of the underlying
-stack. Using a tail recursive function -- where the result of the recursive
-calls are not used by another function to compute the result -- an optimizing
+stack. Using a tail recursive function --where the result of the recursive
+calls are not used by another function to compute the result-- an optimizing
 compiler can directly pass the control to the recursive call without needing to
 allocate a stack frame. Avoiding post processing means there is no need to save
 intermediate results.  For the list type, the problem can be solved by using a
 left fold\footnote{Imposing further restrictions on the function |f : (a -> b ->
-b)| (see \cite{}} (|foldl|). However, for non-linear structures, is not as
-straightforward to recover a tail recursive function that evaluates to the same
-result.
-
-\todo{add citation to discovering folds Hutton}
+b)| (see \cite{Hutton93atutorial}).} (|foldl|). However, for non-linear
+structures, is not as straightforward to recover a tail recursive function that
+evaluates to the same result.
 
 As an example let us consider the type of arithmetic expressions or binary trees
 with integers in the leaves\footnote{The folklore names it Hutton's razor}.
@@ -104,9 +104,8 @@ structural recursion on the input. The |Add| constructor represents addition
 
 The function |eval| is nothing more than a fold over |Expr| where the function
 that combines results from the subtrees is fixed. The |eval| function is not
-tail recursive because the |\_+\_| operator needs the result\footnote{For
-non-strict functions this may not be true} of both subtrees before the
-evaluation can proceed.
+tail recursive because the |plusOp| operator needs the result of both subtrees
+before the evaluation can proceed.
 
 To transform |eval| into a tail-recursive version that computes the "same" final
 result we make the execution stack, holding intermediate computations, explicit
@@ -125,7 +124,7 @@ defining a type for the stack as follows.
 
 A pair of mutually recursive functions, \AF{load} and \AF{unload}, perform the
 evaluation. The former searches for the leftmost subtree on the expression while
-the latter performs the evaluation once we are in a right subtree. Now, both
+the latter performs the evaluation once we are in a right subtree. Both
 functions are tail recursive.
 
 %{
@@ -181,7 +180,7 @@ In order to do so, we need to address the following specific problems.
   \noindent
   \textbf{Correctness} Once termination is proved, the next step aims to prove
   that the transformation is correct. By correct it is understood that both
-  the fold and the its tail-recursive counterpart are extensionally equivalent,
+  the fold and the its tail-recursive transformation are extensionally equivalent,
   i.e. for any input both functions compute the same result.
 
   \medskip
@@ -196,17 +195,16 @@ In order to do so, we need to address the following specific problems.
 
 \subsection{Proposal}
 
-  The rest of the document is organized as follows. In \cref{sec:termination} we
+  The rest of the document is organized as follows. In \Cref{sec:termination} we
   explore common techniques used in type theory to prove that a function
   terminates even though is not defined by structural induction
-  over its input. \cref{sec:generic} explores how generic programming can be
+  over its input. \Cref{sec:generic} explores how generic programming can be
   exploited to define a tail-recursive fold through the notion of dissection.
-  \cref{sec:prototype} describes the preliminar work done during the proposal
+  \Cref{sec:prototype} describes the preliminar work done during the proposal
   phase, showing that it is possible to prove termination through \emph{well
   founded} recursion of a tail recursive traversal over binary
   trees.
 
-\todo{fix section capital (look at cref)}
 \todo{check about foetus}
 
 %}
