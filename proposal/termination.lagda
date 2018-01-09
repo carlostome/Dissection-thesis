@@ -28,14 +28,14 @@ founded} recursion.
 As a running example, we will use the quicksort function:
 
   \begin{code}
-    quickSortN : (A -> A -> Bool) -> List A -> List A
+    quickSortN : forall {A : Set} -> (A -> A -> Bool) -> List A -> List A
     quickSortN p [] = []
     quickSortN p (x :: xs) =  quickSortN p (filter (p x) xs)
                                 ++ [ x ] ++
                               quickSortN p (filter (not . (p x)) xs)
   \end{code}
 
-As the recursive call is not made on a structurally smaller list, |xs|, we need
+Because the recursive call is not made on a structurally smaller list, |xs|, we need
 to do extra work to convince the termination checker.
 %}
 
@@ -84,35 +84,41 @@ during type checking that the \textit{size} of the values conform with its type.
   Sized types in \Agda~are somewhat limited and currently it is not possible to
   express on the type that the output \textit{size} should be
   \mbox{\AB{i}\AS{}\AP{+}\AS{}\AB{j}}. The closest approximation is to use the
-  type \AP{ω} which subsumes any other \textit{size} value. It means that we do not now
-  anything about the \textit{size} of the output.
+  type \AP{ω} which subsumes any other \textit{size} value. It means that we do
+  not know anything about the \textit{size} of the output.
+
 \end{example}
 
 \subsection{Bove-Capretta predicate}\label{subsec:bove}
 
-Even though a function may not recurse on structurally smaller arguments, the
-call graph of the function is it.  Given a recursive function
-\mbox{\AF{f}\AS{}\AY{:}\AD{A}\AS{}\AY{→}\AS{}\AD{B}}
-(\mbox{\AD{A}\AS{}\AD{B}\AS{}\AY{:}\AS{}\AP{Set}}) its graph can be mechanically
-reified as a type indexed by elements of the input type \AD{A}.
+%{
+%format f = "\AF{f}"
+%format A = "\AD{A}"
+%format B = "\AD{B}"
 
-Because the call graph structurally decreases in each recursive call it can be
-used to define \AF{f} by recursion over it instead of the input. Intuitively the
-domain predicate outlines the conditions for which the function terminates as a
-predicate.
+Even though a function may not recurse on structurally smaller arguments, we can
+make it structurally recursive by making its call graph explicit. The call graph
+of any function |f : A -> B| structurally decreases in each recursive call thus
+it can be used to define |f| by recursion over it instead of its input.
 
-Nevertheless, in order to show that the function terminates for any input is
-necessary to provide a proof that it is possible to construct the domain
-predicate for any possible input. The termination issue therefore is decoupled
-from the definition of the function but still has to be proved.
+The call graph of |f| is defined as a inductive type indexed by the values of
+the input type |A|. This new type, called the domain predicate\footnote{A
+predicate in \Agda~is anything of type |A -> Set|} of |f|, intuitively outlines
+the conditions for which the function terminates.
 
+In order to show that the function terminates for any input, it is necessary to
+provide a proof that it is possible to construct the domain predicate for any
+possible input. Therefore, the termination issue is decoupled from the definition
+of the function but still has to be proved.
+
+%}
 \begin{example}
 
   The domain predicate for the quicksort function is an \Agda~predicate type
-  over lists, \mbox{\AD{List A}\AS{}\AY{→}\AS{}\AP{Set}}. The base case, when
-  the list is empty quicksort terminates. In the inductive case, quicksort
-  terminates if it  terminates both on the list that results from filtering out
-  smaller elements and greater elements.
+  over lists, |List A -> Set|. The base case, when the list is empty, quicksort
+  terminates. In the inductive case, quicksort terminates if it terminates both
+  on the list that results from filtering out smaller elements and greater
+  elements.
 
   \InsertCode{Proposal/Bove-Capretta/QuickSort.tex}{DP}
 
@@ -123,24 +129,35 @@ from the definition of the function but still has to be proved.
   \InsertCode{Proposal/Bove-Capretta/QuickSort.tex}{BC}
 
   However, we are left now with the requirement of showing that the domain
-  predicate holds for any possible list. In order to show it we will have to
-  resort to the method of \emph{well founded} recursion that is explained in the
+  predicate holds for any possible list. In order to show it, we will have to
+  resort to the method of \emph{well founded} recursion that will be explained in the
   next section.
 \end{example}
+
+%{
+%format f = "\AF{f}"
+%format A = "\AD{A}"
+%format B = "\AD{B}"
+%format x = "\AB{x}"
+%format x1 = "\AB{x_1}"
+%format x2 = "\AB{x_2}"
+%format x3 = "\AB{x_3}"
+%format _<_ = "\AF{\_<\_}"
+%format <   = "\AF{<}"
 
 \subsection{Well founded recursion}
 \label{subsec:wf}
 
 The essential idea of \emph{well founded} recursion is to define a relation over
-terms of type \AD{A}, and show that starting from any value of \AD{A} it is
+terms of type |A|, and show that starting from any value of |A| it is
 possible to reach the smallest element in the relation only using a finite
 number of steps.
 
-Formally, given a binary relation $<$ over \AD{A}, | _<_ : AD(A) -> AD(A) ->
-Set |, an element $x$ of \AD{A} is accessible if there is no infinite descending
-chain of the form $ x > x_1 > x_2 > x_3 \dots $. A more constructive
-characterization of the accessibility predicate due to Nordstr{\"o}m
-\cite{nordstrom1988terminating} is the following type in \Agda.
+Formally, given a binary relation |<| over |A|, | _<_ : A -> A -> Set |, an
+element |x : A| is accessible if there is no infinite descending chain of the
+form | x > x1 > x2 > x3 cdots |. A more constructive characterization of the
+accessibility predicate due to Nordstr{\"o}m \cite{nordstrom1988terminating} is
+the following type in \Agda.
 
 \InsertCode{Proposal/WellFounded/WellFounded.tex}{Acc}
 
@@ -187,14 +204,36 @@ over a \emph{well founded} relation.
 
 \medskip
 
-The most important part when working with \emph{well founded} recursion is to
-show that the relation is \emph{well founded}, otherwise we would have to
-construct a proof that the accessibility predicate holds for any input we want
-to apply the function to. The proof amounts to show \Agda~ that in there is some
-argument that structurally decreases. It can either be the element of the
-relation or the proof itself.
+A non structurally recursive function,  |f : A -> B|,  can be defined in
+\Agda~by giving an smaller-than relation over the input type and performing
+structural recursion on the accessibility predicate. For this to work, the
+recursive calls should be made over elements that, even though they might not be
+structurally smaller than the input, they are smaller by the relation.
+
+Then, for any input value we have to provide a proof that the value is accesible
+by the relation, which means all descending chains starting from such element
+are finite. If the relation is \emph{well founded}, then every element of the
+input type is accesible by the relation giving us a means of constructing
+automatically the required proof.
+
+For this reason, defining a function by \emph{well founded} recursion critically
+relies on showing that the relation itself is \emph{well founded} which is by no
+means an easy task that lastly forces us to show \Agda~that something
+structurally decreases.
 
 \medskip
+
+%{
+%format 0   = "\AN{0}"
+%format aux = "\AF{aux}"
+%format Base = "\AD{Base}"
+%format Step = "\AD{Step}"
+%format succ = "\AD{succ}"
+%format zero = "\AD{zero}"
+%format y = "\AB{y}"
+%format x = "\AB{x}"
+%format p = "\AB{p}"
+%format <2 = "\AI{\ensuremath{<_{2}}}"
 
 \begin{example}
 
@@ -205,8 +244,8 @@ relation or the proof itself.
 
   In the first definition, constructors are peeled off from the first argument
   until there is a difference of one which constitutes the base case. On the
-  contrary, in the second defintion peels constructors from the left argument
-  until it reaches \AN{0}.
+  other hand, the second defintion peels constructors from the left argument
+  until it reaches |zero|.
 
   It should be clear that both definitions are equivalent. However, the first is
   more suitable to prove well foundedness due to the explicit structural relation
@@ -215,34 +254,39 @@ relation or the proof itself.
   \InsertCode{Proposal/WellFounded/Nat.tex}{Proof-1}
 
   Pattern matching on the proof allows us to refine both arguments. The
-  recursive call to the well foundednees proof in the \AI{Base} case is allowed
-  because \AB{y} is structurally smaller than \AI{succ} \AB{y}. In the step case
-  we can recurse using \AF{aux} because the proof gets smaller.
+  recursive call to the well foundednees proof in the |Base| case is allowed
+  because |y| is structurally smaller than |succ y|. In the step case
+  we can recurse using |aux| because the proof |p| is structurally smaller than
+  |Step p|.
 
   Things are not that easy with the second definition. As an attempt we might
-  try the following.
+  try the following:
 
   \InsertCode{Proposal/WellFounded/Nat.tex}{Incomplete}
 
-  The \AI{Base} case requires us to provide a proof of the well foundedness of
-  \AN{0}.  However, we cannot use the well founded function itself because it is
-  not clear how \AI{zero} is structurally smaller with respect to \AI{succ} \AB{y}.
-  The hole in the \AI{Step} case has type which doesn't allow us either to use a
-  recursive call on aux.
+  The |Base| case requires us to provide a proof of the well foundedness of
+  |zero|.  However, we cannot use the well founded proof itself because |zero|
+  is not structurally smaller than |succ x|. For the |Step| case we need to
+  prove that |succ y| is accesible. We can resort to |aux| and fill the two
+  first arguments. However, providing a proof of |succ y <2 succ x| from |p : y
+  <2 x| means passing |p| as an argument to the constructors |Step|, the same
+  that needed to be peeled in order to be structurally smaller.
 
   Because there is not a clear relation between the structure of both arguments
   in the proof we cannot use recursive calls and we are stuck.
 
   In order to solve the problem, we need to introduce an auxiliary lemma that
   relates the structure of both inputs in such a way that pattern matching
-  on it refines the arguments clearing the path to recursion again.
+  on it refines the arguments clearing the path for the proof of well
+  foundedness.
 
-  The needed lemma and the proof are as follows.
+  The required lemma and the proof are as follows:
 
   \InsertCode{Proposal/WellFounded/Nat.tex}{Lemma}
   \vspace*{-0.75cm} % remove space between blocks
   \InsertCode{Proposal/WellFounded/Nat.tex}{Proof-2}
 \end{example}
+%}
 
 % to add size annotations to the constructors of
 % a type. The size of a value represents an upper bound on the number of

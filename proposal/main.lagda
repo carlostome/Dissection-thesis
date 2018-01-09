@@ -156,7 +156,11 @@
 }
 \newcommand{\InsertCodeInline}[2]{\codeinlinetrue\ExecuteMetaData[../src-tex/#1]{#2}}
 
-\newcommand{\InsertCode}[2]{\ExecuteMetaData[../src-tex/#1]{#2}}
+\newcommand{\InsertCode}[2]
+  { \begin{samepage}
+    \ExecuteMetaData[../src-tex/#1]{#2}
+    \end{samepage}
+  }
 
 \newcommand{\InsertCodeN}[2]{
   % \codeinlinefalse

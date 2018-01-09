@@ -13,7 +13,7 @@ module Proposal.WellFounded.Nat where
 %<*Rel>
 \begin{code}
   data _<₁_ (m : ℕ) : ℕ → Set where
-    Base :                      m <₁ suc m
+    Base  :                      m <₁ suc m
     Step : ∀ {n : ℕ} → m <₁ n → m <₁ suc n
 
   data _<₂_ : ℕ → ℕ → Set where
@@ -35,6 +35,9 @@ module Proposal.WellFounded.Nat where
 
 \begin{code}
   module Proof-2-incomplete where
+    lema : ∀ {x y} → x <₂ y → suc x <₂ suc y
+    lema Base = Step Base
+    lema (Step x) = Step (lema x)
 \end{code}
 
 %<*Incomplete>
@@ -45,7 +48,7 @@ module Proposal.WellFounded.Nat where
         aux : (x y : ℕ) → y <₂ x → Acc _<₂_ y
         aux zero y ()
         aux (suc x) .0 Base                   = {!<₂-WF 0!}
-        aux (suc x) .(suc y) (Step {n = y} p) = aux {!!} {!!} {!p!}
+        aux (suc x) .(suc y) (Step {n = y} p) = aux (suc x) (suc y) {!!}
 \end{code}
 %</Incomplete>
 

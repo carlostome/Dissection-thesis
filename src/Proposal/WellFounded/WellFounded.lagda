@@ -30,7 +30,8 @@ module Proposal.WellFounded.WellFounded  where
 %<*Elim>
 \begin{code}
   wfRec : ∀ {A : Set} {_<_ : A → A → Set}
-          (P : A → Set) (a : A) → Acc _<_ a → (∀ x → (∀ y → y < x → P y) → P x) → P a
+          (P : A → Set) (a : A) → Acc _<_ a
+          → (∀ x → (∀ y → y < x → P y) → P x) → P a
   wfRec P a (acc x) e = e a λ y p → wfRec P y (x y p) e
 \end{code}
 %</Elim>

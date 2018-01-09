@@ -38,9 +38,9 @@ module Proposal.Bove-Capretta.QuickSort where
 %<*DP>
 \begin{code}
   data qsAcc {A : Set} (p : A → A → Bool) : List A → Set where
-    qsNil  : qsAcc p []
-    qsCons : ∀ x xs → qsAcc p (filter (p x) xs)
-                    → qsAcc p (filter (not ∘ p x) xs) → qsAcc p (x ∷ xs)
+    qsNil   : qsAcc p []
+    qsCons  : ∀ x xs  → qsAcc p (filter (p x) xs)
+                      → qsAcc p (filter (not ∘ p x) xs) → qsAcc p (x ∷ xs)
 \end{code}
 %</DP>
 
@@ -51,7 +51,7 @@ module Proposal.Bove-Capretta.QuickSort where
   quickSort p .[] qsNil = []
   quickSort p .(x ∷ xs) (qsCons x xs smaller bigger) =
       quickSort p ((filter (p x) xs)) smaller
-      ++ [ x ] ++
+        ++ [ x ] ++
       quickSort p (filter (not ∘ (p x)) xs) bigger
 \end{code}
 %</BC>
