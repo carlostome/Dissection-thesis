@@ -239,9 +239,7 @@ structurally decreases.
 
   Let us consider the natural numbers and two equivalent definitions of the |<|
   (strict less than) relation.
-
   \InsertCode{Proposal/WellFounded/Nat.tex}{Rel}
-
   In the first definition, constructors are peeled off from the first argument
   until there is a difference of one which constitutes the base case. On the
   other hand, the second defintion peels constructors from the left argument
@@ -250,9 +248,7 @@ structurally decreases.
   It should be clear that both definitions are equivalent. However, the first is
   more suitable to prove well foundedness due to the explicit structural relation
   between both arguments.
-
   \InsertCode{Proposal/WellFounded/Nat.tex}{Proof-1}
-
   Pattern matching on the proof allows us to refine both arguments. The
   recursive call to the well foundednees proof in the |Base| case is allowed
   because |y| is structurally smaller than |succ y|. In the step case
@@ -261,9 +257,7 @@ structurally decreases.
 
   Things are not that easy with the second definition. As an attempt we might
   try the following:
-
   \InsertCode{Proposal/WellFounded/Nat.tex}{Incomplete}
-
   The |Base| case requires us to provide a proof of the well foundedness of
   |zero|.  However, we cannot use the well founded proof itself because |zero|
   is not structurally smaller than |succ x|. For the |Step| case we need to

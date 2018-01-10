@@ -94,12 +94,6 @@ module Proposal.Regular where
   fmap (R ⨁ Q) f (inj₂ y)  = inj₂ (fmap Q f y)
   fmap (R ⨂ Q) f (x , y)   = (fmap R f x) , (fmap Q f y)
 
-  law₁ : ∀ (R : Reg) (X : Set) → ∀ (x : ⟦ R ⟧ X) → fmap R id x ≡ x
-  law₁ = {!!}
-
-  law₂ : ∀ (R : Reg) (X Y Z : Set) → ∀ (f : Y → Z) (g : X →  Y)
-       → ∀ (x : ⟦ R ⟧ X) → fmap R (f ∘′ g) x ≡ (fmap R f ∘′ fmap R g) x
-  law₂ = {!!}
 \end{code}
 %</R-Fmap>
 
@@ -294,23 +288,23 @@ module Proposal.Regular where
 \end{code}
 %<*Cata-nt>
 \begin{code}
-    cata : ∀ {A : Set} (F : Reg) → (⟦ F ⟧ A -> A) → μ F -> A
-    cata F ϕ (In x) = ϕ (fmap F (cata F ϕ) x)
+    cata : ∀ {A : Set} (R : Reg) → (⟦ R ⟧ A → A) → μ R → A
+    cata R ϕ (In x) = ϕ (fmap R (cata R ϕ) x)
 \end{code}
 %</Cata-nt>
 
 %<*Cata>
 \begin{code}
-  cata : ∀ {A : Set} (F : Reg) → (⟦ F ⟧ A -> A) → μ F -> A
-  cata  F ϕ (In x) = ϕ (mapFold F F ϕ x)
+  cata : ∀ {A : Set} (R : Reg) → (⟦ R ⟧ A → A) → μ R → A
+  cata  R ϕ (In x) = ϕ (mapFold R R ϕ x)
     where
-      mapFold : ∀ {a} (F G : Reg) → (⟦ G ⟧ a -> a) -> ⟦ F ⟧ (μ G) -> ⟦ F ⟧ a
-      mapFold 0′ G ϕ ()
-      mapFold 1′ G ϕ tt    = tt
-      mapFold V G ϕ (In x) = ϕ (mapFold G G ϕ x)
-      mapFold (P ⨁ Q)  G ϕ (inj₁ x)  = inj₁ (mapFold P G ϕ x)
-      mapFold (P ⨁ Q)  G ϕ (inj₂ y)  = inj₂ (mapFold Q G ϕ y)
-      mapFold (P ⨂ Q)  G ϕ (x , y)   = mapFold P G ϕ x , mapFold Q G ϕ y
+      mapFold : ∀ {a} (Q R : Reg) → (⟦ R ⟧ a → a) → ⟦ Q ⟧ (μ R) → ⟦ Q ⟧ a
+      mapFold 0′ R ϕ ()
+      mapFold 1′ R ϕ tt    = tt
+      mapFold V R ϕ (In x) = ϕ (mapFold R R ϕ x)
+      mapFold (P ⨁ Q)  R ϕ (inj₁ x)  = inj₁ (mapFold P R ϕ x)
+      mapFold (P ⨁ Q)  R ϕ (inj₂ y)  = inj₂ (mapFold Q R ϕ y)
+      mapFold (P ⨂ Q)  R ϕ (x , y)   = mapFold P R ϕ x , mapFold Q R ϕ y
 \end{code}
 %</Cata>
 
@@ -321,8 +315,8 @@ module Proposal.Regular where
     1′   :  Reg₂
     F    :  Reg₂
     S    :  Reg₂
-    ↗_   :  Reg → Reg₂
-    ↘_   :  Reg → Reg₂
+    C    :  Reg → Reg₂
+    J    :  Reg → Reg₂
     _⨁_  : (P Q : Reg₂)  → Reg₂
     _⨂_  : (P Q : Reg₂)  → Reg₂
 \end{code}
@@ -335,15 +329,15 @@ module Proposal.Regular where
   ⟦ 1′  ⟧₂ X Y = ⊤
   ⟦ F   ⟧₂ X Y = X
   ⟦ S   ⟧₂ X Y = Y
-  ⟦ ↗ R ⟧₂ X Y  = ⟦ R ⟧ X
-  ⟦ ↘ R ⟧₂ X Y  = ⟦ R ⟧ Y
+  ⟦ C R ⟧₂ X Y  = ⟦ R ⟧ X
+  ⟦ J R ⟧₂ X Y  = ⟦ R ⟧ Y
   ⟦ R ⨁ Q ⟧₂ X Y = ⟦ R ⟧₂ X Y ⊎ ⟦ Q ⟧₂ X Y
   ⟦ R ⨂ Q ⟧₂ X Y = ⟦ R ⟧₂ X Y × ⟦ Q ⟧₂ X Y
 \end{code}
 %</R2-Interpretation>
 
 \begin{code}
-  infixr 50 ↗_ ↘_
+  -- infixr 50 C J
 \end{code}
 
 \begin{code}
@@ -358,7 +352,7 @@ module Proposal.Regular where
     ∇ 1′ = 0′
     ∇ V  = 1′
     ∇ (R ⨁ Q) = ∇ R ⨁ ∇ Q
-    ∇ (R ⨂ Q) = (∇ R ⨂ ↘ Q) ⨁ (↗ R ⨂ ∇ Q)
+    ∇ (R ⨂ Q) = (∇ R ⨂ J Q) ⨁ (C R ⨂ ∇ Q)
 \end{code}
 %</Dissection>
 %<*R2-first>
@@ -381,46 +375,54 @@ module Proposal.Regular where
 \end{code}
 %</R2-first>
 
-%<*R2-right>
 \begin{code}
     mutual
+\end{code}
+%<*R2-right>
+\begin{code}
       right : ∀ {c j : Set} (P : Reg)
             → (⟦ P ⟧ j ⊎ (⟦ ∇ P ⟧₂ c j × c)) → ((j × ⟦ ∇ P ⟧₂ c j) ⊎ ⟦ P ⟧ c)
-      right 0′ (inj₁ ())
-      right 0′ (inj₂ (() , _))
-      right 1′ (inj₁ tt) = inj₂ tt
-      right 1′ (inj₂ (() , _))
-      right V (inj₁ j)         = inj₁ (j , tt)
-      right V (inj₂ (tt , c))  = inj₂ c
-      right (P ⨁ Q) (inj₁ (inj₁ pj)) with right P (inj₁ pj)
+      right = ∙∙∙
+\end{code}
+%</R2-right>
+\begin{code}
+      ∙∙∙ : ∀ {c j : Set} (P : Reg)
+          → (⟦ P ⟧ j ⊎ (⟦ ∇ P ⟧₂ c j × c)) → ((j × ⟦ ∇ P ⟧₂ c j) ⊎ ⟦ P ⟧ c)
+
+      ∙∙∙ 0′ (inj₁ ())
+      ∙∙∙ 0′ (inj₂ (() , _))
+      ∙∙∙ 1′ (inj₁ tt) = inj₂ tt
+      ∙∙∙ 1′ (inj₂ (() , _))
+      ∙∙∙ V (inj₁ j)         = inj₁ (j , tt)
+      ∙∙∙ V (inj₂ (tt , c))  = inj₂ c
+      ∙∙∙ (P ⨁ Q) (inj₁ (inj₁ pj)) with ∙∙∙ P (inj₁ pj)
       ... | inj₁ (j , pd)  = inj₁ (j , inj₁ pd)
       ... | inj₂ pc        = inj₂ (inj₁ pc)
-      right (P ⨁ Q) (inj₁ (inj₂ qj)) with right Q (inj₁ qj)
+      ∙∙∙ (P ⨁ Q) (inj₁ (inj₂ qj)) with ∙∙∙ Q (inj₁ qj)
       ... | inj₁ (j , qd′)  = inj₁ (j , (inj₂ qd′))
       ... | inj₂ qc         = inj₂ (inj₂ qc)
-      right (P ⨁ Q) (inj₂ (inj₁ pd , c))    with right P (inj₂ (pd , c))
+      ∙∙∙ (P ⨁ Q) (inj₂ (inj₁ pd , c))    with ∙∙∙ P (inj₂ (pd , c))
       ... | inj₁ (j , pd′)  = inj₁ (j , inj₁ pd′)
       ... | inj₂ pc         = inj₂ (inj₁ pc)
-      right (P ⨁ Q) (inj₂ (inj₂ qd , c)) with right Q (inj₂ (qd , c))
+      ∙∙∙ (P ⨁ Q) (inj₂ (inj₂ qd , c)) with ∙∙∙ Q (inj₂ (qd , c))
       ... | inj₁ (j , qd′)  = inj₁ (j , (inj₂ qd′))
       ... | inj₂ qc         = inj₂ (inj₂ qc)
 
-      right (P ⨂ Q) (inj₁ (pj , qj)) = goL P Q (right P (inj₁ pj)) qj
-      right (P ⨂ Q) (inj₂ (inj₁ (pd , qj) , c)) = goL P Q (right P (inj₂ (pd , c))) qj
-      right (P ⨂ Q) (inj₂ (inj₂ (pc , qd) , c)) = goR P Q pc (right Q (inj₂ (qd , c)))
+      ∙∙∙ (P ⨂ Q) (inj₁ (pj , qj)) = goL P Q (∙∙∙ P (inj₁ pj)) qj
+      ∙∙∙ (P ⨂ Q) (inj₂ (inj₁ (pd , qj) , c)) = goL P Q (∙∙∙ P (inj₂ (pd , c))) qj
+      ∙∙∙ (P ⨂ Q) (inj₂ (inj₂ (pc , qd) , c)) = goR P Q pc (∙∙∙ Q (inj₂ (qd , c)))
 
       private
         goL : ∀ {c j : Set} (P Q : Reg) → ((j × ⟦ ∇ P ⟧₂ c j) ⊎ ⟦ P ⟧ c) → ⟦ Q ⟧ j
                                           → ((j × ⟦ ∇ (P ⨂ Q) ⟧₂ c j) ⊎ ⟦ P ⨂ Q ⟧ c)
         goL P Q (inj₁ (j , pd)) qj = inj₁ (j , inj₁ (pd , qj))
-        goL P Q (inj₂ pc)       qj = goR P Q pc (right Q (inj₁ qj))
+        goL P Q (inj₂ pc)       qj = goR P Q pc (∙∙∙ Q (inj₁ qj))
 
         goR : ∀ {c j : Set} (P Q : Reg) → ⟦ P ⟧ c → ((j × ⟦ ∇ Q ⟧₂ c j) ⊎ ⟦ Q ⟧ c)
                                           → ((j × ⟦ ∇ (P ⨂ Q) ⟧₂ c j) ⊎ ⟦ P ⨂ Q ⟧ c)
         goR P Q pc (inj₁ (j , qd)) = inj₁ (j , (inj₂ (pc , qd)))
         goR P Q pc (inj₂ y)        = inj₂ (pc , y)
 \end{code}
-%</R2-right>
 
 \begin{code}
     {-# TERMINATING #-}
@@ -432,16 +434,16 @@ module Proposal.Regular where
       where
         mutual
           load : ∀ {A : Set} (R : Reg)
-               -> (⟦ R ⟧ A → A) -> μ R → List (⟦ ∇ R ⟧₂ A (μ R)) → A
+               → (⟦ R ⟧ A → A) → μ R → List (⟦ ∇ R ⟧₂ A (μ R)) → A
           load R φ (In x) stk = next R φ (right R (inj₁ x)) stk
 
           unload : ∀ {A : Set} (R : Reg)
-                 → (⟦ R ⟧ A -> A) → A -> List (⟦ ∇ R ⟧₂ A (μ R)) → A
+                 → (⟦ R ⟧ A -> A) → A → List (⟦ ∇ R ⟧₂ A (μ R)) → A
           unload R φ v []          = v
           unload R φ v (pd ∷ stk)  = next R φ (right R (inj₂ (pd , v))) stk
 
           next : ∀ {A : Set} (R : Reg) → (⟦ R ⟧ A → A)
-              → (μ R × ⟦ ∇ R ⟧₂ A (μ R)) ⊎ ⟦ R ⟧ A → List (⟦ ∇ R ⟧₂ A (μ R)) → A
+               → (μ R × ⟦ ∇ R ⟧₂ A (μ R)) ⊎ ⟦ R ⟧ A → List (⟦ ∇ R ⟧₂ A (μ R)) → A
           next R φ (inj₁ (t , pd)) stk  = load R φ t (pd ∷ stk)
           next R φ (inj₂ pv) stk        = unload R φ (φ pv) stk
 
