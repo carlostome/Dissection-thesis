@@ -149,9 +149,8 @@ of the function but still has to be proved.
 \label{subsec:wf}
 
 The essential idea of \emph{well founded} recursion is to define a relation over
-terms of type |A|, and show that starting from any value of |A| it is
-possible to reach the smallest element in the relation only using a finite
-number of steps.
+terms of type |A|, and show that starting from any term of type |A| any
+decreasing chain is finite.
 
 Formally, given a binary relation |<| over |A|, | _<_ : A -> A -> Set |, an
 element |x : A| is accessible if there is no infinite descending chain of the
@@ -161,9 +160,9 @@ the following type in \Agda.
 
 \InsertCode{Proposal/WellFounded/WellFounded.tex}{Acc}
 
-An element of \AD{A} is accessible if every element smaller than \AD{A} by |<|
+An element of |A| is accessible if every element smaller than |A| by |<|
 is also accessible. The relation |<| is then \emph{well founded} when every
-element of \AD{A} is accessible.
+element of |A| is accessible.
 
 \InsertCode{Proposal/WellFounded/WellFounded.tex}{WF}
 
@@ -175,7 +174,7 @@ over a \emph{well founded} relation.
 \begin{example}
   For encoding the quicksort function using \emph{well founded} recursion, we
   have to define a suitable relation over lists that we can use to show that the
-  result of applying \AF{filter} yields a smaller element. We can either use the
+  result of applying |filter| yields a smaller element. We can either use the
   eliminator for \emph{well founded} recursion or define the function by
   explicit recursion over the accessibility predicate. For this matter the proof
   that the relation is \emph{well founded} is mandatory.
@@ -187,7 +186,7 @@ over a \emph{well founded} relation.
   is \emph{well founded}.
 
   \InsertCode{Proposal/WellFounded/List.tex}{WF}
-  
+
   A couple of lemmas that relate the length of the input list
   to \AF{filter} with the length of the output are also needed.
 

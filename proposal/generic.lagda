@@ -280,7 +280,6 @@ function that indicates how to compute a value for every different constructor
 in |R|, we can define a fold for \regular tree types |mu R|.
 
 \InsertCode{Proposal/Regular.tex}{Cata-nt}
-\colored
 
 Defining |cata| like this causes \Agda's termination checker to complain because
 it cannot verify that |fmap| does not increment the size of its input. In order
@@ -302,7 +301,6 @@ structure is evidently smaller as in the case of the binary tree
 non-terminating.
 
 \InsertCode{Proposal/Regular.tex}{tcata}
-\colored
 
 The code is analogous to the |load|/|unload| functions used to define a
 tail-recursive |eval| function as we explained in \cref{subsec:problem}. Now
@@ -313,3 +311,5 @@ Showing that |cata| and |tcata| are equivalent means proving the following
 theorem:
 
 \InsertCode{Proposal/Regular.tex}{theorem}
+%}
+%}

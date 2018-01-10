@@ -204,8 +204,5 @@ In order to do so, we need to address the following specific problems.
   phase, showing that it is possible to prove termination through \emph{well
   founded} recursion of a tail recursive traversal over binary
   trees.
-
-\todo{check about foetus}
-
 %}
 

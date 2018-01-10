@@ -265,7 +265,7 @@
 \tableofcontents
 
 
-\listoftodos
+% \listoftodos
 \input{problem.tex}
 % \input{introduction.tex}
 \input{termination.tex}

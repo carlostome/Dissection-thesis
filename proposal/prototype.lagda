@@ -18,7 +18,7 @@
   right inductive structure that is implicit in any tree-like type. For this
   reason we cannot directly write in \Agda~ the function that performs the
   traversal. The termination checker warns that it does not terminate because
-  the argument is not --evidently-- structurally smaller.
+  the argument is not --manifestly-- structurally smaller.
 
   In \cref{sec:termination} we reviewed several well known techniques that can
   be used to assist \Agda's termination checker. \emph{Well founded} recursion
@@ -53,19 +53,18 @@
   \AI{nothing}.
 
   \InsertCode{Proposal/Tree/Base.tex}{BUIterate}
-  \colored
 
   Pattern matching on the result of \AF{right}\AS{}\AB{z} does not reveal any
   structural relation between the input \AB{z} and \AB{z₁}. Thus \Agda~'s
   termination checker correctly classifies the function as non-terminating. It
   does not know in which sense the recursive call is made on a smaller argument.
 
-\subsection{Preparing the stage}
+\subsection{Setting the stage}
 \label{subsec:preparing}
 
-  In order to be able to define \AF{rightmost}, we should find the structure
+  To be able to define \AF{rightmost}, we should find the structure
   that decreases with each call to the function \AF{right} so \AF{rightmost} can
-  be defined by structural recursion over it.
+  be defined by \emph{well founded} recursion over it.
 
   Any position in the tree has a finite number of positions to the right of
   itself. A value of type \AD{Zipper} represents a position in the tree and for
@@ -87,15 +86,11 @@
   The purpose of the following subsections is to show how we can fill
   the open holes and the definition of \AD{\_<\_}.
 
-  \colored
-
 \subsection{Defining the relation}
 
   The relation we need shall consider positions on the left subtree of a
   \AI{Node} bigger than the \AI{Node} itself which at the same time is bigger
   than any position in its right subtree.
-
-  \todo{a picture here?}
 
   Following Huet's idea, we regard the \AD{Stack} type as a path going
   \textit{backwards} from the position of the subtree up to the root. The
@@ -132,7 +127,7 @@
 
   We are ready to define the relation between elements of type \AD{Zipper}. The
   main idea of the relation is to look in the \AD{Stack} part of the \AD{Zipper}
-  for the point where both \AD{Stack} diverge.
+  for the point where both \AD{Stack}s diverge.
 
   Once this happens, the \AD{Stack} that has a \AI{Left} constructor on top
   indicates that its position located in the left subtree of the \AI{Node} and
@@ -160,15 +155,15 @@
 
   The relation itself would be useless if we cannot prove that it is \emph{well
   founded}. As it was explained in \cref{subsec:wf}, the \emph{well foundedness}
-  property for a relation requires us to exploit the recursive structure either
-  of the input, in the base cases, or of the proof , in the inductive cases. If
+  property for a relation requires us to exploit the recursive structure of either
+  the input, in the base cases, or the proof , in the inductive cases. If
   we are not able to show \Agda's termination checker that the argument is
-  --evidently-- structurally smaller then we would not be able to use recursion
+  --obviously-- structurally smaller then we would not be able to use recursion
   to prove \emph{well foundedness}.
 
   The naive approach to the proof fails because in general pattern matching on
   the \AD{\_<\_} proof does not reveal any information about the structure of
-  the tree for which both elements are positions of.
+  the tree of which the two \AD{Zipper}s are a decomposition.
 
   In the base cases the structure we need to perform recursion is exactly the
   subtrees of the original tree, however this is not explicit in the proof.
@@ -183,18 +178,15 @@
   \InsertCode{Proposal/Tree/Base.tex}{TDRelIx}
 
   Because the new relation is indexed by a \AD{Tree} the definition of what
-  means for this relation to be well founded has to change accordingly. The
-  relation is well founded if for any \AD{Tree} any position of it, \AD{Zipper}
-  is accessible.
+  means for this relation to be \emph{well founded} has to change accordingly. The
+  relation is \emph{well founded} if for any \AD{Tree} any position of it,
+  \AD{Zipper}, is accessible.
 
   \InsertCode{Proposal/Tree/Base.tex}{WF}
 
   The full proof is omitted but can be found in the accompanying code. It works
   by induction on the \AD{\_<\_} structure as before, but it uses the equality
   proofs to discover the smaller structure on which perform recursion.
-
-
-\todo{include the full proof?}
 
 \subsection{Navigating through the tree}
 
@@ -225,18 +217,16 @@
 
   \InsertCode{Proposal/Tree/Fold.tex}{Tree}
 
-  The fold requires that the stack records not only the structure of the tree
-  that is left to consume but also the intermediate results that have been
-  produced but not yet consumed. For this reason the \AD{Stack} now holds
-  subtrees that are to the right while the computed values have to substitute
-  the left subtrees.
+  The fold requires that the stack records both the subtrees that still need to
+  be traversed and the intermediate results that have not yet been consumed.  For
+  this reason, the \AD{Stack} datatype now becomes:
 
   \InsertCode{Proposal/Tree/Fold.tex}{Stack}
 
   In the case of the trees we are using we can define an analogous
   \emph{plugging} operator for both the \textit{backwards} and \textit{forwards}
   view of the \AD{Stack}. Because the \AD{Stack} does not represent a path on
-  the original tree but is just a partial image on how the evaluation proceed we
+  the original tree but is just a partial image on how the evaluation proceeds we
   embed the intermediate results as leaves to be able to output a full tree.
 
   \InsertCode{Proposal/Tree/Fold.tex}{Plug}

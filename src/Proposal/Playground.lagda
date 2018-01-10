@@ -90,4 +90,17 @@ module Proposal.Playground where
   from : Empty → X
   from ()
 
+  data Nat : Set where
+    suc : Nat → Nat
+
+  data _<<_ ( m : Nat) : Nat → Set where
+    Step : ∀ {n : Nat} → m << n → m << suc n
+
+  <-WF : Well-founded _<<_
+  <-WF x = acc (aux x)
+    where
+      aux : ∀ x → WfRec _<<_ (Acc _<<_) x
+      aux .(suc n) y (Step {n} p) = aux n y p
 \end{code}
+
+
