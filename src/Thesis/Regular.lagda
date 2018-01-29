@@ -64,7 +64,73 @@ module Thesis.Regular where
   first-μ R x with first R x
   first-μ R x | inj₁ (ctx , In mu) = {!!}
   first-μ R x | inj₂ y = {!!}
-  -- first 0′ ()
+
+  data Reg₂ : Set where
+    0′   :  Reg₂
+    1′   :  Reg₂
+    F    :  Reg₂
+    S    :  Reg₂
+    C    :  Reg → Reg₂
+    J    :  Reg → Reg₂
+    _⨁_  : (P Q : Reg₂)  → Reg₂
+    _⨂_  : (P Q : Reg₂)  → Reg₂
+
+  ⟦_⟧₂ : Reg₂ → (Set → Set → Set)
+  ⟦ 0′  ⟧₂ X Y = ⊥
+  ⟦ 1′  ⟧₂ X Y = ⊤
+  ⟦ F   ⟧₂ X Y = X
+  ⟦ S   ⟧₂ X Y = Y
+  ⟦ C R ⟧₂ X Y  = ⟦ R ⟧ X
+  ⟦ J R ⟧₂ X Y  = ⟦ R ⟧ Y
+  ⟦ R ⨁ Q ⟧₂ X Y = ⟦ R ⟧₂ X Y ⊎ ⟦ Q ⟧₂ X Y
+  ⟦ R ⨂ Q ⟧₂ X Y = ⟦ R ⟧₂ X Y × ⟦ Q ⟧₂ X Y
+
+  ∇ : Reg → Reg₂
+  ∇ 0′ = 0′
+  ∇ 1′ = 0′
+  ∇ V  = 1′
+  ∇ (R ⨁ Q) = ∇ R ⨁ ∇ Q
+  ∇ (R ⨂ Q) = (∇ R ⨂ J Q) ⨁ (C R ⨂ ∇ Q)
+
+  Rel₂ : ∀ {X Y : Set} → (R : Reg₂) → ⟦ R ⟧₂ X Y → ⟦ R ⟧₂ X Y → Set
+  Rel₂ 0′ () y
+  Rel₂ 1′ x y = ⊥
+  Rel₂ F x y  = ⊥
+  Rel₂ S x y  = ⊥
+  Rel₂ (C R) x y    = ⊥
+  Rel₂ (J R) x y    = ⊥
+  Rel₂ (R ⨁ Q) (inj₁ x) (inj₁ y)  = Rel₂ R x y
+  Rel₂ (R ⨁ Q) (inj₁ x) (inj₂ y)  = ⊥
+  Rel₂ (R ⨁ Q) (inj₂ x) (inj₁ y)  = ⊤
+  Rel₂ (R ⨁ Q) (inj₂ x) (inj₂ y) = Rel₂ Q x y
+  Rel₂ (R ⨂ Q) x y = {!!}
+
+  Zipper : Reg → (Set → Set)
+  Zipper R X = μ R × List (⟦ ∇ R ⟧₂ (μ R × X) (μ R))
+
+  Rel : ∀ {X : Set} (R : Reg) → Zipper R X → Zipper R X → Set
+  Rel R  (t₁ , []) (t₂ , [])      = ⊥
+  Rel 0′ (t₁ , []) (t₂ , () ∷ s₂)
+  Rel 1′ (t₁ , []) (t₂ , () ∷ s₂)
+  Rel V  (t₁ , [])  (t₂ , x ∷ s₂) = {!!}
+  Rel (R ⨁ R₁) (t₁ , []) (t₂ , inj₁ x ∷ s₂) = {!!}
+  Rel (R ⨁ R₁) (t₁ , []) (t₂ , inj₂ y ∷ s₂) = {!!}
+  Rel (R ⨂ Q)  (t₁ , []) (t₂ , inj₁ (dr , q) ∷ s₂) = {!!} -- we need to be able to say that t₁ contains recursive positions
+  Rel (R ⨂ Q) (t₁ , []) (t₂ , inj₂ (r , dq) ∷ s₂) = {!!}
+  Rel R (t₁ , x ∷ s₁) (t₂ , s₂) = {!s₂!}
+
+  module Normal-Form where
+  
+    data Reg-A : Set where
+                         
+    data Reg-⨂ : Set where
+      _⨂-c_ : (r₁ r₂ : Reg-⨂) → Reg-⨂
+      ⨂-l_  : Reg-A → Reg-⨂
+
+    data Reg-⨁ : Set where
+      _⨁-c_  : (r₁ r₂ : Reg-⨁) → Reg-⨁
+      _⨁-l_  : (r₁ r₁ : Reg-⨂)  → Reg-⨁
+
   -- first 1′ x = {!!}
   -- first V x  = just (tt , x)
   -- first (u ⨁ v) (inj₁ x) with first u x
@@ -223,33 +289,8 @@ module Thesis.Regular where
 -- \end{code}
 -- %</Cata>
 
--- %<*R2>
--- \begin{code}
---   data Reg₂ : Set where
---     0′   :  Reg₂
---     1′   :  Reg₂
---     F    :  Reg₂
---     S    :  Reg₂
---     C    :  Reg → Reg₂
---     J    :  Reg → Reg₂
---     _⨁_  : (P Q : Reg₂)  → Reg₂
---     _⨂_  : (P Q : Reg₂)  → Reg₂
--- \end{code}
--- %</R2>
 
--- %<*R2-Interpretation>
--- \begin{code}
---   ⟦_⟧₂ : Reg₂ → (Set → Set → Set)
---   ⟦ 0′  ⟧₂ X Y = ⊥
---   ⟦ 1′  ⟧₂ X Y = ⊤
---   ⟦ F   ⟧₂ X Y = X
---   ⟦ S   ⟧₂ X Y = Y
---   ⟦ C R ⟧₂ X Y  = ⟦ R ⟧ X
---   ⟦ J R ⟧₂ X Y  = ⟦ R ⟧ Y
---   ⟦ R ⨁ Q ⟧₂ X Y = ⟦ R ⟧₂ X Y ⊎ ⟦ Q ⟧₂ X Y
---   ⟦ R ⨂ Q ⟧₂ X Y = ⟦ R ⟧₂ X Y × ⟦ Q ⟧₂ X Y
--- \end{code}
--- %</R2-Interpretation>
+
 
 -- \begin{code}
 --   -- infixr 50 C J
@@ -262,12 +303,6 @@ module Thesis.Regular where
 
 -- %<*Dissection>
 -- \begin{code}
---     ∇ : Reg → Reg₂
---     ∇ 0′ = 0′
---     ∇ 1′ = 0′
---     ∇ V  = 1′
---     ∇ (R ⨁ Q) = ∇ R ⨁ ∇ Q
---     ∇ (R ⨂ Q) = (∇ R ⨂ J Q) ⨁ (C R ⨂ ∇ Q)
 -- \end{code}
 -- %</Dissection>
 -- %<*R2-first>
