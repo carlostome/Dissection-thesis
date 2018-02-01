@@ -14,7 +14,7 @@ module Thesis.SoP where
 
   module Raw-SoP where
 
-    data Atom : Set where
+    data Atom  : Set where
       0′ : Atom
       1′ : Atom
       I  : Atom
@@ -57,22 +57,6 @@ module Thesis.SoP where
     ⟦_⟧ₛ : Sum → (Set → Set)
     ⟦ [] ⟧ₛ X     = ⊥
     ⟦ x ∷ xs ⟧ₛ X = ⟦ x ⟧ₚ X ⊎ ⟦ xs ⟧ₛ X
-
-    ⟦_⟧ₚ₂ : (p : Prod) → Fin (length p) → (Set → Set → Set)
-    ⟦ []  ⟧ₚ₂ () X Y
-    ⟦ x ∷ p ⟧ₚ₂ zero X Y = ⟦ x ⟧ₐ X × ⟦ p ⟧ₚ Y
-    ⟦ x ∷ p ⟧ₚ₂ (suc f) X Y = ⟦ x ⟧ₐ X × ⟦ p ⟧ₚ₂ f X Y
-
-    Prod₂ = Σ Prod λ p → Fin (length p)
-    Sum₂  = List Prod₂
-
-    ⟦_⟧ₛ₂ : Sum₂ → (Set → Set → Set)
-    ⟦ [] ⟧ₛ₂ X Y     = ⊥
-    ⟦ (p , f) ∷ ps ⟧ₛ₂ X Y = ⟦ p ⟧ₚ₂ f X Y ⊎ ⟦ ps ⟧ₛ₂ X Y
-
-  -- we can only compare two products when they are equal bu fin n changes
-    Rel₂ₚ : ∀ {X Y : Set} (p : Prod₂) → Set 
-    Rel₂ₚ (p , proj₄) x x₁ = {!!}
 
   -- What is a one-hole context in the SoP universe?
   -- This is not a good representation because:
@@ -145,3 +129,42 @@ module Thesis.SoP where
     Rel : ∀ {X Y : Set} → (s : Sum) → ⟦ s ⟧ₛ X Y → ⟦ s ⟧ₛ X Y → Set
     Rel [] () y
     Rel ((p₁ , p₂) ∷ s) x y = {!!}
+
+  module SSoP where
+    open import Data.Nat
+    
+    data Atom (n : ℕ) : Set where
+      0′ : Atom n
+      1′ : Atom n
+      I  : Fin n → Atom n
+
+    ⟦_⟧ₐ : ∀ {n} → Atom n → Vec Set n → Set
+    ⟦ 0′ ⟧ₐ V  = ⊥
+    ⟦ 1′ ⟧ₐ V  = ⊤
+    ⟦ I x ⟧ₐ V = lookup x V
+
+    Prod : ℕ → Set
+    Prod n = List (Atom n)
+
+    ⟦_⟧ₚ : ∀ {n} → Prod n → Vec Set n → Set
+    ⟦ [] ⟧ₚ V     = ⊤
+    ⟦ x ∷ xs ⟧ₚ V = (⟦ x ⟧ₐ V) × (⟦ xs ⟧ₚ V)
+
+    Sum : ℕ → Set
+    Sum n = List (Prod n)
+
+    ⟦_⟧ₛ : ∀ {n} → Sum n → Vec Set n → Set
+    ⟦ [] ⟧ₛ V     = ⊥
+    ⟦ x ∷ xs ⟧ₛ V = ⟦ x ⟧ₚ V ⊎ ⟦ xs ⟧ₛ V
+
+    SSoP : ℕ → Set
+    SSoP n = List (Sum n)
+
+    ⟦_⟧ₛₒₚ : ∀ {n} → SSoP n → Vec Set n → Set
+    ⟦ [] ⟧ₛₒₚ V    = ⊥
+    ⟦ x ∷ s ⟧ₛₒₚ V = ⟦ x ⟧ₛ V ⊎ ⟦ s ⟧ₛₒₚ V
+
+    Rel : ∀ {n} → Sum n → Sum n → Set
+    Rel [] [] = {!!}
+    Rel [] (x ∷ x₁) = {!!}
+    Rel (x ∷ x₂) x₁ = {!!}
