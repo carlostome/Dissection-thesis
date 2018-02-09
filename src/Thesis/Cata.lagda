@@ -38,7 +38,9 @@ module Thesis.Cata where
     reverse-++ (y ∷ s) x = {!!}
 
     reverse-reverse : ∀ {A : Set} (xs : List A) → reverse (reverse xs) ≡ xs
-    reverse-reverse = {!!}
+    reverse-reverse [] = refl
+    reverse-reverse (x ∷ xs) = {!!}
+
     lemmam : ∀ {A : Set} (y : A) (xs ys : List A) → xs ++ (y ∷ ys) ≡ (xs ++ (y ∷ [])) ++ ys
     lemmam y [] ys = refl
     lemmam y (x ∷ xs) ys = cong (x ∷_) (lemmam y xs ys)
@@ -171,6 +173,14 @@ module Thesis.Cata where
     <-Right-Left  : ∀ {n} {t₁ t₂ s₁ s₂} {t₁′ t₂′}  {eq : eval t₁′ ≡ n} → (t₁′ ≡ t₂ ⊲ s₂) →  (t₂′ ≡ t₁ ⊲ s₁) → (t₁ , Right t₁′ n eq ∷ s₁)   < (t₂ , Left t₂′ ∷ s₂)
     <-Right-Base  : ∀ {n} {t t₁ s₁} {t′}           {eq : eval t₁  ≡ n} → (t′  ≡ t  ⊲ s₁)                    → (t  , Right t₁ n eq  ∷ s₁)   < (Node t₁ t′ , [])
     <-Left-Base   : ∀ {t t₁ s₁} {t′}           →    (t′ ≡ t ⊲ s₁)                                           → (Node t′ t₁  , [])           < (t , Left t₁ ∷ s₁)
+             
+--    -- the relation is adapted to hold evaluations
+--   data _<_ : Zipper → Zipper → Set where
+--     <-Right-Step  : ∀ {n t t₁ t₂ s₁ s₂} {eq : eval t ≡ n} → (t₁ , s₁) < (t₂ , s₂) →  (t₁ , Right t n eq ∷ s₁)    < (t₂ , Right t n eq ∷ s₂)
+--     <-Left-Step   : ∀ {t t₁ t₂ s₁ s₂}    → (t₁ , s₁) < (t₂ , s₂) → (t₁ , Left t ∷ s₁)                            < (t₂ , Left t ∷ s₂)
+--     <-Right-Left  : ∀ {t₁ t₂ s₁ s₂}      → (t₁ , Right (t₂ ⊲ s₂) (eval (t₂ ⊲ s₂)) refl ∷ s₁)                     < (t₂ , Left (t₁ ⊲ s₁) ∷ s₂)
+--     <-Right-Base  : ∀ {t t₁ s₁} {n} {eq : eval t₁ ≡ n}          → (t  , Right t₁ n eq  ∷     s₁)                 < (Node t₁ (t ⊲ s₁) , [])
+--     <-Left-Base   : ∀ {t t₁ s₁}          → (Node (t ⊲ s₁) t₁  , [])                                              < (t , Left t₁ ∷ s₁)
 
   data [[_]]_<_ ( t : Tree) : Zipper → Zipper → Set where
     lt : ∀ z₁ z₂ → plug-⊲ z₁ ≡ t → plug-⊲ z₂ ≡ t → z₁ < z₂ → [[ t ]] z₁ < z₂
@@ -182,78 +192,35 @@ module Thesis.Cata where
       = acc (accR (y ⊲ s₁) t₁ (y , s₁) n eq (rs (y , s₁) (lt (y , s₁) x refl (proj₂ (Node-inj eq₂)) p)))
 
     accL : ∀ t t₁ x →  Acc ([[ t ]]_<_) x → WfRec ([[ Node t t₁ ]]_<_ ) (Acc ([[ Node t t₁  ]]_<_ )) (proj₁ x , Left t₁ ∷ (proj₂ x))
-    accL t t₁ (x , s) (acc rs) (y , s′) p  = {!!}
+    accL .(y ⊲ s₁) t₁ (x , s) (acc rs) (y , .(inj₁ t₁ ∷ s₁)) (lt .(y , inj₁ t₁ ∷ s₁) .(x , inj₁ t₁ ∷ s) refl eq₂ (<-Left-Step {s₁ = s₁} p))
+      = acc (accL (y ⊲ s₁) t₁ (y , s₁) (rs (y , s₁) (lt (y , s₁) (x , s) refl (proj₁ (Node-inj eq₂)) p)))
+    accL .(x ⊲ s) .(y ⊲ s₁) (x , s) (acc rs) (y , .(inj₂ ((x ⊲ s) , _ , _) ∷ s₁)) (lt .(y , inj₂ ((x ⊲ s) , _ , _) ∷ s₁) .(x , inj₁ (y ⊲ s₁) ∷ s) refl eq₂ (<-Right-Left {s₁ = s₁} refl refl))
+      = acc (accR (y ⊲ s₁) (x ⊲ s) (y , s₁) _ _ (<-WF (y ⊲ s₁) (y , s₁)))
+    accL .(x ⊲ s) t₁ (x , s) (acc rs) (.(Node (x ⊲ s) t₁) , .[]) (lt .(Node (x ⊲ s) t₁ , []) .(x , inj₁ t₁ ∷ s) refl eq₂ (<-Left-Base refl))
+      = acc (accH (x ⊲ s) t₁)
       
     accH : ∀ t₁ t₂ → WfRec ([[ Node t₁ t₂ ]]_<_) (Acc ([[ Node t₁ t₂ ]]_<_ )) (Node t₁ t₂ , [])
-    accH t₁ = {!!}
+    accH t₁ .(y ⊲ s₁) (y , .(inj₂ (t₁ , _ , _) ∷ s₁)) (lt .(y , inj₂ (t₁ , _ , _) ∷ s₁) .(Node t₁ (y ⊲ s₁) , []) refl eq₂ (<-Right-Base {s₁ = s₁} x))
+      = acc (accR (y ⊲ s₁) t₁ (y , s₁) _ _ (<-WF (y ⊲ s₁) (y , s₁)))
       
     <-WF : ∀ t → Well-founded [[ t ]]_<_
     <-WF t x = acc (aux t x)
        where aux : ∀ t x → WfRec ([[ t ]]_<_) (Acc ([[ t ]]_<_)) x
-             aux = {!!}
-             
---    -- the relation is adapted to hold evaluations
---   data _<_ : Zipper → Zipper → Set where
---     <-Right-Step  : ∀ {n t t₁ t₂ s₁ s₂} {eq : eval t ≡ n} → (t₁ , s₁) < (t₂ , s₂) →  (t₁ , Right t n eq ∷ s₁)    < (t₂ , Right t n eq ∷ s₂)
---     <-Left-Step   : ∀ {t t₁ t₂ s₁ s₂}    → (t₁ , s₁) < (t₂ , s₂) → (t₁ , Left t ∷ s₁)                            < (t₂ , Left t ∷ s₂)
---     <-Right-Left  : ∀ {t₁ t₂ s₁ s₂}      → (t₁ , Right (t₂ ⊲ s₂) (eval (t₂ ⊲ s₂)) refl ∷ s₁)                    < (t₂ , Left (t₁ ⊲ s₁) ∷ s₂)
---     <-Right-Base  : ∀ {t t₁ s₁} {n} {eq : eval t₁ ≡ n}          → (t  , Right t₁ n eq  ∷     s₁)                  < (Node t₁ (t ⊲ s₁) , [])
---     <-Left-Base   : ∀ {t t₁ s₁}          → (Node (t ⊲ s₁) t₁  , [])                                              < (t , Left t₁ ∷ s₁)
-
---   data [[_]]_<2_ ( t : Tree) : Zipper → Zipper → Set where
---     lt : ∀ z₁ z₂ → plug-⊲ z₁ ≡ t → plug-⊲ z₂ ≡ t → z₁ < z₂ → [[ t ]] z₁ < z₂
-
---   mutual
---     accR : ∀ t t₁ x n (eq : eval t₁ ≡ n) → Acc ([[ t ]]_<_) x → WfRec ([[ Node t₁ t ]]_<_ ) (Acc ([[ Node t₁ t ]]_<_)) (proj₁ x , Right t₁ n eq ∷ (proj₂ x))
---     accR .(y ⊲ s₁) t₁ x n eq (acc rs) (y , .(inj₂ (t₁ , n , eq) ∷ s₁)) (lt .(y , inj₂ (t₁ , n , eq) ∷ s₁)
---                                        .(proj₁ x , inj₂ (t₁ , n , eq) ∷ proj₂ x) refl eq₂ (<-Right-Step {s₁ = s₁} p))
---          = acc (accR (y ⊲ s₁) t₁ (y , s₁) n eq (rs (y , s₁) (lt (y , s₁) x refl (proj₂ (Node-inj eq₂)) p)))
-
---     accL : ∀ t t₁ x →  Acc ([[ t ]]_<_) x → WfRec ([[ Node t t₁ ]]_<_ ) (Acc ([[ Node t t₁  ]]_<_ )) (proj₁ x , Left t₁ ∷ (proj₂ x))
---     accL .(y ⊲ s₁) t₁ (x , s) (acc rs) (y , .(inj₁ t₁ ∷ _)) (lt .(y , inj₁ t₁ ∷ _) .(x , inj₁ t₁ ∷ s) refl eq₂ (<-Left-Step {s₁ = s₁} p))
---         = acc (accL (y ⊲ s₁) t₁ (y , s₁) (rs (y , s₁) (lt (y , s₁) (x , s) refl (proj₁ (Node-inj eq₂)) p)))
---     accL .(x ⊲ s) .(y ⊲ s₁) (x , s) (acc rs) (y , .(inj₂ ((x ⊲ s) , eval (x ⊲ s) , refl) ∷ s₁))
---                                               (lt .(y , inj₂ ((x ⊲ s) , eval (x ⊲ s) , refl) ∷ s₁)
---                                                   .(x , inj₁ (y ⊲ s₁) ∷ s) refl eq₂ (<-Right-Left {s₁ = s₁}))
---         = acc (accR (y ⊲ s₁) (x ⊲ s) (y , s₁) (eval (x ⊲ s)) refl (<-WF (y ⊲ s₁) (y , s₁)))
---     accL .(x ⊲ s) t₁ (x , s) (acc rs) (.(Node (x ⊲ s) t₁) , .[]) (lt .(Node (x ⊲ s) t₁ , []) .(x , inj₁ t₁ ∷ s) refl eq₂ <-Left-Base)
---         = acc (accH (x ⊲ s) t₁)
-
---     accH : ∀ t₁ t₂ → WfRec ([[ Node t₁ t₂ ]]_<_) (Acc ([[ Node t₁ t₂ ]]_<_ )) (Node t₁ t₂ , [])
---     accH t₁ .(y ⊲ s₁) (y , .(inj₂ (t₁ , n , eq) ∷ s₁))
---                       (lt .(y , inj₂ (t₁ , n , eq) ∷ s₁)
---                           .(Node t₁ (y ⊲ s₁) , []) refl eq₂
---                           (<-Right-Base {s₁ = s₁} {n = n} {eq = eq}))
---          = acc (accR (y ⊲ s₁) t₁ (y , s₁) n eq (<-WF (y ⊲ s₁) (y , s₁)))
-
---     <-WF : ∀ t → Well-founded [[ t ]]_<_
---     <-WF t x = acc (aux t x)
---       where aux : ∀ t x → WfRec ([[ t ]]_<_) (Acc ([[ t ]]_<_)) x
---             aux .(Node t (y ⊲ s₁)) (x , .(inj₂ (t , eval t , refl) ∷ _)) (y , .(inj₂ (t , eval t , refl) ∷ s₁))
---                 (lt .(y , inj₂ (t , eval t , refl) ∷ s₁)
---                     .(x , inj₂ (t , eval t , refl) ∷ _) refl eq₂
---                     (<-Right-Step {.(eval t)} {t} {.y} {.x} {s₁} {eq = refl} p))
---                 = acc (accR (y ⊲ s₁) t (y , s₁) (eval t) refl (<-WF (y ⊲ s₁) (y , s₁)))
---             aux .(Node (y ⊲ s₁) t) (x , .(inj₁ t ∷ s₂)) (y , .(inj₁ t ∷ s₁))
---                 (lt .(y , inj₁ t ∷ s₁)
---                     .(x , inj₁ t ∷ s₂) refl eq₂
---                     (<-Left-Step {t} {.y} {.x} {s₁} {s₂} p))
---                 = acc (accL (y ⊲ s₁) t (y , s₁) (<-WF (y ⊲ s₁) (y , s₁)))
---             aux .(Node (x ⊲ s₂) (y ⊲ s₁)) (x , .(inj₁ (y ⊲ s₁) ∷ s₂)) (y , .(inj₂ ((x ⊲ s₂) , eval (x ⊲ s₂) , refl) ∷ s₁))
---                  (lt .(y , inj₂ ((x ⊲ s₂) , eval (x ⊲ s₂) , refl) ∷ s₁)
---                      .(x , inj₁ (y ⊲ s₁) ∷ s₂) refl eq₂
---                      (<-Right-Left {s₁ = s₁} {s₂}))
---                 = acc (accR (y ⊲ s₁) (x ⊲ s₂) (y , s₁) (eval (x ⊲ s₂)) refl (<-WF (y ⊲ s₁) (y , s₁)))
---             aux .(Node t₁ (y ⊲ s₁)) (.(Node t₁ (y ⊲ s₁)) , .[]) (y , .(inj₂ (t₁ , n , eq) ∷ s₁))
---                  (lt .(y , inj₂ (t₁ , n , eq) ∷ s₁)
---                      .(Node t₁ (y ⊲ s₁) , []) refl eq₂
---                      (<-Right-Base {.y} {t₁} {s₁} {n = n} {eq = eq}))
---                = acc (accR (y ⊲ s₁) t₁ (y , s₁) n eq (<-WF (y ⊲ s₁) (y , s₁)))
---             aux .(Node (x ⊲ s₁) t₁) (x , .(inj₁ t₁ ∷ s₁)) (.(Node (x ⊲ s₁) t₁) , .[])
---                 (lt .(Node (x ⊲ s₁) t₁ , [])
---                     .(x , inj₁ t₁ ∷ s₁) refl eq₂
---                     (<-Left-Base {.x} {t₁} {s₁}))
---               = acc (accH (x ⊲ s₁) t₁)
+             aux .(Node _ (y ⊲ s₁)) (x , .(inj₂ (_ , _ , _) ∷ s₂)) (y , .(inj₂ (_ , _ , _) ∷ s₁))
+                 (lt .(y , inj₂ (_ , _ , _) ∷ s₁) .(x , inj₂ (_ , _ , _) ∷ s₂) refl eq₂ (<-Right-Step {s₁ = s₁} {s₂} p))
+               = acc (accR (y ⊲ s₁) _ (y , s₁) _ _ (<-WF (y ⊲ s₁) (y , s₁)))
+             aux .(Node (y ⊲ s₁) t) (x , .(inj₁ t ∷ s₂)) (y , .(inj₁ t ∷ s₁))
+                 (lt .(y , inj₁ t ∷ s₁) .(x , inj₁ t ∷ s₂) refl eq₂ (<-Left-Step {t} {s₁ = s₁} {s₂} p))
+               = acc (accL (y ⊲ s₁) t (y , s₁) (<-WF (y ⊲ s₁) (y , s₁)))
+             aux .(Node (x ⊲ s₂) (y ⊲ s₁)) (x , .(inj₁ (y ⊲ s₁) ∷ s₂)) (y , .(inj₂ ((x ⊲ s₂) , _ , _) ∷ s₁))
+                 (lt .(y , inj₂ ((x ⊲ s₂) , _ , _) ∷ s₁) .(x , inj₁ (y ⊲ s₁) ∷ s₂) refl eq₂ (<-Right-Left {s₁ = s₁} {s₂} refl refl))
+               = acc (accR (y ⊲ s₁) (x ⊲ s₂) (y , s₁) _ _ (<-WF (y ⊲ s₁) (y , s₁)))
+             aux .(Node _ (y ⊲ s₁)) (.(Node _ (y ⊲ s₁)) , .[]) (y , .(inj₂ (_ , _ , _) ∷ s₁))
+                 (lt .(y , inj₂ (_ , _ , _) ∷ s₁) .(Node _ (y ⊲ s₁) , []) refl eq₂ (<-Right-Base {s₁ = s₁} refl))
+               = acc (accR (y ⊲ s₁) _ (y , s₁) _ _ (<-WF (y ⊲ s₁) (y , s₁)))
+             aux .(Node (x ⊲ s₁) _) (x , .(inj₁ _ ∷ s₁)) (.(Node (x ⊲ s₁) _) , .[])
+                 (lt .(Node (x ⊲ s₁) _ , []) .(x , inj₁ _ ∷ s₁) refl eq₂ (<-Left-Base {s₁ = s₁} refl))
+               = acc (accH (x ⊲ s₁) _)
 
   ⊳-++-Right : ∀ x n t (p : eval t ≡ n) s → x ⊳ (s ++ Right t n p ∷ []) ≡ Node t (x ⊳ s)
   ⊳-++-Right x n t p (Left t′ ∷ s)       = ⊳-++-Right (Node x t′) n t p s
@@ -318,13 +285,19 @@ module Thesis.Cata where
   prepend-++ x (inj₁ x₁ ∷ s) = <-Left-Step (prepend-++ x s)
   prepend-++ x (inj₂ (y , _ , _) ∷ s) = <-Right-Step (prepend-++ x s)
 
+
+  prepend-++-l : ∀ {t₁ t₂ s₁} → (t₁ , []) < (t₂ , s₁) → ∀ s → (t₁ , s) < (t₂ , s ++ s₁)
+  prepend-++-l x [] = x
+  prepend-++-l x (inj₁ x₁ ∷ s) = <-Left-Step (prepend-++-l x s)
+  prepend-++-l x (inj₂ (y , _ , _) ∷ s) = <-Right-Step (prepend-++-l x s) 
+  
   lemma : ∀ z → plug-⊲ (convert (One-Up z)) ≡ plug-⊲ (convert z)
   lemma (x , []) = refl
   lemma (x , Left t ∷ s) = refl
   lemma (x , Right t n eq ∷ s) rewrite reverse-++ s (inj₂ (t , n , eq))= sym (⊲-++-Right (reverse s))
 
-  to-up-right-lemma : ∀ t t′ n (eq : eval t ≡ n) s s′ → to-up-right t n eq s ≡ inj₁ (t′ , s′) → convert (One-Up (t′ , s′)) < convert (One-Up (t , s))
-  to-up-right-lemma t t′ n eq s s′ x = {!!}
+  postulate to-up-right-lemma : ∀ t t′ n (eq : eval t ≡ n) s s′ → to-up-right t n eq s ≡ inj₁ (t′ , s′) → convert (One-Up (t′ , s′)) < convert (One-Up (t , s))
+  -- to-up-right-lemma t t′ n eq s s′ x = {!!}
 
   -- Predicate to check that a constructor is inj₁ (Left)
   data Is-inj₁ {A B : Set} : A ⊎ B → Set where
@@ -458,41 +431,45 @@ module Thesis.Cata where
               | .(foldl _ (inj₁ x ∷ []) xs) | refl
               | .(Tip n′ ⊳ foldl _ [] (foldl _ (inj₁ x ∷ []) xs)) | refl
               | .(inj₁ x ∷ xs) | refl
-              = proj₂ (Node-inj (plug-⊳-injective-stack (Node tₓ (Node t₁ t₂)) (Node tₓ (Node (Node (Tip n′) x ⊳ xs) t₂) ) s pre⊳))
-              
+              = proj₂ (Node-inj (plug-⊳-injective-stack (Node tₓ (Node t₁ t₂)) (Node tₓ (Node (Node (Tip n′) x ⊳ xs) t₂)) s pre⊳))
+
+  tip-lemma : ∀ {x t s} →
+              (Node (Tip x) t , reverse s) < (Tip x , reverse (inj₁ t ∷ s))
+  tip-lemma {x} {t} {s} with (reverse (inj₁ t ∷ s)) | reverse-++ s (inj₁ t)
+  tip-lemma {x} {t} {s} | .(foldl (λ rev x₁ → x₁ ∷ rev) [] s ++ inj₁ t ∷ []) | refl = prepend-++-l (<-Left-Base refl) (foldl (λ z z₁ → z₁ ∷ z) [] s)
+  
   -- We use the ZipperP property to rule out bogus Zippers
   to-right-< : ∀ (z z′ : Zipper)
              → ZipperP z          -- is z valid?
              → right z ≡ inj₁ z′
              → convert (One-Up z′) < convert (One-Up z)
-  to-right-< (t , []) z′ zP rP = {!!}
-  to-right-< (t , x ∷ s) z′ zP rP = {!!}
-  -- to-right-< (Tip x , []) z′ zP ()
-  -- to-right-< (Tip x , Left t ∷ s) .(t , Right (Tip x) x refl ∷ s) tt refl = ?
-  -- to-right-< (Tip x , Right t n eq ∷ s) (t′ , s′) tt rP                   = to-up-right-lemma (Tip x) t′ x refl (inj₂ (t , n , eq) ∷ s) s′ rP
-  -- to-right-< (Node t₁ t₂ , Right t n eq ∷ s) (t′ , s′) tt rP              = to-left-lemma t₁ t₂ t t′ n eq s s′ (⊎-injective₁ rP)
+  to-right-< (Tip x , []) z′ zP ()
+  to-right-< (Tip x , Left t ∷ s) .(t , Right (Tip x) x refl ∷ s) tt refl = tip-lemma {x} {t} {s}
+  to-right-< (Tip x , Right t n eq ∷ s) (t′ , s′) tt rP                   = to-up-right-lemma (Tip x) t′ x refl (inj₂ (t , n , eq) ∷ s) s′ rP
+  to-right-< (Node t₁ t₂ , Right t n eq ∷ s) (t′ , s′) tt rP              = to-left-lemma t₁ t₂ t t′ n eq s s′ (⊎-injective₁ rP)
 
---   -- the bogus cases we don′t wanna deal with
---   to-right-< (Node t₁ t₂ , []) z′ () rP
---   to-right-< (Node t₁ t₂ , Left x ∷ s) z′ () rP
+  -- the bogus cases we don′t wanna deal with
+  to-right-< (Node t₁ t₂ , []) z′ () rP
+  to-right-< (Node t₁ t₂ , Left x ∷ s) z′ () rP
 
--- --   foldAll : (z : Zipper) → ZipperP z → ℕ
--- --   foldAll (t , s) zP = aux (t , s) zP (<-WF (t ⊳ s) (convert (One-Up (t , s))))
--- --     where aux : ∀ (z : Zipper) → ZipperP z → Acc ([[ plug-⊳ z ]]_<_) (convert (One-Up z)) → ℕ
--- --           aux z zP (acc rs) with right z | inspect right z
--- --           aux z zP (acc rs) | inj₁ z′ | [ eq ] with right-preserves-⊳' z z′ eq
--- --           ... | pr rewrite pr | lemma z | sym (lemma z′) = aux z′ (ZipperP-right z z′ eq zP) (rs (convert (One-Up z′))
--- --                                              (lt (convert (One-Up z′))
--- --                                              (convert (One-Up z))
--- --                                              (trans (lemma z′) (sym (⊳-to-⊲ z′)))
--- --                                              (trans (lemma z)
--- --                                              (trans (sym (⊳-to-⊲ z)) (right-preserves-⊳' z z′ eq))) (to-right-< z z′ zP eq)))
--- --           aux z zP (acc rs) | inj₂ y  | eq = y
+  foldAll : (z : Zipper) → ZipperP z → ℕ
+  foldAll (t , s) zP = aux (t , s) zP (<-WF (t ⊳ s) (convert (One-Up (t , s))))
+    where aux : ∀ (z : Zipper) → ZipperP z → Acc ([[ plug-⊳ z ]]_<_) (convert (One-Up z)) → ℕ
+          aux z zP (acc rs) with right z | inspect right z
+          aux z zP (acc rs) | inj₁ z′ | [ eq ] with right-preserves-⊳' z z′ eq
+          ... | pr rewrite pr | lemma z | sym (lemma z′) = aux z′ (ZipperP-right z z′ eq zP) (rs (convert (One-Up z′))
+                                             (lt (convert (One-Up z′))
+                                             (convert (One-Up z))
+                                             (trans (lemma z′) (sym (⊳-to-⊲ z′)))
+                                             (trans (lemma z)
+                                             (trans (sym (⊳-to-⊲ z)) (right-preserves-⊳' z z′ eq))) (to-right-< z z′ zP eq)))
+          aux z zP (acc rs) | inj₂ y  | eq = y
 
--- --   fold-Tree : Tree → ℕ
--- --   fold-Tree t with to-left t [] | inspect (to-left t) []
--- --   ... | z | [ eq ] = foldAll z (ZipperP-to-left t [] (proj₁ z) (proj₂ z) eq)
+  fold-Tree : Tree → ℕ
+  fold-Tree t with to-left t [] | inspect (to-left t) []
+  ... | z | [ eq ] = foldAll z (ZipperP-to-left t [] (proj₁ z) (proj₂ z) eq)
 
+  t = Node (Node (Tip 1) (Tip 3)) (Tip 2)
 -- --   t = Node (Tip 1)
 -- --   -- good luck with that!
 -- --   correctness : ∀ t → eval t ≡ fold-Tree t

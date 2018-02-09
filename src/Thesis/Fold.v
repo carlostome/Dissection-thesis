@@ -119,8 +119,10 @@ Notation "x < y" := (Smaller_than x y).
 Lemma Smaller_than_acc : forall z, Acc Smaller_than z.
 Proof.
   intros. destruct z. destruct p. induction s.
-    + destruct t.
-      * admit. (*The relation doesn't have this case *)
+  + constructor. intros y H. inversion H.
+    - constructor. intros.
+  + destruct t.
+      * admit. (*The relation 
       * 
   
 
