@@ -173,18 +173,38 @@ module Thesis.Cata where
     <-Right-Left  : ∀ {n} {t₁ t₂ s₁ s₂} {t₁′ t₂′}  {eq : eval t₁′ ≡ n} → (t₁′ ≡ t₂ ⊲ s₂) →  (t₂′ ≡ t₁ ⊲ s₁) → (t₁ , Right t₁′ n eq ∷ s₁)   < (t₂ , Left t₂′ ∷ s₂)
     <-Right-Base  : ∀ {n} {t t₁ s₁} {t′}           {eq : eval t₁  ≡ n} → (t′  ≡ t  ⊲ s₁)                    → (t  , Right t₁ n eq  ∷ s₁)   < (Node t₁ t′ , [])
     <-Left-Base   : ∀ {t t₁ s₁} {t′}           →    (t′ ≡ t ⊲ s₁)                                           → (Node t′ t₁  , [])           < (t , Left t₁ ∷ s₁)
-             
---    -- the relation is adapted to hold evaluations
---   data _<_ : Zipper → Zipper → Set where
---     <-Right-Step  : ∀ {n t t₁ t₂ s₁ s₂} {eq : eval t ≡ n} → (t₁ , s₁) < (t₂ , s₂) →  (t₁ , Right t n eq ∷ s₁)    < (t₂ , Right t n eq ∷ s₂)
---     <-Left-Step   : ∀ {t t₁ t₂ s₁ s₂}    → (t₁ , s₁) < (t₂ , s₂) → (t₁ , Left t ∷ s₁)                            < (t₂ , Left t ∷ s₂)
---     <-Right-Left  : ∀ {t₁ t₂ s₁ s₂}      → (t₁ , Right (t₂ ⊲ s₂) (eval (t₂ ⊲ s₂)) refl ∷ s₁)                     < (t₂ , Left (t₁ ⊲ s₁) ∷ s₂)
---     <-Right-Base  : ∀ {t t₁ s₁} {n} {eq : eval t₁ ≡ n}          → (t  , Right t₁ n eq  ∷     s₁)                 < (Node t₁ (t ⊲ s₁) , [])
---     <-Left-Base   : ∀ {t t₁ s₁}          → (Node (t ⊲ s₁) t₁  , [])                                              < (t , Left t₁ ∷ s₁)
 
+  module Ela where
+  
+    data _<<_ : Zipper → Zipper → Set where
+      <-Right-Step  : ∀ {n} {t t₁ t₂} {s₁ s₂} {eq : eval t ≡ n} → (t₁ , s₁) << (t₂ , s₂)   →  (t₁ , Right t n eq ∷ s₁) << (t₂ , Right t n eq ∷ s₂)
+      <-Left-Step   : ∀ {t t₁ t₂ s₁ s₂}                         → (t₁ , s₁) << (t₂ , s₂)   →  (t₁ , Left t ∷ s₁)       << (t₂ , Left t ∷ s₂)
+      <-Right-Left  : ∀ {n} {t₁ t₂ s₁ s₂} {t₁′ t₂′}  {eq : eval t₁′ ≡ n} → (t₁′ ≡ t₂ ⊲ s₂) →  (t₂′ ≡ t₁ ⊲ s₁) → (t₁ , Right t₁′ n eq ∷ s₁)   << (t₂ , Left t₂′ ∷ s₂)
+
+    data [[_]]_<<_ ( t : Tree) : Zipper → Zipper → Set where
+      lt : ∀ z₁ z₂ → plug-⊲ z₁ ≡ t → plug-⊲ z₂ ≡ t → z₁ << z₂ → [[ t ]] z₁ << z₂
+  
+    mutual
+      accR : ∀ t t₁ x n (eq : eval t₁ ≡ n) → Acc ([[ t ]]_<<_) x → WfRec ([[ Node t₁ t ]]_<<_ ) (Acc ([[ Node t₁ t ]]_<<_)) (proj₁ x , Right t₁ n eq ∷ (proj₂ x))
+      accR .(y ⊲ s₁) t₁ (x , s) n eq (acc rs) (y , .(inj₂ (t₁ , n , eq) ∷ s₁)) (lt .(y , inj₂ (t₁ , n , eq) ∷ s₁) .(x , inj₂ (t₁ , n , eq) ∷ s) refl eq₂ (<-Right-Step {s₁ = s₁} p)) = acc (accR (y ⊲ s₁) t₁ (y , s₁) n eq (rs (y , s₁) (lt (y , s₁) (x , s) refl (proj₂ (Node-inj eq₂)) p)))
+    
+      accL : ∀ t t₁ x →  Acc ([[ t ]]_<<_) x → WfRec ([[ Node t t₁ ]]_<<_ ) (Acc ([[ Node t t₁  ]]_<<_ )) (proj₁ x , Left t₁ ∷ (proj₂ x))
+      accL .(x ⊲ s) t₁ (x , s) (acc rs) (y , .(inj₁ t₁ ∷ s₁)) (lt .(y , inj₁ t₁ ∷ s₁) .(x , inj₁ t₁ ∷ s) eq₁ refl (<-Left-Step {s₁ = s₁} p))
+        = acc (accL (x ⊲ s) t₁ (y , s₁) (rs (y , s₁) (lt (y , s₁) (x , s) (proj₁ (Node-inj eq₁)) refl p)))
+      accL .(x ⊲ s) .(y ⊲ s₁) (x , s) (acc rs) (y , .(inj₂ ((x ⊲ s) , _ , _) ∷ s₁)) (lt .(y , inj₂ ((x ⊲ s) , _ , _) ∷ s₁) .(x , inj₁ (y ⊲ s₁) ∷ s) eq₁ refl (<-Right-Left {s₁ = s₁} refl refl)) = acc (accR (y ⊲ s₁) (x ⊲ s) (y , s₁) _ _ (<-WF (y ⊲ s₁) (y , s₁)))
+    
+      accH : ∀ t₁ t₂ → WfRec ([[ Node t₁ t₂ ]]_<<_) (Acc ([[ Node t₁ t₂ ]]_<<_ )) (Node t₁ t₂ , [])
+      accH = {!!}
+    
+      <-WF : ∀ t → Well-founded [[ t ]]_<<_
+      <-WF t x = acc (aux t x)
+        where aux : ∀ t x → WfRec ([[ t ]]_<<_) (Acc ([[ t ]]_<<_)) x
+              aux .(Node t (y ⊲ s₁)) (x , .(inj₂ (t , n , _) ∷ s₂)) (y , .(inj₂ (t , n , _) ∷ s₁)) (lt .(y , inj₂ (t , n , _) ∷ s₁) .(x , inj₂ (t , n , _) ∷ s₂) refl eq₂ (<-Right-Step {n} {t} {s₁ = s₁} {s₂} p)) = acc (accR (y ⊲ s₁) t (y , s₁) n _ (<-WF (y ⊲ s₁) (y , s₁)))
+              aux .(Node (y ⊲ s₁) t) (x , .(inj₁ t ∷ s₂)) (y , .(inj₁ t ∷ s₁)) (lt .(y , inj₁ t ∷ s₁) .(x , inj₁ t ∷ s₂) refl eq₂ (<-Left-Step {t} {s₁ = s₁} {s₂} p)) = acc (accL (y ⊲ s₁) t (y , s₁) (<-WF (y ⊲ s₁) (y , s₁)))
+              aux .(Node (x ⊲ s₂) (y ⊲ s₁)) (x , .(inj₁ (y ⊲ s₁) ∷ s₂)) (y , .(inj₂ ((x ⊲ s₂) , _ , _) ∷ s₁)) (lt .(y , inj₂ ((x ⊲ s₂) , _ , _) ∷ s₁) .(x , inj₁ (y ⊲ s₁) ∷ s₂) refl eq₂ (<-Right-Left {s₁ = s₁} {s₂} refl refl)) = acc (accR (y ⊲ s₁) (x ⊲ s₂) (y , s₁) _ _ (<-WF (y ⊲ s₁) (y , s₁)))
+             
   data [[_]]_<_ ( t : Tree) : Zipper → Zipper → Set where
     lt : ∀ z₁ z₂ → plug-⊲ z₁ ≡ t → plug-⊲ z₂ ≡ t → z₁ < z₂ → [[ t ]] z₁ < z₂
-
   mutual
     accR : ∀ t t₁ x n (eq : eval t₁ ≡ n) → Acc ([[ t ]]_<_) x → WfRec ([[ Node t₁ t ]]_<_ ) (Acc ([[ Node t₁ t ]]_<_)) (proj₁ x , Right t₁ n eq ∷ (proj₂ x))
     accR .(y ⊲ s₁) t₁ x n eq (acc rs) (y , .(inj₂ (t₁ , n , eq) ∷ s₁)) (lt .(y , inj₂ (t₁ , n , eq) ∷ s₁)
