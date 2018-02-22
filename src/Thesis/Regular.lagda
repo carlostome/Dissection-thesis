@@ -305,59 +305,31 @@ module Thesis.Regular where
   first (R ⨂ Q) (r , q) | inj₁ em₁ | inj₂ (dr , x)  = inj₂ (inj₂ (em₁ , dr) , x)
   first (R ⨂ Q) (r , q) | inj₁ em₁ | inj₁ em₂       = inj₁ (em₁ , em₂)
 
+
+
+  {- We would like to be more precise on the types and say that if there is no hole then we can return a ⟦ R ⟧ Y for any Y
+     in the spirit of parametric polymorphism. -}
   mutual
-    first-μ : ∀ {X : Set} → (R : Reg) → μ R → List (⟦ ∇ R ⟧₂ X (μ R)) → (List (⟦ ∇ R ⟧₂ X (μ R)) × ⟦ R ⟧ X)
-    first-μ {X} R (In x) xs = first-cp R x {!cont-first xs!} 
+    first-cps : ∀ {X : Set} {Result : Set} → (R : Reg) → ⟦ R ⟧ X → (X → ⟦ ∇ R ⟧₂ X X → Maybe Result) → Maybe Result
+    first-cps 0′ () k
+    first-cps 1′ tt k = nothing
+    first-cps V x k   = k x tt
+    first-cps (R ⨁ Q) (inj₁ x) k = first-cps R x (λ x i → k x (inj₁ i))
+    first-cps (R ⨁ Q) (inj₂ y) k = first-cps Q y (λ x i → k x (inj₂ i))
+    first-cps (R ⨂ Q) (x , y) k  = first-cps R x (λ x i → k x (inj₁ (i , y))) <|> first-cps Q y (λ y i → k y (inj₂ (x , i)))
+      where _<|>_ : ∀ {A : Set} → Maybe A → Maybe A → Maybe A
+            just x  <|> y = just x
+            nothing <|> y = y
 
-    cont-first : ∀ {X : Set} (R : Reg) → List (⟦ ∇ R ⟧₂ X (μ R)) → ⟦ R ⟧ X ⊎ (⟦ ∇ R ⟧₂ X (μ R) × μ R) → List (⟦ ∇ R ⟧₂ X (μ R)) × ⟦ R ⟧ X
-    cont-first R xs (inj₁ x)       = xs , x
-    cont-first R xs (inj₂ (y , x)) = first-μ R x (y ∷ xs)
-    
-    first-cp : ∀ {X : Set} → (R : Reg) → ⟦ R ⟧ (μ R) → (⟦ R ⟧ X ⊎ (⟦ ∇ R ⟧₂ X (μ R) × μ R) → List (⟦ ∇ R ⟧₂ X (μ R)) × ⟦ R ⟧ X) → List (⟦ ∇ R ⟧₂ X (μ R)) × ⟦ R ⟧ X 
-    first-cp R x₁ x₂ = {!!}
-    -- aux 0′ ()
-      -- aux 1′ tt = inj₁ tt
-      -- aux V x   = ?
-      
-      -- aux (R ⨁ Q) (inj₁ x) with aux R x
-      -- aux (R ⨁ Q) (inj₁ x) | inj₂ (dr , x′)  = inj₂ (inj₁ dr , x′)
-      -- aux (R ⨁ Q) (inj₁ x) | inj₁ em         = inj₁ (inj₁ em)
-      -- aux (R ⨁ Q) (inj₂ y) with aux Q y
-      -- aux (R ⨁ Q) (inj₂ y) | inj₂ (dq , y′)  = inj₂ (inj₂ dq , y′)
-      -- aux (R ⨁ Q) (inj₂ y) | inj₁ em         = inj₁ (inj₂ em)
-      -- aux (R ⨂ Q) (r , q) with aux R r
-      -- aux (R ⨂ Q) (r , q) | inj₂ (dr , x) = inj₂ ((inj₁ (dr , q)) , x)
-      -- aux (R ⨂ Q) (r , q) | inj₁ em₁ with aux Q q
-      -- aux (R ⨂ Q) (r , q) | inj₁ em₁ | inj₂ (dr , x)  = inj₂ (inj₂ (em₁ , dr) , x)
-      -- aux (R ⨂ Q) (r , q) | inj₁ em₁ | inj₁ em₂       = inj₁ (em₁ , em₂)
+    first-μ : ∀ {X : Set} {Result : Set} → (R : Reg) → μ R → List (⟦ ∇ R ⟧₂ (μ R) (μ R)) → Maybe Result
+    first-μ {X} R (In x) cs = first-cps R x (λ x c → first-μ R {!x!} (c ∷ cs))
+    --                ^                        ^
+    -- the x bound by the lambda is not structurally smaller than the original x
 
-  {- I don't like to use maybe for the case where the value is a leaf of
-     the tree. We should be able to express the fact on the type level -}
-  first-cps : {Result : Set} {X Y : Set} (R : Reg)
-            → (X → ⟦ ∇ R ⟧₂ Y X → Maybe Result)
-            → ⟦ R ⟧ X → Maybe Result
-  first-cps 0′ k ()
-  first-cps 1′ k tt = nothing
-  first-cps V k x   = k x tt
-  first-cps (R ⨁ Q) k (inj₁ x) = first-cps R (λ x ctx → k x (inj₁ ctx)) x
-  first-cps (R ⨁ Q) k (inj₂ y) = first-cps Q (λ y ctx → k y (inj₂ ctx)) y
-  first-cps (R ⨂ Q) k (r , q)  = first-cps R (λ x ctx → k x (inj₁ (ctx , q))) r
 
-  mutual
-    first-μ-cps : ∀ {Result : Set} {X : Set} (R : Reg) → μ R → List (⟦ ∇ R ⟧₂ X (μ R)) → Maybe Result
-    first-μ-cps {Result} {X} R (In x) ctxs
-      = first-cps R (cont-μ R ctxs) x
 
-    cont-μ : ∀ {Result : Set} {X : Set} (R : Reg) → List (⟦ ∇ R ⟧₂ X (μ R)) → μ R → ⟦ ∇ R ⟧₂ X (μ R) → Maybe Result
-    cont-μ R ctxs (In x) ctx = {! !}
-    {-
-    ∀ {x} {y} → A x y × (A x y → ⊥) ⊎ B x y
-  -}
+
   data lt : (R : Reg) → Zipper R → Zipper R → Set where
-    -- this are wrong
---    lt-left  : ∀ {R} {t₁ t₂ s s₂} → Plug R (s , plug-μ R t₂ s₂) t₁ → IsInj₁ R s → lt R (In t₁ , []) (t₂ , s ∷ s₂)
---    lt-right : ∀ {R} {t₁ t₂ s s₁} → Plug R (s , plug-μ R t₁ s₁) t₂ → IsInj₂ R s → lt R (t₁ , s ∷ s₁) (In t₂ , [])
-
     lt-step  : ∀ {R} {t₁ t₂ x y s₁ s₂}  → x ≡ y → lt R (t₁ , s₁) (t₂ , s₂)                    → lt R (t₁ , x ∷ s₁) (t₂ , y ∷ s₂)
     lt-base  : ∀ {R} {t₁ t₂ x y s₁ s₂}  → nltReg R (y , plug-μ R t₂ s₂) (x , plug-μ R t₁ s₁)  → lt R (t₂ , y ∷ s₂) (t₁ , x ∷ s₁)
 
@@ -448,27 +420,3 @@ module Thesis.Regular where
             aux (R ⨂ R₁) .(In (plug R dr (plug-μ (R ⨂ R₁) b s₂) , q)) (a , .(inj₁ (dr′ , q) ∷ s₁)) (b , .(inj₁ (dr , q) ∷ s₂)) (iRel .(b , inj₁ (dr , q) ∷ s₂) .(a , inj₁ (dr′ , q) ∷ s₁) refl eq₂ (lt-base {x = .(inj₁ (dr′ , q))} {.(inj₁ (dr , q))} {s₁} {s₂} (step-⨂-inj₁ {dr = dr} {dr′} {q} refl p))) = acc {!!}
             aux (R ⨂ R₁) t (a , .(inj₂ (_ , _) ∷ s₁)) (b , .(inj₂ (_ , _) ∷ s₂)) (iRel .(b , inj₂ (_ , _) ∷ s₂) .(a , inj₂ (_ , _) ∷ s₁) eq₁ eq₂ (lt-base {x = .(inj₂ (_ , _))} {.(inj₂ (_ , _))} {s₁} {s₂} (step-⨂-inj₂ x₁ p))) = {!!}
             aux (R ⨂ R₁) t (a , .(inj₁ _ ∷ s₁)) (b , .(inj₂ _ ∷ s₂)) (iRel .(b , inj₂ _ ∷ s₂) .(a , inj₁ _ ∷ s₁) eq₁ eq₂ (lt-base {x = .(inj₁ _)} {.(inj₂ _)} {s₁} {s₂} (base-⨂ x₂))) = {!!}
-
-  data IRel1 (R : Reg) (t : ⟦ R ⟧ (μ R)) : Zipper R → Zipper R → Set where
-    iRel : ∀ t₁ x s₁ t₂ y s₂ → Plug R (x , plug-μ R t₁ s₁) t
-                             → Plug R (y , plug-μ R t₂ s₂) t
-                             → lt R (t₁ , x ∷ s₁) (t₂ , y ∷ s₂)
-                             → IRel1 R t (t₁ , s₁) (t₂ , s₂)
-
-  
-  mutual
-    acc1-⨁-inj₁ : ∀ R Q x a s → Acc (IRel1 (R ⨁ Q) (inj₁ x)) (a , s) → WfRec (IRel1 (R ⨁ Q) (inj₁ x)) (Acc (IRel1 (R ⨁ Q) (inj₁ x))) (a , s)
-    acc1-⨁-inj₁ R Q x a s (acc rs) .(t₁ , s₁) (iRel t₁ .(inj₁ x₁) s₁ .a .(inj₁ x₁) .s (step-⨁-inj₁ {x = x₁} eq₁) (step-⨁-inj₁ eq₂) (lt-step refl p)) = {!!}
-    acc1-⨁-inj₁ R Q x a s (acc rs) .(t₁ , s₁) (iRel t₁ x₁ s₁ .a y .s eq₁ eq₂ (lt-base x₂)) = {!!}
-      
-    IRel1-WF : (R : Reg) → (t : ⟦ R ⟧ (μ R)) → Well-founded (IRel1 R t)
-    IRel1-WF R t x = acc (aux R t x)
-      where aux : (R : Reg) → (t : ⟦ R ⟧ (μ R)) → (x : Zipper R) → WfRec (IRel1 R t) (Acc (IRel1 R t)) x
-            aux 0′ t (a , s) (b , s′) (iRel .b () .s′ .a _ .s eq₁ eq₂ (lt-step refl p))
-            aux 1′ t (a , s) (b , s′) (iRel .b () .s′ .a _ .s eq₁ eq₂ (lt-step refl p))
-            aux V t (a , s) (b , s′) (iRel .b x .s′ .a .x .s eq₁ eq₂ (lt-step refl p)) = {!!}
-            aux (R ⨁ Q) .(inj₁ y) (a , s) (b , s′) (iRel .b .(inj₁ x) .s′ .a .(inj₁ x) .s (step-⨁-inj₁ {x = x} {y} eq₁) (step-⨁-inj₁ eq₂) (lt-step refl p))
-              = acc {!eq₁!}
-            aux (R ⨁ Q) .(inj₂ y) (a , s) (b , s′) (iRel .b .(inj₂ x) .s′ .a .(inj₂ x) .s (step-⨁-inj₂ {x = x} {y} eq₁) (step-⨁-inj₂ eq₂) (lt-step refl p)) = {!!}
-            aux (R ⨂ R₁) t (a , s) (b , s′) (iRel .b x .s′ .a .x .s eq₁ eq₂ (lt-step refl p)) = {!!}
-            aux R t (a , s) (b , s′) (iRel .b x .s′ .a y .s eq₁ eq₂ (lt-base x₂)) = {!!}
