@@ -327,8 +327,6 @@ module Thesis.Regular where
     -- the x bound by the lambda is not structurally smaller than the original x
 
 
-
-
   data lt : (R : Reg) → Zipper R → Zipper R → Set where
     lt-step  : ∀ {R} {t₁ t₂ x y s₁ s₂}  → x ≡ y → lt R (t₁ , s₁) (t₂ , s₂)                    → lt R (t₁ , x ∷ s₁) (t₂ , y ∷ s₂)
     lt-base  : ∀ {R} {t₁ t₂ x y s₁ s₂}  → nltReg R (y , plug-μ R t₂ s₂) (x , plug-μ R t₁ s₁)  → lt R (t₂ , y ∷ s₂) (t₁ , x ∷ s₁)
