@@ -31,9 +31,9 @@ module Thesis.Fold where
     ++-assoc (x ∷ xs) ys zs = cong (x ∷_) (++-assoc xs ys zs)
 
     reverse-++ : ∀ {A : Set} (s : List A) (x : A) → reverse (x ∷ s) ≡ reverse s ++ (x ∷ [])
-    reverse-++ [] x = refl
-    reverse-++ (x₁ ∷ xs) x with reverse-++ xs x
-    ... | z = {!!}
+    reverse-++ xs x = unfold-reverse x xs
+
+ 
     
   data Tree : Set where
     Tip   : ℕ → Tree
