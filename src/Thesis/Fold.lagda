@@ -30,28 +30,26 @@ module Thesis.Fold where
     ++-assoc [] ys zs       = refl
     ++-assoc (x ∷ xs) ys zs = cong (x ∷_) (++-assoc xs ys zs)
 
-    ++-right-identity : ∀ {A : Set} (s : List A) → s ≡ s ++ []
-    ++-right-identity [] = refl
-    ++-right-identity (x ∷ s) = cong (x ∷_) (++-right-identity s)
-
     reverse-++ : ∀ {A : Set} (s : List A) (x : A) → reverse (x ∷ s) ≡ reverse s ++ (x ∷ [])
     reverse-++ [] x = refl
-    reverse-++ (y ∷ s) x = {!!}
-
-    reverse-reverse : ∀ {A : Set} (xs : List A) → reverse (reverse xs) ≡ xs
-    reverse-reverse [] = refl
-    reverse-reverse (x ∷ xs) = {!!}
-
-    lemmam : ∀ {A : Set} (y : A) (xs ys : List A) → xs ++ (y ∷ ys) ≡ (xs ++ (y ∷ [])) ++ ys
-    lemmam y [] ys = refl
-    lemmam y (x ∷ xs) ys = cong (x ∷_) (lemmam y xs ys)
-
+    reverse-++ (x₁ ∷ xs) x with reverse-++ xs x
+    ... | z = {!!}
+    
   data Tree : Set where
     Tip   : ℕ → Tree
     Node  : (t₁ t₂ : Tree) → Tree
 
   Node-inj-inv : ∀ {a b x y} → a ≡ x → b ≡ y → Node a b ≡ Node x y
-  Node-inj-inv = {!!}
+  Node-inj-inv refl refl = refl
+
+  Node-injᵣ : ∀ {l r₁ r₂} → r₁ ≡ r₂ → Node l r₁ ≡ Node l r₂
+  Node-injᵣ refl = refl
+
+  Node-injₗ : ∀ {l₁ l₂ r} → l₁ ≡ l₂ → Node l₁ r ≡ Node l₂ r
+  Node-injₗ refl = refl
+
+  Node-inj : ∀ {a b x y} → Node a b ≡ Node x y → a ≡ x × b ≡ y
+  Node-inj refl = refl , refl
   eval : Tree → ℕ
   eval (Tip x) = x
   eval (Node t t₁) = eval t + eval t₁
@@ -79,12 +77,6 @@ module Thesis.Fold where
   plugZ⇓ : Zipper → Tree
   plugZ⇓ (n , s) = plug⇓ (Tip n) s
 
-  Node-injᵣ : ∀ {l r₁ r₂} → r₁ ≡ r₂ → Node l r₁ ≡ Node l r₂
-  Node-injᵣ refl = refl
-
-  Node-injₗ : ∀ {l₁ l₂ r} → l₁ ≡ l₂ → Node l₁ r ≡ Node l₂ r
-  Node-injₗ refl = refl
-
   data _<_ : Zipper → Zipper → Set where
       <-Right-Step  : ∀ {n} {l} {t₁ t₂} {s₁ s₂} {eq : eval l ≡ n} → (t₁ , s₁) < (t₂ , s₂)   →  (t₁ , Right l n eq ∷ s₁) < (t₂ , Right l n eq ∷ s₂)
       <-Left-Step   : ∀ {r} {t₁ t₂ s₁ s₂}                         → (t₁ , s₁) < (t₂ , s₂)   →  (t₁ , Left r ∷ s₁)       < (t₂ , Left r ∷ s₂)
@@ -98,10 +90,10 @@ module Thesis.Fold where
     accR : ∀ r l x s n (eq : eval l ≡ n) → Acc ([[ r ]]_<_) (x , s) → WfRec ([[ Node l r ]]_<_ ) (Acc ([[ Node l r ]]_<_)) (x , Right l n eq ∷ s)
     accR .(plug⇓ (Tip t₁) s₁) l x s n eq (acc rs) .(t₁ , inj₂ (l , n , eq) ∷ s₁)
                                          (lt .(t₁ , inj₂ (l , n , eq) ∷ s₁) .(x , inj₂ (l , n , eq) ∷ s) refl eq₂ (<-Right-Step {t₁ = t₁} {s₁ = s₁} p))
-      = acc (accR (plug⇓ (Tip t₁) s₁) l t₁ s₁ n eq (rs (t₁ , s₁) (lt (t₁ , s₁) (x , s) refl {!!} p)))
+      = acc (accR (plug⇓ (Tip t₁) s₁) l t₁ s₁ n eq (rs (t₁ , s₁) (lt (t₁ , s₁) (x , s) refl (proj₂ (Node-inj eq₂)) p)))
     accL : ∀ l r  x s →  Acc ([[ l ]]_<_) (x , s) → WfRec ([[ Node l r ]]_<_ ) (Acc ([[ Node l r  ]]_<_ )) (x , Left r ∷ s)
     accL l r x s (acc rs) (y , .(inj₁ r ∷ s₁)) (lt .(y , inj₁ r ∷ s₁) .(x , inj₁ r ∷ s) eq₁ eq₂ (<-Left-Step {s₁ = s₁} p))
-      = acc (accL l r y s₁ (rs (y , s₁) (lt (y , s₁) (x , s) {!!} {!!} p)))
+      = acc (accL l r y s₁ (rs (y , s₁) (lt (y , s₁) (x , s) (proj₁ (Node-inj eq₁)) (proj₁ (Node-inj eq₂)) p)))
     accL .(plug⇓ (Tip x) s) .(plug⇓ (Tip y) s₁) x s (acc rs) (y , .(inj₂ (plug⇓ (Tip x) s , n , eq) ∷ s₁))
          (lt .(y , inj₂ (plug⇓ (Tip x) s , n , eq) ∷ s₁) .(x , inj₁ (plug⇓ (Tip y) s₁) ∷ s) refl eq₂ (<-Right-Left {n} {s₁ = s₁} {eq = eq} refl refl))
       = acc (accR (plug⇓ (Tip y) s₁) (plug⇓ (Tip x) s) y s₁ n eq (<-WF (plug⇓ (Tip y) s₁) (y , s₁)))
@@ -140,14 +132,11 @@ module Thesis.Fold where
   data Is-inj₁ {A B : Set} : A ⊎ B → Set where
     is-inj₁ : ∀ {x} → Is-inj₁ (inj₁ x)
 
-  plug⇑-to-plug⇓ : ∀ (z : Zipper) → plugZ⇑ z ≡ plugZ⇓ (convert z)
-  plug⇑-to-plug⇓ (t , s) = aux (Tip t) s (reverseView s)
-    where aux : ∀ t s → Reverse s → plug⇑ t s ≡ plug⇓ t (reverse s)
-          aux = {!!}
-          
+
   All-++ : ∀ {A : Set} {P : A → Set} {xs ys : List A} → All P xs → All P ys → All P (xs ++ ys)
   All-++ {xs = []} {ys} [] x₁ = x₁
-  All-++ {xs = x₂ ∷ xs} {ys} x x₁ = {!!}
+  All-++ {xs = x₂ ∷ xs} {ys} (px ∷ x) x₁ = px ∷ All-++ x x₁
+  
   All-end : ∀ {A : Set} {P : A → Set} {xs : List A} {x : A} → All P xs → P x → All P (xs ++ (x ∷ []))
   All-end [] px          = px ∷ []
   All-end (px ∷ pxs) px' = px ∷ All-end pxs px'
@@ -161,6 +150,8 @@ module Thesis.Fold where
   unload-preserves-plug⇑ t n eq (Left x ∷ s) t′ s′ p         = load-preserves-plug⇑ x (inj₂ (t , n , eq) ∷ s) t′ s′ p
   unload-preserves-plug⇑ t n eq (Right x n′ eq′ ∷ s) t′ s′ p = unload-preserves-plug⇑ (Node x t) (n′ + n) (+-lemma eq′ eq) s t′ s′ p
 
+  step-preserves-plug⇑ : ∀ (z z′ : Zipper) → step z ≡ inj₁ z′ → plugZ⇑ z ≡ plugZ⇑ z′
+  step-preserves-plug⇑ (t , s) (t′ , s′) x = unload-preserves-plug⇑ (Tip t) t refl s t′ s′ x
   plug⇑-++-Right : ∀ x n t (p : eval t ≡ n) s → plug⇑ x (s ++ Right t n p ∷ []) ≡ Node t (plug⇑ x s)
   plug⇑-++-Right x n t p (Left t′ ∷ s)       = plug⇑-++-Right (Node x t′) n t p s
   plug⇑-++-Right x n t p (Right t′ n′ p′ ∷ s)   = plug⇑-++-Right (Node t′ x) n t p s
@@ -176,6 +167,37 @@ module Thesis.Fold where
   plug⇓-++-Left (Right t n p ∷ s)  = cong (Node t)      (plug⇓-++-Left s)
   plug⇓-++-Left []                 = refl
 
+  plug⇓-++-Right : ∀ {x} {n} {t} {p : eval t ≡ n} s → plug⇓ x (s ++ Right t n p ∷ []) ≡ plug⇓ (Node t x) s
+  plug⇓-++-Right (Left t ∷ s)       = cong (flip Node t) (plug⇓-++-Right s)
+  plug⇓-++-Right (Right t n p ∷ s)  = cong (Node t) (plug⇓-++-Right s)
+  plug⇓-++-Right []              = refl
+
+
+  plug⇑-to-plug⇓ : ∀ t s → plug⇑ t s ≡ plug⇓ t (reverse s)
+  plug⇑-to-plug⇓  t  s = aux t s (reverseView s)
+    where aux : ∀ t s → Reverse s → plug⇑ t s ≡ plug⇓ t (reverse s)
+          aux t .[] [] = refl
+          aux t .(s ++ Left t₁ ∷ []) (s ∶ x ∶ʳ Left t₁)
+            rewrite reverse-++-commute s (Left t₁ ∷ [])
+                  | plug⇑-++-Left t t₁ s                   = cong (flip Node t₁) (aux t s x)
+          aux t .(s ++ Right t₁ n eq ∷ []) (s ∶ x ∶ʳ Right t₁ n eq)
+            rewrite reverse-++-commute s (Right t₁ n eq ∷ [])
+                  | plug⇑-++-Right t n t₁ eq s         = cong (Node t₁) (aux t s x)
+
+  plug⇓-to-plug⇑ : ∀ t s → plug⇓ t s ≡ plug⇑ t (reverse s)
+  plug⇓-to-plug⇑ t  s = aux t s (reverseView s)
+    where aux : ∀ t s → Reverse s → plug⇓ t s ≡ plug⇑ t (reverse s)
+          aux t .[] [] = refl
+          aux t .(s ++ Right t₁ n eq ∷ []) (s ∶ x ∶ʳ Right t₁ n eq)
+            rewrite reverse-++-commute s (Right t₁ n eq ∷ [])
+                  | plug⇓-++-Right {t} {n} {t₁} {eq} s      = aux (Node t₁ t) s x
+          aux t .(s ++ Left t₁ ∷ []) (s ∶ x ∶ʳ Left t₁)
+            rewrite reverse-++-commute s (Left t₁ ∷ [])
+                  | plug⇓-++-Left {t} {t₁} s                = aux (Node t t₁) s x
+
+  plugZ⇓-to-plugZ⇑ : ∀ t s → plugZ⇓ (t , s) ≡ plugZ⇑ (t , reverse s)
+  plugZ⇓-to-plugZ⇑ t s = plug⇓-to-plug⇑ (Tip t) s
+ 
   prepend : ∀ {t₁ t₂ s₁ s₂} → (t₁ , s₁) < (t₂ , s₂) → ∀ s → (t₁ , s ++ s₁) < (t₂ , s ++ s₂)
   prepend x (Left t ∷ s)       = <-Left-Step  (prepend x s)
   prepend x (Right t n eq ∷ s) = <-Right-Step (prepend x s)         
@@ -270,7 +292,7 @@ module Thesis.Fold where
     | .(foldl _ [] s ++ inj₂ (Tip n , n , eq) ∷ []) | refl | .(foldl _ [] xs ++ inj₁ x ∷ []) | refl
     | .(foldl _ [] s ++ inj₂ (Tip n , n , eq) ∷ inj₁ t₂ ∷ []) | refl
     | .(foldl (λ rev x₁ → x₁ ∷ rev) [] s ++ inj₂ (Tip n , n , eq) ∷ inj₁ t₂ ∷ foldl (λ rev x₁ → x₁ ∷ rev) [] xs ++ inj₁ x ∷ []) | refl
-    = prepend (<-Right-Left refl (Node-inj-inv (sym (trans (plug⇓-++-Left (reverse xs)) (sym {!!}))) refl)) (reverse s)
+    = prepend (<-Right-Left refl (Node-inj-inv (sym (trans (plug⇓-++-Left (reverse xs)) (sym (plug⇑-to-plug⇓ (Node (Tip t′) x) xs)))) refl)) (reverse s)
 
 
   data Is-inj₂ {A B : Set} : A ⊎ B → Set where
@@ -285,33 +307,219 @@ module Thesis.Fold where
   unload-stack-lemma (inj₁ x₂ ∷ pre) x post t n eq t′ s′ (() ∷ x₁) p
   unload-stack-lemma (inj₂ (y , .(eval y) , refl) ∷ pre) x post t .(eval t) refl t′ s′ (is-inj₂ ∷ all) p
     with unload-stack-lemma pre x post (Node y t) (eval y + eval t) refl t′ s′ all p
-  unload-stack-lemma (inj₂ (y , .(eval y) , refl) ∷ pre) .(plug⇑ (Tip t′) ss) post t .(eval t) refl t′ .(ss ++ inj₂ (plug⇑ (Node y t) pre , eval (plug⇑ (Node y t) pre) , refl) ∷ post) (is-inj₂ ∷ all) p | ss , refl , al , refl = ss , refl , al , refl
+  unload-stack-lemma (inj₂ (y , .(eval y) , refl) ∷ pre) .(plug⇑ (Tip t′) ss) post t .(eval t) refl t′
+    .(ss ++ inj₂ (plug⇑ (Node y t) pre , eval (plug⇑ (Node y t) pre) , refl) ∷ post) (is-inj₂ ∷ all) p | ss , refl , al , refl = ss , refl , al , refl
 
   data View : Stack → Set where
-    Empty : View []
     AllOf  : ∀ xs → All Is-inj₂ xs → View xs
-    Prefix : ∀ pre x xs → All Is-inj₂ pre → View (pre ++ (Left x ∷ xs))
+    Prefix : ∀ pre y ys → All Is-inj₂ pre → View (pre ++ (Left y ∷ ys))
 
   toView : ∀ s → View s
-  toView [] = Empty
+  toView [] = AllOf [] []
   toView (inj₁ x ∷ s) = Prefix [] x s []
   toView (inj₂ y ∷ s) with toView s
-  toView (inj₂ y ∷ .[]) | Empty                                = AllOf (inj₂ y ∷ []) (is-inj₂ ∷ [])
   toView (inj₂ y ∷ s) | AllOf .s x                             = AllOf (inj₂ y ∷ s) (is-inj₂ ∷ x)
   toView (inj₂ y ∷ .(pre ++ inj₁ x ∷ xs)) | Prefix pre x xs x₁ = Prefix (inj₂ y ∷ pre) x xs (is-inj₂ ∷ x₁)
 
+  other-lemma : ∀ s → All Is-inj₂ s → ∀ t n eq  t′ s′ → unload t n eq s ≡ inj₁ (t′ , s′) → ⊥
+  other-lemma .[] [] t n eq t′ s′ ()
+  other-lemma .(inj₂ (t′′ , n′ , eq′) ∷ _) (is-inj₂ {(t′′ , n′ , eq′)} ∷ x) t n eq t′ s′ p = other-lemma _ x (Node t′′ t) (n′ + n) (+-lemma eq′ eq) t′ s′ p
+  
   unload-< : ∀ n eq s t′ s′ → unload (Tip n) n eq s ≡ inj₁ (t′ , s′) → (t′ , reverse s′) < (n , reverse s)
   unload-< n eq [] t′ s′ ()
   unload-< n eq (Left x₁ ∷ s) t′ s′ x                 = load-< n eq x₁ s t′ s′ x
   unload-< n eq (inj₂ (node , val , eq′) ∷ s) t′ s′ p with toView s
-  unload-< n eq (inj₂ (node , val , eq′) ∷ .[]) t′ s′ () | Empty
-  unload-< n eq (inj₂ (node , val , eq′) ∷ s) t′ s′ p | AllOf .s x = {!!} -- contradiction
+  unload-< n eq (inj₂ (node , val , eq′) ∷ s) t′ s′ p | AllOf .s x = ⊥-elim (other-lemma s x (Node node (Tip n)) (val + n) (+-lemma eq′ eq) t′ s′ p)
   unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ x ∷ xs)) t′ s′ p | Prefix pre x xs all
     with unload-stack-lemma pre x xs (Node node (Tip n)) (val + n) (+-lemma eq′ eq) t′ s′ all p
-  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′ .(inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl = {!!}
-  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Tip t′) (y ∷ ys)) ∷ xs)) t′.(y ∷ ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p | Prefix pre .(plug⇑ (Tip t′) (y ∷ ys)) xs all | .(_ ∷ _) , refl , _∷_ {y} {ys} px al , refl = {!px!}
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′
+    .(inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p
+    | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl
+    with reverse (inj₂ (node , val , eq′) ∷ (pre ++ inj₁ (Tip t′) ∷ xs))
+      | reverse-++ (pre ++ inj₁ (Tip t′) ∷ xs) (inj₂ (node , val , eq′))
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′
+    .([] ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p
+    | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl
+    | .(foldl (λ rev x → x ∷ rev) [] (pre ++ inj₁ (Tip t′) ∷ xs) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    with reverse (pre ++ inj₁ (Tip t′) ∷ xs)
+      | reverse-++-commute pre (inj₁ (Tip t′) ∷ xs)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′
+    .([] ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p
+    | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl
+    | .(foldl _ [] (pre ++ inj₁ (Tip t′) ∷ xs) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl (λ rev x → x ∷ rev) (inj₁ (Tip t′) ∷ []) xs ++ foldl (λ rev x → x ∷ rev) [] pre) | refl
+    with reverse (inj₁ (Tip t′) ∷ xs)
+      | reverse-++ xs (inj₁ (Tip t′))
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′
+    .([] ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p
+    | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl
+    | .(foldl _ [] (pre ++ inj₁ (Tip t′) ∷ xs) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (Tip t′) ∷ []) xs ++ foldl _ [] pre) | refl
+    | .(foldl (λ rev x → x ∷ rev) [] xs ++ inj₁ (Tip t′) ∷ []) | refl
+    with ((reverse xs ++ inj₁ (Tip t′) ∷ []) ++ reverse pre)
+      | ++-assoc (reverse xs) (inj₁ (Tip t′) ∷ []) (reverse pre)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′
+    .([] ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p
+    | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl
+    | .(foldl _ [] (pre ++ inj₁ (Tip t′) ∷ xs) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (Tip t′) ∷ []) xs ++ foldl _ [] pre) | refl
+    | .(foldl _ [] xs ++ inj₁ (Tip t′) ∷ []) | refl
+    | .(foldl (λ rev x → x ∷ rev) [] xs ++ inj₁ (Tip t′) ∷ foldl (λ rev x → x ∷ rev) [] pre) | refl
+    with (reverse xs ++ inj₁ (Tip t′) ∷ reverse pre) ++ (inj₂ (node , val , eq′) ∷ [])
+      | ++-assoc (reverse xs) (inj₁ (Tip t′) ∷ reverse pre) (inj₂ (node , val , eq′) ∷ [])
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′
+    .([] ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p
+    | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl
+    | .(foldl _ [] (pre ++ inj₁ (Tip t′) ∷ xs) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (Tip t′) ∷ []) xs ++ foldl _ [] pre) | refl
+    | .(foldl _ [] xs ++ inj₁ (Tip t′) ∷ []) | refl
+    | .(foldl _ [] xs ++ inj₁ (Tip t′) ∷ foldl _ [] pre) | refl
+    | .(foldl (λ rev x → x ∷ rev) [] xs ++ inj₁ (Tip t′) ∷ foldl (λ rev x → x ∷ rev) [] pre ++ inj₂ (node , val , eq′) ∷ []) | refl
+    with reverse (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs)
+      | reverse-++ xs (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl))
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′
+    .([] ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p
+    | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl
+    | .(foldl _ [] (pre ++ inj₁ (Tip t′) ∷ xs) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (Tip t′) ∷ []) xs ++ foldl _ [] pre) | refl
+    | .(foldl _ [] xs ++ inj₁ (Tip t′) ∷ []) | refl
+    | .(foldl _ [] xs ++ inj₁ (Tip t′) ∷ foldl _ [] pre) | refl
+    | .(foldl _ [] xs ++ inj₁ (Tip t′) ∷ foldl _ [] pre ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl (λ rev x → x ∷ rev) [] xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    = prepend (<-Right-Left (sym (trans (plug⇓-++-Right (reverse pre)) (sym (plug⇑-to-plug⇓ (Node node (Tip n)) pre)))) refl) (reverse xs)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .(inj₁ x ∷ xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {(inj₁ x)} {xs} is-inj₁ al , refl
+    with reverse (inj₁ x ∷ (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys))
+         | reverse-++ ((xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys)) (inj₁ x)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    with reverse (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys)
+      | reverse-++-commute xs (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl (λ rev x₁ → x₁ ∷ rev) [] xs) | refl
+    with reverse (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys)
+      | reverse-++ ys (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl))
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl _ (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl _ [] xs) | refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    with reverse (inj₂ (node , val , eq′) ∷ (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys))
+      | reverse-++ ((pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) (inj₂ (node , val , eq′))
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl _ (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) [] (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    with reverse (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)
+      | reverse-++-commute pre (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl _ (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    | .(foldl _ [] (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) ys ++ foldl (λ rev x₁ → x₁ ∷ rev) [] pre) | refl
+    with reverse (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)
+      | reverse-++ ys (inj₁ (plug⇑ (Node (Tip t′) x) xs))
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl _ (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    | .(foldl _ [] (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) ys ++ foldl _ [] pre) | refl | .(foldl (λ rev x₁ → x₁ ∷ rev) [] ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) | refl
+    with ((reverse ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl)  ∷ []) ++ reverse xs)
+      | ++-assoc (reverse ys) (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl)  ∷ []) (reverse xs)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl _ (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    | .(foldl _ [] (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) ys ++ foldl _ [] pre) | refl
+    | .(foldl _ [] ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) | refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ foldl (λ rev x₁ → x₁ ∷ rev) [] xs) | refl
+    with (reverse ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ reverse xs) ++ inj₁ x ∷ []
+      | ++-assoc (reverse ys) (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ reverse xs) (inj₁ x ∷ [])
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl _ (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    | .(foldl _ [] (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) ys ++ foldl _ [] pre) | refl
+    | .(foldl _ [] ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ foldl _ [] xs) | refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ foldl (λ rev x₁ → x₁ ∷ rev) [] xs
+              ++ inj₁ x ∷ []) | refl
+    with (reverse ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) ++ reverse pre
+      | ++-assoc (reverse ys) (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) (reverse pre)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl _ (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    | .(foldl _ [] (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) ys ++ foldl _ [] pre) | refl | .(foldl _ [] ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ foldl _ [] xs ++ inj₁ x ∷ []) | refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) [] ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ foldl (λ rev x₁ → x₁ ∷ rev) [] pre) | refl
+    with (reverse ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ reverse pre) ++ inj₂ (node , val , eq′) ∷ []
+      | ++-assoc (reverse ys) (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ reverse pre) (inj₂ (node , val , eq′) ∷ [])
+  unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys)) t′
+    .((inj₁ x ∷ xs) ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) p
+    | Prefix pre .(plug⇑ (Node (Tip t′) x) xs) ys all | .(inj₁ x ∷ xs) , refl , _∷_ {inj₁ x} {xs} is-inj₁ al , refl
+    | .(foldl _ [] (xs ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ ys) ++ inj₁ x ∷ []) | refl
+    | .(foldl _ (inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) ys ++ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ []) | refl
+    | .(foldl _ [] (pre ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ ys) ++ inj₂ (node , val , eq′) ∷ []) | refl
+    | .(foldl _ (inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) ys ++ foldl _ [] pre) | refl
+    | .(foldl _ [] ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ []) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ foldl _ [] xs) | refl
+    | .(foldl _ [] ys ++ inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ foldl _ [] xs ++ inj₁ x ∷ []) | refl
+    | .(foldl _ [] ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ foldl _ [] pre) | refl
+    | .(foldl (λ rev x₁ → x₁ ∷ rev) [] ys ++ inj₁ (plug⇑ (Node (Tip t′) x) xs) ∷ foldl (λ rev x₁ → x₁ ∷ rev) [] pre ++ inj₂ (node , val , eq′) ∷ []) | refl
+    = prepend (<-Right-Left (sym (trans (plug⇓-++-Right (reverse pre)) (sym (plug⇑-to-plug⇓ (Node node (Tip n)) pre))))
+                                        (sym (trans (plug⇓-++-Left (reverse xs)) (sym (plug⇑-to-plug⇓ (Node (Tip t′) x) xs)) ))) (reverse ys)
 
-  -- step-< : ∀ z z′ → step z ≡ inj₁ z′ → convert z′ < convert z
-  -- step-< (n , []) z′ ()
-  -- step-< (n , Left t′ ∷ s) (n′ , s′) x          = load-< n refl t′ s n′ s′ x
-  -- step-< (n , Right t′ m eq′  ∷ s) (n′ , s′) x  = unload-< n refl (inj₂ (t′ , m , eq′) ∷ s) n′ s′ x -- -? - unload-< n refl (inj₂ (t′ , m , eq′) ∷ s) n′ s′ x
+  step-< : ∀ z z′ → step z ≡ inj₁ z′ → convert z′ < convert z
+  step-< (n , []) z′ ()
+  step-< (n , Left t′ ∷ s) (n′ , s′) x          = load-< n refl t′ s n′ s′ x
+  step-< (n , Right t′ m eq′  ∷ s) (n′ , s′) x  = unload-< n refl (inj₂ (t′ , m , eq′) ∷ s) n′ s′ x
+
+
+  reduce : (z : Zipper) → ℕ
+  reduce (t , s) = aux t  s (<-WF (plug⇑ (Tip t) s) ((t , reverse s)))
+    where aux : ∀ t s → Acc ([[ plug⇑ (Tip t) s ]]_<_) (t , reverse s) → ℕ
+          aux t  s (acc rs) with step (t , s) | inspect step (t , s)
+          aux t  s (acc rs) | inj₁ (t′ , s′) | [ eq ]
+            with step-preserves-plug⇑ (t , s) (t′ , s′) eq
+          ... | pr rewrite pr = aux t′ s′ (rs (t′ , (reverse s′))
+                                          (lt (t′ , reverse s′) (t , reverse s)
+                                              (sym (plug⇑-to-plug⇓ (Tip t′) s′)) (sym (trans (sym pr) (plug⇑-to-plug⇓ (Tip t) s))) (step-< (t , s) (t′ , s′) eq)))
+          aux t  s (acc rs) | inj₂ n  | eq = n
+  
+  fold-Tree : Tree → ℕ
+  fold-Tree t with load t []
+  ... | inj₁ (t′ , s′) = reduce ((t′ , s′))
+  ... | inj₂ n         = n
+
+  tree : Tree
+  tree = Node (Tip 1) (Node (Tip 2) (Tip 4))
+
+  
