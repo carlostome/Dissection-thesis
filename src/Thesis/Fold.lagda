@@ -217,8 +217,8 @@ module Thesis.Fold where
       , plug⇑-++-Left (Node (Tip t′) x) t₂ xs
  
   load-< : ∀ n eq t  s t′ s′
-         → load t (Right (Tip n) n eq ∷ s) ≡ inj₁ (t′ , s′)
-         → (t′ , reverse s′) < (n , reverse (Left t ∷ s)) 
+          → load t (Right (Tip n) n eq ∷ s) ≡ inj₁ (t′ , s′)
+          → (t′ , reverse s′) < (n , reverse (Left t ∷ s)) 
   load-< n eq (Tip x) s .x .(inj₂ (Tip n , n , eq) ∷ s) refl with reverse (Right (Tip n ) n eq ∷ s) | reverse-++ s (Right (Tip n) n eq)
   load-< n eq (Tip x) s .x .(inj₂ (Tip n , n , eq) ∷ s) refl
     | .(foldl (λ rev x₁ → x₁ ∷ rev) [] s ++ inj₂ (Tip n , n , eq) ∷ []) | refl
@@ -502,24 +502,68 @@ module Thesis.Fold where
   step-< (n , Left t′ ∷ s) (n′ , s′) x          = load-< n refl t′ s n′ s′ x
   step-< (n , Right t′ m eq′  ∷ s) (n′ , s′) x  = unload-< n refl (inj₂ (t′ , m , eq′) ∷ s) n′ s′ x
 
+  rec : ∀ t s → Acc ([[ plug⇑ (Tip t) s ]]_<_) (t , reverse s) → ℕ
+  rec t  s (acc rs) with step (t , s) | inspect step (t , s)
+  rec t  s (acc rs) | inj₁ (t′ , s′) | [ eq ]
+    with plug⇑ (Tip t) s | step-preserves-plug⇑ (t , s) (t′ , s′) eq
+  rec t s (acc rs) | inj₁ (t′ , s′) | Reveal_·_is_.[ eq ] | .(plug⇑ (Tip t′) s′) | refl
+    = rec t′ s′ (rs (t′ , (reverse s′))
+                 (lt (t′ , (reverse s′)) (t , reverse s)
+                           (sym (plug⇑-to-plug⇓ (Tip t′) s′)) (trans (sym (plug⇑-to-plug⇓ (Tip t) s))
+                           (step-preserves-plug⇑ (t , s) (t′ , s′) eq))
+                           (step-< (t , s) (t′ , s′) eq)))
+  rec t  s (acc rs) | inj₂ n  | eq = n
 
-  reduce : (z : Zipper) → ℕ
-  reduce (t , s) = aux t  s (<-WF (plug⇑ (Tip t) s) ((t , reverse s)))
-    where aux : ∀ t s → Acc ([[ plug⇑ (Tip t) s ]]_<_) (t , reverse s) → ℕ
-          aux t  s (acc rs) with step (t , s) | inspect step (t , s)
-          aux t  s (acc rs) | inj₁ (t′ , s′) | [ eq ]
-            with step-preserves-plug⇑ (t , s) (t′ , s′) eq
-          ... | pr rewrite pr = aux t′ s′ (rs (t′ , (reverse s′))
-                                          (lt (t′ , reverse s′) (t , reverse s)
-                                              (sym (plug⇑-to-plug⇓ (Tip t′) s′)) (sym (trans (sym pr) (plug⇑-to-plug⇓ (Tip t) s))) (step-< (t , s) (t′ , s′) eq)))
-          aux t  s (acc rs) | inj₂ n  | eq = n
-  
-  fold-Tree : Tree → ℕ
-  fold-Tree t with load t []
-  ... | inj₁ (t′ , s′) = reduce ((t′ , s′))
-  ... | inj₂ n         = n
+  foldTree : Tree → ℕ
+  foldTree t with load t []
+  foldTree t | inj₁ (t′ , s′) = rec t′ s′ (<-WF (plug⇑ (Tip t′) s′) (t′ , (reverse s′)))
+  foldTree t | inj₂ n         = n
 
-  tree : Tree
-  tree = Node (Tip 1) (Node (Tip 2) (Tip 4))
+  evalZipper⇑ : (n : ℕ) → (s : Stack) → ℕ
+  evalZipper⇑ n []                  = n
+  evalZipper⇑ n (Left x ∷ s)        = evalZipper⇑ (n + eval x) s
+  evalZipper⇑ n (Right t n′ eq ∷ s) = evalZipper⇑ (n′ + n) s
 
-  
+  load-preserves-evalZipper⇑ : ∀ t s t′ s′  → load t s ≡ inj₁ (t′ , s′) → evalZipper⇑ (eval t) s ≡ evalZipper⇑ t′ s′
+  load-preserves-evalZipper⇑ (Tip x₁) s .x₁ .s refl = refl
+  load-preserves-evalZipper⇑ (Node t₁ t₂) s t′ s′ x = load-preserves-evalZipper⇑ t₁ (inj₁ t₂ ∷ s) t′ s′ x
+
+  unload-preserves-evalZipper⇑ : ∀ t n eq s t′ s′ → unload t n eq s ≡ inj₁ (t′ , s′) → evalZipper⇑ n s ≡ evalZipper⇑ t′ s′
+  unload-preserves-evalZipper⇑ t n eq [] t′ s′ ()
+  unload-preserves-evalZipper⇑ t .(eval t) refl (inj₁ x₁ ∷ s) t′ s′ x               = load-preserves-evalZipper⇑ x₁ (inj₂ (t , eval t , refl) ∷ s) t′ s′ x
+  unload-preserves-evalZipper⇑ t .(eval t) refl (inj₂ (t′′ , n′ , eq′) ∷ s) t′ s′ x = unload-preserves-evalZipper⇑ (Node t′′ t) (n′ + eval t) (+-lemma eq′ refl) s t′ s′ x
+
+  step-preserves-evalZipper⇑  : ∀ t s t′ s′ → step (t , s) ≡ inj₁ (t′ , s′) →  evalZipper⇑ t s ≡ evalZipper⇑ t′ s′
+  step-preserves-evalZipper⇑ t s t′ s′ x = unload-preserves-evalZipper⇑ (Tip t) t refl s t′ s′ x
+
+ 
+  load-not-inj₂ : ∀ t s r → load t s ≡ inj₂ r → ⊥
+  load-not-inj₂ (Tip x₁) s r ()
+  load-not-inj₂ (Node t t₁) s r x = load-not-inj₂ t (inj₁ t₁ ∷ s) r x
+
+  unload-preserves-evalZipper⇑2 : ∀ t n eq s r → unload t n eq s ≡ inj₂ r → evalZipper⇑ n s ≡ r
+  unload-preserves-evalZipper⇑2 t n eq [] .n refl = refl
+  unload-preserves-evalZipper⇑2 t n eq (inj₁ y ∷ s) n′ x = ⊥-elim (load-not-inj₂ y (inj₂ (t , n , eq) ∷ s) n′ x)
+  unload-preserves-evalZipper⇑2 t n eq (inj₂ (t′ , n′ , eq′)  ∷ s) r x = unload-preserves-evalZipper⇑2 (Node t′ t) (n′ + n) (+-lemma eq′ eq) s r x
+
+  lemma : ∀ t s ac n → rec t s ac ≡ n → evalZipper⇑ t s ≡ n
+  lemma t s (acc rs) n x with step (t , s) | inspect step (t , s)
+  lemma t s (acc rs) n x | inj₁ (t′ , s′) | Reveal_·_is_.[ eq ] with plug⇑ (Tip t) s | step-preserves-plug⇑ (t , s) (t′ , s′) eq 
+  lemma t s (acc rs) n x | inj₁ (t′ , s′) | Reveal_·_is_.[ eq ] | .(plug⇑ (Tip t′) s′) | refl
+    with step-preserves-evalZipper⇑ t s t′ s′ eq
+  ... | eq′ = trans eq′ (lemma t′ s′ (rs (t′ , (reverse s′))
+              (lt (t′ , reverse s′) (t , reverse s) (sym (plug⇑-to-plug⇓ ((Tip t′)) s′)) ((trans (sym (plug⇑-to-plug⇓ (Tip t) s))
+                           (step-preserves-plug⇑ (t , s) (t′ , s′) eq))) (step-< (t , s) (t′ , s′) eq))) n x)
+  lemma t s (acc rs) .y refl | inj₂ y | Reveal_·_is_.[ eq ]     = unload-preserves-evalZipper⇑2 (Tip t) t refl s y eq
+
+
+  correctness : ∀ t → foldTree t ≡ eval t
+  correctness t
+    with load t []
+       | inspect (load t) []
+  correctness t | inj₁ (t′ , s′) | [ eq ]
+    with rec t′ s′ (<-WF (plug⇑ (Tip t′) s′) (t′ , (reverse s′)))
+       | inspect (rec t′ s′) (<-WF (plug⇑ (Tip t′) s′) (t′ , (reverse s′)))
+  ... | n | [ eq′ ] = trans (sym (lemma t′ s′ (<-WF (plug⇑ (Tip t′) s′) (t′ , (reverse s′))) n eq′))
+                            (sym (load-preserves-evalZipper⇑ t [] t′ s′ eq ))
+  correctness t | inj₂ y | [ eq ] = ⊥-elim (load-not-inj₂ t [] y eq)
