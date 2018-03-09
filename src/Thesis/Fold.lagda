@@ -116,6 +116,7 @@ module Thesis.Fold where
 
   load : Tree → Stack → Zipper ⊎ ℕ
   load (Tip x) s      = inj₁ (x , s)
+  
   load (Node t₁ t₂) s = load t₁ (Left t₂ ∷ s)
 
   unload : (t : Tree) → (n : ℕ) → eval t ≡ n → Stack → Zipper ⊎ ℕ
@@ -536,7 +537,6 @@ module Thesis.Fold where
   step-preserves-evalZipper⇑  : ∀ t s t′ s′ → step (t , s) ≡ inj₁ (t′ , s′) →  evalZipper⇑ t s ≡ evalZipper⇑ t′ s′
   step-preserves-evalZipper⇑ t s t′ s′ x = unload-preserves-evalZipper⇑ (Tip t) t refl s t′ s′ x
 
- 
   load-not-inj₂ : ∀ t s r → load t s ≡ inj₂ r → ⊥
   load-not-inj₂ (Tip x₁) s r ()
   load-not-inj₂ (Node t t₁) s r x = load-not-inj₂ t (inj₁ t₁ ∷ s) r x
@@ -556,7 +556,6 @@ module Thesis.Fold where
                            (step-preserves-plug⇑ (t , s) (t′ , s′) eq))) (step-< (t , s) (t′ , s′) eq))) n x)
   lemma t s (acc rs) .y refl | inj₂ y | Reveal_·_is_.[ eq ]     = unload-preserves-evalZipper⇑2 (Tip t) t refl s y eq
 
-
   correctness : ∀ t → foldTree t ≡ eval t
   correctness t
     with load t []
@@ -567,3 +566,6 @@ module Thesis.Fold where
   ... | n | [ eq′ ] = trans (sym (lemma t′ s′ (<-WF (plug⇑ (Tip t′) s′) (t′ , (reverse s′))) n eq′))
                             (sym (load-preserves-evalZipper⇑ t [] t′ s′ eq ))
   correctness t | inj₂ y | [ eq ] = ⊥-elim (load-not-inj₂ t [] y eq)
+
+
+  tree = Node (Tip 1) (Tip 2)
