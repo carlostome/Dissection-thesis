@@ -219,7 +219,7 @@ module Thesis.Regular where
     = cong (_,_ r) (first-preserves-plug Q q dq x′ eq₁)
   first-preserves-plug (R ⨂ Q) (r , q) h x () | nothing | Reveal_·_is_.[ eq ] | nothing | eq₁
 
-  right : ∀ {X Y : Set} → (R : Reg) → ∇ R X Y × X → (∇ R Y X × Y) ⊎ (⟦ R ⟧ Y)
+  right : ∀ {X : Set} → (R : Reg) → ∇ R X X × X → (∇ R X X × X) ⊎ (⟦ R ⟧ X)
   right 0′ (() , _)
   right 1′ (() , _)
   right V (tt , x) = inj₂ x
@@ -238,6 +238,45 @@ module Thesis.Regular where
   right (u ⨂ v) (inj₂ (u′ , dv) , x) with right v (dv , x)
   right (u ⨂ v) (inj₂ (u′ , dv) , x) | inj₁ (dv′ , x′) = inj₁ (inj₂ (u′ , dv′) , x′)
   right (u ⨂ v) (inj₂ (u′ , dv) , x) | inj₂ v′         = inj₂ (u′ , v′)
+
+  righty : ∀ {j c : Set} → (R : Reg) → ⟦ R ⟧ j ⊎ (∇ R j c × c) → ⟦ R ⟧ c ⊎ (∇ R j c × j)
+  righty = ?
+  plug-μ : ∀ (R : Reg) → μ R → List (∇ R (μ R) (μ R)) → μ R
+  plug-μ u t []         = t
+  plug-μ 0′ t (() ∷ xs)
+  plug-μ 1′ t (() ∷ xs)
+  plug-μ (K _) _ (() ∷ xs)
+  plug-μ V t (tt ∷ xs)  = t
+  plug-μ (u ⨁ v) t (inj₁ du ∷ xs)         = In (inj₁ (plug u du (plug-μ (u ⨁ v) t xs)))
+  plug-μ (u ⨁ v) t (inj₂ dv ∷ xs)         = In (inj₂ (plug v dv (plug-μ (u ⨁ v) t xs)))
+  plug-μ (u ⨂ v) t (inj₁ (du , v′) ∷ xs)  = In (plug u du (plug-μ (u ⨂ v) t xs) , v′)
+  plug-μ (u ⨂ v) t (inj₂ (u′ , dv) ∷ xs)  = In (u′ , (plug v dv (plug-μ (u ⨂ v) t xs)))
+
+
+  {- What is a leaf of μ R? 
+
+  ∀ {X : Set} → ⟦ R ⟧ X
+
+  -}
+  Leaf : (R : Reg) → Set₁
+  Leaf R = ∀ {X} → ⟦ R ⟧ X
+
+  Zipper : (R : Reg) → Set₁
+  Zipper R = Leaf R × List (∇ R (μ R) (μ R))
+
+  plugZ : (R : Reg) → Zipper R → μ R
+  plugZ R (leaf , stk) = plug-μ R (In leaf) stk
+
+  data lt (R : Reg) : Zipper R → Zipper R → Set₁ where
+  --  lt-step : ∀ {t₁ t₂} {h} {s₁ s₂}            →  lt R (t₁ , s₁) (t₂ , s₂)                           → lt R (t₁ , h  ∷ s₁) (t₂ , h  ∷ s₂)
+
+
+
+
+
+--  data lt {X : Set} (R : Reg) (em : X → μ R) : List (∇ R (μ R) (μ R)) × X → List (∇ R (μ R) (μ R)) × X → Set where
+--    lt-step : ∀ {t₁ t₂} {h} {s₁ s₂}            →  lt R em (s₁ , t₁) (s₂ , t₂)                           → lt R em (h  ∷ s₁ , t₁) (h  ∷ s₂ , t₂)
+--    lt-base  : ∀ {h₁ h₂} {s₁ s₂} {t₁ t₂}       → h₁ ≡ nltReg R (h₁ , plug-μ R (em t₂)  s₂) (h₂ , plug-μ R (em t₁) s₁)  → lt R em (h₁ ∷ s₁ , t₁) (h₂ ∷ s₂ , t₂)
 
 --   right-preserves-plug₂ : ∀ {X : Set} (R : Reg) (h : ∇ R X X ) (x : X) (r : ⟦ R ⟧ X) → right R (h , x) ≡ inj₂ r → r ≡ plug R h x
 --   right-preserves-plug₂ 0′ () x r p
@@ -313,25 +352,6 @@ module Thesis.Regular where
 --   right-< (R ⨂ Q) (inj₂ (r , dq)) x .(inj₂ (r , h′)) .x′ refl | inj₁ (h′ , x′) | Reveal_·_is_.[ eq ]
 --     = step-⨂-inj₂ refl (right-< Q dq x h′ x′ eq)
 --   right-< (R ⨂ Q) (inj₂ (r , dq)) x h′ x′ () | inj₂ y | Reveal_·_is_.[ eq ]
-
---   plug-μ : ∀ (R : Reg) → μ R → List (∇ R (μ R) (μ R)) → μ R
---   plug-μ u t []         = t
---   plug-μ 0′ t (() ∷ xs)
---   plug-μ 1′ t (() ∷ xs)
---   plug-μ (K _) _ (() ∷ xs)
---   plug-μ V t (tt ∷ xs)  = t
---   plug-μ (u ⨁ v) t (inj₁ du ∷ xs)         = In (inj₁ (plug u du (plug-μ (u ⨁ v) t xs)))
---   plug-μ (u ⨁ v) t (inj₂ dv ∷ xs)         = In (inj₂ (plug v dv (plug-μ (u ⨁ v) t xs)))
---   plug-μ (u ⨂ v) t (inj₁ (du , v′) ∷ xs)  = In (plug u du (plug-μ (u ⨂ v) t xs) , v′)
---   plug-μ (u ⨂ v) t (inj₂ (u′ , dv) ∷ xs)  = In (u′ , (plug v dv (plug-μ (u ⨂ v) t xs)))
-
---   data lt {X : Set} (R : Reg) (em : X → μ R) : List (∇ R (μ R) (μ R)) × X → List (∇ R (μ R) (μ R)) × X → Set where
---     lt-step : ∀ {t₁ t₂} {h} {s₁ s₂} →  lt R em (s₁ , t₁) (s₂ , t₂)                           → lt R em (h  ∷ s₁ , t₁) (h  ∷ s₂ , t₂)
-
-
-  
--- --     lt-base  : ∀ {h₁ h₂} {s₁ s₂} {t₁ t₂}       → h₁ ≡ nltReg R (h₁ , plug-μ R (em t₂)  s₂) (h₂ , plug-μ R (em t₁) s₁)  → lt R em (h₁ ∷ s₁ , t₁) (h₂ ∷ s₂ , t₂)
-
 -- --   ⊎-injective₁ : ∀ {A B : Set} {x y} → (A ⊎ B ∋ inj₁ x) ≡ inj₁ y → x ≡ y
 --  --   ⊎-injective₁ refl = refl
 

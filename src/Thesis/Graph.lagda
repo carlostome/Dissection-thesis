@@ -14,7 +14,8 @@ module Graph where
   ⟦_⟧ : Type → Set
   ⟦ nat ⟧   = ℕ
   ⟦ t ⇒ s ⟧ = ⟦ t ⟧ → ⟦ s ⟧
-  
+
+  -- Graph reduction from Implementing functional programming languages
   data Graph : Type → Set where
     _◆_  : ∀ {σ τ} → Graph (σ ⇒ τ) → Graph σ → Graph τ
     em   : ∀ {τ}   → ⟦ τ ⟧                   → Graph τ
@@ -37,8 +38,8 @@ module Graph where
 
   data Stack⇓ : Type → Type → Set where
     nil   : ∀ {σ}     → Stack⇓ σ σ
-    left  : ∀ {σ} {τ} → Graph σ                                                 → Stack⇓ (σ ⇒ τ) (σ ⇒ τ) → Stack⇓ (σ ⇒ τ) τ
-    right : ∀ {σ} {τ} → (g : Graph (σ ⇒ τ)) → (f : ⟦ σ ⟧  → ⟦ τ ⟧) → eval g ≡ f → Stack⇓ σ σ             → Stack⇓ σ τ
+    left  : ∀ {σ} {τ} → Graph σ                                            → Stack⇓ (σ ⇒ τ) (σ ⇒ τ) → Stack⇓ (σ ⇒ τ) τ
+    right : ∀ {σ} {τ} → (g : Graph (σ ⇒ τ)) → (f : ⟦ σ ⟧  → ⟦ τ ⟧) → eval g ≡ f → Stack⇓ σ σ        → Stack⇓ σ τ
 
   plug⇓ : ∀ {τ σ} → Graph τ → Stack⇓ τ σ → Graph σ
   plug⇓ g nil             = g
@@ -98,22 +99,32 @@ module Graph where
   plug⇑ g (right h f x s)  = plug⇑ (h ◆ g) s
 
   data Decomp⇑ (τ : Type) : Set where
-    _,_ : ∀ {σ} (g : Graph σ) → (s : Stack⇑ σ τ) → Decomp⇑ τ
+    _,_ : ∀ {σ} (e : ⟦ σ ⟧) → (s : Stack⇑ σ τ) → Decomp⇑ τ
 
   plugD⇑ : ∀ {τ} →  Decomp⇑ τ → Graph τ
-  plugD⇑ (g , s) = plug⇑ g s
+  plugD⇑ (e , s) = plug⇑ (em e) s
   
-  -- unwind the spine
-  unwind : ∀ {τ σ} → Graph σ → Stack⇑ σ τ → Decomp⇑ τ
-  unwind (f ◆ x) s =  unwind f (left x s)
-  unwind (em x) s  =  em x , s
+  wind : ∀ {τ σ} → Graph σ → Stack⇑ σ τ → Decomp⇑ τ ⊎ ⟦ τ ⟧
+  wind (f ◆ x) s =  wind f (left x s)
+  wind (em x)  s =  inj₁ (x , s)
 
-  wind : ∀ {τ σ} → (g : Graph τ) → (v : ⟦ τ ⟧) → eval g ≡ v → Stack⇑ τ σ → Decomp⇑ σ ⊎ ⟦ σ ⟧
-  wind g v eq nil              = inj₂ v
-  wind g v eq (left x s)       = inj₁ (x , right g v eq s)
-  wind g v eq (right g₁ f x s) = wind (g₁ ◆ g) (f v) {!!} s
- 
-  data Legal (τ : Type) : Decomp⇑ τ → Set where
-    legal : ∀ {σ} → (e : ⟦ σ ⟧) (s : Stack⇑ σ τ) → Legal τ (em e , s) 
+  unwind : ∀ {τ σ} → (g : Graph τ) → (v : ⟦ τ ⟧) → eval g ≡ v → Stack⇑ τ σ → Decomp⇑ σ ⊎ ⟦ σ ⟧
+  unwind g v eq nil              = inj₂ v
+  unwind g v eq (left x s)       = wind x (right g v eq s)
+  unwind g v eq (right g₁ f x s) = unwind (g₁ ◆ g) (f v) {!!} s
 
+  step : ∀ {σ} → Decomp⇑ σ → Decomp⇑ σ ⊎ ⟦ σ ⟧
+  step (e , s) = unwind (em e) e refl s
+
+  app : ∀ {σ τ} → Stack⇓ σ τ → Stack⇓ σ σ → Stack⇓ σ τ
+  app nil y               = y
+  app (left x xs) ys      = left x (app xs ys)
+  app (right g f x xs) ys = right g f x (app xs ys)
   
+  Stack⇑-to-Stack⇓ : ∀ {σ τ} → Stack⇑ σ τ → Stack⇓ σ τ
+  Stack⇑-to-Stack⇓ nil = nil
+  Stack⇑-to-Stack⇓ (left x s)      = app (Stack⇑-to-Stack⇓ {!s!}) {!left!}
+  Stack⇑-to-Stack⇓ (right g f x s) = app {!!} {!!}
+
+  convert : ∀ {σ} → Decomp⇑ σ → Decomp⇓ σ
+  convert (e , s) = (em e) , {!!}
