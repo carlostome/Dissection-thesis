@@ -240,7 +240,9 @@ module Thesis.Regular where
   right (u ⨂ v) (inj₂ (u′ , dv) , x) | inj₂ v′         = inj₂ (u′ , v′)
 
   righty : ∀ {j c : Set} → (R : Reg) → ⟦ R ⟧ j ⊎ (∇ R j c × c) → ⟦ R ⟧ c ⊎ (∇ R j c × j)
-  righty = ?
+  righty = {!!}
+
+
   plug-μ : ∀ (R : Reg) → μ R → List (∇ R (μ R) (μ R)) → μ R
   plug-μ u t []         = t
   plug-μ 0′ t (() ∷ xs)

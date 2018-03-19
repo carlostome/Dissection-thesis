@@ -7,6 +7,7 @@ module Thesis.RealFold where
   open import Data.Bool
   open import Function
   open import Data.Sum
+  open import Data.Sum.Properties
   open import Thesis.Data.Sum.Inj
   open import Data.Empty
   open import Data.Nat hiding (_<_)
