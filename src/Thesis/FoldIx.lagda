@@ -41,7 +41,12 @@ module Thesis.FoldIx where
   treeCata tAlg (Tip n)      = TreeAlg.TipA  tAlg n
   treeCata tAlg (Node t₁ t₂) = TreeAlg.NodeA tAlg (treeCata tAlg t₁) (treeCata tAlg t₂)
 
+  eval : Tree -> Nat
+  eval = ?
+  evalTreeAlg : TreeAlg
+  evalTreeAlg = record { A = ℕ ; TipA = id ; NodeA = _+_ }
 
+  
   -- The tail-recursive construction is parametrized over the algebra used.
   module _ (tAlg : TreeAlg) where
 
@@ -268,6 +273,7 @@ module Thesis.FoldIx where
 
     --------------------------------------------------------------------------------
     --               Properties of Folding functions                              --                                                            
+
 
     -- load never delivers some inj₂
     load-not-inj₂ : (t : Tree) (s : Stack) → ∀ a → load t s ≡ inj₂ a → ⊥
