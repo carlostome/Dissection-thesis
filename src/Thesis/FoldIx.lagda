@@ -41,12 +41,10 @@ module Thesis.FoldIx where
   treeCata tAlg (Tip n)      = TreeAlg.TipA  tAlg n
   treeCata tAlg (Node t₁ t₂) = TreeAlg.NodeA tAlg (treeCata tAlg t₁) (treeCata tAlg t₂)
 
-  eval : Tree -> Nat
-  eval = ?
   evalTreeAlg : TreeAlg
   evalTreeAlg = record { A = ℕ ; TipA = id ; NodeA = _+_ }
 
-  
+
   -- The tail-recursive construction is parametrized over the algebra used.
   module _ (tAlg : TreeAlg) where
 
@@ -161,24 +159,26 @@ module Thesis.FoldIx where
     --                  Well-foundedness proof of [[_]]⇓_<_                         --
 
 
-    mutual
-      accR : ∀ {l r : Tree} (t : ℕ) (s : Stack) eq₁
-               {a : A} {eq : treeCata tAlg l ≡ a} →
-               Acc ([[_]]⇓_<_ r) ((t , s) ,, Node-injᵣ eq₁) → 
+
+    accR : ∀ {l r : Tree} (t : ℕ) (s : Stack) eq₁
+             {a : A} {eq : treeCata tAlg l ≡ a} →
+             Acc ([[_]]⇓_<_ r) ((t , s) ,, Node-injᵣ eq₁) →
              (y : Zipper⇓ (Node l r)) → [[ Node l r ]]⇓ y < ((t , inj₂ (a , l , eq) ∷ s) ,, eq₁) → Acc ([[_]]⇓_<_ (Node l r)) y
-      accR t s eq₁ {a} {eq} (acc rs) .((t₁ , inj₂ (a , _ , eq) ∷ s₁) ,, refl) (<-Right-Step {t₁ = t₁} {s₁ = s₁} refl .eq₁ p)
-          = acc (accR t₁ s₁ refl (rs ((t₁ , s₁) ,, refl) p))
+    accR t s eq₁ {a} {eq} (acc rs) .((t₁ , inj₂ (a , _ , eq) ∷ s₁) ,, refl) (<-Right-Step {t₁ = t₁} {s₁ = s₁} refl .eq₁ p)
+        = acc (accR t₁ s₁ refl (rs ((t₁ , s₁) ,, refl) p))
 
-      accL : ∀ {l r : Tree} (t : ℕ) (s : Stack) eq₂ →
-               Acc ([[_]]⇓_<_ l) ((t , s ) ,, Node-injₗ eq₂) → 
-               (y : Zipper⇓ (Node l r)) → [[ Node l r ]]⇓ y < ((t , inj₁ r ∷ s) ,, eq₂) → Acc ([[_]]⇓_<_ (Node l r)) y
-      accL {r = r} t s eq₂ (acc rs) .((t₁ , inj₁ r ∷ s₁) ,, refl) (<-Left-Step {t₁ = t₁} {s₁ = s₁} refl .eq₂ p)
-        = acc (accL t₁ s₁ refl (rs ((t₁ , s₁) ,, refl) p))
-      accL {l} t s eq₂ (acc rs) .((t₁ , inj₂ (a , l , eq) ∷ s₁) ,, refl) (<-Right-Left {a} {t₁ = t₁} {s₁ = s₁} {eq = eq} {refl})
-        = acc (accR t₁ s₁ refl (<-WF (plug⇓ (Tip t₁) s₁) ((t₁ , s₁) ,, refl)))
+    
+    accL : ∀ {l r : Tree} (t : ℕ) (s : Stack) eq₂ →
+             (wrf : Well-founded [[ r ]]⇓_<_) →
+             Acc ([[_]]⇓_<_ l) ((t , s ) ,, Node-injₗ eq₂) → 
+             (y : Zipper⇓ (Node l r)) → [[ Node l r ]]⇓ y < ((t , inj₁ r ∷ s) ,, eq₂) → Acc ([[_]]⇓_<_ (Node l r)) y
+    accL {r = r} t s eq₂ wfr (acc rs) .((t₁ , inj₁ r ∷ s₁) ,, refl) (<-Left-Step {t₁ = t₁} {s₁ = s₁} refl .eq₂ p)
+      = acc (accL t₁ s₁ refl wfr (rs ((t₁ , s₁) ,, refl) p))
+    accL {l} t s eq₂ wrf (acc rs) .((t₁ , inj₂ (a , l , eq) ∷ s₁) ,, refl) (<-Right-Left {a} {t₁ = t₁} {s₁ = s₁} {eq = eq} {refl})
+      = acc (accR t₁ s₁ refl (wrf ((t₁ , s₁) ,, refl)))
 
-      <-WF : ∀ (t : Tree) → Well-founded ([[ t ]]⇓_<_)
-      <-WF t x = acc (aux t x)
+    <-WF : ∀ (t : Tree) → Well-founded ([[ t ]]⇓_<_)
+    <-WF t x = acc (aux t x)
           where
             aux : ∀ (t : Tree) (x : Zipper⇓ t)
                 (y : Zipper⇓ t) → [[ t ]]⇓ y < x → Acc ([[_]]⇓_<_ t) y
@@ -187,7 +187,7 @@ module Thesis.FoldIx where
               = acc (accR t₁ s₁ refl (<-WF (plug⇓ (Tip t₁) s₁) ((t₁ , s₁) ,, refl)))
             aux .(Node (plug⇓ (Tip t₁) s₁) r) .((t₂ , inj₁ r ∷ s₂) ,, eq₂) .((t₁ , inj₁ r ∷ s₁) ,, refl)
                 (<-Left-Step {r = r} {t₁} {t₂} {s₁} {s₂} refl eq₂ p)
-              = acc (accL t₁ s₁ refl (<-WF (plug⇓ (Tip t₁) s₁) ((t₁ , s₁) ,, refl)))
+              = acc (accL t₁ s₁ refl (<-WF r) (<-WF (plug⇓ (Tip t₁) s₁) ((t₁ , s₁) ,, refl)))
             aux .(Node l (plug⇓ (Tip t₁) s₁)) .((t₂ , inj₁ (plug⇓ (Tip t₁) s₁) ∷ s₂) ,, eq₂) .((t₁ , inj₂ (a , l , eq) ∷ s₁) ,, refl)
                 (<-Right-Left {a} {l} {.(plug⇓ (Tip t₁) s₁)} {t₁} {t₂} {s₁} {s₂} {eq} {refl} {eq₂})
               = acc (accR t₁ s₁ refl (<-WF (plug⇓ (Tip t₁) s₁) ((t₁ , s₁) ,, refl)))
