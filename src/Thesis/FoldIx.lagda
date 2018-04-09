@@ -166,7 +166,6 @@ module Thesis.FoldIx where
              (y : Zipper⇓ (Node l r)) → [[ Node l r ]]⇓ y < ((t , inj₂ (a , l , eq) ∷ s) ,, eq₁) → Acc ([[_]]⇓_<_ (Node l r)) y
     accR t s eq₁ {a} {eq} (acc rs) .((t₁ , inj₂ (a , _ , eq) ∷ s₁) ,, refl) (<-Right-Step {t₁ = t₁} {s₁ = s₁} refl .eq₁ p)
         = acc (accR t₁ s₁ refl (rs ((t₁ , s₁) ,, refl) p))
-
     
     accL : ∀ {l r : Tree} (t : ℕ) (s : Stack) eq₂ →
              (wrf : Well-founded [[ r ]]⇓_<_) →
@@ -210,7 +209,7 @@ module Thesis.FoldIx where
 
     -- from the relation over UZipper and equality proofs we can recover the
     -- indexed relation
-    to : ∀ (t : Tree) (z₁ z₂ : UZipper) eq₁ eq₂ → z₁ <ᵤ z₂ → [[ t ]]⇓ (z₁ ,, eq₁) < (z₂ ,, eq₂)
+    to : ∀ (t : Tree) (z₁ z₂ : UZipper) (eq₁ : plugZ⇓ z₁ ≡ t) (eq₂ : plugZ⇓ z₂ ≡ t) → z₁ <ᵤ z₂ → [[ t ]]⇓ (z₁ ,, eq₁) < (z₂ ,, eq₂)
     to .(Node l (plug⇓ (Tip t₁) s₁)) .(t₁ , inj₂ (a , l , eq) ∷ s₁) .(t₂ , inj₂ (a , l , eq) ∷ s₂) refl eq₂ (<ᵤ-Right-Step {a} {l} {t₁} {t₂} {s₁} {s₂} {eq} x)
       = <-Right-Step refl eq₂ (to (plug⇓ (Tip t₁) s₁) (t₁ , s₁) (t₂ , s₂) refl (Node-injᵣ eq₂) x)
     to .(Node (plug⇓ (Tip t₁) s₁) r) .(t₁ , inj₁ r ∷ s₁) .(t₂ , inj₁ r ∷ s₂) refl eq₂ (<ᵤ-Left-Step {r} {t₁} {t₂} {s₁} {s₂} x)
