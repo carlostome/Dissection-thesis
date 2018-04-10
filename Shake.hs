@@ -1,6 +1,3 @@
-#!/usr/bin/env stack
--- stack --resolver lts-11.3 script --package shake
-
 import Development.Shake
 import Development.Shake.Command
 import Development.Shake.FilePath
@@ -20,7 +17,7 @@ tex = "tex"
 
 -- lagda modules used to build the thesis
 thesis_lagda_modules :: [String]
-thesis_lagda_modules = [ "main" , "tree" ]
+thesis_lagda_modules = [ "main" , "tree" , "problem"]
 
 main :: IO ()
 main = shakeArgs shakeOptions $ do
