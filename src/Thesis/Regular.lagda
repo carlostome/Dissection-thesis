@@ -110,8 +110,6 @@ module Thesis.Regular where
   Plug-to-plug .(R ⨂ _) .(inj₁ (dr , q)) x .(e , q) (Plug-⨂-inj₁ {R} {dr = dr} {q} {e} p) = cong (λ x → (x , q)) (Plug-to-plug R dr x e p)
   Plug-to-plug .(_ ⨂ Q) .(inj₂ (r , dq)) x .(r , e) (Plug-⨂-inj₂ {Q = Q} {r = r} {dq} {e} p) = cong (λ x → (r , x)) (Plug-to-plug Q dq x e p)
 
-  Plug-refl : {X : Set} (R : Reg) (h : ∇ R X X) (x : X) → Plug R h x (plug R h x)
-  Plug-refl = {!!}
   plug-μ : ∀ (R : Reg) → μ R → List (∇ R (μ R) (μ R)) → μ R
   plug-μ R t [] = t
   plug-μ R t (h ∷ hs) = In (plug R h (plug-μ R t hs))
@@ -139,6 +137,55 @@ module Thesis.Regular where
                  → ∇-[[ X , R , tr ]] (r ,, t₁ ,, eq₁) < (r′ ,, t₂ ,, eq₂)
                  → ∇-[[ X , R ⨁ Q , inj₁ tr ]] (inj₁ r ,, t₁ ,, Plug-⨁-inj₁ eq₁) < (inj₁ r′ ,, t₂ ,, Plug-⨁-inj₁ eq₂)
 
+  acc-⨂-inj₂ : ∀ {X : Set} (R Q : Reg) (r : ⟦ R ⟧ X) (q : ⟦ Q ⟧ X) (dq : ∇ Q X X) (t : X) eq
+              → Acc (∇-[[ X , Q , q ]]_<_) (dq ,, t ,, eq)
+              → WfRec (∇-[[ X , R ⨂ Q , (r , q) ]]_<_) (Acc (∇-[[ X , R ⨂ Q , (r , q) ]]_<_))
+                      (inj₂ (r , dq) ,, t ,, Plug-⨂-inj₂ eq)
+  acc-⨂-inj₂ R Q r q dq t eq (acc rs) .(inj₂ (r , dq′) ,, t₁ ,, Plug-⨂-inj₂ eq₁) (step-⨂-inj₂ {dq = dq′} {t₁ = t₁} {eq₁ = eq₁} p)
+    = acc (acc-⨂-inj₂ R Q r q dq′ t₁ eq₁ (rs (dq′ ,, t₁ ,, eq₁) p))
+      
+  acc-⨂-inj₁ : ∀ {X : Set} (R Q : Reg) (dr : ∇ R X X) (t :  X) (r : ⟦ R ⟧ X) (q : ⟦ Q ⟧ X) eq
+              → Well-founded (∇-[[ X , Q , q ]]_<_)
+              → Acc (∇-[[ X , R , r ]]_<_) (dr ,, t ,,  eq)
+              → WfRec (∇-[[ X , R ⨂ Q , (r , q) ]]_<_) (Acc (∇-[[ X , R ⨂ Q , (r , q) ]]_<_))
+                      (inj₁ (dr , q) ,, t ,, Plug-⨂-inj₁ eq)
+  acc-⨂-inj₁ R Q dr t r q eq wfq (acc rs) .(inj₁ (dr′ , q) ,, t₁ ,, Plug-⨂-inj₁ eq₁) (step-⨂-inj₁ {dr = dr′} {t₁ = t₁} {eq₁ = eq₁} p)
+    = acc (acc-⨂-inj₁ R Q dr′ t₁ r q eq₁ wfq (rs (dr′ ,, t₁ ,, eq₁) p))
+  acc-⨂-inj₁ R Q dr t r q eq wfq (acc rs) .(inj₂ (r , dq) ,, t₁ ,, Plug-⨂-inj₂ eq₁) (base-⨂ {dq = dq} {t₁ = t₁} {eq₁ = Plug-⨂-inj₂ eq₁})
+    = acc (acc-⨂-inj₂ R Q r q dq t₁ eq₁ (wfq (dq ,, t₁ ,, eq₁)))
+
+  acc-⨁-inj₂ : ∀ {X : Set} (R Q : Reg) (tq : ⟦ Q ⟧ X) (dq : ∇ Q X X) (t : X) eq
+              → Acc (∇-[[ X , Q , tq ]]_<_) (dq ,, t ,, eq)
+              → WfRec (∇-[[ X , R ⨁ Q , inj₂ tq ]]_<_) (Acc (∇-[[ X , R ⨁ Q , inj₂ tq ]]_<_)) (inj₂ dq ,, t ,, Plug-⨁-inj₂ eq)
+  acc-⨁-inj₂ R Q tq dq t eq (acc rs) .(inj₂ q ,, t₁ ,, Plug-⨁-inj₂ eq₁) (step-⨁-inj₂ {q = q} {t₁ = t₁} eq₁ .eq p)
+    = acc (acc-⨁-inj₂ R Q tq q t₁ eq₁ (rs (q ,, t₁ ,, eq₁) p))
+
+  acc-⨁-inj₁ : ∀ {X : Set} (R Q : Reg) (tr : ⟦ R ⟧ X) (dr : ∇ R X X) (t : X) eq
+              → Acc (∇-[[ X , R , tr ]]_<_) (dr ,, t ,, eq)
+              → WfRec (∇-[[ X , R ⨁ Q , inj₁ tr ]]_<_) (Acc (∇-[[ X , R ⨁ Q , inj₁ tr ]]_<_)) (inj₁ dr ,, t ,,  Plug-⨁-inj₁ eq)
+  acc-⨁-inj₁ R Q tr dr t eq (acc rs) .(inj₁ r ,, t₁ ,, Plug-⨁-inj₁ eq₁) (step-⨁-inj₁ {r = r} {t₁ = t₁} eq₁ .eq p)
+    = acc (acc-⨁-inj₁ R Q tr r t₁ eq₁ (rs (r ,, t₁ ,, eq₁) p))
+
+  ∇-WF : (X : Set) → (R : Reg) → (tₓ : ⟦ R ⟧ X) → Well-founded (∇-[[ X , R , tₓ ]]_<_)
+  ∇-WF X R tₓ x = acc (aux R tₓ x)
+    where
+      aux : ∀ (R : Reg) (t : ⟦ R ⟧ X) (x : ∇-Dec R X t) → WfRec (∇-[[ X , R , t ]]_<_) (Acc (∇-[[ X , R , t ]]_<_)) x
+      aux .(R ⨂ Q) .(r , q) .(inj₁ (dr′ , q) ,, t₂ ,, Plug-⨂-inj₁ eq₂) .(inj₁ (dr , q) ,, t₁ ,, Plug-⨂-inj₁ eq₁)
+        (step-⨂-inj₁ {R} {Q} {r} {dr} {dr′} {q} {t₁} {t₂} {eq₁} {eq₂} p)
+          = acc (acc-⨂-inj₁ R Q dr t₁ r q eq₁ (∇-WF X Q q) (aux R r (dr′ ,, t₂ ,, eq₂) (dr ,, t₁ ,, eq₁) p))
+      aux .(R ⨂ Q) .(r , q) .(inj₂ (r , dq′) ,, t₂ ,, Plug-⨂-inj₂ eq₂) .(inj₂ (r , dq) ,, t₁ ,, Plug-⨂-inj₂ eq₁)
+        (step-⨂-inj₂ {R} {Q} {q} {dq} {dq′} {r} {t₁} {t₂} {eq₁} {eq₂} p)
+          = acc (acc-⨂-inj₂ R Q r q dq t₁ eq₁ (aux Q q (dq′ ,, t₂ ,, eq₂) (dq ,, t₁ ,, eq₁) p))
+      aux .(R ⨂ Q) .(r , q) .(inj₁ (dr , q) ,, t₂ ,, eq₂) .(inj₂ (r , dq) ,, t₁ ,, Plug-⨂-inj₂ eq₁)
+        (base-⨂ {R} {Q} {dr} {dq} {r} {q} {t₁} {t₂} {Plug-⨂-inj₂ eq₁} {eq₂})
+          = acc (acc-⨂-inj₂ R Q r q dq t₁ eq₁ (∇-WF X Q q (dq ,, t₁ ,, eq₁)))
+      aux .(R ⨁ Q) .(inj₂ tq) .(inj₂ q′ ,, t₂ ,, Plug-⨁-inj₂ eq₂) .(inj₂ q ,, t₁ ,, Plug-⨁-inj₂ eq₁)
+        (step-⨁-inj₂ {R} {Q} {tq} {q}  {q′} {t₁} {t₂} eq₁ eq₂ p)
+        = acc (acc-⨁-inj₂ R Q tq q t₁ eq₁ (aux Q tq (q′ ,, t₂ ,, eq₂) (q ,, t₁ ,, eq₁) p))
+      aux .(R ⨁ Q) .(inj₁ tr) .(inj₁ r′ ,, t₂ ,, Plug-⨁-inj₁ eq₂) .(inj₁ r ,, t₁ ,, Plug-⨁-inj₁ eq₁)
+        (step-⨁-inj₁ {R} {Q} {tr} {r} {r′} {t₁} {t₂} eq₁ eq₂ p)
+        = acc (acc-⨁-inj₁ R Q tr r t₁ eq₁ (aux R tr (r′ ,, t₂ ,, eq₂) (r ,, t₁ ,, eq₁) p))
+
   data Plug-μ (R : Reg) : μ R → List (∇ R (μ R) (μ R)) → μ R → Set where
     Plug-[] : ∀ {t} → Plug-μ R t [] t
     Plug-∷  : ∀ {t} {h} {hs} {e} {e′}
@@ -164,48 +211,12 @@ module Thesis.Regular where
              → ∇-[[ μ R , R , t ]] (h₁ ,, plug-μ R (In t₁) s₁ ,,  q₁) < (h₂ ,, plug-μ R (In t₂) s₂ ,, q₂)
              → lt R (In t) (t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (t₂ ,, h₂ ∷ s₂ ,, Plug-∷ eq₂ q₂)
 
-  -- aux-lt :  ∀ R e e′ t h hs eq q
-  --        → Acc (lt R e′) (t ,, hs ,, eq)
-  --        → WfRec (lt R (In e)) (Acc (lt R (In e)))
-  --                (t ,, h ∷ hs ,, Plug-∷ eq q)
-  -- aux-lt R e e′ t h hs eq q₂ (acc rs) .(t₁ ,, h ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq q₁ .q₂ p)
-  --  =  acc (aux-lt R e e′ t₁ h s₁ eq₁ q₁ (rs (t₁ ,, s₁ ,, eq₁) p))
-  -- aux-lt R e e′ t h hs eq q (acc rs) .(t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = h₁} {s₁ = s₁} {t₁ = t₁} .e′ a₂ eq₁ .eq q₁ .q x) = {!!}
-
-
-  aux-wf : ∀ R e e′ t h hs eq q → Acc (∇-[[ μ R , R , e ]]_<_) (h ,, e′ ,, q)
-                                → Acc (lt R e′) (t ,, hs ,, eq)
-                                → WfRec (lt R (In e)) (Acc (lt R (In e))) (t ,, h ∷ hs ,, Plug-∷ eq q)
-  aux-wf R e e′ t h hs eq q wf (acc rs₁) .(t₁ ,, h ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq q₁ .q p)
-    = acc (aux-wf {!!} {!!} {!!} {!!} {!!} {!!} {!!} {!!} {!!} {!!} )
-  aux-wf R e .(plug-μ R (In t) hs) t h hs eq q (acc rs) (acc rs₁) .(t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = h₁} {s₁ = s₁} {t₁ = t₁} eq₁ .eq q₁ .q x)
-    = acc (aux-wf {!!} {!!} {!!} {!!} {!!} {!!} {!!} {!!} (rs (h₁ ,, plug-μ R (In t₁) s₁ ,, q₁) x) {!!})
-  -- aux-[] : ∀ R e t h q → Acc (∇-[[ μ R , R , e ]]_<_) (h ,, In t ,, q)
-  --                      → WfRec (lt R (In e)) (Acc (lt R (In e))) (t ,, h ∷ [] ,, Plug-∷ Plug-[] q)
-  -- aux-[] R e t h q ac .(_ ,, h ∷ _ ,, Plug-∷ eq₁ q₁) (lt-step eq₁ .Plug-[] q₁ .q ())
-  -- aux-[] R e t h q (acc rs) .(t₁ ,, h₁ ∷ [] ,, Plug-∷ Plug-[] q₁) (lt-base {h₁ = h₁} {t₁ = t₁} .(In t) .(In t₁) Plug-[] .Plug-[] q₁ .q x)
-  --   = acc (aux-[] R e t₁ h₁ q₁ (rs (h₁ ,, In t₁ ,, q₁) x))
-   -- aux-[] R e t h q (acc rs) .(_ ,, _ ∷ _ ∷ _ ,, Plug-∷ (Plug-∷ eq₁ x₁) q₁) (lt-base .(In t) .(In _) (Plug-∷ eq₁ x₁) .Plug-[] q₁ .q x) = {!!}
-
-
-
-  acc-⨂-base : ∀ (R Q : Reg) (r : ⟦ R ⟧ (μ (R ⨂ Q))) (e : μ (R ⨂ Q)) (q : ⟦ Q ⟧ (μ (R ⨂ Q))) (dq : ∇ Q (μ (R ⨂ Q)) (μ (R ⨂ Q)))
-                  (t : (⟦ R ⟧ (μ (R ⨂ Q)) × ⟦ Q ⟧ (μ (R ⨂ Q))))
-                  (s : List (∇ R (μ (R ⨂ Q)) (μ (R ⨂ Q)) × ⟦ Q ⟧ (μ (R ⨂ Q)) ⊎ ⟦ R ⟧ (μ (R ⨂ Q)) × ∇ Q (μ (R ⨂ Q)) (μ (R ⨂ Q))))
-                  (eq : Plug-μ (R ⨂ Q) (In t) s e) (eqq : Plug Q dq e q)
-
-              → (∀ t dq → Plug Q dq t q → Well-founded (lt (R ⨂ Q) t))
-              → Acc (lt (R ⨂ Q) e) (t ,, s ,, eq)
-              → Acc (∇-[[ μ (R ⨂ Q) , Q , q ]]_<_) (dq ,, e ,, eqq)
-              → WfRec (lt (R ⨂ Q) (In (r , q)))
-                                             (Acc (lt (R ⨂ Q) (In (r , q))))
-                                             (t ,, inj₂ (r , dq) ∷ s ,, Plug-∷ eq (Plug-⨂-inj₂ eqq))
-  acc-⨂-base R Q r e q dq t s eq eqq aa (acc rs) x .(t₁ ,, inj₂ (r , dq) ∷ s₁ ,, Plug-∷ eq₁ (Plug-⨂-inj₂ q₁)) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq (Plug-⨂-inj₂ q₁) .(Plug-⨂-inj₂ eqq) p) = acc (acc-⨂-base R Q r e q dq t₁ s₁ eq₁ q₁ aa (rs (t₁ ,, s₁ ,, eq₁) p) {!!})
-  acc-⨂-base R Q r e q dq t s eq eqq aa (acc xx) x .(_ ,, inj₁ x₂ ∷ _ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = inj₁ x₂} eq₁ .eq q₁ .(Plug-⨂-inj₂ eqq) ())
-  acc-⨂-base R Q r e q dq t s eq eqq aa (acc xx) (acc rs) .(t₁ ,, inj₂ (r , dq′) ∷ s₁ ,, Plug-∷ eq₁ (Plug-⨂-inj₂ eq₂))
-    (lt-base {h₁ = inj₂ (.r , dq′)} {s₁ = s₁} {t₁ = t₁} eq₁ .eq .(Plug-⨂-inj₂ eq₂) .(Plug-⨂-inj₂ eqq) (step-⨂-inj₂ {eq₁ = eq₂} p))
-      = acc (acc-⨂-base R Q r (plug-μ (R ⨂ Q) (In t₁) s₁) q dq′ t₁ s₁ eq₁ eq₂ aa (aa (plug-μ (R ⨂ Q) (In t₁) s₁) dq′ eq₂ (t₁ ,, s₁ ,, eq₁)) (rs (dq′ ,, plug-μ (R ⨂ Q) (In t₁) s₁ ,, eq₂) p))
-
+  porp : (X : Set) → (R : Reg) → (dr : ∇ R X X) (x : X) (r : ⟦ R ⟧ X) → (a : Plug R dr x r) → (b : Plug R dr x r) → a ≡ b
+  porp X .V .tt e .e Plug-V Plug-V = refl
+  porp X .(R ⨁ Q) .(inj₁ r) e .(inj₁ r′) (Plug-⨁-inj₁ {R} {Q} {r = r} {r′} a) (Plug-⨁-inj₁ b) = cong Plug-⨁-inj₁ (porp X R r e r′ a b)
+  porp X .(R ⨁ Q) .(inj₂ q) e .(inj₂ q′) (Plug-⨁-inj₂ {R} {Q} {q = q} {q′} a) (Plug-⨁-inj₂ b) = cong Plug-⨁-inj₂ (porp X Q q e q′ a b)
+  porp X (R ⨂ Q) .(inj₁ (dr , q)) x (dr′ , q) (Plug-⨂-inj₁ {dr = dr} a) (Plug-⨂-inj₁ b) = cong Plug-⨂-inj₁ (porp X R dr x dr′ a b)
+  porp X (R ⨂ Q) .(inj₂ (r , dq)) x (r , dq′) (Plug-⨂-inj₂ {dq = dq} a) (Plug-⨂-inj₂ b) = cong Plug-⨂-inj₂ (porp X Q dq x dq′ a b)
 
   acc-base :  ∀ R r dr e t s eq eqq → (∀ t dr → Plug R dr t r → Well-founded (lt R t))
                → Acc (lt R e) (t ,, s ,, eq)
@@ -213,172 +224,119 @@ module Thesis.Regular where
                → WfRec (lt R (In r)) (Acc (lt R (In r)))
                                      (t ,, dr ∷ s ,, Plug-∷ eq eqq)
   acc-base R r dr e t s eq eqq x (acc rs) x₂ .(t₁ ,, dr ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq q₁ .eqq p)
-    = acc (acc-base R r dr e t₁ s₁ eq₁ q₁ x (rs (t₁ ,, s₁ ,, eq₁) p) {!!})
+    with porp (μ R) R dr e r eqq q₁
+  acc-base R r dr e t s eq eqq x (acc rs) x₂ .(t₁ ,, dr ∷ s₁ ,, Plug-∷ eq₁ eqq) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq .eqq .eqq p) | refl
+    = acc (acc-base R r dr e t₁ s₁ eq₁ eqq x (rs (t₁ ,, s₁ ,, eq₁) p) x₂ )
   acc-base R r dr .(plug-μ R (In t) s) t s eq eqq x (acc _) (acc rs) .(t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = h₁} {s₁ = s₁} {t₁ = t₁} eq₁ .eq q₁ .eqq p)
     = acc (acc-base R r h₁ (plug-μ R (In t₁) s₁) t₁ s₁ eq₁ q₁ x (x (plug-μ R (In t₁) s₁) h₁ q₁ (t₁ ,, s₁ ,, eq₁)) (rs (h₁ ,, plug-μ R (In t₁) s₁ ,, q₁) p) ) 
-  -- we need that every possible subtree of q is well founded.
 
+  data AllR (A : Set) (P : A → Set₁) : (R : Reg) → ⟦ R ⟧ A → Set₁ where
+    AllR-V       : (x : A) → P x → AllR A P V x
+    AllR-⨂      : (R Q : Reg) → (r : ⟦ R ⟧ A) → (q : ⟦ Q ⟧ A) → AllR A P R r → AllR A P Q q → AllR A P (R ⨂ Q) (r , q)
+    AllR-⨁-inj₁ : (R Q : Reg) (r : ⟦ R ⟧ A) → AllR A P R r → AllR A P (R ⨁ Q) (inj₁ r)
+    AllR-⨁-inj₂ : (R Q : Reg) (q : ⟦ Q ⟧ A) → AllR A P Q q → AllR A P (R ⨁ Q) (inj₂ q)
+    AllR-1′      : AllR A P 1′ tt
+    AllR-K       : (B : Set) → (b : B) → AllR A P (K B) b  
 
-
-  another : ∀ (R : Reg) e e′ (h : ∇ R (μ R) (μ R)) (t : ⟦ R ⟧ (μ R)) (s : List (∇ R (μ R) (μ R))) eq q
-          → Acc (∇-[[ μ R , R , e′ ]]_<_) (h ,, e ,, q)
-          → Acc (lt R e) (t ,, s ,, eq)
-          → WfRec (lt R (In e′)) (Acc (lt R (In e′) )) ((t ,, h ∷ s ,, Plug-∷ eq q))
-  another R e e′ h t s eq q ac (acc rs) .(t₁ ,, h ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq q₁ .q p)
-    = acc (another R e e′ h t₁ s₁ eq₁ q₁ {!ac!} (rs (t₁ ,, s₁ ,, eq₁) p))
-  another R .(plug-μ R (In t) s) e′ h t s eq q (acc rs) x .(t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = h₁} {s₁ = s₁} {t₁ = t₁} eq₁ .eq q₁ .q x₃)
-    = acc (another R (plug-μ R (In t₁) s₁) e′ h₁ t₁ s₁ eq₁ q₁ (rs (h₁ ,, plug-μ R (In t₁) s₁ ,, q₁) x₃) {!rs!})
+  prop : (R Q : Reg) (P : μ R → Set₁ ) → ∀ t → AllR (μ R) P Q t → (∀ r dr → Plug Q dr r t → P r)
+  prop R .V P t (AllR-V .t x) .t .tt Plug-V = x
+  prop R .(R₁ ⨂ Q) P .(r₁ , q) (AllR-⨂ R₁ Q r₁ q x x₂) r (inj₁ (r′ , .q)) (Plug-⨂-inj₁ x₁)   = prop R R₁ P r₁ x r r′ x₁ 
+  prop R .(R₁ ⨂ Q) P .(r₁ , q) (AllR-⨂ R₁ Q r₁ q x x₂) r (inj₂ .(r₁ , _)) (Plug-⨂-inj₂ x₁)   = prop R Q P q x₂ r _ x₁
+  prop R .(R₁ ⨁ Q) P .(inj₁ r₁) (AllR-⨁-inj₁ R₁ Q r₁ x) r .(inj₁ _) (Plug-⨁-inj₁ x₁)         = prop R R₁ P r₁ x r _ x₁
+  prop R .(R₁ ⨁ Q) P .(inj₂ q) (AllR-⨁-inj₂ R₁ Q q x) r .(inj₂ q₁) (Plug-⨁-inj₂ {q = q₁} x₁) = prop R Q P q x r q₁ x₁
+  prop R .1′ P .tt AllR-1′ r () x₁
+  prop R .(K B) P t (AllR-K B .t) r () x₁
   
-
-  acc-aux : ∀ R e t h s eq eqq  → Acc (∇-[[ μ R , R , e ]]_<_) (h ,, plug-μ R (In t) s ,, eqq)
-                                → Acc (lt R ((plug-μ R (In t) s))) (t ,, s ,, eq)
-                                → Well-founded (lt R ( In (plug R h (plug-μ R (In t) s))))
-                                → WfRec (lt R (In e)) (Acc (lt R (In e)))
-                                                      (t ,, h ∷ s ,, Plug-∷ eq eqq)
-  acc-aux R e t h s eq eqq ac (acc rs) wf .(t₁ ,, h ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq q₁ .eqq x₁) with plug R h (plug-μ R (In t) s) | sym (cong (plug R h) (Plug-μ-to-plug-μ R (In t₁) s₁ (plug-μ R (In t) s) eq₁)) 
-  acc-aux R e t h s eq eqq ac (acc rs) wf .(t₁ ,, h ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq q₁ .eqq x₁) | .(plug R h (plug-μ R (In t₁) s₁)) | refl
-    = acc {!acc-aux ? ? ? ? ? ? ? ? ? ? !} 
-  -- axxx : ∀ {R} {h : ∇ R (μ R) (μ R)} {t₁ : ⟦ R ⟧ (μ R)}
-  --        {s₁ : List (∇ R (μ R) (μ R))} {t : ⟦ R ⟧ (μ R)}
-  --        {s : List (∇ R (μ R) (μ R))}
-  --        {eq₁ : Plug-μ R (In t₁) s₁ (plug-μ R (In t) s)} {e : ⟦ R ⟧ (μ R)}
-  --        {q₁ : Plug R h (plug-μ R (In t) s) e} (y : Zipper R (In e)) →
-  --      lt R (In e) y (t₁ ,, h ∷ s₁ ,, Plug-∷ eq₁ q₁) → Acc (lt R (In e)) y
-
-  acc-aux R e t h s eq eqq (acc rs) ac wf .(t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = h₁} {s₁ = s₁} {t₁ = t₁} eq₁ .eq q₁ .eqq p)
-    with plug R h (plug-μ R (In t) s) | (trans (Plug-to-plug R h (plug-μ R (In t) s) e eqq) (sym (Plug-to-plug R h₁ (plug-μ R (In t₁) s₁) e q₁))) 
-  acc-aux R e t h s eq eqq (acc rs) ac wf .(t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = h₁} {s₁ = s₁} {t₁ = t₁} eq₁ .eq q₁ .eqq p) | .(plug R h₁ (plug-μ R (In t₁) s₁)) | refl = acc (acc-aux {!!} {!!} {!!} {!!} {!!} {!!} {!!} (rs (h₁ ,, plug-μ R (In t₁) s₁ ,, q₁) p) {!wf ?!} {!!}) -- acc (acc-aux R e t₁ h₁ s₁ eq₁ q₁ (rs (h₁ ,, plug-μ R (In t₁) s₁ ,, q₁) p) {!!} {!!} )
-
   lt-WF : (R : Reg) (t : μ R) → Well-founded (lt R t)
   lt-WF R t x = acc (aux R t x)
     where
+       all-is-wf : (R Q : Reg) → (t : ⟦ Q ⟧ (μ R)) → AllR (μ R) (λ t → Well-founded (lt R t)) Q t
+       all-is-wf R 0′ ()
+       all-is-wf R 1′ tt             = AllR-1′
+       all-is-wf R V t               = AllR-V t (lt-WF R t)
+       all-is-wf R (K A) t           = AllR-K A t
+       all-is-wf R (Q ⨁ P) (inj₁ x) = AllR-⨁-inj₁ Q P x (all-is-wf R Q x)
+       all-is-wf R (Q ⨁ P) (inj₂ y) = AllR-⨁-inj₂ Q P y (all-is-wf R P y)
+       all-is-wf R (Q ⨂ P) (q , p)  = AllR-⨂ Q P q p (all-is-wf R Q q) (all-is-wf R P p)
+
        aux : ∀ (R : Reg) → (t : (μ R)) → (x : Zipper R t) → WfRec (lt R t) (Acc (lt R t)) x
-       aux R .(In _) .(_ ,, _ ∷ _ ,, Plug-∷ eq₂ q₂) .(_ ,, _ ∷ _ ,, Plug-∷ eq₁ q₁) (lt-step eq₁ eq₂ q₁ q₂ p) = {!!}
-       aux = {!!}
 
+       aux R (In t) .(t₂ ,, h ∷ s₂ ,, Plug-∷ eq₂ q₂) .(t₁ ,, h ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-step {t′ = t′} {t₁} {t₂} {h} {s₁} {s₂} eq₁ eq₂ q₁ q₂ p)
+         = acc (acc-base R t h t′ t₁ s₁ eq₁ q₁ (prop R R (λ z → (x₁ : Zipper R z) → Acc (lt R z) x₁) t (all-is-wf R R t))
+                                               (prop R R (λ z → (x₁ : Zipper R z) → Acc (lt R z) x₁) t (all-is-wf R R t) t′ h q₂ (t₁ ,, s₁ ,, eq₁))
+                                               (∇-WF (μ R) R t (h ,, t′ ,, q₁)))
 
-
---      aux R .(In t) .(t₂ ,, h₂ ∷ s₂ ,, Plug-∷ eq₂ q₂) .(t₁ ,, h₁ ∷ [] ,, Plug-∷ Plug-[] q₁) (lt-base {t} {h₁} {h₂} {.[]} {s₂} {t₁} {t₂} a₁ .(In t₁) Plug-[] eq₂ q₁ q₂ p) = acc {!!}
-  --      aux R .(In t) .(t₂ ,, h₂ ∷ s₂ ,, Plug-∷ eq₂ q₂) .(t₁ ,, h₁ ∷ _ ∷ _ ,, Plug-∷ (Plug-∷ eq₁ x) q₁) (lt-base {t} {h₁} {h₂} {.(_ ∷ _)} {s₂} {t₁} {t₂} a₁ .(In _) (Plug-∷ eq₁ x) eq₂ q₁ q₂ p) = {!!}
-  --      aux R .(In t) .(_ ,, _ ∷ s₂ ,, Plug-∷ eq₂ q₂) .(_ ,, _ ∷ _ ,, Plug-∷ eq₁ q₁) (lt-step {t} {s₂ = s₂} eq₁ eq₂ q₁ q₂ x₂) = acc {!!}
-  --   where
-  --     aux : ∀ (R : Reg) → (t : (μ R)) → (x : Zipper R t) → WfRec (lt R t) (Acc (lt R t)) x
-  --     aux R .(In t) .(t₂ ,, h ∷ s₂ ,, Plug-∷ eq₂ q2) .(t₁ ,, h ∷ s₁ ,, Plug-∷ eq₁ q1) (lt-step {t} {t₁ = t₁} {t₂} {h} {s₁} {s₂} eq₁ eq₂ q1 q2 p)
-  --       = acc (aux-lt R t _ t₁ h s₁ eq₁ q1 (aux R _ (t₂ ,, s₂ ,, eq₂) (t₁ ,, s₁ ,, eq₁) p))
-
-  -- acc-⨂-inj₂ : ∀ {X : Set} (R Q : Reg) (r : ⟦ R ⟧ X) (q : ⟦ Q ⟧ X) (dq : ∇ Q X X) (t : X) eq
-  --             → Acc (∇-[[ X , Q , q ]]_<_) (dq ,, t ,, ×-injective₂ eq)
-  --             → WfRec (∇-[[ X , R ⨂ Q , (r , q) ]]_<_) (Acc (∇-[[ X , R ⨂ Q , (r , q) ]]_<_))
-  --                     (inj₂ (r , dq) ,, t ,, eq)
-  -- acc-⨂-inj₂ R Q r .(plug Q dq t) dq t refl (acc rs) .(inj₂ (r , dq₁) ,, t₁ ,, eq₁) (step-⨂-inj₂ {dq = dq₁} {t₁ = t₁} {eq₁ = eq₁} x)
-  --   = acc (acc-⨂-inj₂ R Q r (plug Q dq t) dq₁ t₁ eq₁ (rs (dq₁ ,, t₁ ,, ×-injective₂ eq₁) x))
-      
-  -- acc-⨂-inj₁ : ∀ {X : Set} (R Q : Reg) (dr : ∇ R X X) (t :  X) (r : ⟦ R ⟧ X) (q : ⟦ Q ⟧ X) eq
-  --             → Well-founded (∇-[[ X , Q , q ]]_<_)
-  --             → Acc (∇-[[ X , R , r ]]_<_) (dr ,, t ,, ×-injective₁ eq)
-  --             → WfRec (∇-[[ X , R ⨂ Q , (r , q) ]]_<_) (Acc (∇-[[ X , R ⨂ Q , (r , q) ]]_<_))
-  --                     (inj₁ (dr , q) ,, t ,, eq)
-  -- acc-⨂-inj₁ R Q dr t .(plug R dr₁ t₁) q eq wf (acc rs) .(inj₁ (dr₁ , q) ,, t₁ ,, refl) (step-⨂-inj₁ {dr = dr₁} {t₁ = t₁} {eq₁ = refl} p)
-  --   = acc (acc-⨂-inj₁ R Q dr₁ t₁ (plug R dr₁ t₁) q refl wf (rs (dr₁ ,, t₁ ,, refl) p))
-  -- acc-⨂-inj₁ R Q dr t .(plug R dr t) .(plug Q dq t₁) refl wf (acc rs) .(inj₂ (plug R dr t , dq) ,, t₁ ,, refl) (base-⨂ {dq = dq} {t₁ = t₁} {eq₁ = refl})
-  --   = acc (acc-⨂-inj₂ R Q (plug R dr t) (plug Q dq t₁) dq t₁ refl (wf (dq ,, t₁ ,, refl)))
-
-  -- acc-⨁-inj₂ : ∀ {X : Set} (R Q : Reg) (tq : ⟦ Q ⟧ X) (dq : ∇ Q X X) (t : X) eq
-  --             → Acc (∇-[[ X , Q , tq ]]_<_) (dq ,, t ,, ⊎-injective₂ eq)
-  --             → WfRec (∇-[[ X , R ⨁ Q , inj₂ tq ]]_<_) (Acc (∇-[[ X , R ⨁ Q , inj₂ tq ]]_<_)) (inj₂ dq ,, t ,, eq)
-  -- acc-⨁-inj₂ R Q .(plug Q q t₁) dq t eq (acc rs) .(inj₂ q ,, t₁ ,, refl) (step-⨁-inj₂ {q = q} {t₁ = t₁} refl .eq p)
-  --   = acc (acc-⨁-inj₂ R Q (plug Q q t₁) q t₁ refl (rs (q ,, t₁ ,, refl) p))
-
-  -- acc-⨁-inj₁ : ∀ {X : Set} (R Q : Reg) (tr : ⟦ R ⟧ X) (dr : ∇ R X X) (t : X) eq
-  --             → Acc (∇-[[ X , R , tr ]]_<_) (dr ,, t ,, ⊎-injective₁ eq)
-  --             → WfRec (∇-[[ X , R ⨁ Q , inj₁ tr ]]_<_) (Acc (∇-[[ X , R ⨁ Q , inj₁ tr ]]_<_)) (inj₁ dr ,, t ,, eq)
-  -- acc-⨁-inj₁ R Q .(plug R r t₁) dr t eq (acc rs) .(inj₁ r ,, t₁ ,, refl) (step-⨁-inj₁ {r = r} {t₁ = t₁} refl .eq p)
-  --   = acc (acc-⨁-inj₁ R Q (plug R r t₁) r t₁ refl (rs (r ,, t₁ ,, refl) p))
+       aux R (In t) .(t₂ ,, h₂ ∷ s₂ ,, Plug-∷ eq₂ q₂) .(t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = h₁} {h₂} {s₁} {s₂} {t₁} {t₂} eq₁ eq₂ q₁ q₂ x₁)
+         = acc (acc-base R t h₁ (plug-μ R (In t₁) s₁) t₁ s₁ eq₁ q₁
+                                (prop R R (λ z → (x₂ : Zipper R z) → Acc (lt R z) x₂) t (all-is-wf R R t))
+                                (prop R R (λ z → (x₂ : Zipper R z) → Acc (lt R z) x₂) t (all-is-wf R R t) (plug-μ R (In t₁) s₁) h₁ q₁ (t₁ ,, s₁ ,, eq₁))
+                                (∇-WF (μ R) R t (h₁ ,, plug-μ R (In t₁) s₁ ,, q₁)))
     
-  -- ∇-[]<-WF : ∀ {X : Set} (R : Reg) (tₓ : ⟦ R ⟧ X) → Well-founded (∇-[[ X , R , tₓ ]]_<_)
-  -- ∇-[]<-WF {X} R t x = acc (aux R t x)
-  --   where
-  --     aux : ∀ (R : Reg) (t : ⟦ R ⟧ X) (x : ∇-Dec R X t) → WfRec (∇-[[ X , R , t ]]_<_) (Acc (∇-[[ X , R , t ]]_<_)) x
-  --     aux .(R ⨂ Q) .(plug R dr t₁ , q) .(inj₁ (dr′ , q) ,, t₂ ,, eq₂) .(inj₁ (dr , q) ,, t₁ ,, refl)
-  --          (step-⨂-inj₁ {R} {Q} {.(plug R dr t₁)} {dr} {dr′} {q} {t₁} {t₂} {refl} {eq₂} p)
-  --       = acc (acc-⨂-inj₁ R Q dr t₁ (plug R dr t₁) q refl (∇-[]<-WF Q q) (∇-[]<-WF R (plug R dr t₁) (dr ,, t₁ ,, refl)))
-  --     aux .(R ⨂ Q) .(r , q) .(inj₂ (r , dq′) ,, t₂ ,, eq₂) .(inj₂ (r , dq) ,, t₁ ,, eq₁)
-  --          (step-⨂-inj₂ {R} {Q} {q} {dq} {dq′} {r} {t₁} {t₂} {eq₁} {eq₂} p)
-  --       = acc (acc-⨂-inj₂ R Q r q dq t₁ eq₁ (∇-[]<-WF Q q (dq ,, t₁ ,, ×-injective₂ eq₁)))
-  --     aux .(R ⨂ Q) .(r , q) .(inj₁ (dr , q) ,, t₂ ,, eq₂) .(inj₂ (r , dq) ,, t₁ ,, eq₁)
-  --          (base-⨂ {R} {Q} {dr} {dq} {r} {q} {t₁} {t₂} {eq₁} {eq₂})
-  --       = acc (acc-⨂-inj₂ R Q r q dq t₁ eq₁ (∇-[]<-WF Q q (dq ,, t₁ ,, ×-injective₂ eq₁)))
-  --     aux .(R ⨁ Q) .(inj₂ tq) .(inj₂ q′ ,, t₂ ,, eq₂) .(inj₂ q ,, t₁ ,, eq₁)
-  --         (step-⨁-inj₂ {R} {Q} {tq} {q} {q′} {t₁} {t₂} eq₁ eq₂ p)
-  --       = acc (acc-⨁-inj₂ R Q tq q t₁ eq₁ (∇-[]<-WF Q tq (q ,, t₁ ,, ⊎-injective₂ eq₁)))
-  --     aux .(R ⨁ Q) .(inj₁ tr) .(inj₁ r′ ,, t₂ ,, eq₂) .(inj₁ r ,, t₁ ,, eq₁)
-  --         (step-⨁-inj₁ {R} {Q} {tr} {r} {r′} {t₁} {t₂} eq₁ eq₂ p)
-  --       = acc (acc-⨁-inj₁ R Q tr r t₁ eq₁ (∇-[]<-WF R tr (r ,, t₁ ,, ⊎-injective₁ eq₁)))
       
 
 
 
-  first : ∀ {X : Set} → (R : Reg) → ⟦ R ⟧ X → Maybe (∇ R X X × X)
-  first 0′ ()
-  first 1′ x = nothing
-  first V x  = just (tt , x)
-  first (K A) x = nothing
-  first (u ⨁ v) (inj₁ x) with first u x
-  first (u ⨁ v) (inj₁ x) | just (du , x′) = just (inj₁ du , x′)
-  first (u ⨁ v) (inj₁ x) | nothing        = nothing
-  first (u ⨁ v) (inj₂ y) with first v y
-  first (u ⨁ v) (inj₂ y) | just (x′ , dv) = just (inj₂ x′ , dv)
-  first (u ⨁ v) (inj₂ y) | nothing        = nothing
-  first (u ⨂ v) (u′ , v′) with first u u′
-  first (u ⨂ v) (u′ , v′) | just (du , x) = just (inj₁ (du , v′) , x)
-  first (u ⨂ v) (u′ , v′) | nothing with first v v′
-  first (u ⨂ v) (u′ , v′) | nothing | just (dv , x) = just ((inj₂ (u′ , dv)) , x)
-  first (u ⨂ v) (u′ , v′) | nothing | nothing       = nothing
+  -- first : ∀ {X : Set} → (R : Reg) → ⟦ R ⟧ X → Maybe (∇ R X X × X)
+  -- first 0′ ()
+  -- first 1′ x = nothing
+  -- first V x  = just (tt , x)
+  -- first (K A) x = nothing
+  -- first (u ⨁ v) (inj₁ x) with first u x
+  -- first (u ⨁ v) (inj₁ x) | just (du , x′) = just (inj₁ du , x′)
+  -- first (u ⨁ v) (inj₁ x) | nothing        = nothing
+  -- first (u ⨁ v) (inj₂ y) with first v y
+  -- first (u ⨁ v) (inj₂ y) | just (x′ , dv) = just (inj₂ x′ , dv)
+  -- first (u ⨁ v) (inj₂ y) | nothing        = nothing
+  -- first (u ⨂ v) (u′ , v′) with first u u′
+  -- first (u ⨂ v) (u′ , v′) | just (du , x) = just (inj₁ (du , v′) , x)
+  -- first (u ⨂ v) (u′ , v′) | nothing with first v v′
+  -- first (u ⨂ v) (u′ , v′) | nothing | just (dv , x) = just ((inj₂ (u′ , dv)) , x)
+  -- first (u ⨂ v) (u′ , v′) | nothing | nothing       = nothing
 
-  first-preserves-plug : ∀ {X : Set} → (R : Reg) → (r : ⟦ R ⟧ X) → (h : ∇ R X X) (x : X) → first R r ≡ just (h , x) → plug R h x ≡ r
-  first-preserves-plug 0′ r () x x₁
-  first-preserves-plug 1′ r h x ()
-  first-preserves-plug V r .tt .r refl = refl
-  first-preserves-plug (K _) r () x p
-  first-preserves-plug (R ⨁ Q) (inj₁ r) h x p with first R r | inspect (first R) r
-  first-preserves-plug (R ⨁ Q) (inj₁ r) .(inj₁ dr) .x′ refl | just (dr , x′) | Reveal_·_is_.[ eq ]
-    = cong inj₁ (first-preserves-plug R r dr x′ eq)
-  first-preserves-plug (R ⨁ Q) (inj₁ r) h x () | nothing | eq
-  first-preserves-plug (R ⨁ Q) (inj₂ q) h x p with first Q q | inspect (first Q) q
-  first-preserves-plug (R ⨁ Q) (inj₂ q) .(inj₂ dq) .x′ refl | just (dq , x′) | Reveal_·_is_.[ eq ]
-    = cong inj₂ (first-preserves-plug Q q dq x′ eq)
-  first-preserves-plug (R ⨁ Q) (inj₂ q) h x () | nothing | eq
-  first-preserves-plug (R ⨂ Q) (r , q) h x p with first R r | inspect (first R) r
-  first-preserves-plug (R ⨂ Q) (r , q) .(inj₁ (dr , q)) .x′ refl | just (dr , x′) | Reveal_·_is_.[ eq ]
-    = cong (_, q) (first-preserves-plug R r dr x′ eq)
-  first-preserves-plug (R ⨂ Q) (r , q) h x p | nothing | Reveal_·_is_.[ eq ]
-    with first Q q | inspect (first Q) q
-  first-preserves-plug (R ⨂ Q) (r , q) .(inj₂ (r , dq)) .x′ refl | nothing | Reveal_·_is_.[ eq ] | just (dq , x′) | Reveal_·_is_.[ eq₁ ]
-    = cong (_,_ r) (first-preserves-plug Q q dq x′ eq₁)
-  first-preserves-plug (R ⨂ Q) (r , q) h x () | nothing | Reveal_·_is_.[ eq ] | nothing | eq₁
+  -- first-preserves-plug : ∀ {X : Set} → (R : Reg) → (r : ⟦ R ⟧ X) → (h : ∇ R X X) (x : X) → first R r ≡ just (h , x) → plug R h x ≡ r
+  -- first-preserves-plug 0′ r () x x₁
+  -- first-preserves-plug 1′ r h x ()
+  -- first-preserves-plug V r .tt .r refl = refl
+  -- first-preserves-plug (K _) r () x p
+  -- first-preserves-plug (R ⨁ Q) (inj₁ r) h x p with first R r | inspect (first R) r
+  -- first-preserves-plug (R ⨁ Q) (inj₁ r) .(inj₁ dr) .x′ refl | just (dr , x′) | Reveal_·_is_.[ eq ]
+  --   = cong inj₁ (first-preserves-plug R r dr x′ eq)
+  -- first-preserves-plug (R ⨁ Q) (inj₁ r) h x () | nothing | eq
+  -- first-preserves-plug (R ⨁ Q) (inj₂ q) h x p with first Q q | inspect (first Q) q
+  -- first-preserves-plug (R ⨁ Q) (inj₂ q) .(inj₂ dq) .x′ refl | just (dq , x′) | Reveal_·_is_.[ eq ]
+  --   = cong inj₂ (first-preserves-plug Q q dq x′ eq)
+  -- first-preserves-plug (R ⨁ Q) (inj₂ q) h x () | nothing | eq
+  -- first-preserves-plug (R ⨂ Q) (r , q) h x p with first R r | inspect (first R) r
+  -- first-preserves-plug (R ⨂ Q) (r , q) .(inj₁ (dr , q)) .x′ refl | just (dr , x′) | Reveal_·_is_.[ eq ]
+  --   = cong (_, q) (first-preserves-plug R r dr x′ eq)
+  -- first-preserves-plug (R ⨂ Q) (r , q) h x p | nothing | Reveal_·_is_.[ eq ]
+  --   with first Q q | inspect (first Q) q
+  -- first-preserves-plug (R ⨂ Q) (r , q) .(inj₂ (r , dq)) .x′ refl | nothing | Reveal_·_is_.[ eq ] | just (dq , x′) | Reveal_·_is_.[ eq₁ ]
+  --   = cong (_,_ r) (first-preserves-plug Q q dq x′ eq₁)
+  -- first-preserves-plug (R ⨂ Q) (r , q) h x () | nothing | Reveal_·_is_.[ eq ] | nothing | eq₁
 
-  right : ∀ {X : Set} → (R : Reg) → ∇ R X X × X → (∇ R X X × X) ⊎ (⟦ R ⟧ X)
-  right 0′ (() , _)
-  right 1′ (() , _)
-  right V (tt , x) = inj₂ x
-  right (K _) (() , _)
-  right (u ⨁ v) (inj₁ du , x) with right u (du , x)
-  right (u ⨁ v) (inj₁ du , x) | inj₁ (du′ , x′) = inj₁ ((inj₁ du′) , x′)
-  right (u ⨁ v) (inj₁ du , x) | inj₂ u′         = inj₂ (inj₁ u′)
-  right (u ⨁ v) (inj₂ dv , x) with right v (dv , x)
-  right (u ⨁ v) (inj₂ dv , x) | inj₁ (dv′ , x′) = inj₁ ((inj₂ dv′) , x′)
-  right (u ⨁ v) (inj₂ dv , x) | inj₂ v′         = inj₂ (inj₂ v′)
-  right (u ⨂ v) (inj₁ (du , v′) , x) with right u (du , x)
-  right (u ⨂ v) (inj₁ (du , v′) , x) | inj₁ (du′ , x′) = inj₁ ((inj₁ (du′ , v′)) , x′)
-  right (u ⨂ v) (inj₁ (du , v′) , x) | inj₂ u′ with first v v′
-  right (u ⨂ v) (inj₁ (du , v′) , x) | inj₂ u′ | just (dv , x′′) = inj₁ (inj₂ (u′ , dv) , x′′)
-  right (u ⨂ v) (inj₁ (du , v′) , x) | inj₂ u′ | nothing         = inj₂ (u′ , v′)
-  right (u ⨂ v) (inj₂ (u′ , dv) , x) with right v (dv , x)
-  right (u ⨂ v) (inj₂ (u′ , dv) , x) | inj₁ (dv′ , x′) = inj₁ (inj₂ (u′ , dv′) , x′)
-  right (u ⨂ v) (inj₂ (u′ , dv) , x) | inj₂ v′         = inj₂ (u′ , v′)
+  -- right : ∀ {X : Set} → (R : Reg) → ∇ R X X × X → (∇ R X X × X) ⊎ (⟦ R ⟧ X)
+  -- right 0′ (() , _)
+  -- right 1′ (() , _)
+  -- right V (tt , x) = inj₂ x
+  -- right (K _) (() , _)
+  -- right (u ⨁ v) (inj₁ du , x) with right u (du , x)
+  -- right (u ⨁ v) (inj₁ du , x) | inj₁ (du′ , x′) = inj₁ ((inj₁ du′) , x′)
+  -- right (u ⨁ v) (inj₁ du , x) | inj₂ u′         = inj₂ (inj₁ u′)
+  -- right (u ⨁ v) (inj₂ dv , x) with right v (dv , x)
+  -- right (u ⨁ v) (inj₂ dv , x) | inj₁ (dv′ , x′) = inj₁ ((inj₂ dv′) , x′)
+  -- right (u ⨁ v) (inj₂ dv , x) | inj₂ v′         = inj₂ (inj₂ v′)
+  -- right (u ⨂ v) (inj₁ (du , v′) , x) with right u (du , x)
+  -- right (u ⨂ v) (inj₁ (du , v′) , x) | inj₁ (du′ , x′) = inj₁ ((inj₁ (du′ , v′)) , x′)
+  -- right (u ⨂ v) (inj₁ (du , v′) , x) | inj₂ u′ with first v v′
+  -- right (u ⨂ v) (inj₁ (du , v′) , x) | inj₂ u′ | just (dv , x′′) = inj₁ (inj₂ (u′ , dv) , x′′)
+  -- right (u ⨂ v) (inj₁ (du , v′) , x) | inj₂ u′ | nothing         = inj₂ (u′ , v′)
+  -- right (u ⨂ v) (inj₂ (u′ , dv) , x) with right v (dv , x)
+  -- right (u ⨂ v) (inj₂ (u′ , dv) , x) | inj₁ (dv′ , x′) = inj₁ (inj₂ (u′ , dv′) , x′)
+  -- right (u ⨂ v) (inj₂ (u′ , dv) , x) | inj₂ v′         = inj₂ (u′ , v′)
 
-  righty : ∀ {j c : Set} → (R : Reg) → ⟦ R ⟧ j ⊎ (∇ R j c × c) → ⟦ R ⟧ c ⊎ (∇ R j c × j)
-  righty = {!!}
+  -- righty : ∀ {j c : Set} → (R : Reg) → ⟦ R ⟧ j ⊎ (∇ R j c × c) → ⟦ R ⟧ c ⊎ (∇ R j c × j)
+  -- righty = {!!}
 
 
   {- What is a leaf of μ R? 
