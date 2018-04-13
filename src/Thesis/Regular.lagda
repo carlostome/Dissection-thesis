@@ -206,6 +206,16 @@ module Thesis.Regular where
     (lt-base {h₁ = inj₂ (.r , dq′)} {s₁ = s₁} {t₁ = t₁} eq₁ .eq .(Plug-⨂-inj₂ eq₂) .(Plug-⨂-inj₂ eqq) (step-⨂-inj₂ {eq₁ = eq₂} p))
       = acc (acc-⨂-base R Q r (plug-μ (R ⨂ Q) (In t₁) s₁) q dq′ t₁ s₁ eq₁ eq₂ aa (aa (plug-μ (R ⨂ Q) (In t₁) s₁) dq′ eq₂ (t₁ ,, s₁ ,, eq₁)) (rs (dq′ ,, plug-μ (R ⨂ Q) (In t₁) s₁ ,, eq₂) p))
 
+
+  acc-base :  ∀ R r dr e t s eq eqq → (∀ t dr → Plug R dr t r → Well-founded (lt R t))
+               → Acc (lt R e) (t ,, s ,, eq)
+               → Acc (∇-[[ μ R , R , r ]]_<_) (dr ,, e ,, eqq)
+               → WfRec (lt R (In r)) (Acc (lt R (In r)))
+                                     (t ,, dr ∷ s ,, Plug-∷ eq eqq)
+  acc-base R r dr e t s eq eqq x (acc rs) x₂ .(t₁ ,, dr ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-step {t₁ = t₁} {s₁ = s₁} eq₁ .eq q₁ .eqq p)
+    = acc (acc-base R r dr e t₁ s₁ eq₁ q₁ x (rs (t₁ ,, s₁ ,, eq₁) p) {!!})
+  acc-base R r dr .(plug-μ R (In t) s) t s eq eqq x (acc _) (acc rs) .(t₁ ,, h₁ ∷ s₁ ,, Plug-∷ eq₁ q₁) (lt-base {h₁ = h₁} {s₁ = s₁} {t₁ = t₁} eq₁ .eq q₁ .eqq p)
+    = acc (acc-base R r h₁ (plug-μ R (In t₁) s₁) t₁ s₁ eq₁ q₁ x (x (plug-μ R (In t₁) s₁) h₁ q₁ (t₁ ,, s₁ ,, eq₁)) (rs (h₁ ,, plug-μ R (In t₁) s₁ ,, q₁) p) ) 
   -- we need that every possible subtree of q is well founded.
 
 
