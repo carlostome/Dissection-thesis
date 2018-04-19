@@ -207,15 +207,6 @@ module Thesis.Regular where
     view (R ⨂ Q) P (r , q) | inj₂ (l , isl , eq) | inj₁ (dq , p , plug)   = inj₁ (inj₂ (r , dq) , p , Plug-⨂-inj₂ plug)
     view (R ⨂ Q) P (r , q) | inj₂ (l , isl , eq) | inj₂ (l′ , isl′ , eq′) = inj₂ ((l , l′) , NonRec-⨂ R Q l l′ isl isl′ , ≈-⨂ eq eq′)
 
-  --   embed-≈ : (R : Reg) → (l : ⟦ R ⟧ A)
-  --           → (isl : IsLeaf R l) → ∀ Q → (r : ⟦ R ⟧ (μ Q)) → [ R ]-[ μ Q ] r ≈[ A ] l → embed R Q (leaf l isl) ≡ r   
-  --   embed-≈ .1′ .tt IsLeaf-1′ Q .tt ≈-1′ = refl
-  --   embed-≈ .(K B) l (IsLeaf-K B .l) Q .l ≈-K = refl
-  --   embed-≈ .(R ⨁ Q) .(inj₁ r) (IsLeaf-⨁-inj₁ R Q r isl) P .(inj₁ x) (≈-⨁₁ {.R} {.Q} {x = x} {.r} p) = cong inj₁ (embed-≈ R r isl P x p)
-  --   embed-≈ .(R ⨁ Q) .(inj₂ q) (IsLeaf-⨁-inj₂ R Q q isl) P .(inj₂ x) (≈-⨁₂ {Q = .Q} {x = x} p)       = cong inj₂ (embed-≈ Q q isl P x p)
-  --   embed-≈ .(R ⨂ Q) .(r , q) (IsLeaf-⨂ R Q r q islr islq) P (r′ , q′) (≈-⨂ {x₁ = x₁} eq-r eq-q)     = cong₂ _,_ (embed-≈ R r islr P r′ eq-r)
-  --                                                                                                                  (embed-≈ Q q islq P q′ eq-q)
-
     -- data Stack {X : Set} : Reg → Set₁ where
     --   S-⨂₁  : ∀ {R Q} → ⟦ Q ⟧ X → Stack {X} R → Stack (R ⨂ Q)
     --   S-⨂₂  : ∀ {R Q} → ⟦ R ⟧ X → Stack {X} Q → Stack (R ⨂ Q)
@@ -302,7 +293,7 @@ module Thesis.Regular where
       first-lemma (K A) Q r k f s t .(f (r , NonRec-K A r) s) refl p | inj₂ (a , isla) = p
       first-lemma (R ⨁ Q) P (inj₁ r) k f s t z x p with view R P r
       first-lemma (R ⨁ Q) P (inj₁ r) k f s t z x (pm′ , plP , plmP ) | inj₁ (dr , pm , plug) = 
-        first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s t z x {!!}
+        first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s t z x {!!} -- Σ (⟦ P ⟧ (μ P)) λ e → Plug P (k dr) q e × Plug-μ⇑ P (In e) s t
       first-lemma (R ⨁ Q) P (inj₁ r) k f s z t x p | inj₂ (ra , isl , eq) =
         first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s z t x {!!}
       first-lemma (R ⨁ Q) P (inj₂ q) k f s t z x p = {!!}
@@ -313,50 +304,4 @@ module Thesis.Regular where
       to-left-preserves : (R : Reg) → (r : μ R) → (s : List (∇ R (μ R) (μ R))) → (t : μ R)
                         → Plug-μ⇑ R r s t → (z : UZipper' R) → to-left R r s ≡ z → PlugZ'-μ⇑ R z t
       to-left-preserves R (In r) s t x z p = first-lemma R R r id _,_ s t z p (propR R r s t x)
-   
-
-  -- --   --   first-preserves-V : ∀ Q x k f z t s →  first V Q x k f s ≡ z → Plug-μ⇑ Q x (k tt ∷ s) t → PlugZ'-μ⇑ Q z t
-  -- --   --   first-preserves-V Q x k f z t s x₁ x₂ = to-left-preserves Q x (k tt ∷ s) t x₂ z x₁
-
-  -- --   -- --   first-preserves-⨁₁ : ∀ R Q r k f s z t → first R (R ⨁ Q) r k f ≡ z → Plug-μ⇑ (R ⨁ Q) (In (inj₁ r)) s t → PlugZ'-μ⇑ (R ⨁ Q) z t
-  -- --   -- --   first-preserves-⨁₁ 0′ Q r k f s z t x x₁ = {!!}
-  -- --   -- --   first-preserves-⨁₁ 1′ Q r k f s z t x x₁ = {!!}
-  -- --   -- --   first-preserves-⨁₁ V Q (In (inj₁ v)) k f s z t x x₁ = first-preserves-V (V ⨁ Q) v {!!} {!!} z t x (Plug-∷ {!!} {!!})
-  -- --   -- --   first-preserves-⨁₁ V Q (In (inj₂ y)) k f s z t x x₁ = {!!}
-  -- --   -- --   first-preserves-⨁₁ (K A) Q r k f s z t x x₁ = {!!}
-  -- --   -- --   first-preserves-⨁₁ (R ⨁ R₁) Q r k f s z t x x₁ = {!!}
-  -- --   -- --   first-preserves-⨁₁ (R ⨂ R₁) Q r k f s z t x x₁ = {!!}
-
-  -- --   --   first-preserves-⨂₁ : ∀ (R Q : Reg) (r : ⟦ R ⟧ (μ (R ⨁ Q)))
-  -- --   --                           (k : ∇ R (μ (R ⨁ Q)) (μ (R ⨁ Q)) ⊎ ∇ Q (μ (R ⨁ Q)) (μ (R ⨁ Q)) → ∇ R (μ (R ⨁ Q)) (μ (R ⨁ Q)) ⊎ ∇ Q (μ (R ⨁ Q)) (μ (R ⨁ Q)))
-  -- --   --                           (f : Leaf (R ⨁ Q) → (List (∇ R (μ (R ⨁ Q)) (μ (R ⨁ Q)) ⊎ ∇ Q (μ (R ⨁ Q)) (μ (R ⨁ Q)))) → UZipper' (R ⨁ Q))
-  -- --   --                           s z t → first R (R ⨁ Q) r (k ∘ inj₁) (λ { (leaf l x) → f (leaf (inj₁ l) (IsLeaf-⨁-inj₁ R Q l x)) }) s ≡ z →
-  -- --   --                          Plug-μ⇑ (R ⨁ Q) (In (inj₁ r)) s t → PlugZ'-μ⇑ (R ⨁ Q) z t
-  -- --   --   first-preserves-⨂₁ 0′ Q r k f s z t x x₁ = {!!}
-  -- --   --   first-preserves-⨂₁ 1′ Q r k f s z t x x₁ = {!!}
-  -- --   --   first-preserves-⨂₁ V Q r k f s z t x x₁ = {!!}
-  -- --   --   first-preserves-⨂₁ (K A) Q r k f s z t x x₁ = {!!}
-  -- --   --   first-preserves-⨂₁ (R ⨁ P) Q (inj₁ r) k f s z t x x₁ = {!!}
-  -- --   --   first-preserves-⨂₁ (R ⨁ P) Q (inj₂ y) k f s z t x x₁ = {!!}
-  -- --   --   first-preserves-⨂₁ (R ⨂ R₁) Q r k f s z t x x₁ = {!!}
-      
-  -- --   --   first-preserves : ∀ R r k f s z t → first R R r k f s ≡ z → Plug-μ⇑ R (In r) s t → PlugZ'-μ⇑ R z t
-  -- --   --   first-preserves 0′ r k f s z t x p = {!!}
-  -- --   --   first-preserves 1′ r k f s z t x p = {!!}
-  -- --   --   first-preserves V r k f s z t x p = {!!}
-  -- --   --   first-preserves (K A) r k f s z t x p = {!!}
-  -- --   --   first-preserves (R ⨁ Q) (inj₁ r) k f s z t x p = {!p!}
-  -- --   --   first-preserves (R ⨁ Q) (inj₂ q) k f s z t x p = {!!}
-  -- --   --   first-preserves (R ⨂ R₁) r k f s z t x p = {!!}
-  -- --   --   -- first-preserves 0′ () s z t x p
-  -- --   --   -- first-preserves 1′ r s .(leaf tt IsLeaf-1′ , s) t refl p = p
-  -- --   --   -- first-preserves V r s z t x p = to-left-preserves V r (tt ∷ s) t (Plug-∷ Plug-V p) z x
-  -- --   --   -- first-preserves (K A) r s .(leaf r (IsLeaf-K A r) , s) t refl p = p
-  -- --   --   -- first-preserves (R ⨁ Q) (inj₁ x₁) s z t x p = {!!}
-  -- --   --   -- first-preserves (R ⨁ Q) (inj₂ y) s z t x p = {!!}
-  -- --   --   -- first-preserves (R ⨂ Q) r s z t x p = {!!}
-      
-  -- --   --   to-left-preserves : (R : Reg) → (r : μ R) → (s : List (∇ R (μ R) (μ R))) → (t : μ R)
-  -- --   --                     → Plug-μ⇑ R r s t → (z : UZipper' R) → to-left R r s ≡ z → PlugZ'-μ⇑ R z t
-  -- --   --   to-left-preserves R (In r) s t x z p = first-preserves R r id _,_ s z  t p x
    

@@ -251,7 +251,7 @@
 \newcommand{\referenceneeded}[1]{\todo[color=green!40,noline]{#1}}
 \newcommand{\colored}{\todo[color=pink!40,noline]{Color the stuff}}
 
-\title{Thesis Proposal: Verified tail recursive folds through dissection}
+\title{Verified tail recursive folds through dissection}
 \date{\today}
 \author{Carlos Tom\'e Corti\~nas}
 
@@ -267,7 +267,8 @@
 \tableofcontents
 
 % \listoftodos
-% \input{problem.tex}
+\input{problem.tex}
+\input{background.tex}
 % \input{termination.tex}
 % \input{generic.tex}
 \input{tree.tex}

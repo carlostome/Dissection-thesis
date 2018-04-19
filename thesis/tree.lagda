@@ -1,4 +1,4 @@
-%include polycode.fmt
+
 %include thesis.fmt
 
 %{
@@ -6,6 +6,7 @@
 %format Tip   = "\AI{Tip}"
 %format Node  = "\AI{Node}"
 %format eval  = "\AF{eval}"
+%format eval'  = "\AF{eval'}"
 %format +     = "\AF{+}"
 %format pretty   = "\AF{pretty}"
 %format TreeAlg  = "\AD{TreeAlg}"
@@ -100,7 +101,7 @@
 
   \todo{photo example}
 
-  We can use binary trees to represent the syntax of arithmetic expressions. A
+  Binary trees can be used to represent the syntax of arithmetic expressions. A
   value of type |Tree| is an expression where the |Node| constructor stands for
   addition and the natural numbers stand for themselves. Under this view, we can
   interpret (or evaluate) an expression into a natural number using a function
@@ -118,10 +119,11 @@
 %}
 
   The function |eval| is defined compositionally (in the style of denotational
-  semantics) where the value of a |Node| is computed by composing the values for
-  the left and right subtree. Analogously, we can have another interpetation
-  function that pretty prints a binary tree. This is a function of type |Tree ->
-  String|.
+  semantics) where the value of a |Node| depends only on the values of the left
+  and right subtree.
+
+  Analogously, we can write another interpetation function that pretty prints a
+  binary tree. This is a function of type |Tree -> String|.
 
 %{
 %format n     = "\AB{n}"
@@ -134,12 +136,11 @@
 \end{code}
 %}
 
-  Both interpretations functions share some underlying structure. In the case of
+  Both interpretation functions share some underlying structure. In the case of
   |eval|, when evaluating the constructor |Node| we combine the results of both
   subtrees using the addition operator |+| while when pretty printing we combine
-  them by concatenating the resulting |String|s.
-
-  Abstracting the concrete functions used in each case into an algebra.
+  them by concatenating the resulting |String|s. The concrete functions used in
+  both can be abstracted into an algebra.
 
 \begin{code}
   record TreeAlg : Set1 where
@@ -149,29 +150,27 @@
       NodeA  : A -> A -> A
 \end{code}
 
-\todo{A has to be in TreeAlg or it should be made parametric over it?}
-
-  We can define a general catamorphism that folds a tree into a value of the
-  type specified by the algebra.
+  Given an algebra, we can define a catamorphism that folds a tree into a value
+  of the carrier type specified by the algebra.
 
 %{
 %format n     = "\AB{n}"
 %format t1    = "\AB{\ensuremath{t_1}}"
 %format t2    = "\AB{\ensuremath{t_2}}"
 \begin{code}
-  treeCata : (tAlg : TreeAlg) → Tree → A tAlg
+  treeCata : (tAlg : TreeAlg) -> Tree -> A tAlg
   treeCata tAlg (Tip n)       = TipA  tAlg n
   treeCata tAlg (Node t1 t2)  = NodeA tAlg (treeCata tAlg t1) (treeCata tAlg t2)
 \end{code}
 %}
 
-  Using the catamorphism, the |eval| function can be re-implemented as follows.
+  Using the catamorphism, the function |eval| is equivalent to |eval'|.
 
 %{
 %format tAlg = "\AB{tAlg}"
 \begin{code}
-  eval : Tree -> Nat
-  eval = treeCata tAlg
+  eval' : Tree -> Nat
+  eval' = treeCata tAlg
     where
       tAlg : TreeAlg
       tAlg = record { A = Nat  ;  TipA = id  ;  NodeA = \_+\_ }

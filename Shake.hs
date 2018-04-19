@@ -17,7 +17,7 @@ tex = "tex"
 
 -- lagda modules used to build the thesis
 thesis_lagda_modules :: [String]
-thesis_lagda_modules = [ "main" , "tree" , "problem"]
+thesis_lagda_modules = [ "main" , "tree" , "problem" , "background"]
 
 main :: IO ()
 main = shakeArgs shakeOptions $ do

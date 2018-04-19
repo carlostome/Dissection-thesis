@@ -9,6 +9,8 @@ proposal/*.tex
 proposal/*.sty
 dirty
 proposal/out
+
+thesis/*.tex
 ### Agda ###
 *.agdai
 
@@ -418,5 +420,8 @@ Session.vim
 .netrwhist
 # auto-generated tag files
 tags
+
+# shake
+.shake
 
 # End of https://www.gitignore.io/api/vim,tex,agda,latex,emacs
