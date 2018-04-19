@@ -281,25 +281,19 @@ module Thesis.Regular where
                   → (t : μ Q)
                   → (z : UZipper' Q)
                   → first R Q r k f s ≡ z → Prop R Q r k s f t → PlugZ'-μ⇑ Q z t
-      first-lemma 0′ Q () k f s t z x p
-      first-lemma 1′ Q r k f s t z x p with view 1′ Q r
-      first-lemma 1′ Q r k f s t z x p | inj₁ (() , _)
-      first-lemma 1′ Q r k f s t .(f (tt , NonRec-1′) s) refl p | inj₂ y = p
-      first-lemma I Q r k f s t z x p with view I Q r
-      first-lemma I Q r k f s t z x (q′ , pl , pm) | inj₁ (tt , q) = to-left-preserves Q r (k tt ∷ s) t (Plug-∷ pl (pm)) z x
-      first-lemma I Q r k f s t z x p | inj₂ (_ , () , _)
-      first-lemma (K A) Q r k f s t z x p     with view (K A) Q r
-      first-lemma (K A) Q r k f s t z x p | inj₁ (() , _)
-      first-lemma (K A) Q r k f s t .(f (r , NonRec-K A r) s) refl p | inj₂ (a , isla) = p
-      first-lemma (R ⨁ Q) P (inj₁ r) k f s t z x p with view R P r
-      first-lemma (R ⨁ Q) P (inj₁ r) k f s t z x (pm′ , plP , plmP ) | inj₁ (dr , pm , plug) = 
-        first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s t z x {!!} -- Σ (⟦ P ⟧ (μ P)) λ e → Plug P (k dr) q e × Plug-μ⇑ P (In e) s t
-      first-lemma (R ⨁ Q) P (inj₁ r) k f s z t x p | inj₂ (ra , isl , eq) =
-        first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s z t x {!!}
-      first-lemma (R ⨁ Q) P (inj₂ q) k f s t z x p = {!!}
-      first-lemma (R ⨂ Q) P (r , q) k f s t z x p with view R P r
-      first-lemma (R ⨂ Q) P (r , q) k f s t z x (a , b , c) | inj₁ (proj₃ , proj₄ , proj₅) = {!!}
-      first-lemma (R ⨂ Q) P (r , q) k f s t z x p | inj₂ y = {!!}
+
+      first-lemma R Q r k f s t z x p with view R Q r
+      first-lemma R Q r k f s t z x p | inj₁ x₁ = {!x₁!}
+      first-lemma .1′ Q .tt k f s t .(f (tt , NonRec-1′) s) refl p | inj₂ (.tt , NonRec-1′ , ≈-1′) = p
+      first-lemma .(K B) Q .l k f s t .(f (l , NonRec-K B l) s) refl p | inj₂ (l , NonRec-K B .l , ≈-K) = p
+      first-lemma .(R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r′) , NonRec-⨁-inj₁ R Q r′ isl , ≈-⨁₁ {x = x} eq)
+        with view R P x 
+      first-lemma .(R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r′) , NonRec-⨁-inj₁ R Q r′ isl , ≈-⨁₁ {x = x} eq) | inj₁ (_ , _ , _ ) = {!!}
+      first-lemma .(R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r′) , NonRec-⨁-inj₁ R Q r′ isl , ≈-⨁₁ {x = x} eq) | inj₂ (rl , islr , eq′)
+       = first-lemma R P x (λ z₁ → k (inj₁ z₁)) (first-⨁₁ R Q P f) s t z e {!p!} -- Should be accepted
+      
+      first-lemma .(R ⨁ Q) P r k f s t z x p | inj₂ (.(inj₂ q) , NonRec-⨁-inj₂ R Q q isl , eq) = {!!}
+      first-lemma .(R ⨂ Q) P r k f s t z x p | inj₂ (.(r′ , q) , NonRec-⨂ R Q r′ q isl isl₁ , eq) = {!!}
       
       to-left-preserves : (R : Reg) → (r : μ R) → (s : List (∇ R (μ R) (μ R))) → (t : μ R)
                         → Plug-μ⇑ R r s t → (z : UZipper' R) → to-left R r s ≡ z → PlugZ'-μ⇑ R z t
