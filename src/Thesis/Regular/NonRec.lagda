@@ -7,7 +7,9 @@ module Thesis.Regular.NonRec where
   open import Data.Empty
 
   open import Thesis.Regular.Core
-  open import Thesis.Regular.Equality
+  open import Thesis.Regular.Equality renaming (refl to ≈-refl)
+
+  open import Relation.Binary.PropositionalEquality renaming (refl to ≡-refl)
 
   data NonRec {X : Set} : (R : Reg) → ⟦ R ⟧ X → Set where
     NonRec-1′ : NonRec 1′ tt
@@ -34,9 +36,9 @@ module Thesis.Regular.NonRec where
   coerce-NonRec .(r , q) (NonRec-⨂ R Q r q nr nr₁) = NonRec-⨂ R Q (coerce r nr) (coerce q nr₁) (coerce-NonRec r nr) (coerce-NonRec q nr₁)
 
   coerce-≈ : ∀ {X : Set} {R : Reg} (x : ⟦ R ⟧ X) → (nr : NonRec R x)
-           → ∀ {Y : Set} → [ R ]-[ X ] x ≈[ Y ] (coerce x nr)
-  coerce-≈ .tt NonRec-1′     = ≈-1′
-  coerce-≈ x (NonRec-K B .x) = ≈-K
-  coerce-≈ .(inj₁ r) (NonRec-⨁-inj₁ R Q r nr) = ≈-⨁₁ (coerce-≈ r nr)
-  coerce-≈ .(inj₂ q) (NonRec-⨁-inj₂ R Q q nr) = ≈-⨁₂ (coerce-≈ q nr)
-  coerce-≈ .(r , q) (NonRec-⨂ R Q r q nr nr₁) = ≈-⨂  (coerce-≈ r nr) (coerce-≈ q nr₁)
+           → ∀ {Y : Set} → (y : ⟦ R ⟧ Y) → [ R ]-[ X ] x ≈[ Y ] y → coerce x nr ≡ y
+  coerce-≈ .tt NonRec-1′ .tt ≈-1′   = ≡-refl
+  coerce-≈ x (NonRec-K B .x) .x ≈-K = ≡-refl
+  coerce-≈ .(inj₁ r) (NonRec-⨁-inj₁ R Q r nr) .(inj₁ _) (≈-⨁₁ eq)   = cong inj₁ (coerce-≈ r nr _ eq)
+  coerce-≈ .(inj₂ q) (NonRec-⨁-inj₂ R Q q nr) .(inj₂ _) (≈-⨁₂ eq)   = cong inj₂ (coerce-≈ q nr _ eq)
+  coerce-≈ .(r , q) (NonRec-⨂ R Q r q nr nr₁) (_ , _) (≈-⨂ eq₁ eq₂) = cong₂ _,_ (coerce-≈ r nr _ eq₁) (coerce-≈ q nr₁ _ eq₂)

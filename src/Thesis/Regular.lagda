@@ -16,7 +16,7 @@ module Thesis.Regular where
   open import Data.Maybe
 
   open import Thesis.Regular.Core
-  open import Thesis.Regular.Equality
+  open import Thesis.Regular.Equality renaming (refl to ≈-refl; sym to ≈-sym)
   open import Thesis.Regular.Dissection
   open import Thesis.Regular.NonRec
   -- Un-indexed type of a Zipper
@@ -215,6 +215,21 @@ module Thesis.Regular where
   --   embed-≈ .(R ⨁ Q) .(inj₂ q) (IsLeaf-⨁-inj₂ R Q q isl) P .(inj₂ x) (≈-⨁₂ {Q = .Q} {x = x} p)       = cong inj₂ (embed-≈ Q q isl P x p)
   --   embed-≈ .(R ⨂ Q) .(r , q) (IsLeaf-⨂ R Q r q islr islq) P (r′ , q′) (≈-⨂ {x₁ = x₁} eq-r eq-q)     = cong₂ _,_ (embed-≈ R r islr P r′ eq-r)
   --                                                                                                                  (embed-≈ Q q islq P q′ eq-q)
+
+    -- data Stack {X : Set} : Reg → Set₁ where
+    --   S-⨂₁  : ∀ {R Q} → ⟦ Q ⟧ X → Stack {X} R → Stack (R ⨂ Q)
+    --   S-⨂₂  : ∀ {R Q} → ⟦ R ⟧ X → Stack {X} Q → Stack (R ⨂ Q)
+    --   S-⨁₁  : ∀ {R Q} → Stack {X} R → Stack (R ⨁ Q)
+    --   S-⨁₂  : ∀ {R Q} → Stack {X} Q → Stack (R ⨁ Q)
+    --   S-[]   : ∀ {R}   → Stack R
+
+    -- pluga : {X : Set} → (R : Reg) → Stack {X} R → ⟦ R ⟧ X
+    -- pluga .(_ ⨂ _) (S-⨂₁ x s) = (pluga _ s) , x
+    -- pluga .(_ ⨂ _) (S-⨂₂ x s) = {!!}
+    -- pluga .(_ ⨁ _) (S-⨁₁ x) = {!in!}
+    -- pluga .(_ ⨁ _) (S-⨁₂ x) = {!!}
+    -- pluga R S-[] = {!!}
+
     mutual
 
       first-⨁₁ : (R Q P : Reg) → (Leaf (R ⨁ Q) → List (∇ P (μ P) (μ P)) → UZipper' P)
@@ -251,52 +266,53 @@ module Thesis.Regular where
       to-left R (In t) s = first R R t id _,_ s
 
   
-  --   Prop : (R : Reg) → (Q : Reg) → ⟦ R ⟧ (μ Q) →  (∇ R (μ Q) (μ Q) → ∇ Q (μ Q) (μ Q)) → List (∇ Q (μ Q) (μ Q)) → (Leaf R → List (∇ Q (μ Q) (μ Q)) → UZipper' Q) → (μ Q) → Set
-  --   Prop R Q r k s f t with view R Q r
-  --   Prop R Q r k s f t | inj₁ (dr , q , _)  = Σ (⟦ Q ⟧ (μ Q)) λ e → Plug Q (k dr) q e × Plug-μ⇑ Q (In e) s t
-  --   Prop R Q r k s f t | inj₂ (l  , pr , _) = PlugZ'-μ⇑ Q (f (leaf l pr) s) t
+    Prop : (R : Reg) → (Q : Reg) → ⟦ R ⟧ (μ Q) →  (∇ R (μ Q) (μ Q) → ∇ Q (μ Q) (μ Q)) → List (∇ Q (μ Q) (μ Q)) → (Leaf R → List (∇ Q (μ Q) (μ Q)) → UZipper' Q) → (μ Q) → Set
+    Prop R Q r k s f t with view R Q r
+    Prop R Q r k s f t | inj₁ (dr , q , _)  = Σ (⟦ Q ⟧ (μ Q)) λ e → Plug Q (k dr) q e × Plug-μ⇑ Q (In e) s t
+    Prop R Q r k s f t | inj₂ (l  , pr , _) = PlugZ'-μ⇑ Q (f (l , pr) s) t
   
-  --   propR : ∀ R r s t → Plug-μ⇑ R (In r) s t → Prop R R r id s _,_ t
-  --   propR R r s t p with view R R r
-  --   propR R r s t p | inj₁ (dr , mr , pl) = r , (pl , p)
-  --   propR .1′ .tt s t p | inj₂ (.tt , isl , ≈-1′) = p
-  --   propR .(K B) r s t p | inj₂ (.r , IsLeaf-K B .r , ≈-K) = p
-  --   propR .(R ⨁ Q) .(inj₁ x) s t p | inj₂ (.(inj₁ r) , IsLeaf-⨁-inj₁ R Q r isl , ≈-⨁₁ {.R} {.Q} {x = x} {.r} eq)
-  --     rewrite embed-≈ R r isl (R ⨁ Q) x eq = p
-  --   propR .(R ⨁ Q) .(inj₂ x) s t p | inj₂ (.(inj₂ q) , IsLeaf-⨁-inj₂ R Q q isl , ≈-⨁₂ {.R} {.Q} {x = x} {.q} eq)
-  --     rewrite embed-≈ Q q isl (R ⨁ Q) x eq = p
-  --   propR .(R ⨂ Q) (r′ , q′) s t p | inj₂ (.(r , q) , IsLeaf-⨂ R Q r q islr islq , ≈-⨂ eq-r eq-q)
-  --     rewrite embed-≈ R r islr (R ⨂ Q) r′ eq-r | embed-≈ Q q islq (R ⨂ Q) q′ eq-q = p
+    propR : ∀ R r s t → Plug-μ⇑ R (In r) s t → Prop R R r id s _,_ t
+    propR R r s t p with view R R r
+    propR R r s t p | inj₁ (dr , mr , pl) = r , (pl , p)
+    propR .1′ .tt s t p | inj₂ (.tt , isl , ≈-1′) = p
+    propR I r s t p | inj₂ (dr , () , pl)
+    propR .(K B) r s t p | inj₂ (.r , NonRec-K B .r , ≈-K) = p
+    propR .(R ⨁ Q) .(inj₁ x) s t p | inj₂ (.(inj₁ r) , NonRec-⨁-inj₁ R Q r isl , ≈-⨁₁ {.R} {.Q} {x = x} {.r} eq)
+      rewrite coerce-≈ r isl x (≈-sym eq) = p
+    propR .(R ⨁ Q) .(inj₂ x) s t p | inj₂ (.(inj₂ q) , NonRec-⨁-inj₂ R Q q isl , ≈-⨁₂ {.R} {.Q} {x = x} {.q} eq)
+      rewrite coerce-≈ q isl x (≈-sym eq) = p
+    propR .(R ⨂ Q) (r′ , q′) s t p | inj₂ (.(r , q) , NonRec-⨂ R Q r q islr islq , ≈-⨂ eq-r eq-q)
+      rewrite coerce-≈ r islr r′ (≈-sym eq-r) | coerce-≈ q islq q′ (≈-sym eq-q) = p
 
-  --   mutual
-  --     first-lemma : (R Q : Reg) → (r : ⟦ R ⟧ (μ Q)) 
-  --                 → (k : ∇ R (μ Q) (μ Q) → ∇ Q (μ Q) (μ Q)) → (f : Leaf R → List (∇ Q (μ Q) (μ Q)) → UZipper' Q) → (s : List (∇ Q (μ Q) (μ Q)))
-  --                 → (t : μ Q)
-  --                 → (z : UZipper' Q)
-  --                 → first R Q r k f s ≡ z → Prop R Q r k s f t → PlugZ'-μ⇑ Q z t
-  --     first-lemma 0′ Q () k f s t z x p
-  --     first-lemma 1′ Q r k f s t z x p with view 1′ Q r
-  --     first-lemma 1′ Q r k f s t z x p | inj₁ (() , _)
-  --     first-lemma 1′ Q r k f s t .(f (leaf tt IsLeaf-1′) s) refl p | inj₂ y = p
-  --     first-lemma I Q r k f s t z x p with view I Q r
-  --     first-lemma I Q r k f s t z x (q′ , pl , pm) | inj₁ (tt , q) = to-left-preserves Q r (k tt ∷ s) t (Plug-∷ pl (pm)) z x
-  --     first-lemma I Q r k f s t z x p | inj₂ (_ , () , _)
-  --     first-lemma (K A) Q r k f s t z x p     with view (K A) Q r
-  --     first-lemma (K A) Q r k f s t z x p | inj₁ (() , _)
-  --     first-lemma (K A) Q r k f s t .(f (leaf r (IsLeaf-K A r)) s) refl p | inj₂ (a , isla) = p
-  --     first-lemma (R ⨁ Q) P (inj₁ r) k f s t z x p with view R P r
-  --     first-lemma (R ⨁ Q) P (inj₁ r) k f s t z x (pm′ , plP , plmP ) | inj₁ (dr , pm , plug) = 
-  --       first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s t z x {!!}
-  --     first-lemma (R ⨁ Q) P (inj₁ r) k f s z t x p | inj₂ (ra , isl , eq) =
-  --       first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s z t x {!!}
-  --     first-lemma (R ⨁ Q) P (inj₂ q) k f s t z x p = {!!}
-  --     first-lemma (R ⨂ Q) P (r , q) k f s t z x p with view R P r
-  --     first-lemma (R ⨂ Q) P (r , q) k f s t z x (a , b , c) | inj₁ (proj₃ , proj₄ , proj₅) = {!!}
-  --     first-lemma (R ⨂ Q) P (r , q) k f s t z x p | inj₂ y = {!!}
+    mutual
+      first-lemma : (R Q : Reg) → (r : ⟦ R ⟧ (μ Q)) 
+                  → (k : ∇ R (μ Q) (μ Q) → ∇ Q (μ Q) (μ Q)) → (f : Leaf R → List (∇ Q (μ Q) (μ Q)) → UZipper' Q) → (s : List (∇ Q (μ Q) (μ Q)))
+                  → (t : μ Q)
+                  → (z : UZipper' Q)
+                  → first R Q r k f s ≡ z → Prop R Q r k s f t → PlugZ'-μ⇑ Q z t
+      first-lemma 0′ Q () k f s t z x p
+      first-lemma 1′ Q r k f s t z x p with view 1′ Q r
+      first-lemma 1′ Q r k f s t z x p | inj₁ (() , _)
+      first-lemma 1′ Q r k f s t .(f (tt , NonRec-1′) s) refl p | inj₂ y = p
+      first-lemma I Q r k f s t z x p with view I Q r
+      first-lemma I Q r k f s t z x (q′ , pl , pm) | inj₁ (tt , q) = to-left-preserves Q r (k tt ∷ s) t (Plug-∷ pl (pm)) z x
+      first-lemma I Q r k f s t z x p | inj₂ (_ , () , _)
+      first-lemma (K A) Q r k f s t z x p     with view (K A) Q r
+      first-lemma (K A) Q r k f s t z x p | inj₁ (() , _)
+      first-lemma (K A) Q r k f s t .(f (r , NonRec-K A r) s) refl p | inj₂ (a , isla) = p
+      first-lemma (R ⨁ Q) P (inj₁ r) k f s t z x p with view R P r
+      first-lemma (R ⨁ Q) P (inj₁ r) k f s t z x (pm′ , plP , plmP ) | inj₁ (dr , pm , plug) = 
+        first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s t z x {!!}
+      first-lemma (R ⨁ Q) P (inj₁ r) k f s z t x p | inj₂ (ra , isl , eq) =
+        first-lemma R P r (k ∘ inj₁) (first-⨁₁ R Q P f) s z t x {!!}
+      first-lemma (R ⨁ Q) P (inj₂ q) k f s t z x p = {!!}
+      first-lemma (R ⨂ Q) P (r , q) k f s t z x p with view R P r
+      first-lemma (R ⨂ Q) P (r , q) k f s t z x (a , b , c) | inj₁ (proj₃ , proj₄ , proj₅) = {!!}
+      first-lemma (R ⨂ Q) P (r , q) k f s t z x p | inj₂ y = {!!}
       
-  --     to-left-preserves : (R : Reg) → (r : μ R) → (s : List (∇ R (μ R) (μ R))) → (t : μ R)
-  --                       → Plug-μ⇑ R r s t → (z : UZipper' R) → to-left R r s ≡ z → PlugZ'-μ⇑ R z t
-  --     to-left-preserves R (In r) s t x z p = first-lemma R R r id _,_ s t z p (propR R r s t x)
+      to-left-preserves : (R : Reg) → (r : μ R) → (s : List (∇ R (μ R) (μ R))) → (t : μ R)
+                        → Plug-μ⇑ R r s t → (z : UZipper' R) → to-left R r s ≡ z → PlugZ'-μ⇑ R z t
+      to-left-preserves R (In r) s t x z p = first-lemma R R r id _,_ s t z p (propR R r s t x)
    
 
   -- --   --   first-preserves-V : ∀ Q x k f z t s →  first V Q x k f s ≡ z → Plug-μ⇑ Q x (k tt ∷ s) t → PlugZ'-μ⇑ Q z t
