@@ -5,9 +5,10 @@ module Thesis.Regular.Equality where
   open import Data.Product
   open import Data.Sum
   open import Data.Empty
+  open import Relation.Binary.PropositionalEquality renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans; proof-irrelevance to ≡-proof-irrelevance)
 
   open import Thesis.Regular.Core
-  
+
   data [_]-[_]_≈[_]_ : (R : Reg) → (X : Set) → ⟦ R ⟧ X
                                  → (Y : Set) → ⟦ R ⟧ Y → Set₁ where
     ≈-1′  : ∀ {X : Set} {Y : Set}                    → [ 1′  ]-[ X ] tt ≈[ Y ] tt
@@ -42,5 +43,18 @@ module Thesis.Regular.Equality where
   trans (≈-⨁₂ eq₁) (≈-⨁₂ eq₂)       = ≈-⨁₂ (trans eq₁ eq₂)
   trans (≈-⨂ eq₁ eq₃) (≈-⨂ eq₂ eq₄) = ≈-⨂  (trans eq₁ eq₂) (trans eq₃ eq₄)
 
---  ≈-to-≡ : ∀ {X Y : Set} {R : Reg} {x y} → X ≡ Y → [ R ]-[ X ] x ≈[ Y ] y → x ≡ y
---  ≈-to-≡ = ?
+  proof-irrelevance : ∀ {X Y : Set} {R : Reg} {x y} → (a : [ R ]-[ X ] x ≈[ Y ] y) → (b : [ R ]-[ X ] x ≈[ Y ] y) → a ≡ b
+  proof-irrelevance ≈-1′ ≈-1′ = ≡-refl
+  proof-irrelevance ≈-K ≈-K = ≡-refl
+  proof-irrelevance ≈-I ≈-I = ≡-refl
+  proof-irrelevance (≈-⨁₁ a) (≈-⨁₁ b)     = cong ≈-⨁₁ (proof-irrelevance a b)
+  proof-irrelevance (≈-⨁₂ a) (≈-⨁₂ b)     = cong ≈-⨁₂ (proof-irrelevance a b)
+  proof-irrelevance (≈-⨂ a a₁) (≈-⨂ b b₁) = cong₂ ≈-⨂ (proof-irrelevance a b) (proof-irrelevance a₁ b₁)
+
+  ≈-to-≡ : ∀ {X : Set} {R : Reg} {x y} → [ R ]-[ X ] x ≈[ X ] y → x ≡ y
+  ≈-to-≡ ≈-1′ = ≡-refl
+  ≈-to-≡ ≈-K  = ≡-refl
+  ≈-to-≡ ≈-I  = ≡-refl
+  ≈-to-≡ (≈-⨁₁ x₁)   = cong inj₁ (≈-to-≡ x₁)
+  ≈-to-≡ (≈-⨁₂ x₁)   = cong inj₂ (≈-to-≡ x₁)
+  ≈-to-≡ (≈-⨂ x₁ x₂) = cong₂ _,_ (≈-to-≡ x₁) (≈-to-≡ x₂)

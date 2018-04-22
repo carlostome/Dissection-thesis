@@ -7,8 +7,10 @@ module Thesis.Regular.Dissection where
   open import Data.Unit
   open import Thesis.Regular.Core
   open import Relation.Binary.PropositionalEquality
+  open import Data.Maybe
 
   open import Induction.WellFounded
+  
   ∇ : (R : Reg) → (Set → Set → Set)
   ∇ 0′ X Y = ⊥
   ∇ 1′ X Y = ⊥
@@ -34,6 +36,25 @@ module Thesis.Regular.Dissection where
     Plug-⨂-inj₁ : ∀ {R Q} {x} {dr} {q} {e} → Plug R dr x e → Plug (R ⨂ Q) (inj₁ (dr , q)) x (e , q)
     Plug-⨂-inj₂ : ∀ {R Q} {x} {r} {dq} {e} → Plug Q dq x e → Plug (R ⨂ Q) (inj₂ (r , dq)) x (r , e)
 
+  -- first : ∀ {X : Set} → (R : Reg) → ⟦ R ⟧ X → Maybe (∇ R X X × X)
+  -- first 0′ ()
+  -- first 1′ x    = nothing
+  -- first I x     = just (tt , x)
+  -- first (K A) x = nothing
+  -- first (R ⨁ Q) (inj₁ r) with first R r
+  -- first (R ⨁ Q) (inj₁ r) | just (rx , x) = just (inj₁ rx , x)
+  -- first (R ⨁ Q) (inj₁ r) | nothing       = nothing
+  -- first (R ⨁ Q) (inj₂ q) with first Q q
+  -- first (R ⨁ Q) (inj₂ q) | just (qx , x) = just (inj₂ qx , x)
+  -- first (R ⨁ Q) (inj₂ q) | nothing       = nothing
+  -- first (R ⨂ Q) (r , q) with first R r
+  -- first (R ⨂ Q) (r , q) | just (rx , x) = just (inj₁ (rx , q) , x)
+  -- first (R ⨂ Q) (r , q) | nothing       with first Q q
+  -- first (R ⨂ Q) (r , q) | nothing | just (qx , x) = just (inj₂ (r , qx) , x)
+  -- first (R ⨂ Q) (r , q) | nothing | nothing       = nothing
+
+
+    
   Plug-to-plug : {X : Set} → (R : Reg) → (h : ∇ R X X) → (x : X) → (r : ⟦ R ⟧ X) → Plug R h x r → plug R h x ≡ r
   Plug-to-plug .I .tt x .x Plug-I = refl
   Plug-to-plug .(R ⨁ _) .(inj₁ r) x .(inj₁ e) (Plug-⨁-inj₁ {R} {r = r} {e} p)             = cong inj₁ (Plug-to-plug R r x e p)
