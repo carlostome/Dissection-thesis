@@ -43,15 +43,31 @@ module Thesis.Regular.Core where
     Fmap-⨁₂ : ∀ {R Q} {q} {q′} → Fmap f Q q q′ → Fmap f (R ⨁ Q) (inj₂ q) (inj₂ q′)
     Fmap-⨂  : ∀ {R Q} {r q} {r′ q′} → Fmap f R r r′ → Fmap f Q q q′ → Fmap f (R ⨂ Q) (r , q) (r′ , q′)
 
+  Fmap-to-fmap : ∀ {A B : Set} {f : A → B} {R : Reg} {x : ⟦ R ⟧ A} {y : ⟦ R ⟧ B}
+               → Fmap f R x y → y ≡ fmap R f x
+  Fmap-to-fmap Fmap-1′ = refl
+  Fmap-to-fmap Fmap-I  = refl
+  Fmap-to-fmap Fmap-K  = refl
+  Fmap-to-fmap (Fmap-⨁₁ p)   = cong inj₁ (Fmap-to-fmap p)
+  Fmap-to-fmap (Fmap-⨁₂ p)   = cong inj₂ (Fmap-to-fmap p)
+  Fmap-to-fmap (Fmap-⨂ p p₁) = cong₂ _,_ (Fmap-to-fmap p) (Fmap-to-fmap p₁)
+  
   -- Fmap is proof-irrelevant
-  proof-irrelevance : ∀ {A B : Set} {f : A → B} {R : Reg} {i o} → (f₁ f₂ : Fmap f R i o) → f₁ ≡ f₂
-  proof-irrelevance Fmap-1′ Fmap-1′ = refl
-  proof-irrelevance Fmap-I Fmap-I = refl
-  proof-irrelevance Fmap-K Fmap-K = refl
-  proof-irrelevance (Fmap-⨁₁ f₁) (Fmap-⨁₁ f₂)     = cong Fmap-⨁₁ (proof-irrelevance f₁ f₂)
-  proof-irrelevance (Fmap-⨁₂ f₁) (Fmap-⨁₂ f₂)     = cong Fmap-⨁₂ (proof-irrelevance f₁ f₂)
-  proof-irrelevance (Fmap-⨂ f₁ f₃) (Fmap-⨂ f₂ f₄) = cong₂ Fmap-⨂ (proof-irrelevance f₁ f₂) (proof-irrelevance f₃ f₄)
+  Fmap-proof-irrelevance : ∀ {A B : Set} {f : A → B} {R : Reg} {i o} → (f₁ f₂ : Fmap f R i o) → f₁ ≡ f₂
+  Fmap-proof-irrelevance Fmap-1′ Fmap-1′ = refl
+  Fmap-proof-irrelevance Fmap-I Fmap-I = refl
+  Fmap-proof-irrelevance Fmap-K Fmap-K = refl
+  Fmap-proof-irrelevance (Fmap-⨁₁ f₁) (Fmap-⨁₁ f₂)     = cong Fmap-⨁₁ (Fmap-proof-irrelevance f₁ f₂)
+  Fmap-proof-irrelevance (Fmap-⨁₂ f₁) (Fmap-⨁₂ f₂)     = cong Fmap-⨁₂ (Fmap-proof-irrelevance f₁ f₂)
+  Fmap-proof-irrelevance (Fmap-⨂ f₁ f₃) (Fmap-⨂ f₂ f₄) = cong₂ Fmap-⨂ (Fmap-proof-irrelevance f₁ f₂) (Fmap-proof-irrelevance f₃ f₄)
 
+  data All (A : Set) (P : A → Set) : (R : Reg) → ⟦ R ⟧ A → Set₁ where
+    All-I       : ∀ {x : A} → P x → All A P I x
+    All-⨂      : ∀ {R Q : Reg} {r : ⟦ R ⟧ A} {q : ⟦ Q ⟧ A} → All A P R r → All A P Q q → All A P (R ⨂ Q) (r , q)
+    All-⨁₁     : ∀ {R Q : Reg} {r : ⟦ R ⟧ A} → All A P R r → All A P (R ⨁ Q) (inj₁ r)
+    All-⨁₂     : ∀ {R Q : Reg} {q : ⟦ Q ⟧ A} → All A P Q q → All A P (R ⨁ Q) (inj₂ q)
+    All-1′      : All A P 1′ tt
+    All-K       : ∀ {B : Set} {b : B} → All A P (K B) b  
 
   data μ (R : Reg) : Set where
     In : ⟦ R ⟧ (μ R) → μ R

@@ -9,7 +9,7 @@ module Thesis.Regular.NonRec where
     renaming (refl to ≡-refl; proof-irrelevance to ≡-proof-irrelevance)
 
   open import Thesis.Regular.Core
-    renaming (proof-irrelevance to Fmap-proof-irrelevance)
+
   open import Thesis.Regular.Equality
     renaming (refl to ≈-refl; proof-irrelevance to ≈-proof-irrelevance)
 

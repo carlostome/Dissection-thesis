@@ -9,7 +9,6 @@ module Thesis.Regular.Equality where
     renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans; proof-irrelevance to ≡-proof-irrelevance)
 
   open import Thesis.Regular.Core
-    renaming (proof-irrelevance to Fmap-proof-irrelevance)
 
   ----------------------------------------------------------------------------------------
   --                Heterogeneous equality over regular Functors

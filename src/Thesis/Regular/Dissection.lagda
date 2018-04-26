@@ -6,10 +6,12 @@ module Thesis.Regular.Dissection where
   open import Data.Empty
   open import Data.Unit
   open import Relation.Binary.PropositionalEquality
+    renaming (proof-irrelevance to ≡-proof-irrelevance)
 
   open import Induction.WellFounded
 
-  open import Thesis.Regular.Core renaming (proof-irrelevance to Fmap-proof-irrelevance)
+  open import Thesis.Regular.Core
+
   -- Dissection operation
   ∇ : (R : Reg) → (Set → Set → Set)
   ∇ 0′ X Y = ⊥
@@ -39,6 +41,31 @@ module Thesis.Regular.Dissection where
     Plug-⨂-inj₁ : ∀ {R Q} {x} {dr} {q} {e}    → Plug ex R dr x e → Plug ex (R ⨂ Q) (inj₁ (dr , q)) x (e , q)
     Plug-⨂-inj₂ : ∀ {R Q} {x} {r r′} {dq} {e} → Fmap ex R r r′   → Plug ex Q dq x e →  Plug ex (R ⨂ Q) (inj₂ (r , dq)) x (r′ , e)
 
+  Plug-to-plug : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {x : X} {t : ⟦ R ⟧ X} →
+                 Plug ex R dr x t → t ≡ plug R ex dr x
+  Plug-to-plug Plug-I = refl
+  Plug-to-plug (Plug-⨁-inj₁ p) = cong inj₁ (Plug-to-plug p)
+  Plug-to-plug (Plug-⨁-inj₂ p) = cong inj₂ (Plug-to-plug p)
+  Plug-to-plug (Plug-⨂-inj₁ p) = cong (_, _) (Plug-to-plug p)
+  Plug-to-plug (Plug-⨂-inj₂ x₁ p) with Fmap-to-fmap x₁
+  ... | refl = cong (_,_ _) (Plug-to-plug p)
+  -- Plug is proof-irrelevant
+  proof-irrelevance : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {x : X} {r : ⟦ R ⟧ X}
+                    → (a : Plug ex R dr x r) → (b : Plug ex R dr x r) → a ≡ b
+  proof-irrelevance Plug-I Plug-I = refl
+  proof-irrelevance (Plug-⨁-inj₁ a) (Plug-⨁-inj₁ b) = cong Plug-⨁-inj₁ (proof-irrelevance a b)
+  proof-irrelevance (Plug-⨁-inj₂ a) (Plug-⨁-inj₂ b) = cong Plug-⨁-inj₂ (proof-irrelevance a b)
+  proof-irrelevance (Plug-⨂-inj₁ a) (Plug-⨂-inj₁ b) = cong Plug-⨂-inj₁ (proof-irrelevance a b)
+  proof-irrelevance (Plug-⨂-inj₂ x₁ a) (Plug-⨂-inj₂ x₂ b) with Fmap-proof-irrelevance x₁ x₂
+  proof-irrelevance (Plug-⨂-inj₂ x₁ a) (Plug-⨂-inj₂ .x₁ b) | refl = cong (Plug-⨂-inj₂ x₁) (proof-irrelevance a b)
+
+  Plug-injective-on-2 : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {t : ⟦ R ⟧ X} {a b : X} → Plug ex R dr a t → Plug ex R dr b t → a ≡ b
+  Plug-injective-on-2 Plug-I Plug-I = refl
+  Plug-injective-on-2 (Plug-⨁-inj₁ p₁) (Plug-⨁-inj₁ p₂)      = Plug-injective-on-2 p₁ p₂
+  Plug-injective-on-2 (Plug-⨁-inj₂ p₁) (Plug-⨁-inj₂ p₂)      = Plug-injective-on-2 p₁ p₂
+  Plug-injective-on-2 (Plug-⨂-inj₁ p₁) (Plug-⨂-inj₁ p₂)      = Plug-injective-on-2 p₁ p₂
+  Plug-injective-on-2 (Plug-⨂-inj₂ x p₁) (Plug-⨂-inj₂ x₁ p₂) = Plug-injective-on-2 p₁ p₂
+  -- Core definitions
   Dissection : (R : Reg) → (X Y : Set) → Set
   Dissection R X Y = ∇ R Y X × X
 
@@ -67,7 +94,7 @@ module Thesis.Regular.Dissection where
              → Lt X Y (R ⨁ Q) (inj₁ r , t₁) (inj₁ r′ , t₂)
 
   -- Type-Indexed Dissection
-  data IxDissection (R : Reg) (X Y : Set) (ex : Y → X) (tₓ : ⟦ R ⟧ X) : Set₁ where
+  data IxDissection (R : Reg) (X Y : Set) (ex : Y → X) (tₓ : ⟦ R ⟧ X) : Set where
     _,_ : (d : Dissection R X Y) → PlugD R X Y d ex tₓ → IxDissection R X Y ex tₓ  
  
 
@@ -94,16 +121,16 @@ module Thesis.Regular.Dissection where
 
   -- Given two dissections and a proof that they plug to a common value
   -- we can recover the indexed relation from the unindexed one
-  Lt-to-LtIx : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {tₓ : ⟦ R ⟧ X}
+  Lt-to-IxLt : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {tₓ : ⟦ R ⟧ X}
              → {d₁ d₂ : Dissection R X Y} → (eq₁ : PlugD R X Y d₁ ex tₓ) → (eq₂ : PlugD R X Y d₂ ex tₓ)
              → Lt X Y R d₁ d₂ → IxLt X Y ex R tₓ (d₁ , eq₁) (d₂ , eq₂)  
-  Lt-to-LtIx (Plug-⨂-inj₁ eq₁)    (Plug-⨂-inj₁ eq₂)    (step-⨂₁ x) = step-⨂₁ (Lt-to-LtIx eq₁ eq₂ x)
-  Lt-to-LtIx (Plug-⨂-inj₂ x₁ eq₁) (Plug-⨂-inj₂ x₂ eq₂) (step-⨂₂ x)
+  Lt-to-IxLt (Plug-⨂-inj₁ eq₁)    (Plug-⨂-inj₁ eq₂)    (step-⨂₁ x) = step-⨂₁ (Lt-to-IxLt eq₁ eq₂ x)
+  Lt-to-IxLt (Plug-⨂-inj₂ x₁ eq₁) (Plug-⨂-inj₂ x₂ eq₂) (step-⨂₂ x)
     with Fmap-proof-irrelevance x₁ x₂
-  ... | refl = step-⨂₂ (Lt-to-LtIx eq₁ eq₂ x)
-  Lt-to-LtIx (Plug-⨂-inj₂ x eq₁) (Plug-⨂-inj₁ eq₂) base-⨂    = base-⨂
-  Lt-to-LtIx (Plug-⨁-inj₂ eq₁) (Plug-⨁-inj₂ eq₂) (step-⨁₂ x) = step-⨁-inj₂ eq₁ eq₂ (Lt-to-LtIx eq₁ eq₂ x)
-  Lt-to-LtIx (Plug-⨁-inj₁ eq₁) (Plug-⨁-inj₁ eq₂) (step-⨁₁ x) = step-⨁-inj₁ eq₁ eq₂ (Lt-to-LtIx eq₁ eq₂ x)
+  ... | refl = step-⨂₂ (Lt-to-IxLt eq₁ eq₂ x)
+  Lt-to-IxLt (Plug-⨂-inj₂ x eq₁) (Plug-⨂-inj₁ eq₂) base-⨂    = base-⨂
+  Lt-to-IxLt (Plug-⨁-inj₂ eq₁) (Plug-⨁-inj₂ eq₂) (step-⨁₂ x) = step-⨁-inj₂ eq₁ eq₂ (Lt-to-IxLt eq₁ eq₂ x)
+  Lt-to-IxLt (Plug-⨁-inj₁ eq₁) (Plug-⨁-inj₁ eq₂) (step-⨁₁ x) = step-⨁-inj₁ eq₁ eq₂ (Lt-to-IxLt eq₁ eq₂ x)
 
 
   ---------------------------------------------------------------------------------------------------
