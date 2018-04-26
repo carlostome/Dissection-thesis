@@ -43,6 +43,7 @@ module Thesis.Regular where
   -- proof that the value is the result of applying a
   -- catamorphism on the tree.
   record Computed (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) : Set where
+    constructor _,,_,,_
     field
       Tree  : μ R  
       Value : X
@@ -140,40 +141,43 @@ module Thesis.Regular where
   -- --           | refl | .(In (plug R h (plug-μ⇑ R t hs))) | refl
   -- --           = cong (In ∘ plug R h) (aux R t hs re)
   
-  -- -- PlugZ-μ⇓-to-PlugZ-μ⇑ : (R : Reg) → (l : ⟦ R ⟧ (μ R)) → (s : List (∇ R (μ R) (μ R))) → (t : μ R)
-  -- --                      → PlugZ-μ⇓ R (l , s) t → PlugZ-μ⇑ R (l , reverse s) t
-  -- -- PlugZ-μ⇓-to-PlugZ-μ⇑ R l .[] .(In l) Plug-[] = Plug-[]
-  -- -- PlugZ-μ⇓-to-PlugZ-μ⇑ R l .(_ ∷ _) .(In _) (Plug-∷ x x₁) = {!!} 
+  Plug-μ⇓-to-Plug-μ⇑ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R} → PlugZ-μ⇑ R (l , s) t → PlugZ-μ⇓ R (l , reverse s) t
+  Plug-μ⇓-to-Plug-μ⇑ Plug-[]       = Plug-[]
+  Plug-μ⇓-to-Plug-μ⇑ (Plug-∷ x x₁) = {!!}
 
+
+  Plug-μ⇑-to-Plug-μ⇓ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R} → PlugZ-μ⇓ R (l , s) t → PlugZ-μ⇑ R (l , reverse s) t
+  Plug-μ⇑-to-Plug-μ⇓ = {!!}
+  
   data Zipper⇓ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) (t : μ R) : Set where
     _,_ : (z : UZipper R X alg) → PlugZ-μ⇓ R z t → Zipper⇓ R X alg t
 
-  -- -- data Zipper⇑ (R : Reg) (t : μ R) : Set where
-  -- --   _,_ : (z : UZipper R) → PlugZ-μ⇑ R z t → Zipper⇑ R t 
+  data Zipper⇑ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) (t : μ R) : Set where
+    _,_ : (z : UZipper R X alg) → PlugZ-μ⇑ R z t → Zipper⇑ R X alg t 
 
-  -- -- Zipper⇓-to-Zipper⇑ : (R : Reg) → (t : μ R) → Zipper⇓ R t → Zipper⇑ R t
-  -- -- Zipper⇓-to-Zipper⇑ R t ((l , s) , p) = (l , (reverse s)) , {!plug-μ⇓-to-plug-μ⇑ !}
+  Zipper⇓-to-Zipper⇑ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇓ R X alg t → Zipper⇑ R X alg t
+  Zipper⇓-to-Zipper⇑ R X alg t ((l , s) , p) = (l , (reverse s)) , {!!}
 
-  -- -- Zipper⇑-to-Zipper⇓ : (R : Reg) → (t : μ R) → Zipper⇑ R t → Zipper⇓ R t
-  -- -- Zipper⇑-to-Zipper⇓  = {!!}
+  Zipper⇑-to-Zipper⇓ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇑ R X alg t → Zipper⇓ R X alg t
+  Zipper⇑-to-Zipper⇓ R X alg t ((l , s) , p) = (l , (reverse s)) , Plug-μ⇓-to-Plug-μ⇑ p
 
   ----------------------------------------------------------------------------------------------
   --                               Relation over Indexed Top-Down Zippers
 
 
-  data IxLt (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) : (t : μ R) → Zipper⇓ R X alg t → Zipper⇓ R X alg t → Set where
+  data IxLt⇓ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) : (t : μ R) → Zipper⇓ R X alg t → Zipper⇓ R X alg t → Set where
     Step  : ∀ {t} {t′} {t₁ t₂} {h} {s₁ s₂} {eq₁} {eq₂} {q₁ q₂}
-          →  IxLt R X alg t′     ((t₁ , s₁) , eq₁)               ((t₂ ,  s₂) ,  eq₂)
-          →  IxLt R X alg (In t) ((t₁ , h ∷ s₁) , Plug-∷ eq₁ q₁) ((t₂ , h  ∷ s₂) , Plug-∷ eq₂ q₂)
+          →  IxLt⇓ R X alg t′     ((t₁ , s₁) , eq₁)               ((t₂ ,  s₂) ,  eq₂)
+          →  IxLt⇓ R X alg (In t) ((t₁ , h ∷ s₁) , Plug-∷ eq₁ q₁) ((t₂ , h  ∷ s₂) , Plug-∷ eq₂ q₂)
              
     Base  : ∀ {t} {h₁ h₂} {s₁ s₂} {t₁ t₂} {eq₁ eq₂ q₁ q₂}
           → Dissection-IxLt (μ R) (Computed R X alg) Computed.Tree R t ((h₁ , plug-μ⇓ R (In (LeafToTree R X t₁)) s₁) ,  q₁)
                                                                        ((h₂ , plug-μ⇓ R (In (LeafToTree R X t₂)) s₂) , q₂)
-          → IxLt R X alg (In t) ((t₁ , h₁ ∷ s₁) , Plug-∷ eq₁ q₁) ((t₂ , h₂ ∷ s₂) , Plug-∷ eq₂ q₂)
+          → IxLt⇓ R X alg (In t) ((t₁ , h₁ ∷ s₁) , Plug-∷ eq₁ q₁) ((t₂ , h₂ ∷ s₂) , Plug-∷ eq₂ q₂)
 
 
   ----------------------------------------------------------------------------------------------
-  --                                IxLt is well founded
+  --                                IxLt⇓ is well founded
 
   private
     all-to-plug : ∀ {X : Set}  {R Q : Reg} {ex : X → μ Q} {P : μ Q → Set}
@@ -189,11 +193,11 @@ module Thesis.Regular where
 
   acc-Base : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {r : ⟦ R ⟧ (μ R)}
            → ∀ {dr : ∇ R (Computed R X alg) (μ R)} {e : μ R} {t : Leaf R X} {s : Stack R X alg} {eq} {q}
-           → (∀ (t : μ R) (dr : ∇ R (Computed R X alg) (μ R)) → Plug Computed.Tree R dr t r → Well-founded (IxLt R X alg t))
-           → Acc (IxLt R X alg e) ((t , s) , eq)
+           → (∀ (t : μ R) (dr : ∇ R (Computed R X alg) (μ R)) → Plug Computed.Tree R dr t r → Well-founded (IxLt⇓ R X alg t))
+           → Acc (IxLt⇓ R X alg e) ((t , s) , eq)
            → Acc (Dissection-IxLt (μ R) (Computed R X alg) Computed.Tree R r) ((dr , e) , q)
-           → WfRec (IxLt R X alg (In r))
-                    (Acc (IxLt R X alg (In r)))
+           → WfRec (IxLt⇓ R X alg (In r))
+                    (Acc (IxLt⇓ R X alg (In r)))
                     ((t , dr ∷ s) , Plug-∷ eq q)
   acc-Base {q = q} x (acc rs) ac .((_ , _ ∷ _) , Plug-∷ _ q₁) (Step {q₁ = q₁} p)
     with Plug-proof-irrelevance q q₁
@@ -203,27 +207,41 @@ module Thesis.Regular where
     =  acc (acc-Base x (x _ _ q₁ _) (rs₁ _ p))
 
   
-  IxLt-WF : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Well-founded (IxLt R X alg t)
-  IxLt-WF R X alg t x = acc (aux R X alg t x)
+  IxLt⇓-WF : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Well-founded (IxLt⇓ R X alg t)
+  IxLt⇓-WF R X alg t x = acc (aux R X alg t x)
     where
-       all-is-wf : (X : Set) (R Q : Reg) (alg : ⟦ R ⟧ X → X) → (t : ⟦ Q ⟧ (μ R)) → All (μ R) (λ t → Well-founded (IxLt R X alg t)) Q t
+       all-is-wf : (X : Set) (R Q : Reg) (alg : ⟦ R ⟧ X → X) → (t : ⟦ Q ⟧ (μ R)) → All (μ R) (λ t → Well-founded (IxLt⇓ R X alg t)) Q t
        all-is-wf X R 0′ alg ()
        all-is-wf X R 1′ alg tt   = All-1′
-       all-is-wf X R I alg t     = All-I (IxLt-WF R X alg t)
+       all-is-wf X R I alg t     = All-I (IxLt⇓-WF R X alg t)
        all-is-wf X R (K A) alg t = All-K
        all-is-wf X R (Q ⨁ P) alg (inj₁ x) = All-⨁₁ (all-is-wf X R Q alg x)
        all-is-wf X R (Q ⨁ P) alg (inj₂ y) = All-⨁₂ (all-is-wf X R P alg y)
        all-is-wf X R (Q ⨂ P) alg (x , y)  = All-⨂ (all-is-wf X R Q alg x) (all-is-wf X R P alg y)
      
-       aux : ∀ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : (μ R)) → (x : Zipper⇓ R X alg t) → WfRec (IxLt R X alg t) (Acc (IxLt R X alg t)) x
+       aux : ∀ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : (μ R)) → (x : Zipper⇓ R X alg t) → WfRec (IxLt⇓ R X alg t) (Acc (IxLt⇓ R X alg t)) x
        aux R X alg .(In _) .((_ , _ ∷ _) , Plug-∷ _ q₂) .((_ , _ ∷ _) , Plug-∷ eq₁ q₁) (Step {eq₁ = eq₁} {q₁ = q₁} {q₂} p)
-         = acc (acc-Base (all-to-plug {P = λ t → Well-founded (IxLt R X alg t)} (all-is-wf X R R alg _))
-                         (all-to-plug {P = λ t → Well-founded (IxLt R X alg t)} (all-is-wf X R R alg _) _ _ q₂ (_ , eq₁))
+         = acc (acc-Base (all-to-plug {P = λ t → Well-founded (IxLt⇓ R X alg t)} (all-is-wf X R R alg _))
+                         (all-to-plug {P = λ t → Well-founded (IxLt⇓ R X alg t)} (all-is-wf X R R alg _) _ _ q₂ (_ , eq₁))
                          (Dissection-IxLt-WF (μ R) (Computed R X alg) Computed.Tree R _ (_ , q₁)))
        aux R X alg .(In _) .((_ , _ ∷ _) , Plug-∷ _ _) .((_ , _ ∷ _) , Plug-∷ eq₁ q₁) (Base {eq₁ = eq₁} {q₁ = q₁} p)
-         = acc (acc-Base (all-to-plug {P = λ t → Well-founded (IxLt R X alg t)} (all-is-wf X R R alg _))
-                         (all-to-plug {P = λ t₁ → Well-founded (IxLt R X alg t₁)} (all-is-wf X R R alg _) _ _ q₁ (_ , eq₁))
+         = acc (acc-Base (all-to-plug {P = λ t → Well-founded (IxLt⇓ R X alg t)} (all-is-wf X R R alg _))
+                         (all-to-plug {P = λ t₁ → Well-founded (IxLt⇓ R X alg t₁)} (all-is-wf X R R alg _) _ _ q₁ (_ , eq₁))
                          (Dissection-IxLt-WF (μ R) (Computed R X alg) Computed.Tree R _ (_ , q₁)))
+
+  -----------------------------------------------------------------------------------------------
+  --                 Relation over Bottom-Up Zippers
+     
+  data IxLt⇑ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) (t : μ R) : Zipper⇑ R X alg t → Zipper⇑ R X alg t → Set where
+    ixLt⇑ : ∀ z₁ z₂ → IxLt⇓ R X alg t (Zipper⇑-to-Zipper⇓ R X alg t z₁) (Zipper⇑-to-Zipper⇓ R X alg t z₂) → IxLt⇑ R X alg t z₁ z₂
+
+  IxLt⇑-WF : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Well-founded (IxLt⇑ R X alg t)
+  IxLt⇑-WF R X alg t x = acc (aux R X alg t x (IxLt⇓-WF R X alg t (Zipper⇑-to-Zipper⇓ R X alg t x)))
+     where 
+      aux : ∀ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : (μ R)) → (x : Zipper⇑ R X alg t)
+          → Acc (IxLt⇓ R X alg t) (Zipper⇑-to-Zipper⇓ R X alg t x) → WfRec (IxLt⇑ R X alg t) (Acc (IxLt⇑ R X alg t)) x
+      aux R X alg t x (acc rs) y (ixLt⇑ .y .x p) = acc (aux R X alg t y (rs (Zipper⇑-to-Zipper⇓ R X alg t y) p))
+
 
   -----------------------------------------------------------------------------------------------
   --                     UnIndexed version of the smaller-than relation
@@ -239,18 +257,64 @@ module Thesis.Regular where
                   (h₂ , plug-μ⇓ R (In (LeafToTree R X t₂)) s₂)
           → Lt R X alg (t₁ , h₁ ∷ s₁) (t₂ , h₂ ∷ s₂)
 
-  Lt-to-IxLt : {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {t : μ R}
+  -- convert from the un-indexed relation to the indexed once
+  -- provided with the proof that the Zippers plug to the same tree
+  Lt-to-IxLt⇓ : {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {t : μ R}
              → {z₁ z₂ : UZipper R X alg} → (eq₁ : PlugZ-μ⇓ R z₁ t) → (eq₂ : PlugZ-μ⇓ R z₂ t)
-             → Lt R X alg z₁ z₂ → IxLt R X alg t (z₁ , eq₁) (z₂ , eq₂)
-  Lt-to-IxLt {t = In t} (Plug-∷ eq₁ x₁) (Plug-∷ eq₂ x₂) (Step p)
+             → Lt R X alg z₁ z₂ → IxLt⇓ R X alg t (z₁ , eq₁) (z₂ , eq₂)
+  Lt-to-IxLt⇓ {t = In t} (Plug-∷ eq₁ x₁) (Plug-∷ eq₂ x₂) (Step p)
     with Plug-injective-on-2 x₁ x₂
-  ... | refl = Step (Lt-to-IxLt eq₁ eq₂ p)
-  Lt-to-IxLt {t = In t} (Plug-∷ eq₁ x₁) (Plug-∷ eq₂ x₂) (Base x)
+  ... | refl = Step (Lt-to-IxLt⇓ eq₁ eq₂ p)
+  Lt-to-IxLt⇓ {t = In t} (Plug-∷ eq₁ x₁) (Plug-∷ eq₂ x₂) (Base x)
     with Plug-μ⇓-to-plug-μ⇓ eq₁ | Plug-μ⇓-to-plug-μ⇓ eq₂
   ... | refl | refl = Base (Dissection-Lt-to-IxLt x₁ x₂ x)
+
+
+  ------------------------------------------------------------------------------------------------
+  --                           load function
   
-  -- -- PlugZ'-μ⇑ : {X : Set} → (R : Reg) → UZipper' R X → μ R →  Set
-  -- -- PlugZ'-μ⇑ R ((x , nr) , s) t = Plug-μ⇑ R (In (coerce x nr)) s t
+  mutual
+    first-⨁₁ : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X}
+              → (Leaf (R ⨁ Q) X → Stack P X alg → UZipper P X alg)
+              → (Leaf R X        → Stack P X alg → UZipper P X alg)
+    first-⨁₁ R Q P f (l , x) s = f ((inj₁ l , NonRec-⨁-inj₁ R Q l x)) s
+
+    first-⨁₂ : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X}
+              → (Leaf (R ⨁ Q) X → Stack P X alg → UZipper P X alg)
+              → (Leaf Q X        → Stack P X alg → UZipper P X alg)
+    first-⨁₂ R Q P f (l , x) s = f (inj₂ l , NonRec-⨁-inj₂ R Q l x) s
+
+    first-⨂-2 : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X}
+               → (Leaf (R ⨂ Q) X     → Stack P X alg → UZipper P X alg)
+               → (Leaf R X → Leaf Q X → Stack P X alg → UZipper P X alg)
+    first-⨂-2 R Q P f (r , isl-r) (q , isl-q) s = f ((r , q) , NonRec-⨂ R Q r q isl-r isl-q) s
+
+    first-⨂-1 : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X}
+               → (∇ R (Computed P X alg) (μ P) × ⟦ Q ⟧ (μ P) ⊎ ⟦ R ⟧ (Computed P X alg) × ∇ Q (Computed P X alg) (μ P)
+               → ∇ P (Computed P X alg) (μ P))
+               → (Leaf (R ⨂ Q) X → Stack P X alg → UZipper P X alg)
+               → ⟦ Q ⟧ (μ P)
+               → (Leaf R X → Stack P X alg → UZipper P X alg)
+    first-⨂-1 R Q P k f q (r , isl) = first Q P q (k ∘ inj₂ ∘ _,_ (coerce r isl)) (first-⨂-2 R Q P f (r , isl))
+
+    first : {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X}
+          → ⟦ R ⟧ (μ Q)
+          → (∇ R (Computed Q X alg) (μ Q) → (∇ Q (Computed Q X alg) (μ Q)))
+          → (Leaf R X → List (∇ Q (Computed Q X alg) (μ Q)) → UZipper Q X alg)
+          → List (∇ Q (Computed Q X alg) (μ Q)) → UZipper Q X alg
+    first 0′ Q () _
+    first 1′ Q x k f s              = f (tt , NonRec-1′) s
+    first I Q (In x) k f s          = first Q Q x id _,_ (k tt ∷ s)
+    first (K A) Q x k f s           = f (x , NonRec-K A x) s
+    first (R ⨁ Q) P (inj₁ x) k f s = first R P x  (k ∘ inj₁) (first-⨁₁ R Q P f) s
+    first (R ⨁ Q) P (inj₂ y) k f s = first Q P y  (k ∘ inj₂) (first-⨁₂ R Q P f) s
+    first (R ⨂ Q) P (r , q) k f s  = first R P r  (k ∘ inj₁ ∘ (_, q)) (first-⨂-1 R Q P k f q) s
+
+  load : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → μ R → Stack R X alg → UZipper R X alg ⊎ X
+  load R (In t) s = inj₁ (first R R t id _,_ s)
+
+  ------------------------------------------------------------------------------------------
+  --                  load preserves the tree
 
   -- -- data First {X : Set} : (R : Reg) → ⟦ R ⟧ X → ∇ R X X × X → Set where
   -- --   First-⨁-inj₁ : ∀ {R Q} {r} {rx x} → First R r (rx , x) → First (R ⨁ Q) (inj₁ r) (inj₁ rx , x)
@@ -305,42 +369,6 @@ module Thesis.Regular where
   -- -- First-to-Plug First-I            = Plug-I
   -- -- First-to-Plug (First-⨂₁ x₁)     = Plug-⨂-inj₁ (First-to-Plug x₁)
   -- -- First-to-Plug (First-⨂₂ x₁ x₂)  = Plug-⨂-inj₂ (First-to-Plug x₂)
-  
-  -- mutual
-  --   first-⨁₁ : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X} → (Leaf (R ⨁ Q) X → List (∇ P (Solved P X alg) (μ P)) → UZipper P X alg)
-  --                             → (Leaf R X → List (∇ P (Solved P X alg) (μ P)) → UZipper P X alg)
-  --   first-⨁₁ R Q P f (l , x) s = f ((inj₁ l , NonRec-⨁-inj₁ R Q l x)) s
-
-  --   first-⨁₂ : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X} → (Leaf (R ⨁ Q) X → List (∇ P (Solved P X alg) (μ P)) → UZipper P X alg)
-  --                             → (Leaf Q X → List (∇ P (Solved P X alg) (μ P)) → UZipper P X alg)
-  --   first-⨁₂ R Q P f (l , x) s = f (inj₂ l , NonRec-⨁-inj₂ R Q l x) s
-
-  --   first-⨂-2 : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X}
-  --              → (Leaf (R ⨂ Q) X     → List (∇ P (Solved P X alg) (μ P)) → UZipper P X alg)
-  --              → (Leaf R X → Leaf Q X → List (∇ P (Solved P X alg) (μ P)) → UZipper P X alg)
-  --   first-⨂-2 R Q P f (r , isl-r) (q , isl-q) s = f ((r , q) , NonRec-⨂ R Q r q isl-r isl-q) s
-
-  --   first-⨂-1 : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X}
-  --              → (∇ R (Solved P X alg) (μ P) × ⟦ Q ⟧ (μ P) ⊎ ⟦ R ⟧ (Solved P X alg) × ∇ Q (Solved P X alg) (μ P)
-  --              → ∇ P (Solved P X alg) (μ P)) → (Leaf (R ⨂ Q) X → List (∇ P (Solved P X alg) (μ P)) → UZipper P X alg)
-  --              → ⟦ Q ⟧ (μ P) → (Leaf R X → List (∇ P (Solved P X alg) (μ P)) → UZipper P X alg)
-  --   first-⨂-1 R Q P k f q (r , isl) = first Q P q (k ∘ inj₂ ∘ _,_ (coerce r isl)) (first-⨂-2 R Q P f (r , isl))
-
-  --   first : {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X}
-  --         → ⟦ R ⟧ (μ Q)
-  --         → (∇ R (Solved Q X alg) (μ Q) → (∇ Q (Solved Q X alg) (μ Q)))
-  --         → (Leaf R X → List (∇ Q (Solved Q X alg) (μ Q)) → UZipper Q X alg)
-  --         → List (∇ Q (Solved Q X alg) (μ Q)) → UZipper Q X alg
-  --   first 0′ Q () _
-  --   first 1′ Q x k f s              = f (tt , NonRec-1′) s
-  --   first I Q (In x) k f s          = first Q Q x id _,_ (k tt ∷ s)
-  --   first (K A) Q x k f s           = f (x , NonRec-K A x) s
-  --   first (R ⨁ Q) P (inj₁ x) k f s = first R P x  (k ∘ inj₁) (first-⨁₁ R Q P f) s
-  --   first (R ⨁ Q) P (inj₂ y) k f s = first Q P y  (k ∘ inj₂) (first-⨁₂ R Q P f) s
-  --   first (R ⨂ Q) P (r , q) k f s  = first R P r  (k ∘ inj₁ ∘ (_, q)) (first-⨂-1 R Q P k f q) s
-
-  -- load : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → μ R → List (∇ R (Solved R X alg) (μ R)) → UZipper R X alg ⊎ X
-  -- load R (In t) s = inj₁ (first R R t id _,_ s)
 
   -- -- Prop : {X : Set} (R : Reg) → (Q : Reg) → ⟦ R ⟧ (μ Q) →  (∇ R (μ Q) (μ Q) → ∇ Q (μ Q) (μ Q))
   -- --      → List (∇ Q (μ Q) (μ Q)) → (Leaf R X → List (∇ Q (μ Q) (μ Q)) → UZipper' Q X) → (μ Q) → Set
@@ -508,6 +536,9 @@ module Thesis.Regular where
   -- load-preserves R (In r) s t x z p = {!!}
 
 
+  ---------------------------------------------------------------------------------------------
+  --                                  unload function
+  
   -- first-aux performs recursion on the functorial layer of the tree either
   -- finding whether there are no more left holes to the right.
   first-aux : {X Y : Set} (R : Reg)
@@ -529,69 +560,15 @@ module Thesis.Regular where
   first-aux {X} {Y} (R ⨂ Q) (r , q) | inj₁ r′ | inj₂ (dq , y) = inj₂ (inj₂ (r′ , dq) , y)
   first-aux {X} {Y} (R ⨂ Q) (r , q) | inj₂ (dr , y)           = inj₂ (inj₁ (dr , q) , y)
 
-
-  first-aux-Fmap : ∀ {X Y : Set} (R : Reg)
-                 → (r : ⟦ R ⟧ Y) → (r′ : ⟦ R ⟧ X)
-                 → (ex : X → Y) → first-aux R r ≡ inj₁ r′ → Fmap ex R r′ r 
-  first-aux-Fmap 0′ () r′ ex eq
-  first-aux-Fmap 1′ tt tt ex eq = Fmap-1′
-  first-aux-Fmap I r r′ ex ()
-  first-aux-Fmap (K A) r .r ex refl = Fmap-K
-  first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) r′ ex eq
-    with first-aux {X} R r | inspect (first-aux {X} R) r
-  first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) .(inj₁ x) ex refl
-    | inj₁ x | Is is = Fmap-⨁₁ (first-aux-Fmap R r x ex is)
-  first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) r′ ex () | inj₂ y | Is is
-  first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) r′ ex eq
-    with first-aux {X} Q q | inspect (first-aux {X} Q) q
-  first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) .(inj₂ x) ex refl
-    | inj₁ x | Is is = Fmap-⨁₂ (first-aux-Fmap Q q x ex is)
-  first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) r′ ex () | inj₂ y | Is is
-  first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex x
-    with first-aux {X} R r | inspect (first-aux {X} R) r 
-  first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex x | inj₁ x₁ | Is is
-    with first-aux {X} Q q | inspect (first-aux {X} Q) q
-  first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) .(r′ , q′) ex refl
-    | inj₁ r′ | Is is | inj₁ q′ | Is is′ = Fmap-⨂ (first-aux-Fmap R r r′ ex is) (first-aux-Fmap Q q q′ ex is′)
-  first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex () | inj₁ x₁ | Is is | inj₂ y | Is is′
-  first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex () | inj₂ y | Is is
-
-  first-aux-Plug : ∀ {X Y : Set} (R : Reg)
-                 → (r : ⟦ R ⟧ Y) → (dr : ∇ R X Y)
-                 → (y : Y) → (ex : X → Y) → first-aux R r ≡ inj₂ (dr , y) → Plug ex R dr y r
-  first-aux-Plug 0′ () dr y ex eq
-  first-aux-Plug 1′ r () y ex eq
-  first-aux-Plug I r tt .r ex refl = Plug-I
-  first-aux-Plug (K A) r () y ex eq
-  first-aux-Plug {X} (R ⨁ Q) (inj₁ r) dr y ex eq with first-aux {X} R r | inspect (first-aux {X} R) r
-  first-aux-Plug {X} (R ⨁ Q) (inj₁ r) dr y ex () | inj₁ x | Is is
-  first-aux-Plug {X} (R ⨁ Q) (inj₁ r) .(inj₁ dr′) .y′ ex refl
-    | inj₂ (dr′ , y′) | Is is
-    = Plug-⨁-inj₁ (first-aux-Plug R r dr′ y′ ex is)
-  first-aux-Plug {X} (R ⨁ Q) (inj₂ q) dr y ex eq with first-aux {X} Q q | inspect (first-aux {X} Q) q
-  first-aux-Plug {X} (R ⨁ Q) (inj₂ q) dr y ex () | inj₁ x | Is is
-  first-aux-Plug {X} (R ⨁ Q) (inj₂ q) .(inj₂ dq) .y′ ex refl
-    | inj₂ (dq , y′) | Is is
-    = Plug-⨁-inj₂ (first-aux-Plug Q q dq y′ ex is)
-  first-aux-Plug {X} (R ⨂ Q) (r , q) dr y ex eq with first-aux {X} R r | inspect (first-aux {X} R) r
-  first-aux-Plug {X} (R ⨂ Q) (r , q) dr y ex eq
-    | inj₁ r′ | Is is with first-aux {X} Q q | inspect (first-aux {X} Q) q
-  first-aux-Plug {X} (R ⨂ Q) (r , q) dr y ex () | inj₁ r′ | Is is | inj₁ x | Is is′
-  first-aux-Plug {X} (R ⨂ Q) (r , q) .(inj₂ (r′ , dq′)) .y′ ex refl
-    | inj₁ r′ | Is is | inj₂ (dq′ , y′) | Is is′
-    = Plug-⨂-inj₂ (first-aux-Fmap R r r′ ex is) (first-aux-Plug Q q dq′ y′ ex is′)
-  first-aux-Plug {X} (R ⨂ Q) (r , q) .(inj₁ (dr′ , q)) .q′ ex refl
-    | inj₂ (dr′ , q′) | Is is
-    = Plug-⨂-inj₁ (first-aux-Plug R r dr′ q′ ex is)
-
-
+  -- given a dissection and a tree to fill find either the next dissection
+  -- or if none left return the input
   right : {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} 
         → (∇ R (Computed Q X alg) (μ Q))
         → (t : μ Q) → (y : X) → Catamorphism Q alg t y
         → (⟦ R ⟧ (Computed Q X alg)) ⊎ (∇ R (Computed Q X alg) (μ Q) × μ Q )
   right 0′ Q () t y eq
   right 1′ Q () t y eq
-  right I  Q tt t y eq = inj₂ (tt , t)
+  right I  Q tt t y eq = inj₁ (t ,, y ,, eq)
   right (K A) Q () t y eq
   right (R ⨁ Q) P (inj₁ r) t y eq with right R P r t y eq
   right (R ⨁ Q) P (inj₁ r) t y eq | inj₁ r′        = inj₁ (inj₁ r′)
@@ -602,80 +579,12 @@ module Thesis.Regular where
   right (R ⨂ Q) P (inj₁ (dr , q)) t y eq with right R P dr t y eq
   right {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq | inj₁ r
     with first-aux {X = Computed P X alg } {Y = μ P}  Q q
-  right {X} (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₁ q′    = inj₁ (r , q′) 
-  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₂ (dq , mq) = inj₂ (inj₁ (dr , q) , t)
-  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₂ (dr′ , mq) = inj₂ ((inj₁ (dr′ , q)) , mq)
+  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₁ q′        = inj₁ (r , q′) 
+  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₂ (dq , mq) = inj₂ ((inj₂ (r  , dq)) , mq)
+  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₂ (dr′ , mq)         = inj₂ ((inj₁ (dr′ , q)) , mq)
   right (R ⨂ Q) P (inj₂ (r , dq)) t y eq with right Q P dq t y eq
   right (R ⨂ Q) P (inj₂ (r , dq)) t y eq | inj₁ x          = inj₁ (r , x)
   right (R ⨂ Q) P (inj₂ (r , dq)) t y eq | inj₂ (dq′ , mq) = inj₂ ((inj₂ (r , dq′)) , mq)
-
-  
-  
-  -- -- right-Fmap : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} (dr : ∇ R (Solved Q X alg) (μ Q))
-  -- --            → (t : μ Q) → (y : X) → (eq : cata Q alg t ≡ y)
-  -- --            → (r : ⟦ R ⟧ (Solved Q X alg)) → right R Q dr t y eq ≡ inj₁ r → ∀ e
-  -- --            → Plug (proj₁ ∘ proj₁) R dr t e → Fmap (proj₁ ∘ proj₁) R r e
-  -- -- right-Fmap 0′ Q dr t y eq r x () p
-  -- -- right-Fmap 1′ Q () t y eq r x e p
-  -- -- right-Fmap I Q dr t y eq r () e p
-  -- -- right-Fmap (K A) Q () t y eq r x e p
-  -- -- right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq r x .(inj₁ _) (Plug-⨁-inj₁ p)
-  -- --   with right R P x₁ t y eq | inspect (right R P x₁ t y) eq
-  -- -- right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq .(inj₁ r′) refl .(inj₁ _) (Plug-⨁-inj₁ p)
-  -- --   | inj₁ r′ | Is is = Fmap-⨁₁ (right-Fmap R P x₁ t y eq r′ is _ p)
-  -- -- right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq r () .(inj₁ _) (Plug-⨁-inj₁ p) | inj₂ _ | Is is
-  -- -- right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq r x .(inj₂ _) (Plug-⨁-inj₂ p)
-  -- --   with right Q P y₁ t y eq | inspect (right Q P y₁ t y) eq
-  -- -- right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq .(inj₂ x₁) refl .(inj₂ _) (Plug-⨁-inj₂ p) | inj₁ x₁ | Is is
-  -- --   = Fmap-⨁₂ (right-Fmap Q P y₁ t y eq x₁ is _ p)
-  -- -- right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq r () .(inj₂ _) (Plug-⨁-inj₂ p) | inj₂ y₂ | Is is
-  -- -- right-Fmap (R ⨂ Q) P (inj₁ (dr , q)) t y eq r′ x (_ , _) (Plug-⨂-inj₁ p)
-  -- --   with right R P dr t y eq | inspect (right R P dr t y) eq
-  -- -- right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq r′ x (r′′ , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is
-  -- --   with first-aux {X = Σ (X × μ P) λ { (x , t) → cata P alg t ≡ x }} {Y = μ P} Q q | inspect (first-aux {X = Σ (X × μ P) λ { (x , t) → cata P alg t ≡ x }} {Y = μ P} Q) q
-  -- -- right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq .(r , q′) refl (r′′ , _) (Plug-⨂-inj₁ p)
-  -- --   | inj₁ r | Is is | inj₁ q′ | Is is′
-  -- --   = Fmap-⨂ (right-Fmap R P dr t y eq r is r′′ p) (first-aux-Fmap Q q q′ (proj₂ ∘ proj₁) is′)
-  -- -- right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq r′ () (r′′ , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is | inj₂ y₁ | Is is′ 
-  -- -- right-Fmap (R ⨂ Q) P (inj₁ (dr , q)) t y eq r′ () (_ , _) (Plug-⨂-inj₁ p) | inj₂ y₁ | Is is
-  -- -- right-Fmap (R ⨂ Q) P (inj₂ (r  , dq)) t y eq r′ x e p with right Q P dq t y eq | inspect (right Q P dq t y) eq
-  -- -- right-Fmap (R ⨂ Q) P (inj₂ (r , dq)) t y eq .(r , x₁) refl (_ , _) (Plug-⨂-inj₂ p x)
-  -- --   | inj₁ x₁ | Is is
-  -- --   = Fmap-⨂ x (right-Fmap Q P dq t y eq x₁ is _ p)
-  -- -- right-Fmap (R ⨂ Q) P (inj₂ (r , dq)) t y eq r′ () e p | inj₂ y₁ | Is is
-  
-  -- -- right-Plug : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} (dr : ∇ R (Solved Q X alg) (μ Q)) → (t : μ Q) → (y : X) → (eq : cata Q alg t ≡ y) →
-  -- --                   (dr′ : ∇ R (Solved Q X alg) (μ Q)) → (mq : μ Q) → right R Q dr t y eq ≡ inj₂ (dr′ , mq) → ∀ e
-  -- --                   → Plug (proj₂ ∘ proj₁) R dr t e → Plug (proj₂ ∘ proj₁) R dr′ mq e 
-  -- -- right-Plug 0′ Q dr t y eq dr′ mq x () p
-  -- -- right-Plug 1′ Q dr t y eq () mq x e p
-  -- -- right-Plug I Q tt t y eq .tt .t refl e p = p
-  -- -- right-Plug (K A) Q dr t y eq () mq x e p
-  -- -- right-Plug (R ⨁ Q) P (inj₁ x) t y eq x′ mq r-eq .(inj₁ e) (Plug-⨁-inj₁ {e = e} p)
-  -- --   with right R P x t y eq | inspect (right R P x t y) eq
-  -- -- right-Plug (R ⨁ Q) P (inj₁ x) t y eq x′ mq () .(inj₁ e) (Plug-⨁-inj₁ {e = e} p) | inj₁ _ | _
-  -- -- right-Plug (R ⨁ Q) P (inj₁ x) t y eq .(inj₁ dr′) .mq′ refl .(inj₁ e) (Plug-⨁-inj₁ {e = e} p) | inj₂ (dr′ , mq′) | Is is
-  -- --   = Plug-⨁-inj₁ ((right-Plug R P x t y eq dr′ mq′ is e p))
-  -- -- right-Plug (R ⨁ Q) P (inj₂ x) t y eq x′ mq r-eq .(inj₂ e) (Plug-⨁-inj₂ {e = e} p)
-  -- --   with right Q P x t y eq | inspect (right Q P x t y) eq
-  -- -- right-Plug (R ⨁ Q) P (inj₂ x) t y eq x′ mq () .(inj₂ e) (Plug-⨁-inj₂ {e = e} p) | inj₁ _ | _
-  -- -- right-Plug (R ⨁ Q) P (inj₂ x) t y eq .(inj₂ dr′) .mq′ refl .(inj₂ e) (Plug-⨁-inj₂ {e = e} p) | inj₂ (dr′ , mq′) | Is is
-  -- --   = Plug-⨁-inj₂ ((right-Plug Q P x t y eq dr′ mq′ is e p))
-  -- -- right-Plug (R ⨂ Q) P (inj₁ (dr , q)) t y eq dr′ mq x e p
-  -- --   with right R P dr t y eq | inspect (right R P dr t y) eq
-  -- -- right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq dr′ mq x (e , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is
-  -- --   with first-aux {X = Σ (X × μ P) λ { (x , t) → cata P alg t ≡ x }} {Y = μ P} Q q | inspect (first-aux {X = Σ (X × μ P) λ { (x , t) → cata P alg t ≡ x }} {Y = μ P} Q) q
-  -- -- right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq dr′ mq () (e , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is | inj₁ _ | _
-  -- -- right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq .(inj₂ (r , dq)) .mq′ refl (e , _) (Plug-⨂-inj₁ p)
-  -- --   | inj₁ r | Is is | inj₂ (dq , mq′) | Is is′
-  -- --   = Plug-⨂-inj₂ (first-aux-Plug Q q dq mq′ (proj₂ ∘ proj₁) is′) (right-Fmap R P dr t y eq r is e p)
-  -- -- right-Plug (R ⨂ Q) P (inj₁ (dr , q)) t y eq .(inj₁ (dr′ , q)) .mq′′ refl (dr′′ , .q) (Plug-⨂-inj₁ p) | inj₂ (dr′ , mq′′) | Is is
-  -- --   = Plug-⨂-inj₁ (right-Plug R P dr t y eq dr′ mq′′ is  dr′′ p)
-  -- -- right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq dr′ mq x (_ , _) (Plug-⨂-inj₂ p fm)
-  -- --   with right Q P dq t y eq | inspect (right Q P dq t y) eq
-  -- -- right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq dr′ mq () (_ , _) (Plug-⨂-inj₂ p fm) | inj₁ _ | Is _
-  -- -- right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq .(inj₂ (r , dq′)) .mq′ refl (_ , _) (Plug-⨂-inj₂ p fm) | inj₂ (dq′ , mq′) | Is is
-  -- --   = Plug-⨂-inj₂ (right-Plug Q P dq t y eq dq′ mq′ is _ p) fm
 
   unload : {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X)
          → (t : μ R) → (x : X) → Catamorphism R alg t x
@@ -684,26 +593,209 @@ module Thesis.Regular where
   unload R alg t x eq []       = inj₂ x
   unload R alg t x eq (h ∷ hs) with right R R h t x eq
   unload R alg t x eq (h ∷ hs) | inj₁ r             = unload R alg (In (fmap R Computed.Tree r)) (alg (fmap R Computed.Value r)) {!!} hs
-  unload R alg t x eq (h ∷ hs) | inj₂ (dr , q)      = {!!} -- load R q (dr ∷ hs)
+  unload R alg t x eq (h ∷ hs) | inj₂ (dr , q)      = load R q (dr ∷ hs)
+
 
   step : {X : Set} → (R : Reg) → (alg : ⟦ R ⟧ X → X)
        → UZipper R X alg → UZipper R X alg ⊎ X
   step R alg ((l , isl) , s) = unload R alg (In (coerce l isl)) (alg l) {!!} s
 
+  stepIx : ∀ {X : Set} → (R : Reg) → {t : μ R} → (alg : ⟦ R ⟧ X → X)
+         → Zipper⇑ R X alg t → Zipper⇑ R X alg t ⊎ X
+  stepIx R alg x = {!!}
+
+
+  stepIx-Lt : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {t : μ R}
+          → (z₁ z₂ : Zipper⇑ R X alg t) → stepIx R alg z₁ ≡ inj₁ z₂ → IxLt⇑ R X alg t z₂ z₁
+  stepIx-Lt z₁ z₂ x = {!!}
+
+  -- rec : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R)
+  --     → (z : Zipper⇑ R X alg t) → Acc (IxLt⇑ R X alg t) z → X
+  -- rec t z (acc rs) with stepIx t z | inspect (stepIx t) z
+  -- rec t z (acc rs) | inj₁ x | Is eq  = rec t x (rs x (stepIx-Lt t z x eq))
+  -- rec t z (acc rs) | inj₂ y | _      = y
+
+ 
+  right-Lt : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} 
+           → (dr  : ∇ R (Computed Q X alg) (μ Q)) → (t : μ Q)
+           → (y : X) → (eq : Catamorphism Q alg t y)
+           → (dr′ : ∇ R (Computed Q X alg) (μ Q)) → (t′ : μ Q)
+           → right R Q dr t y eq ≡ inj₂ (dr′ , t′)
+           → Dissection-Lt (μ Q) (Computed Q X alg) R ((dr′ , t′)) ((dr , t)) 
+  right-Lt 0′ Q () t y eq dr′ t′ x
+  right-Lt 1′ Q () t y eq dr′ t′ x
+  right-Lt I Q tt t y eq dr′ t′ ()
+  right-Lt (K A) Q () t y eq dr′ t′ x
+  right-Lt (R ⨁ Q) P (inj₁ r) t y eq dr′ t′ p
+    with right R P r t y eq | inspect (right R P r t y) eq
+  right-Lt (R ⨁ Q) P (inj₁ r) t y eq dr′ t′ () | inj₁ x | Is is
+  right-Lt (R ⨁ Q) P (inj₁ r) t y eq .(inj₁ dr′) .q refl
+    | inj₂ (dr′ , q) | Is is = step-⨁₁ (right-Lt R P r t y eq dr′ q is)
+  right-Lt (R ⨁ Q) P (inj₂ q) t y eq dr′ t′ p
+    with right Q P q t y eq | inspect (right Q P q t y) eq
+  right-Lt (R ⨁ Q) P (inj₂ q) t y eq dr′ t′ () | inj₁ x | Is is
+  right-Lt (R ⨁ Q) P (inj₂ q) t y eq .(inj₂ dq) .q′ refl
+    | inj₂ (dq , q′) | Is is = step-⨁₂ (right-Lt Q P q t y eq dq q′ is)
+  right-Lt (R ⨂ Q) P (inj₁ (dr , q)) t y eq dr′ t′ p
+    with right R P dr t y eq | inspect (right R P dr t y) eq
+  right-Lt {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq (inj₁ (dr′ , q′)) t′ p | inj₁ xx | Is is
+    with first-aux {X = Computed P X alg } {Y = μ P} Q q | inspect (first-aux {X = Computed P X alg } {Y = μ P}Q) q
+  right-Lt {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq (inj₁ (dr′ , q′)) t′ () | inj₁ xx | Is is | inj₁ x | Is is′
+  right-Lt {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq (inj₁ (dr′ , q′)) t′ () | inj₁ xx | Is is | inj₂ (r , dq) | Is is′
+  right-Lt (R ⨂ Q) P (inj₁ (dr , q)) t y eq (inj₂ (r , dq)) t′ p
+    | inj₁ xx | Is is = base-⨂
+  right-Lt (R ⨂ Q) P (inj₁ (dr , q)) t y eq .(inj₁ (dr′′ , q)) .q′ refl
+    | inj₂ (dr′′ , q′) | Is is = step-⨂₁ (right-Lt R P dr t y eq dr′′ q′ is)
+  right-Lt (R ⨂ Q) P (inj₂ (r , dq)) t y eq dr′ t′ p
+    with right Q P dq t y eq | inspect (right Q P dq t y) eq
+  right-Lt (R ⨂ Q) P (inj₂ (r , dq)) t y eq dr′ t′ () | inj₁ x | Is is
+  right-Lt (R ⨂ Q) P (inj₂ (r , dq)) t y eq .(inj₂ (r , dq′)) .q refl
+    | inj₂ (dq′ , q) | Is is = step-⨂₂ (right-Lt Q P dq t y eq dq′ q is) 
+
+  -- first-aux-Fmap : ∀ {X Y : Set} (R : Reg)
+  --                → (r : ⟦ R ⟧ Y) → (r′ : ⟦ R ⟧ X)
+  --                → (ex : X → Y) → first-aux R r ≡ inj₁ r′ → Fmap ex R r′ r 
+  -- first-aux-Fmap 0′ () r′ ex eq
+  -- first-aux-Fmap 1′ tt tt ex eq = Fmap-1′
+  -- first-aux-Fmap I r r′ ex ()
+  -- first-aux-Fmap (K A) r .r ex refl = Fmap-K
+  -- first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) r′ ex eq
+  --   with first-aux {X} R r | inspect (first-aux {X} R) r
+  -- first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) .(inj₁ x) ex refl
+  --   | inj₁ x | Is is = Fmap-⨁₁ (first-aux-Fmap R r x ex is)
+  -- first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) r′ ex () | inj₂ y | Is is
+  -- first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) r′ ex eq
+  --   with first-aux {X} Q q | inspect (first-aux {X} Q) q
+  -- first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) .(inj₂ x) ex refl
+  --   | inj₁ x | Is is = Fmap-⨁₂ (first-aux-Fmap Q q x ex is)
+  -- first-aux-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) r′ ex () | inj₂ y | Is is
+  -- first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex x
+  --   with first-aux {X} R r | inspect (first-aux {X} R) r 
+  -- first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex x | inj₁ x₁ | Is is
+  --   with first-aux {X} Q q | inspect (first-aux {X} Q) q
+  -- first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) .(r′ , q′) ex refl
+  --   | inj₁ r′ | Is is | inj₁ q′ | Is is′ = Fmap-⨂ (first-aux-Fmap R r r′ ex is) (first-aux-Fmap Q q q′ ex is′)
+  -- first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex () | inj₁ x₁ | Is is | inj₂ y | Is is′
+  -- first-aux-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex () | inj₂ y | Is is
+
+  -- first-aux-Plug : ∀ {X Y : Set} (R : Reg)
+  --                → (r : ⟦ R ⟧ Y) → (dr : ∇ R X Y)
+  --                → (y : Y) → (ex : X → Y) → first-aux R r ≡ inj₂ (dr , y) → Plug ex R dr y r
+  -- first-aux-Plug 0′ () dr y ex eq
+  -- first-aux-Plug 1′ r () y ex eq
+  -- first-aux-Plug I r tt .r ex refl = Plug-I
+  -- first-aux-Plug (K A) r () y ex eq
+  -- first-aux-Plug {X} (R ⨁ Q) (inj₁ r) dr y ex eq with first-aux {X} R r | inspect (first-aux {X} R) r
+  -- first-aux-Plug {X} (R ⨁ Q) (inj₁ r) dr y ex () | inj₁ x | Is is
+  -- first-aux-Plug {X} (R ⨁ Q) (inj₁ r) .(inj₁ dr′) .y′ ex refl
+  --   | inj₂ (dr′ , y′) | Is is
+  --   = Plug-⨁-inj₁ (first-aux-Plug R r dr′ y′ ex is)
+  -- first-aux-Plug {X} (R ⨁ Q) (inj₂ q) dr y ex eq with first-aux {X} Q q | inspect (first-aux {X} Q) q
+  -- first-aux-Plug {X} (R ⨁ Q) (inj₂ q) dr y ex () | inj₁ x | Is is
+  -- first-aux-Plug {X} (R ⨁ Q) (inj₂ q) .(inj₂ dq) .y′ ex refl
+  --   | inj₂ (dq , y′) | Is is
+  --   = Plug-⨁-inj₂ (first-aux-Plug Q q dq y′ ex is)
+  -- first-aux-Plug {X} (R ⨂ Q) (r , q) dr y ex eq with first-aux {X} R r | inspect (first-aux {X} R) r
+  -- first-aux-Plug {X} (R ⨂ Q) (r , q) dr y ex eq
+  --   | inj₁ r′ | Is is with first-aux {X} Q q | inspect (first-aux {X} Q) q
+  -- first-aux-Plug {X} (R ⨂ Q) (r , q) dr y ex () | inj₁ r′ | Is is | inj₁ x | Is is′
+  -- first-aux-Plug {X} (R ⨂ Q) (r , q) .(inj₂ (r′ , dq′)) .y′ ex refl
+  --   | inj₁ r′ | Is is | inj₂ (dq′ , y′) | Is is′
+  --   = Plug-⨂-inj₂ (first-aux-Fmap R r r′ ex is) (first-aux-Plug Q q dq′ y′ ex is′)
+  -- first-aux-Plug {X} (R ⨂ Q) (r , q) .(inj₁ (dr′ , q)) .q′ ex refl
+  --   | inj₂ (dr′ , q′) | Is is
+  --   = Plug-⨂-inj₁ (first-aux-Plug R r dr′ q′ ex is)
 
   
-  -- -- unload-preserves : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R) (x : X) (eq : cata R alg t ≡ x) (hs : List (∇ R (Solved R X alg) (μ R)))
-  -- --                  → (e : μ R) → (z : UZipper R X alg) → unload R alg t x eq hs ≡ inj₁ z → Plug-μ⇑ R t hs e → PlugZ-μ⇑ R z e
-  -- -- unload-preserves R alg t x eq [] e z () _
-  -- -- unload-preserves R alg t x eq (h ∷ hs) e z to-z pl
-  -- --   with right R R h t x eq | inspect (right R R h t x) eq
-  -- -- unload-preserves R alg t x eq (h ∷ hs) e z to-z (Plug-∷ pl pl-m) | inj₁ r | Is is
-  -- --   = unload-preserves R alg {!!} {!!} {!!} hs e z  to-z {!!}
-  -- -- unload-preserves R alg t x eq (h ∷ hs) e z to-z (Plug-∷ pl plm) | inj₂ (dr , q) | Is is with right-Plug {!R!} R dr q {!!} {!!} {!!} {!!} is {!!} {!!} 
-  -- -- ... | pp  = {!!} -- load-preserves R q (dr ∷ hs) e (Plug-∷ {!!} plm) z to-z
+  -- -- -- right-Fmap : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} (dr : ∇ R (Solved Q X alg) (μ Q))
+  -- -- --            → (t : μ Q) → (y : X) → (eq : cata Q alg t ≡ y)
+  -- -- --            → (r : ⟦ R ⟧ (Solved Q X alg)) → right R Q dr t y eq ≡ inj₁ r → ∀ e
+  -- -- --            → Plug (proj₁ ∘ proj₁) R dr t e → Fmap (proj₁ ∘ proj₁) R r e
+  -- -- -- right-Fmap 0′ Q dr t y eq r x () p
+  -- -- -- right-Fmap 1′ Q () t y eq r x e p
+  -- -- -- right-Fmap I Q dr t y eq r () e p
+  -- -- -- right-Fmap (K A) Q () t y eq r x e p
+  -- -- -- right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq r x .(inj₁ _) (Plug-⨁-inj₁ p)
+  -- -- --   with right R P x₁ t y eq | inspect (right R P x₁ t y) eq
+  -- -- -- right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq .(inj₁ r′) refl .(inj₁ _) (Plug-⨁-inj₁ p)
+  -- -- --   | inj₁ r′ | Is is = Fmap-⨁₁ (right-Fmap R P x₁ t y eq r′ is _ p)
+  -- -- -- right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq r () .(inj₁ _) (Plug-⨁-inj₁ p) | inj₂ _ | Is is
+  -- -- -- right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq r x .(inj₂ _) (Plug-⨁-inj₂ p)
+  -- -- --   with right Q P y₁ t y eq | inspect (right Q P y₁ t y) eq
+  -- -- -- right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq .(inj₂ x₁) refl .(inj₂ _) (Plug-⨁-inj₂ p) | inj₁ x₁ | Is is
+  -- -- --   = Fmap-⨁₂ (right-Fmap Q P y₁ t y eq x₁ is _ p)
+  -- -- -- right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq r () .(inj₂ _) (Plug-⨁-inj₂ p) | inj₂ y₂ | Is is
+  -- -- -- right-Fmap (R ⨂ Q) P (inj₁ (dr , q)) t y eq r′ x (_ , _) (Plug-⨂-inj₁ p)
+  -- -- --   with right R P dr t y eq | inspect (right R P dr t y) eq
+  -- -- -- right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq r′ x (r′′ , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is
+  -- -- --   with first-aux {X = Σ (X × μ P) λ { (x , t) → cata P alg t ≡ x }} {Y = μ P} Q q | inspect (first-aux {X = Σ (X × μ P) λ { (x , t) → cata P alg t ≡ x }} {Y = μ P} Q) q
+  -- -- -- right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq .(r , q′) refl (r′′ , _) (Plug-⨂-inj₁ p)
+  -- -- --   | inj₁ r | Is is | inj₁ q′ | Is is′
+  -- -- --   = Fmap-⨂ (right-Fmap R P dr t y eq r is r′′ p) (first-aux-Fmap Q q q′ (proj₂ ∘ proj₁) is′)
+  -- -- -- right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq r′ () (r′′ , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is | inj₂ y₁ | Is is′ 
+  -- -- -- right-Fmap (R ⨂ Q) P (inj₁ (dr , q)) t y eq r′ () (_ , _) (Plug-⨂-inj₁ p) | inj₂ y₁ | Is is
+  -- -- -- right-Fmap (R ⨂ Q) P (inj₂ (r  , dq)) t y eq r′ x e p with right Q P dq t y eq | inspect (right Q P dq t y) eq
+  -- -- -- right-Fmap (R ⨂ Q) P (inj₂ (r , dq)) t y eq .(r , x₁) refl (_ , _) (Plug-⨂-inj₂ p x)
+  -- -- --   | inj₁ x₁ | Is is
+  -- -- --   = Fmap-⨂ x (right-Fmap Q P dq t y eq x₁ is _ p)
+  -- -- -- right-Fmap (R ⨂ Q) P (inj₂ (r , dq)) t y eq r′ () e p | inj₂ y₁ | Is is
+  
+  -- -- -- right-Plug : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} (dr : ∇ R (Solved Q X alg) (μ Q)) → (t : μ Q) → (y : X) → (eq : cata Q alg t ≡ y) →
+  -- -- --                   (dr′ : ∇ R (Solved Q X alg) (μ Q)) → (mq : μ Q) → right R Q dr t y eq ≡ inj₂ (dr′ , mq) → ∀ e
+  -- -- --                   → Plug (proj₂ ∘ proj₁) R dr t e → Plug (proj₂ ∘ proj₁) R dr′ mq e 
+  -- -- -- right-Plug 0′ Q dr t y eq dr′ mq x () p
+  -- -- -- right-Plug 1′ Q dr t y eq () mq x e p
+  -- -- -- right-Plug I Q tt t y eq .tt .t refl e p = p
+  -- -- -- right-Plug (K A) Q dr t y eq () mq x e p
+  -- -- -- right-Plug (R ⨁ Q) P (inj₁ x) t y eq x′ mq r-eq .(inj₁ e) (Plug-⨁-inj₁ {e = e} p)
+  -- -- --   with right R P x t y eq | inspect (right R P x t y) eq
+  -- -- -- right-Plug (R ⨁ Q) P (inj₁ x) t y eq x′ mq () .(inj₁ e) (Plug-⨁-inj₁ {e = e} p) | inj₁ _ | _
+  -- -- -- right-Plug (R ⨁ Q) P (inj₁ x) t y eq .(inj₁ dr′) .mq′ refl .(inj₁ e) (Plug-⨁-inj₁ {e = e} p) | inj₂ (dr′ , mq′) | Is is
+  -- -- --   = Plug-⨁-inj₁ ((right-Plug R P x t y eq dr′ mq′ is e p))
+  -- -- -- right-Plug (R ⨁ Q) P (inj₂ x) t y eq x′ mq r-eq .(inj₂ e) (Plug-⨁-inj₂ {e = e} p)
+  -- -- --   with right Q P x t y eq | inspect (right Q P x t y) eq
+  -- -- -- right-Plug (R ⨁ Q) P (inj₂ x) t y eq x′ mq () .(inj₂ e) (Plug-⨁-inj₂ {e = e} p) | inj₁ _ | _
+  -- -- -- right-Plug (R ⨁ Q) P (inj₂ x) t y eq .(inj₂ dr′) .mq′ refl .(inj₂ e) (Plug-⨁-inj₂ {e = e} p) | inj₂ (dr′ , mq′) | Is is
+  -- -- --   = Plug-⨁-inj₂ ((right-Plug Q P x t y eq dr′ mq′ is e p))
+  -- -- -- right-Plug (R ⨂ Q) P (inj₁ (dr , q)) t y eq dr′ mq x e p
+  -- -- --   with right R P dr t y eq | inspect (right R P dr t y) eq
+  -- -- -- right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq dr′ mq x (e , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is
+  -- -- --   with first-aux {X = Σ (X × μ P) λ { (x , t) → cata P alg t ≡ x }} {Y = μ P} Q q | inspect (first-aux {X = Σ (X × μ P) λ { (x , t) → cata P alg t ≡ x }} {Y = μ P} Q) q
+  -- -- -- right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq dr′ mq () (e , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is | inj₁ _ | _
+  -- -- -- right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq .(inj₂ (r , dq)) .mq′ refl (e , _) (Plug-⨂-inj₁ p)
+  -- -- --   | inj₁ r | Is is | inj₂ (dq , mq′) | Is is′
+  -- -- --   = Plug-⨂-inj₂ (first-aux-Plug Q q dq mq′ (proj₂ ∘ proj₁) is′) (right-Fmap R P dr t y eq r is e p)
+  -- -- -- right-Plug (R ⨂ Q) P (inj₁ (dr , q)) t y eq .(inj₁ (dr′ , q)) .mq′′ refl (dr′′ , .q) (Plug-⨂-inj₁ p) | inj₂ (dr′ , mq′′) | Is is
+  -- -- --   = Plug-⨂-inj₁ (right-Plug R P dr t y eq dr′ mq′′ is  dr′′ p)
+  -- -- -- right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq dr′ mq x (_ , _) (Plug-⨂-inj₂ p fm)
+  -- -- --   with right Q P dq t y eq | inspect (right Q P dq t y) eq
+  -- -- -- right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq dr′ mq () (_ , _) (Plug-⨂-inj₂ p fm) | inj₁ _ | Is _
+  -- -- -- right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq .(inj₂ (r , dq′)) .mq′ refl (_ , _) (Plug-⨂-inj₂ p fm) | inj₂ (dq′ , mq′) | Is is
+  -- -- --   = Plug-⨂-inj₂ (right-Plug Q P dq t y eq dq′ mq′ is _ p) fm
 
-  step-Lt : ∀ (X : Set) (R : Reg) (alg : ⟦ R ⟧ X → X) (z₁ z₂ : UZipper R X alg)
-          → step R alg z₁ ≡ inj₁ z₂ → Lt R X alg z₂ z₁
-  step-Lt X R alg ((l , isl) , s) z₂ eq = {!!}
+  -- propo : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : ⟦ R ⟧ X} {isl : NonRec R l } → Catamorphism R alg (In (coerce l isl)) (alg l)
+  -- propo {isl = NonRec-1′}    = Cata MapFold-1′
+  -- propo {isl = NonRec-K B b} = Cata MapFold-K
+  -- propo {alg = alg} {isl = NonRec-⨁-inj₁ R Q r isl} with propo {alg =  (alg ∘ inj₁)} {isl = isl}
+  -- ... | z = {!!}
+  -- propo {isl = NonRec-⨁-inj₂ R Q q isl} = {!!}
+  -- propo {isl = NonRec-⨂ R Q r q isl isl₁} = {!!}
+
+
+
+  
+  -- -- -- unload-preserves : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R) (x : X) (eq : cata R alg t ≡ x) (hs : List (∇ R (Solved R X alg) (μ R)))
+  -- -- --                  → (e : μ R) → (z : UZipper R X alg) → unload R alg t x eq hs ≡ inj₁ z → Plug-μ⇑ R t hs e → PlugZ-μ⇑ R z e
+  -- -- -- unload-preserves R alg t x eq [] e z () _
+  -- -- -- unload-preserves R alg t x eq (h ∷ hs) e z to-z pl
+  -- -- --   with right R R h t x eq | inspect (right R R h t x) eq
+  -- -- -- unload-preserves R alg t x eq (h ∷ hs) e z to-z (Plug-∷ pl pl-m) | inj₁ r | Is is
+  -- -- --   = unload-preserves R alg {!!} {!!} {!!} hs e z  to-z {!!}
+  -- -- -- unload-preserves R alg t x eq (h ∷ hs) e z to-z (Plug-∷ pl plm) | inj₂ (dr , q) | Is is with right-Plug {!R!} R dr q {!!} {!!} {!!} {!!} is {!!} {!!} 
+  -- -- -- ... | pp  = {!!} -- load-preserves R q (dr ∷ hs) e (Plug-∷ {!!} plm) z to-z
+
+  -- step-Lt : ∀ (X : Set) (R : Reg) (alg : ⟦ R ⟧ X → X) (z₁ z₂ : UZipper R X alg)
+  --         → step R alg z₁ ≡ inj₁ z₂ → Lt R X alg z₂ z₁
+  -- step-Lt X R alg ((l , isl) , s) z₂ eq = {!s!}
  
  
