@@ -5,10 +5,15 @@ module Thesis.Regular.Equality where
   open import Data.Product
   open import Data.Sum
   open import Data.Empty
-  open import Relation.Binary.PropositionalEquality renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans; proof-irrelevance to ≡-proof-irrelevance)
+  open import Relation.Binary.PropositionalEquality
+    renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans; proof-irrelevance to ≡-proof-irrelevance)
 
   open import Thesis.Regular.Core
+    renaming (proof-irrelevance to Fmap-proof-irrelevance)
 
+  ----------------------------------------------------------------------------------------
+  --                Heterogeneous equality over regular Functors
+  
   data [_]-[_]_≈[_]_ : (R : Reg) → (X : Set) → ⟦ R ⟧ X
                                  → (Y : Set) → ⟦ R ⟧ Y → Set₁ where
     ≈-1′  : ∀ {X : Set} {Y : Set}                    → [ 1′  ]-[ X ] tt ≈[ Y ] tt
@@ -18,6 +23,9 @@ module Thesis.Regular.Equality where
     ≈-⨁₂ : ∀ {R Q : Reg} {X Y : Set} {x y} → [ Q ]-[ X ] x ≈[ Y ] y → [ R ⨁ Q ]-[ X ] (inj₂ x) ≈[ Y ] (inj₂ y)
     ≈-⨂  : ∀ {R Q : Reg} {X Y : Set} {x₁ x₂ y₁ y₂}  → [ R ]-[ X ] x₁ ≈[ Y ] x₂ → [ Q ]-[ X ] y₁ ≈[ Y ] y₂ → [ R ⨂ Q ]-[ X ] (x₁ , y₁) ≈[ Y ] (x₂ , y₂)
 
+  ----------------------------------------------------------------------------------------
+  --                Heterogeneous equality is an equivalence relation
+  
   refl : ∀ {X : Set} {R : Reg} {x} → [ R ]-[ X ] x ≈[ X ] x
   refl {R = 0′} {()}
   refl {R = 1′} {tt} = ≈-1′
@@ -43,6 +51,7 @@ module Thesis.Regular.Equality where
   trans (≈-⨁₂ eq₁) (≈-⨁₂ eq₂)       = ≈-⨁₂ (trans eq₁ eq₂)
   trans (≈-⨂ eq₁ eq₃) (≈-⨂ eq₂ eq₄) = ≈-⨂  (trans eq₁ eq₂) (trans eq₃ eq₄)
 
+  -- Heterogeneous equality is proof-irrelevant
   proof-irrelevance : ∀ {X Y : Set} {R : Reg} {x y} → (a : [ R ]-[ X ] x ≈[ Y ] y) → (b : [ R ]-[ X ] x ≈[ Y ] y) → a ≡ b
   proof-irrelevance ≈-1′ ≈-1′ = ≡-refl
   proof-irrelevance ≈-K ≈-K = ≡-refl
@@ -51,6 +60,8 @@ module Thesis.Regular.Equality where
   proof-irrelevance (≈-⨁₂ a) (≈-⨁₂ b)     = cong ≈-⨁₂ (proof-irrelevance a b)
   proof-irrelevance (≈-⨂ a a₁) (≈-⨂ b b₁) = cong₂ ≈-⨂ (proof-irrelevance a b) (proof-irrelevance a₁ b₁)
 
+  -- In the special case where the type parameter of both Functors coincide
+  -- we can recover Propositional equality
   ≈-to-≡ : ∀ {X : Set} {R : Reg} {x y} → [ R ]-[ X ] x ≈[ X ] y → x ≡ y
   ≈-to-≡ ≈-1′ = ≡-refl
   ≈-to-≡ ≈-K  = ≡-refl

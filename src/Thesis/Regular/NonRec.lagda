@@ -5,12 +5,16 @@ module Thesis.Regular.NonRec where
   open import Data.Sum
   open import Data.Unit
   open import Data.Empty
+  open import Relation.Binary.PropositionalEquality
+    renaming (refl to ≡-refl; proof-irrelevance to ≡-proof-irrelevance)
 
   open import Thesis.Regular.Core
-  open import Thesis.Regular.Equality renaming (refl to ≈-refl; proof-irrelevance to ≈-proof-irrelevance)
+    renaming (proof-irrelevance to Fmap-proof-irrelevance)
+  open import Thesis.Regular.Equality
+    renaming (refl to ≈-refl; proof-irrelevance to ≈-proof-irrelevance)
 
-  open import Relation.Binary.PropositionalEquality renaming (refl to ≡-refl; proof-irrelevance to ≡-proof-irrelevance)
-
+  -- A predicate over values of regular functors to determine
+  -- whether they mention recursive positions.
   data NonRec {X : Set} : (R : Reg) → ⟦ R ⟧ X → Set where
     NonRec-1′ : NonRec 1′ tt
     NonRec-K  : (B : Set) → (b : B) → NonRec (K B) b
@@ -18,7 +22,7 @@ module Thesis.Regular.NonRec where
     NonRec-⨁-inj₂ : (R Q : Reg) → (q : ⟦ Q ⟧ X) → NonRec Q q → NonRec (R ⨁ Q) (inj₂ q)
     NonRec-⨂      : (R Q : Reg) → (r : ⟦ R ⟧ X) → (q : ⟦ Q ⟧ X) → NonRec R r → NonRec Q q
                                                                  → NonRec (R ⨂ Q) (r , q)
-
+  
   ≈-NonRec : ∀ {X : Set} {R : Reg} → (x : ⟦ R ⟧ X) → (nr-x : NonRec R x) → ∀ {Y : Set} → (y : ⟦ R ⟧ Y) → [ R ]-[ X ] x ≈[ Y ] y → NonRec R y
   ≈-NonRec .tt nr-x .tt ≈-1′ = NonRec-1′
   ≈-NonRec x nr-x .x ≈-K = NonRec-K _ x
@@ -27,7 +31,7 @@ module Thesis.Regular.NonRec where
   ≈-NonRec .(inj₂ q) (NonRec-⨁-inj₂ R Q q nr-x) .(inj₂ _) (≈-⨁₂ x₁) = NonRec-⨁-inj₂ R Q _ (≈-NonRec q nr-x _ x₁)
   ≈-NonRec .(r , q) (NonRec-⨂ R Q r q nr-x nr-x₁) .(_ , _) (≈-⨂ x₁ x₂) = NonRec-⨂ R Q _ _ (≈-NonRec r nr-x _ x₁)
                                                                                             (≈-NonRec q nr-x₁ _ x₂)
-                                                                           
+
   coerce : ∀ {X : Set} {R : Reg} → (x : ⟦ R ⟧ X) → NonRec R x
          → ∀ {Y : Set} → ⟦ R ⟧ Y
   coerce .tt NonRec-1′ {Y}     = tt
