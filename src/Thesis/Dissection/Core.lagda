@@ -1,0 +1,204 @@
+\begin{code}
+module Thesis.Dissection.Core where
+
+  open import Data.Sum     using (_⊎_; inj₁; inj₂)
+  open import Data.Product
+  open import Data.Unit    using (⊤; tt)
+  open import Data.Empty   using (⊥; ⊥-elim)
+  open import Relation.Binary.PropositionalEquality renaming ([_] to Is_)
+  open import Relation.Nullary
+  open import Function
+  open import Data.List
+  open import Induction.WellFounded
+
+  open import Thesis.Regular.Core
+  open import Thesis.Regular.NonRec
+  open import Thesis.Regular.Catamorphism
+  open import Thesis.Regular.Dissection
+
+  ----------------------------------------------------------------------------------
+  --                              Core definitions                
+
+
+  -- A leaf of a generic tree is from a code R is
+  -- a tree without recursive positions.
+  Leaf : Reg → Set → Set
+  Leaf R X = Σ (⟦ R ⟧ X) λ l → NonRec R l
+
+  LeafToTree : (R : Reg) → (X : Set) → Leaf R X → ⟦ R ⟧ (μ R)
+  LeafToTree R X (l , isl) = coerce l isl
+  
+  -- Computed holds both a tree and a value and the
+  -- proof that the value is the result of applying a
+  -- catamorphism on the tree.
+  record Computed (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) : Set where
+    constructor _,,_,,_
+    field
+      Tree  : μ R  
+      Value : X
+      Proof : Catamorphism R alg Tree Value
+
+  -- A Stack is a list of dissections where the recursive positions
+  -- to the left of the hole are inhabited by already computed values
+  -- and to the right by tree still to be proccesed.
+  Stack : (R : Reg) → (X : Set) → (alg : ⟦ R ⟧ X → X) → Set
+  Stack R X alg = List (∇ R (Computed R X alg) (μ R))
+
+  -- Un type-Indexed Zipper
+  UZipper : (R : Reg) → (X : Set) → (alg : ⟦ R ⟧ X → X) → Set
+  UZipper R X alg = Leaf R X × Stack R X alg
+
+  ----------------------------------------------------------------------------------
+  --                              Plug and properties
+  
+  -- Top-bottom plugging operation
+  plug-μ⇓ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → μ R → Stack R X alg → μ R
+  plug-μ⇓ R t []       = t
+  plug-μ⇓ R t (h ∷ hs) = In (plug R Computed.Tree h (plug-μ⇓ R t hs))
+
+  -- plug-μ⇓ reified as a relation
+  data Plug-μ⇓ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} : μ R → Stack R X alg → μ R → Set where
+    Plug-[] : ∀ {t} → Plug-μ⇓ R t [] t
+    Plug-∷  : ∀ {t} {h} {hs} {e} {e′}
+            → Plug-μ⇓ R t hs e → Plug Computed.Tree R h e e′
+            → Plug-μ⇓ R t (h ∷ hs) (In e′)
+
+  Plug-μ⇓-to-plug-μ⇓ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {t : μ R} {s : Stack R X alg} {o : μ R}
+                     → Plug-μ⇓ R t s o → o ≡ plug-μ⇓ R t s
+  Plug-μ⇓-to-plug-μ⇓ Plug-[] = refl
+  Plug-μ⇓-to-plug-μ⇓ {R = R} (Plug-∷ {h = h} eq e)
+    with Plug-to-plug e
+  ... | refl = cong (In ∘ plug R Computed.Tree h) (Plug-μ⇓-to-plug-μ⇓ eq)
+
+  -- handy operator for Zipper
+  PlugZ-μ⇓ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → UZipper R X alg → μ R →  Set
+  PlugZ-μ⇓ R ((l , isl) , s) t = Plug-μ⇓ R (In (coerce l isl)) s t
+
+  -- Bottom-up plugging
+  plug-μ⇑ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → μ R → Stack R X alg → μ R
+  plug-μ⇑ R t []       = t
+  plug-μ⇑ R t (h ∷ hs) = plug-μ⇑ R (In (plug R Computed.Tree h t)) hs
+
+  -- plug-μ⇑ reified as a relation
+  data Plug-μ⇑ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} : μ R → Stack R X alg → μ R → Set where
+    Plug-[] : ∀ {t} → Plug-μ⇑ R t [] t
+    Plug-∷  : ∀ {t} {h} {hs} {e} {e′}
+            → Plug Computed.Tree R h t e → Plug-μ⇑ R (In e) hs e′
+            → Plug-μ⇑ R t (h ∷ hs) e′
+
+  -- handy operator
+  PlugZ-μ⇑ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → UZipper R X alg → μ R →  Set
+  PlugZ-μ⇑ R (l , s) t = Plug-μ⇑ R (In (LeafToTree _ _ l)) s t
+
+  -- Plug-μ⇓-to-Plug-μ⇑ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R}
+  --                    → PlugZ-μ⇑ R (l , s) t → PlugZ-μ⇓ R (l , reverse s) t
+  -- Plug-μ⇓-to-Plug-μ⇑ Plug-[]        = Plug-[]
+  -- Plug-μ⇓-to-Plug-μ⇑ (Plug-∷ pl pm) = {!!}
+
+  -- Plug-μ⇑-to-Plug-μ⇓ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R}
+  --                    → PlugZ-μ⇓ R (l , s) t → PlugZ-μ⇑ R (l , reverse s) t
+  -- Plug-μ⇑-to-Plug-μ⇓ = {!!}
+
+  -- Top-down type-indexed Zipper
+  data Zipper⇓ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) (t : μ R) : Set where
+    _,_ : (z : UZipper R X alg) → PlugZ-μ⇓ R z t → Zipper⇓ R X alg t
+
+  -- Bottom-up type-indexed Zipper
+  data Zipper⇑ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) (t : μ R) : Set where
+    _,_ : (z : UZipper R X alg) → PlugZ-μ⇑ R z t → Zipper⇑ R X alg t 
+
+  -- Zipper⇓-to-Zipper⇑ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇓ R X alg t → Zipper⇑ R X alg t
+  -- Zipper⇓-to-Zipper⇑ R X alg t ((l , s) , p) = (l , (reverse s)) , {!!}
+
+  -- Zipper⇑-to-Zipper⇓ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇑ R X alg t → Zipper⇓ R X alg t
+  -- Zipper⇑-to-Zipper⇓ R X alg t ((l , s) , p) = (l , (reverse s)) , Plug-μ⇓-to-Plug-μ⇑ p
+
+  -- -- --  
+  -- Plug-μ⇓-++ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → (t : μ R) → (hs : Stack R X alg) → (h : ∇ R (Computed R X alg) (μ R))
+  --            → ∀ e → Plug-μ⇓ R t (hs ++ [ h ]) e →  Σ (⟦ R ⟧ (μ R)) λ e′ → Plug Computed.Tree R h t e′ × Plug-μ⇓ R (In e′) hs e
+  -- Plug-μ⇓-++ R t [] h .(In _) (Plug-∷ Plug-[] x) = _ , (x , Plug-[])
+  -- Plug-μ⇓-++ R t (h′ ∷ hs) h .(In _) (Plug-∷ {e = e} pm pl) with Plug-μ⇓-++ R t hs h e pm
+  -- Plug-μ⇓-++ R t (h′ ∷ hs) h .(In _) (Plug-∷ {e = e} pm pl) |  mr , pm′ , pl′ = {!!} , {!!} , {!!}
+
+-- plug-μ⇓-++ R t [] h       = refl
+ -- plug-μ⇓-++ R t (x ∷ hs) h = cong (In ∘ (plug R Computed.Tree x)) (plug-μ⇓-++ R t hs h)
+
+  -- plug-μ⇑-++ : (R : Reg) → (t : μ R) → (hs : List (∇ R (μ R) (μ R))) → (h : ∇ R (μ R) (μ R))
+  --            → plug-μ⇑ R t (hs ++ [ h ]) ≡ In (plug R h (plug-μ⇑ R t hs))
+  -- plug-μ⇑-++ R t [] h       = refl
+  -- plug-μ⇑-++ R t (x ∷ hs) h = plug-μ⇑-++ R (In (plug R x t)) hs h
+  
+  -- -- -- plug-μ⇓ and plug-μ⇑ are related by reversing the stack
+  -- -- plug-μ⇓-to-plug-μ⇑ : (R : Reg) → (t : μ R) → (s : List (∇ R (μ R) (μ R)))
+  -- --                    → plug-μ⇓ R t s ≡ plug-μ⇑ R t (reverse s)
+  -- -- plug-μ⇓-to-plug-μ⇑ R t s = aux R t s (reverseView s)
+  -- --       where aux : (R : Reg) → (t : μ R) → (s : List (∇ R (μ R) (μ R)))
+  -- --                 → Reverse s → plug-μ⇓ R t s ≡ plug-μ⇑ R t (reverse s)
+  -- --             aux R t .[] []                          = refl
+  -- --             aux R t .(hs ++ h ∷ []) (hs ∶ re ∶ʳ h)
+  -- --               with reverse (hs ++ [ h ]) | reverse-++-commute hs [ h ]
+  -- --             aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h) | .(h ∷ reverse hs)
+  -- --               | refl with plug-μ⇓ R t (hs ++ [ h ]) | plug-μ⇓-++ R t hs h
+  -- --             aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h) | .(h ∷ reverse hs)
+  -- --               | refl | .(plug-μ⇓ R (In (plug R h t)) hs) | refl
+  -- --               = aux R (In (plug R h t)) hs re
+  
+  -- -- plug-μ⇑-to-plug-μ⇓ : (R : Reg) → (t : μ R) → (s : List (∇ R (μ R) (μ R)))
+  -- --                    → plug-μ⇑ R t s ≡ plug-μ⇓ R t (reverse s)
+  -- -- plug-μ⇑-to-plug-μ⇓ R t s = aux R t s (reverseView s)
+  -- --   where aux : (R : Reg) → (t : μ R) → (s : List (∇ R (μ R) (μ R)))
+  -- --             → Reverse s → plug-μ⇑ R t s ≡ plug-μ⇓ R t (reverse s)
+  -- --         aux R t .[] [] = refl
+  -- --         aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h)
+  -- --           with reverse (hs ++ [ h ]) | reverse-++-commute hs [ h ]
+  -- --         aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h) | .(h ∷ reverse hs)
+  -- --           | refl with plug-μ⇑ R t (hs ++ [ h ]) | plug-μ⇑-++ R t hs h
+  -- --         aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h) | .(h ∷ foldl _ [] hs)
+  -- --           | refl | .(In (plug R h (plug-μ⇑ R t hs))) | refl
+  -- --           = cong (In ∘ plug R h) (aux R t hs re)
+
+  -- From a Tree with Computed in the leaves, split it into a tree
+  -- only holding values and another only holding subtrees.
+  -- Also we need a proof that MapFold is retained.
+  compute : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X}
+      → ⟦ R ⟧ (Computed Q X alg)
+      → Σ (⟦ R ⟧ X × ⟦ R ⟧ (μ Q)) λ { (x , mr) → MapFold Q alg R mr x }
+  compute 0′ Q ()
+  compute 1′ Q tt = (tt , tt) , MapFold-1′
+  compute I Q {alg} (.(In i) ,, .(alg o) ,, Cata {i} {o} x) = (alg o , In i) , (MapFold-I x)
+  compute (K A) Q x = (x , x) , MapFold-K
+  compute (R ⨁ Q) P (inj₁ x) with compute R P x
+  ... | (rx , rp) , p = ((inj₁ rx) , (inj₁ rp)) , (MapFold-⨁₁ p)
+  compute (R ⨁ Q) P (inj₂ y) with compute Q P y
+  ... | (qx , qp) , p = ((inj₂ qx) , (inj₂ qp)) , (MapFold-⨁₂ p)
+  compute (R ⨂ Q) P (r , q) with compute R P r | compute Q P q
+  compute (R ⨂ Q) P (r , q) | (rx , rp) , p₁ | (qx , qp) , p₂ = ((rx , qx) , (rp , qp)) , MapFold-⨂ p₁ p₂
+
+  -- When we `compute` from a tree the resulting trees can be seen as
+  -- the result of fmapping Computed.Tree and Computed.Value
+  compute-Fmap : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} (r : ⟦ R ⟧ (Computed Q X alg))
+               → (rx : ⟦ R ⟧ X) → (rp : ⟦ R ⟧ (μ Q)) → (eq : MapFold Q alg R rp rx) →
+               compute R Q r ≡ ((rx , rp) , eq) → Fmap Computed.Tree R r rp × Fmap Computed.Value R r rx
+  compute-Fmap 0′ Q () rx rp eq x
+  compute-Fmap 1′ Q tt .tt .tt .MapFold-1′ refl = Fmap-1′ , Fmap-1′
+  compute-Fmap I Q {alg} (.(In i) ,, .(alg o) ,, Cata {i} {o} p) .(alg o) .(In i) .(MapFold-I p) refl = Fmap-I , Fmap-I
+  compute-Fmap (K A) Q r .r .r .MapFold-K refl = Fmap-K , Fmap-K
+  compute-Fmap (R ⨁ Q) P (inj₁ x) rx rp eq p
+    with compute R P x | inspect (compute R P) x
+  compute-Fmap (R ⨁ Q) P (inj₁ x) .(inj₁ rx′) .(inj₁ rp′) .(MapFold-⨁₁ eq′) refl
+    | (rx′ , rp′) , eq′ | Is is
+    with compute-Fmap R P x rx′ rp′ eq′ is
+  ... | fmrp , fmrx = Fmap-⨁₁ fmrp , Fmap-⨁₁ fmrx
+  compute-Fmap (R ⨁ Q) P (inj₂ y) rx rp eq p with compute Q P y | inspect (compute Q P) y
+  compute-Fmap (R ⨁ Q) P (inj₂ y) .(inj₂ qx) .(inj₂ qp) .(MapFold-⨁₂ eq′) refl
+    | (qx , qp) , eq′ | Is is
+    with compute-Fmap Q P y qx qp eq′ is
+  ... | fmqp , fmqx = (Fmap-⨁₂ fmqp) , (Fmap-⨁₂ fmqx)
+  compute-Fmap (R ⨂ Q) P (r , q) rx rp eq x
+    with compute R P r | inspect (compute R P) r | compute Q P q | inspect (compute Q P) q
+  compute-Fmap (R ⨂ Q) P (r , q) .(rx′ , qx) .(rp′ , qp) .(MapFold-⨂ eq₁ eq₂) refl
+    | (rx′ , rp′) , eq₁ | Is is | (qx , qp) , eq₂ | Is is′
+    with compute-Fmap R P r rx′ rp′ eq₁ is | compute-Fmap Q P q qx qp eq₂ is′
+  ... | fmrp , fmrx | fmqp , fmqx = (Fmap-⨂ fmrp fmqp) , (Fmap-⨂ fmrx fmqx)
+
+  

@@ -23,7 +23,7 @@ module Thesis.Regular.NonRec where
     NonRec-⨂      : (R Q : Reg) → (r : ⟦ R ⟧ X) → (q : ⟦ Q ⟧ X) → NonRec R r → NonRec Q q
                                                                  → NonRec (R ⨂ Q) (r , q)
   
-  ≈-NonRec : ∀ {X : Set} {R : Reg} → (x : ⟦ R ⟧ X) → (nr-x : NonRec R x) → ∀ {Y : Set} → (y : ⟦ R ⟧ Y) → [ R ]-[ X ] x ≈[ Y ] y → NonRec R y
+  ≈-NonRec : ∀ {X : Set} {R : Reg} → (x : ⟦ R ⟧ X) → (nr-x : NonRec R x) → ∀ {Y : Set} → (y : ⟦ R ⟧ Y) → [ R ]-[ X ] x ≈[ Y ] y → NonRec  R y
   ≈-NonRec .tt nr-x .tt ≈-1′ = NonRec-1′
   ≈-NonRec x nr-x .x ≈-K = NonRec-K _ x
   ≈-NonRec x nr-x .x ≈-I = nr-x
@@ -63,3 +63,9 @@ module Thesis.Regular.NonRec where
   proof-irrelevance (NonRec-⨁-inj₂ R Q q a) (NonRec-⨁-inj₂ .R .Q .q b)  = cong (NonRec-⨁-inj₂ R Q q) (proof-irrelevance a b)
   proof-irrelevance (NonRec-⨂ R Q r q a a₁) (NonRec-⨂ .R .Q .r .q b b₁) = cong₂ (NonRec-⨂ R Q r q) (proof-irrelevance a b)
                                                                                                      (proof-irrelevance a₁ b₁)
+  coerce-Fmap : ∀ {X Y : Set} {f : X → Y} (R : Reg) (r : ⟦ R ⟧ Y) (isl : NonRec R r) → Fmap f R (coerce r isl) r
+  coerce-Fmap .1′ .tt NonRec-1′ = Fmap-1′
+  coerce-Fmap .(K B) r (NonRec-K B .r) = Fmap-K
+  coerce-Fmap .(R ⨁ Q) .(inj₁ r) (NonRec-⨁-inj₁ R Q r isl)  = Fmap-⨁₁ (coerce-Fmap R r isl)
+  coerce-Fmap .(R ⨁ Q) .(inj₂ q) (NonRec-⨁-inj₂ R Q q isl)  = Fmap-⨁₂ (coerce-Fmap Q q isl)
+  coerce-Fmap .(R ⨂ Q) .(r , q) (NonRec-⨂ R Q r q isl isl₁) = Fmap-⨂ (coerce-Fmap R r isl) (coerce-Fmap Q q isl₁)

@@ -61,6 +61,13 @@ module Thesis.Regular.Core where
   Fmap-proof-irrelevance (Fmap-⨁₂ f₁) (Fmap-⨁₂ f₂)     = cong Fmap-⨁₂ (Fmap-proof-irrelevance f₁ f₂)
   Fmap-proof-irrelevance (Fmap-⨂ f₁ f₃) (Fmap-⨂ f₂ f₄) = cong₂ Fmap-⨂ (Fmap-proof-irrelevance f₁ f₂) (Fmap-proof-irrelevance f₃ f₄)
 
+  Fmap-unicity : ∀ {A B : Set} {f : A → B} {R : Reg} {i o o′} → Fmap f R i o → Fmap f R i o′ → o ≡ o′
+  Fmap-unicity Fmap-1′ Fmap-1′ = refl
+  Fmap-unicity Fmap-I Fmap-I   = refl
+  Fmap-unicity Fmap-K Fmap-K   = refl
+  Fmap-unicity (Fmap-⨁₁ x) (Fmap-⨁₁ x₁)     = cong inj₁ (Fmap-unicity x x₁)
+  Fmap-unicity (Fmap-⨁₂ x) (Fmap-⨁₂ x₁)     = cong inj₂ (Fmap-unicity x x₁)
+  Fmap-unicity (Fmap-⨂ x x₂) (Fmap-⨂ x₁ x₃) = cong₂ _,_ (Fmap-unicity x x₁) (Fmap-unicity x₂ x₃)
   data All (A : Set) (P : A → Set) : (R : Reg) → ⟦ R ⟧ A → Set₁ where
     All-I       : ∀ {x : A} → P x → All A P I x
     All-⨂      : ∀ {R Q : Reg} {r : ⟦ R ⟧ A} {q : ⟦ Q ⟧ A} → All A P R r → All A P Q q → All A P (R ⨂ Q) (r , q)
