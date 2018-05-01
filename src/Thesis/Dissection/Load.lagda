@@ -1,8 +1,8 @@
 \begin{code}
--- {-# OPTIONS --allow-unsolved-metas #-}
 module Thesis.Dissection.Load where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
+  open import Thesis.Data.Sum.Inj
   open import Data.Product
   open import Data.Unit    using (⊤; tt)
   open import Data.Empty   using (⊥; ⊥-elim)
@@ -175,7 +175,7 @@ module Thesis.Dissection.Load where
     Prop-Init {X} .(R ⨂ Q) (r , q) s t p | inj₂ (.(r′ , q′) , NonRec-⨂ R Q r′ q′ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
       rewrite coerce-≈ r′ isl₁ r (≈-sym eq₁) | coerce-≈ q′ isl₂ q (≈-sym eq₂) = p
 
-    
+    -- auxiliary lemma that deals with all the mutually recursive continuations
     first-lemma : {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} → (r : ⟦ R ⟧ (μ Q)) 
                 → (k : ∇ R (Computed Q X alg) (μ Q) → ∇ Q (Computed Q X alg) (μ Q))
                 → (f : Leaf R X → List (∇ Q (Computed Q X alg) (μ Q)) → UZipper Q X alg)
@@ -186,7 +186,8 @@ module Thesis.Dissection.Load where
     first-lemma {X} R Q {alg} r k f s  t z x p with view {X} R Q {alg} r
     first-lemma {X} 0′ Q {alg} () k f s t z x (e , plug-e , plugm) | inj₁ (dr , mq , fst)
     first-lemma {X} 1′ Q {alg} r k f s t z x (e , plug-e , plugm) | inj₁ (() , mq , fst)
-    first-lemma {X} I Q {alg} r k f s t z x (e , plug-e , plugm) | inj₁ (dr , mq , fst) = {!!}
+    first-lemma {X} I Q {alg} (In r) k f s t z x (e , plug-e , plugm) | inj₁ (tt , .(In r) , First-I)
+      = first-lemma Q Q r id _,_ (k tt ∷ s) t z x (Prop-Init Q r (k tt ∷ s) t (Plug-∷ plug-e plugm))
     first-lemma {X} (K A) Q {alg} r k f s t z x (e , plug-e , plugm) | inj₁ (() , mq , fst)
     first-lemma {X} (R ⨁ Q) P {alg} .(inj₁ r) k f s t z x (e , plug-e , plugm)
       | inj₁ (.(inj₁ _) , mq , First-⨁-inj₁ {r = r} fst)
@@ -236,86 +237,88 @@ module Thesis.Dissection.Load where
       | inj₁ (.(inj₂ (coerce r nr , qx)) , mq , First-⨂₂ {qx = qx} nr fst) | inj₂ (r′ , nr-r , eq) | cont
       with first Q P q (k ∘ inj₂ ∘ (_,_ (coerce r′ nr-r))) (first-⨂-2 R Q P f (r′ , nr-r)) s
       | inspect (first Q P q (k ∘ inj₂ ∘ (_,_ (coerce r′ nr-r))) (first-⨂-2 R Q P f (r′ , nr-r))) s 
-    first-lemma {X} (R ⨂ Q) P {alg} (r , q) k f s t z x (e , plug-e , plugm-e) | inj₁ (.(inj₂ (coerce r nr , qx)) , mq , First-⨂₂ {qx = qx} nr fst) | inj₂ (r′ , nr-r , eq) | cont | vv , proj₃ | cont′ = {!proj₃!}
-   -- first-⨂-2 : {X : Set} (R Q P : Reg) {alg : ⟦ P ⟧ X → X}
-   --              → (Leaf (R ⨂ Q) X     → Stack P X alg → UZipper P X alg)
-   --              → (Leaf R X → Leaf Q X → Stack P X alg → UZipper P X alg)
-   
-  -- first-lemma {X} (R ⨂ Q) P (r , q) k f s t z x (e , plug-e , plugm-e)
-    --   | inj₁ (.(inj₂ (r , qx)) , mq , First-⨂₂ {qx = qx} nr fst) | inj₂ (r′ , nr-r , eq) | cont | z′ | Is eq₁
-    --   with view {X} Q P q | first-lemma Q P q (λ z₁ → k (inj₂ (r , z₁))) ((first-⨂-2 R Q P f (r′ , nr-r))) s t z′ eq₁
-    -- first-lemma {X} (R ⨂ Q) P (r , q) k f s t z x (e , plug-e , plugm-e)
-    --   | inj₁ (.(inj₂ (r , qx)) , mq , First-⨂₂ {qx = qx} nr fst) | inj₂ (r′ , nr-r , eq) | cont | z′ | Is eq₁ | inj₁ (dr′′ , mq′′ , fst′′) | cont′
-    --   with First-unicity fst fst′′
-    -- first-lemma {X} (R ⨂ Q) P (r , q) k f s t z x (e , plug-e , plugm-e)
-    --   | inj₁ (.(inj₂ (r , dr′′)) , .mq′′ , First-⨂₂ {qx = .dr′′} nr fst) | inj₂ (r′ , nr-r , eq) | cont | z′ | Is eq₁ | inj₁ (dr′′ , mq′′ , fst′′) | cont′ | refl
-    --   = cont (cont′ (e , plug-e , plugm-e))
-    -- first-lemma {X} (R ⨂ Q) P (r , q) k f s t z x (e , plug-e , plugm-e)
-    --   | inj₁ (.(inj₂ (r , dq)) , mq , First-⨂₂ {qx = dq} isl fst) | inj₂ (l′ , isl′ , eq) | g | z′ | Is eq₁ | inj₂ (l′′ , isl′′ , eq′′) | cont′
-    --   = ⊥-elim (First-NonRec Q q dq mq fst (≈-NonRec l′′ isl′′ q (≈-sym eq′′)))
-    first-lemma {X} R Q {alg} r k f s t z x p | inj₂ y = {!!}
-  -- --   first-lemma {X} 0′ Q () k f s t z x p
-  -- --     | inj₂ (l , isl , plug)
-  -- --   first-lemma {X} 1′ Q .tt k f s t .(f (tt , NonRec-1′) s) refl p
-  -- --     | inj₂ (.tt , NonRec-1′ , ≈-1′)    = p
-  -- --   first-lemma {X} I Q r k f s t z x p
-  -- --     | inj₂ (l , () , plug)
-  -- --   first-lemma {X} (K A) Q r k f s t .(f (r , NonRec-K A r) s) refl p
-  -- --     | inj₂ (.r , NonRec-K .A .r , ≈-K) = p
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r) , NonRec-⨁-inj₁ .R .Q r isl , ≈-⨁₁ {x = x} eq)
-  -- --     with view {X} R P x | first-lemma R P x (k ∘ inj₁) (first-⨁₁ R Q P f) s t z e
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r) , NonRec-⨁-inj₁ .R .Q r isl , ≈-⨁₁ {x = x} eq)
-  -- --     | inj₁ (dr , mq , fst) | _ = ⊥-elim (First-NonRec R x dr mq fst (≈-NonRec r isl x (≈-sym eq)))
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r) , NonRec-⨁-inj₁ .R .Q r isl , ≈-⨁₁ {x = x} eq)
-  -- --     | inj₂ (l , isl′ , eq-l) | cont
-  -- --     with ≈-to-≡ (≈-trans (≈-sym eq-l) eq)
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ l) , NonRec-⨁-inj₁ .R .Q .l isl , ≈-⨁₁ {x = x} eq)
-  -- --     | inj₂ (l , isl′ , eq-l) | cont | refl
-  -- --     with NonRec-proof-irrelevance isl isl′
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ l) , NonRec-⨁-inj₁ .R .Q .l .isl′ , ≈-⨁₁ {x = x} eq)
-  -- --     | inj₂ (l , isl′ , eq-l) | cont | refl | refl = cont p
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ q) , NonRec-⨁-inj₂ .R .Q q isl , ≈-⨁₂ {x = x} eq)
-  -- --     with view {X} Q P x | first-lemma Q P x (k ∘ inj₂) (first-⨁₂ R Q P f) s t z e
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ q) , NonRec-⨁-inj₂ .R .Q q isl , ≈-⨁₂ {x = x} eq)
-  -- --     | inj₁ (dr , mq , fst) | cont = ⊥-elim (First-NonRec Q x dr mq fst (≈-NonRec q isl x (≈-sym eq)))
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ q) , NonRec-⨁-inj₂ .R .Q q isl , ≈-⨁₂ {x = x} eq)
-  -- --     | inj₂ (l , isl′ , eq-l) | cont
-  -- --     with ≈-to-≡ (≈-trans (≈-sym eq-l) eq)
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ l) , NonRec-⨁-inj₂ .R .Q .l isl , ≈-⨁₂ {x = x} eq)
-  -- --     | inj₂ (l , isl′ , eq-l) | cont | refl
-  -- --     with NonRec-proof-irrelevance isl isl′
-  -- --   first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ l) , NonRec-⨁-inj₂ .R .Q .l .isl′ , ≈-⨁₂ {x = x} eq)
-  -- --     | inj₂ (l , isl′ , eq-l) | cont | refl | refl = cont p
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((r′ , q′) , NonRec-⨂ .R .Q _ _ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     with view {X} R P r | first-lemma R P r (k  ∘ inj₁ ∘ (_, q)) (first-⨂-1 R Q P k f q r) s t z e
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((r′ , q′) , NonRec-⨂ .R .Q _ _ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₁ (dr , mq , plug) | _
-  -- --     = ⊥-elim (First-NonRec R r dr mq plug (≈-NonRec r′ isl₁ r (≈-sym eq₁)))
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((r′ , q′) , NonRec-⨂ .R .Q _ _ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₂ (l , isl , eq) | cont
-  -- --     with ≈-to-≡ (≈-trans (≈-sym eq) eq₁)
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₂ (l , isl , eq) | cont | refl
-  -- --     with NonRec-proof-irrelevance isl₁ isl
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₂ (l , isl , eq) | cont | refl | refl
-  -- --     with first Q P q (k ∘ inj₂ ∘ (_,_ r)) (first-⨂-2 R Q P f (l , isl)) s | inspect (first Q P q (k ∘ inj₂ ∘ (_,_ r)) (first-⨂-2 R Q P f (l , isl))) s
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq
-  -- --     with view {X} Q P q | first-lemma Q P q (k ∘ inj₂ ∘ (_,_ r)) ((first-⨂-2 R Q P f (l , isl))) s t z′ f-eq
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq | inj₁ (dr , mq , fst) | cont′
-  -- --     = ⊥-elim (First-NonRec Q q dr mq fst (≈-NonRec q′ isl₂ q (≈-sym eq₂)))
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq | inj₂ (l′ , isl′ , eq′) | cont′
-  -- --     with ≈-to-≡ (≈-trans (≈-sym eq′) eq₂)
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , .l′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq | inj₂ (l′ , isl′ , eq′) | cont′ | refl
-  -- --     with NonRec-proof-irrelevance isl′ isl₂
-  -- --   first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , .l′) , NonRec-⨂ .R .Q _ _ .isl .isl′ , ≈-⨂ eq₁ eq₂)
-  -- --     | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq | inj₂ (l′ , isl′ , eq′) | cont′ | refl | refl
-  -- --     = cont (cont′ p)
+    first-lemma {X} (R ⨂ Q) P {alg} (r , q) k f s t z x (e , plug-e , plugm-e)
+      | inj₁ (.(inj₂ (coerce r nr , qx)) , mq , First-⨂₂ {qx = qx} nr fst) | inj₂ (r′ , nr-r , eq) | cont | z′ | Is is′
+      with view {X} Q P {alg} q | first-lemma Q P {alg} q (k ∘ inj₂ ∘ (_,_ (coerce r′ nr-r))) ((first-⨂-2 R Q P f (r′ , nr-r))) s t z′ is′
+    first-lemma {X} (R ⨂ Q) P {alg} (r , q) k f s t z x (e , plug-e , plugm-e)
+      | inj₁ (.(inj₂ (coerce r nr , qx)) , mq , First-⨂₂ {qx = qx} nr fst) | inj₂ (r′ , nr-r , eq) | cont | z′ | Is is′
+      | inj₁ (dr′′ , mq′′ , fst′′) | cont′
+      with First-unicity fst fst′′
+    first-lemma {X} (R ⨂ Q) P {alg} (r , q) k f s t z x (e , plug-e , plugm-e)
+      | inj₁ (.(inj₂ (coerce r nr-r , dr′′)) , .mq′′ , First-⨂₂ {qx = .dr′′} nr-r fst) | inj₂ (r′ , nr-r′ , eq) | cont | z′ | Is is′
+      | inj₁ (dr′′ , mq′′ , fst′′) | cont′ | refl
+      with coerce r nr-r {Computed P X alg} | coerce r′ nr-r′ {Computed P X alg} | coerce-≈-2 r nr-r r′ nr-r′ eq {Z = Computed P X alg}
+    first-lemma {X} (R ⨂ Q) P {alg} (r , q) k f s t z x (e , plug-e , plugm-e)
+      | inj₁ (.(inj₂ (coerce r nr-r , dr′′)) , .mq′′ , First-⨂₂ {_} {_} {.dr′′} nr-r fst) | inj₂ (r′ , nr-r′ , eq) | cont | z′ | Is is′
+      | inj₁ (dr′′ , mq′′ , fst′′) | cont′ | refl | c₁ | .c₁ | refl =  cont (cont′ (e , (plug-e , plugm-e)))
+    first-lemma {X} (R ⨂ Q) P {alg} (r , q) k f s t z x (e , plug-e , plugm-e)
+      | inj₁ (.(inj₂ (coerce r nr , qx)) , mq , First-⨂₂ {qx = qx} nr fst)
+      | inj₂ (r′ , nr-r , eq) | cont | z′ | Is is′ | inj₂ (l′′ , isl′′ , eq′′) | cont′
+      = ⊥-elim (First-NonRec fst (≈-NonRec l′′ isl′′ q (≈-sym eq′′)))
+    first-lemma {X} 0′ Q () k f s t z x p
+      | inj₂ (l , isl , plug)
+    first-lemma {X} 1′ Q .tt k f s t .(f (tt , NonRec-1′) s) refl p
+      | inj₂ (.tt , NonRec-1′ , ≈-1′)    = p
+    first-lemma {X} I Q r k f s t z x p
+      | inj₂ (l , () , plug)
+    first-lemma {X} (K A) Q r k f s t .(f (r , NonRec-K A r) s) refl p
+      | inj₂ (.r , NonRec-K .A .r , ≈-K) = p
+    first-lemma {X} (R ⨁ Q) P {alg} .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r) , NonRec-⨁-inj₁ .R .Q r isl , ≈-⨁₁ {x = x} eq)
+      with view {X} R P {alg} x | first-lemma R P x (k ∘ inj₁) (first-⨁₁ R Q P f) s t z e
+    first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r) , NonRec-⨁-inj₁ .R .Q r isl , ≈-⨁₁ {x = x} eq)
+      | inj₁ (dr , mq , fst) | _ = ⊥-elim (First-NonRec fst (≈-NonRec r isl x (≈-sym eq)))
+    first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ r) , NonRec-⨁-inj₁ .R .Q r isl , ≈-⨁₁ {x = x} eq)
+      | inj₂ (l , isl′ , eq-l) | cont
+      with ≈-to-≡ (≈-trans (≈-sym eq-l) eq)
+    first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ l) , NonRec-⨁-inj₁ .R .Q .l isl , ≈-⨁₁ {x = x} eq)
+      | inj₂ (l , isl′ , eq-l) | cont | refl
+      with NonRec-proof-irrelevance isl isl′
+    first-lemma {X} (R ⨁ Q) P .(inj₁ x) k f s t z e p | inj₂ (.(inj₁ l) , NonRec-⨁-inj₁ .R .Q .l .isl′ , ≈-⨁₁ {x = x} eq)
+      | inj₂ (l , isl′ , eq-l) | cont | refl | refl = cont p
+    first-lemma {X} (R ⨁ Q) P {alg} .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ q) , NonRec-⨁-inj₂ .R .Q q isl , ≈-⨁₂ {x = x} eq)
+      with view {X} Q P {alg} x | first-lemma Q P x (k ∘ inj₂) (first-⨁₂ R Q P f) s t z e
+    first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ q) , NonRec-⨁-inj₂ .R .Q q isl , ≈-⨁₂ {x = x} eq)
+      | inj₁ (dr , mq , fst) | cont = ⊥-elim (First-NonRec fst (≈-NonRec q isl x (≈-sym eq)))
+    first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ q) , NonRec-⨁-inj₂ .R .Q q isl , ≈-⨁₂ {x = x} eq)
+      | inj₂ (l , isl′ , eq-l) | cont
+      with ≈-to-≡ (≈-trans (≈-sym eq-l) eq)
+    first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ l) , NonRec-⨁-inj₂ .R .Q .l isl , ≈-⨁₂ {x = x} eq)
+      | inj₂ (l , isl′ , eq-l) | cont | refl
+      with NonRec-proof-irrelevance isl isl′
+    first-lemma {X} (R ⨁ Q) P .(inj₂ x) k f s t z e p | inj₂ (.(inj₂ l) , NonRec-⨁-inj₂ .R .Q .l .isl′ , ≈-⨁₂ {x = x} eq)
+      | inj₂ (l , isl′ , eq-l) | cont | refl | refl = cont p
+    first-lemma {X} (R ⨂ Q) P {alg} (r , q) k f s t z e p | inj₂ ((r′ , q′) , NonRec-⨂ .R .Q _ _ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
+      with view {X} R P {alg} r | first-lemma R P r (k  ∘ inj₁ ∘ (_, q)) (first-⨂-1 R Q P k f q) s t z e
+    first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((r′ , q′) , NonRec-⨂ .R .Q _ _ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
+      | inj₁ (dr , mq , plug) | _
+      = ⊥-elim (First-NonRec plug (≈-NonRec r′ isl₁ r (≈-sym eq₁)))
+    first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((r′ , q′) , NonRec-⨂ .R .Q _ _ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
+      | inj₂ (l , isl , eq) | cont
+      with ≈-to-≡ (≈-trans (≈-sym eq) eq₁)
+    first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ isl₁ isl₂ , ≈-⨂ eq₁ eq₂)
+      | inj₂ (l , isl , eq) | cont | refl
+      with NonRec-proof-irrelevance isl₁ isl
+    first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
+      | inj₂ (l , isl , eq) | cont | refl | refl
+      with first Q P q (k ∘ inj₂ ∘ (_,_ (coerce l isl))) (first-⨂-2 R Q P f (l , isl)) s
+      | inspect (first Q P q (k ∘ inj₂ ∘ (_,_ (coerce l isl))) (first-⨂-2 R Q P f (l , isl))) s
+    first-lemma {X} (R ⨂ Q) P {alg} (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
+      | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq
+      with view {X} Q P {alg} q | first-lemma Q P q (k ∘ inj₂ ∘ (_,_ (coerce l isl))) ((first-⨂-2 R Q P f (l , isl))) s t z′ f-eq
+    first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
+      | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq | inj₁ (dr , mq , fst) | cont′
+       = ⊥-elim (First-NonRec fst (≈-NonRec q′ isl₂ q (≈-sym eq₂)))
+    first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , q′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
+      | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq | inj₂ (l′ , isl′ , eq′) | cont′ 
+      with ≈-to-≡ (≈-trans (≈-sym eq′) eq₂)
+    first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , .l′) , NonRec-⨂ .R .Q _ _ .isl isl₂ , ≈-⨂ eq₁ eq₂)
+      | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq | inj₂ (l′ , isl′ , eq′) | cont′ | refl
+      with NonRec-proof-irrelevance isl′ isl₂
+    first-lemma {X} (R ⨂ Q) P (r , q) k f s t z e p | inj₂ ((.l , .l′) , NonRec-⨂ .R .Q _ _ .isl .isl′ , ≈-⨂ eq₁ eq₂)
+      | inj₂ (l , isl , eq) | cont | refl | refl | z′ | Is f-eq | inj₂ (l′ , isl′ , eq′) | cont′ | refl | refl
+      = cont (cont′ p)
 
-  -- -- load-preserves : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → (r : μ R) → (s : List (∇ R (Computed R X alg) (μ R))) → (t : μ R)
-  -- --                → Plug-μ⇑ R r s t → (z : UZipper R X alg) → load R r s ≡ inj₁ z → PlugZ-μ⇑ R z t
-  -- -- load-preserves R (In r) s t x z p = {!!}
+  -- load preserves the tree structure
+  load-preserves : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → (r : μ R) → (s : List (∇ R (Computed R X alg) (μ R))) → (t : μ R)
+                 → Plug-μ⇑ R r s t → (z : UZipper R X alg) → load R r s ≡ inj₁ z → PlugZ-μ⇑ R z t
+  load-preserves R (In r) s t x z p = first-lemma R R r id _,_ s t z  (⊎-injective₁ p) (Prop-Init R r s t x)

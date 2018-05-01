@@ -23,7 +23,7 @@ module Thesis.Regular.NonRec where
     NonRec-⨂      : (R Q : Reg) → (r : ⟦ R ⟧ X) → (q : ⟦ Q ⟧ X) → NonRec R r → NonRec Q q
                                                                  → NonRec (R ⨂ Q) (r , q)
   
-  ≈-NonRec : ∀ {X : Set} {R : Reg} → (x : ⟦ R ⟧ X) → (nr-x : NonRec R x) → ∀ {Y : Set} → (y : ⟦ R ⟧ Y) → [ R ]-[ X ] x ≈[ Y ] y → NonRec  R y
+  ≈-NonRec : ∀ {X : Set} {R : Reg} → (x : ⟦ R ⟧ X) → (nr-x : NonRec R x) → ∀ {Y : Set} → (y : ⟦ R ⟧ Y) → [ R ]-[ X ] x ≈[ Y ] y → NonRec R y
   ≈-NonRec .tt nr-x .tt ≈-1′ = NonRec-1′
   ≈-NonRec x nr-x .x ≈-K = NonRec-K _ x
   ≈-NonRec x nr-x .x ≈-I = nr-x
@@ -31,7 +31,6 @@ module Thesis.Regular.NonRec where
   ≈-NonRec .(inj₂ q) (NonRec-⨁-inj₂ R Q q nr-x) .(inj₂ _) (≈-⨁₂ x₁) = NonRec-⨁-inj₂ R Q _ (≈-NonRec q nr-x _ x₁)
   ≈-NonRec .(r , q) (NonRec-⨂ R Q r q nr-x nr-x₁) .(_ , _) (≈-⨂ x₁ x₂) = NonRec-⨂ R Q _ _ (≈-NonRec r nr-x _ x₁)
                                                                                             (≈-NonRec q nr-x₁ _ x₂)
-
   coerce : ∀ {X : Set} {R : Reg} → (x : ⟦ R ⟧ X) → NonRec R x
          → ∀ {Y : Set} → ⟦ R ⟧ Y
   coerce .tt NonRec-1′ {Y}     = tt
@@ -56,6 +55,16 @@ module Thesis.Regular.NonRec where
   coerce-≈ .(inj₂ q) (NonRec-⨁-inj₂ R Q q nr) .(inj₂ _) (≈-⨁₂ eq)   = cong inj₂ (coerce-≈ q nr _ eq)
   coerce-≈ .(r , q) (NonRec-⨂ R Q r q nr nr₁) (_ , _) (≈-⨂ eq₁ eq₂) = cong₂ _,_ (coerce-≈ r nr _ eq₁) (coerce-≈ q nr₁ _ eq₂)
 
+  coerce-≈-2 : ∀ {R : Reg}
+             → ∀ {X : Set} → (x : ⟦ R ⟧ X) → (nr-x : NonRec R x)
+             → ∀ {Y : Set} → (y : ⟦ R ⟧ Y) → (nr-y : NonRec R y)
+             → [ R ]-[ X ] x ≈[ Y ] y → ∀ {Z : Set} → (coerce x nr-x {Z}) ≡ (coerce y nr-y {Z})
+  coerce-≈-2 .tt NonRec-1′ .tt NonRec-1′ ≈-1′ = ≡-refl
+  coerce-≈-2 .y (NonRec-K B .y) y (NonRec-K .B .y) ≈-K = ≡-refl
+  coerce-≈-2 .(inj₁ r) (NonRec-⨁-inj₁ R Q r nr-x) .(inj₁ r₁) (NonRec-⨁-inj₁ .R .Q r₁ nr-y) (≈-⨁₁ x₁) = cong inj₁ (coerce-≈-2 r nr-x r₁ nr-y x₁)
+  coerce-≈-2 .(inj₂ q) (NonRec-⨁-inj₂ R Q q nr-x) .(inj₂ q₁) (NonRec-⨁-inj₂ .R .Q q₁ nr-y) (≈-⨁₂ x₁) = cong inj₂ (coerce-≈-2 q nr-x q₁ nr-y x₁)
+  coerce-≈-2 .(r , q) (NonRec-⨂ R Q r q nr-x nr-x₁) (_ , _) (NonRec-⨂ .R .Q _ _ nr-y nr-y₁) (≈-⨂ x₁ x₂) = cong₂ _,_ (coerce-≈-2 r nr-x _ nr-y x₁)
+                                                                                                                      (coerce-≈-2 q nr-x₁ _ nr-y₁ x₂)
   proof-irrelevance : ∀ {X : Set} {R : Reg} {x : ⟦ R ⟧ X} → (a : NonRec R x) → (b : NonRec R x) → a ≡ b
   proof-irrelevance NonRec-1′ NonRec-1′ = ≡-refl
   proof-irrelevance (NonRec-K B b₁) (NonRec-K .B .b₁) = ≡-refl
