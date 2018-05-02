@@ -7,7 +7,7 @@ module Thesis.Regular.NonRec where
   open import Data.Empty
   open import Relation.Binary.PropositionalEquality
     renaming (refl to ≡-refl; proof-irrelevance to ≡-proof-irrelevance)
-
+  open import Relation.Nullary
   open import Thesis.Regular.Core
 
   open import Thesis.Regular.Equality
@@ -20,8 +20,25 @@ module Thesis.Regular.NonRec where
     NonRec-K  : (B : Set) → (b : B) → NonRec (K B) b
     NonRec-⨁-inj₁ : (R Q : Reg) → (r : ⟦ R ⟧ X) → NonRec R r → NonRec (R ⨁ Q) (inj₁ r)
     NonRec-⨁-inj₂ : (R Q : Reg) → (q : ⟦ Q ⟧ X) → NonRec Q q → NonRec (R ⨁ Q) (inj₂ q)
-    NonRec-⨂      : (R Q : Reg) → (r : ⟦ R ⟧ X) → (q : ⟦ Q ⟧ X) → NonRec R r → NonRec Q q
-                                                                 → NonRec (R ⨂ Q) (r , q)
+    NonRec-⨂      : (R Q : Reg) → (r : ⟦ R ⟧ X) → (q : ⟦ Q ⟧ X) → NonRec R r → NonRec Q q → NonRec (R ⨂ Q) (r , q)
+
+  -- NonRec is decidable
+  NonRec-Dec : ∀ {X : Set} (R : Reg) (x : ⟦ R ⟧ X) → Dec (NonRec R x)
+  NonRec-Dec 0′ ()
+  NonRec-Dec 1′ tt = yes NonRec-1′
+  NonRec-Dec I x = no (λ ())
+  NonRec-Dec (K A) x = yes (NonRec-K A x)
+  NonRec-Dec (R ⨁ Q) (inj₁ x) with NonRec-Dec R x
+  NonRec-Dec (R ⨁ Q) (inj₁ x) | yes p = yes (NonRec-⨁-inj₁ R Q x p)
+  NonRec-Dec (R ⨁ Q) (inj₁ x) | no ¬p = no λ { (NonRec-⨁-inj₁ _ _ _ x) → ¬p x}
+  NonRec-Dec (R ⨁ Q) (inj₂ y) with NonRec-Dec Q y
+  NonRec-Dec (R ⨁ Q) (inj₂ y) | yes p = yes (NonRec-⨁-inj₂ R Q y p)
+  NonRec-Dec (R ⨁ Q) (inj₂ y) | no ¬p = no λ { (NonRec-⨁-inj₂ _ _ _ x) → ¬p x}
+  NonRec-Dec (R ⨂ Q) (x , y) with NonRec-Dec R x | NonRec-Dec Q y
+  NonRec-Dec (R ⨂ Q) (x , y) | yes p | yes p₁ = yes (NonRec-⨂ R Q x y p p₁)
+  NonRec-Dec (R ⨂ Q) (x , y) | yes p | no ¬p  = no λ { (NonRec-⨂ _ _ _ _ _ z) → ¬p z }
+  NonRec-Dec (R ⨂ Q) (x , y) | no ¬p | yes p  = no λ { (NonRec-⨂ _ _ _ _ z _) → ¬p z }
+  NonRec-Dec (R ⨂ Q) (x , y) | no ¬p | no ¬p₁ = no λ { (NonRec-⨂ _ _ _ _ z _) → ¬p z }
   
   ≈-NonRec : ∀ {X : Set} {R : Reg} → (x : ⟦ R ⟧ X) → (nr-x : NonRec R x) → ∀ {Y : Set} → (y : ⟦ R ⟧ Y) → [ R ]-[ X ] x ≈[ Y ] y → NonRec R y
   ≈-NonRec .tt nr-x .tt ≈-1′ = NonRec-1′

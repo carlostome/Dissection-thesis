@@ -5,8 +5,10 @@ module Thesis.Regular.Core where
   open import Data.Sum
   open import Data.Unit
   open import Data.Empty
+  open import Relation.Binary.PropositionalEquality
+    renaming (proof-irrelevance to ≡-proof-irrelevance)
 
-  open import Relation.Binary.PropositionalEquality renaming (proof-irrelevance to ≡-proof-irrelevance)
+  -- Regular universe
   data Reg : Set₁ where
     0′    : Reg
     1′    : Reg
@@ -18,6 +20,7 @@ module Thesis.Regular.Core where
   infixl 30 _⨁_
   infixl 40 _⨂_
 
+  -- interpretation from the Universe to Agda Functor
   ⟦_⟧ : Reg → (Set → Set)
   ⟦ 0′ ⟧ X  = ⊥
   ⟦ 1′ ⟧ X  = ⊤
@@ -26,6 +29,7 @@ module Thesis.Regular.Core where
   ⟦ F ⨁ G ⟧ X = ⟦ F ⟧ X ⊎ ⟦ G ⟧ X
   ⟦ F ⨂ G ⟧ X = ⟦ F ⟧ X × ⟦ G ⟧ X
 
+  -- witness that interpretation yields a functor (laws required?)
   fmap : ∀ {A B : Set} (R : Reg) → (A → B) → ⟦ R ⟧ A → ⟦ R ⟧ B
   fmap 0′ f ()
   fmap 1′ f tt   = tt
@@ -43,6 +47,18 @@ module Thesis.Regular.Core where
     Fmap-⨁₂ : ∀ {R Q} {q} {q′} → Fmap f Q q q′ → Fmap f (R ⨁ Q) (inj₂ q) (inj₂ q′)
     Fmap-⨂  : ∀ {R Q} {r q} {r′ q′} → Fmap f R r r′ → Fmap f Q q q′ → Fmap f (R ⨂ Q) (r , q) (r′ , q′)
 
+  fmap-to-Fmap : ∀ {A B : Set} (f : A → B) (R : Reg) (x : ⟦ R ⟧ A) (y : ⟦ R ⟧ B)
+                → y ≡ fmap R f x → Fmap f R x y
+  fmap-to-Fmap f 0′ () y eq
+  fmap-to-Fmap f 1′ tt tt eq = Fmap-1′
+  fmap-to-Fmap f I x .(f x) refl  = Fmap-I
+  fmap-to-Fmap f (K A) x .x refl  = Fmap-K
+  fmap-to-Fmap f (R ⨁ Q) (inj₁ r) (inj₁ x) eq = Fmap-⨁₁ (fmap-to-Fmap f R r x {!!})
+  fmap-to-Fmap f (R ⨁ Q) (inj₁ r) (inj₂ y) ()
+  fmap-to-Fmap f (R ⨁ Q) (inj₂ q) (inj₁ x) ()
+  fmap-to-Fmap f (R ⨁ Q) (inj₂ q) (inj₂ y) eq = {!!}
+  fmap-to-Fmap f (R ⨂ Q) x y eq = {!!}
+  
   Fmap-to-fmap : ∀ {A B : Set} {f : A → B} {R : Reg} {x : ⟦ R ⟧ A} {y : ⟦ R ⟧ B}
                → Fmap f R x y → y ≡ fmap R f x
   Fmap-to-fmap Fmap-1′ = refl
@@ -68,6 +84,7 @@ module Thesis.Regular.Core where
   Fmap-unicity (Fmap-⨁₁ x) (Fmap-⨁₁ x₁)     = cong inj₁ (Fmap-unicity x x₁)
   Fmap-unicity (Fmap-⨁₂ x) (Fmap-⨁₂ x₁)     = cong inj₂ (Fmap-unicity x x₁)
   Fmap-unicity (Fmap-⨂ x x₂) (Fmap-⨂ x₁ x₃) = cong₂ _,_ (Fmap-unicity x x₁) (Fmap-unicity x₂ x₃)
+  
   data All (A : Set) (P : A → Set) : (R : Reg) → ⟦ R ⟧ A → Set₁ where
     All-I       : ∀ {x : A} → P x → All A P I x
     All-⨂      : ∀ {R Q : Reg} {r : ⟦ R ⟧ A} {q : ⟦ Q ⟧ A} → All A P R r → All A P Q q → All A P (R ⨂ Q) (r , q)

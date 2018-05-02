@@ -1,4 +1,5 @@
 \begin{code}
+{-# OPTIONS --allow-unsolved-metas #-}
 module Thesis.Dissection.Core where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
@@ -9,6 +10,7 @@ module Thesis.Dissection.Core where
   open import Relation.Nullary
   open import Function
   open import Data.List
+  open import Data.List.Reverse
   open import Induction.WellFounded
 
   open import Thesis.Regular.Core
@@ -25,6 +27,7 @@ module Thesis.Dissection.Core where
   Leaf : Reg → Set → Set
   Leaf R X = Σ (⟦ R ⟧ X) λ l → NonRec R l
 
+  -- embed a leaf into a tree by coercion
   LeafToTree : (R : Reg) → (X : Set) → Leaf R X → ⟦ R ⟧ (μ R)
   LeafToTree R X (l , isl) = coerce l isl
   
@@ -63,12 +66,14 @@ module Thesis.Dissection.Core where
             → Plug-μ⇓ R t hs e → Plug Computed.Tree R h e e′
             → Plug-μ⇓ R t (h ∷ hs) (In e′)
 
-  Plug-μ⇓-to-plug-μ⇓ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {t : μ R} {s : Stack R X alg} {o : μ R}
-                     → Plug-μ⇓ R t s o → o ≡ plug-μ⇓ R t s
-  Plug-μ⇓-to-plug-μ⇓ Plug-[] = refl
-  Plug-μ⇓-to-plug-μ⇓ {R = R} (Plug-∷ {h = h} eq e)
-    with Plug-to-plug e
-  ... | refl = cong (In ∘ plug R Computed.Tree h) (Plug-μ⇓-to-plug-μ⇓ eq)
+  Plug-μ⇓-to-plug-μ⇓ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {t : μ R} {s : Stack R X alg}
+                     → Plug-μ⇓ R t s (plug-μ⇓ R t s)
+  Plug-μ⇓-to-plug-μ⇓ {s = []} = Plug-[]
+  Plug-μ⇓-to-plug-μ⇓ {s = x ∷ s} = {!!}
+  
+  -- Plug-μ⇓-to-plug-μ⇓ {R = R} (Plug-∷ {h = h} eq e)
+  --   with Plug-to-plug e
+  -- ... | refl = cong (In ∘ plug R Computed.Tree h) (Plug-μ⇓-to-plug-μ⇓ eq)
 
   -- handy operator for Zipper
   PlugZ-μ⇓ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → UZipper R X alg → μ R →  Set
@@ -90,11 +95,26 @@ module Thesis.Dissection.Core where
   PlugZ-μ⇑ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → UZipper R X alg → μ R →  Set
   PlugZ-μ⇑ R (l , s) t = Plug-μ⇑ R (In (LeafToTree _ _ l)) s t
 
+  Plug-μ⇓-unicity : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {x : μ R} {s : Stack R X alg} {r₁ r₂ : μ R}
+                  → Plug-μ⇓ R x s r₁ → Plug-μ⇓ R x s r₂ → r₁ ≡ r₂
+  Plug-μ⇓-unicity Plug-[] Plug-[] = refl
+  Plug-μ⇓-unicity (Plug-∷ x₁ x₃) (Plug-∷ x₂ x₄) with Plug-μ⇓-unicity x₁ x₂
+  ... | refl with Plug-unicity x₃ x₄
+  ... | refl = refl
+  
   -- Plug-μ⇓-to-Plug-μ⇑ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R}
   --                    → PlugZ-μ⇑ R (l , s) t → PlugZ-μ⇓ R (l , reverse s) t
-  -- Plug-μ⇓-to-Plug-μ⇑ Plug-[]        = Plug-[]
-  -- Plug-μ⇓-to-Plug-μ⇑ (Plug-∷ pl pm) = {!!}
+  -- Plug-μ⇓-to-Plug-μ⇑ {X} {R} {alg} {l} {s = s} {t} x = aux X R alg l s t x (reverseView s)
+  --   where aux : ∀ (X : Set) (R : Reg) (alg : ⟦ R ⟧ X → X) (l : Leaf R X) (s : Stack R X alg) (t : μ R)
+  --              → Plug-μ⇑ R (In (LeafToTree R X l)) s t → Reverse s → Plug-μ⇓ R (In (LeafToTree R X l)) (reverse s) t
+  --         aux X R alg (l , isl) [] .(In (coerce l isl)) Plug-[] x₂ with reverse []
+  --         ... | r = {!r!}
+  --         aux X R alg (l , isl) (x ∷ s) t (Plug-∷ x₃ x₁) x₂ = {!x₂!}
+  --                 -- aux (l , isl) .[] .(In (coerce l isl)) Plug-[] [] = ?
+  --         -- aux (l , isl) .(xs ++ x ∷ []) t x₁ (xs ∶ x₂ ∶ʳ x) = {!!}
 
+  -- --                 → Reverse s → plug-μ⇓ R t s ≡ plug-μ⇑ R t (reverse s)
+  -- --  
   -- Plug-μ⇑-to-Plug-μ⇓ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R}
   --                    → PlugZ-μ⇓ R (l , s) t → PlugZ-μ⇑ R (l , reverse s) t
   -- Plug-μ⇑-to-Plug-μ⇓ = {!!}
@@ -107,11 +127,11 @@ module Thesis.Dissection.Core where
   data Zipper⇑ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) (t : μ R) : Set where
     _,_ : (z : UZipper R X alg) → PlugZ-μ⇑ R z t → Zipper⇑ R X alg t 
 
-  -- Zipper⇓-to-Zipper⇑ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇓ R X alg t → Zipper⇑ R X alg t
-  -- Zipper⇓-to-Zipper⇑ R X alg t ((l , s) , p) = (l , (reverse s)) , {!!}
+  Zipper⇓-to-Zipper⇑ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇓ R X alg t → Zipper⇑ R X alg t
+  Zipper⇓-to-Zipper⇑ R X alg t ((l , s) , p) = (l , (reverse s)) , {!!}
 
-  -- Zipper⇑-to-Zipper⇓ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇑ R X alg t → Zipper⇓ R X alg t
-  -- Zipper⇑-to-Zipper⇓ R X alg t ((l , s) , p) = (l , (reverse s)) , Plug-μ⇓-to-Plug-μ⇑ p
+  Zipper⇑-to-Zipper⇓ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇑ R X alg t → Zipper⇓ R X alg t
+  Zipper⇑-to-Zipper⇓ R X alg t ((l , s) , p) = (l , (reverse s)) , {!!}
 
   -- -- --  
   -- Plug-μ⇓-++ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → (t : μ R) → (hs : Stack R X alg) → (h : ∇ R (Computed R X alg) (μ R))
@@ -157,7 +177,7 @@ module Thesis.Dissection.Core where
   -- --           | refl | .(In (plug R h (plug-μ⇑ R t hs))) | refl
   -- --           = cong (In ∘ plug R h) (aux R t hs re)
 
-  -- From a Tree with Computed in the leaves, split it into a tree
+  -- From a Tree with `Computed` in the leaves, split it into a tree
   -- only holding values and another only holding subtrees.
   -- Also we need a proof that MapFold is retained.
   compute : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X}

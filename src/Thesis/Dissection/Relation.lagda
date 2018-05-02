@@ -2,6 +2,7 @@
 module Thesis.Dissection.Relation where
 
   open import Data.Product
+  open import Data.Sum
   open import Data.Unit    using (⊤; tt)
   open import Data.Empty   using (⊥; ⊥-elim)
   open import Relation.Binary.PropositionalEquality renaming ([_] to Is_)
@@ -28,6 +29,7 @@ module Thesis.Dissection.Relation where
   open import Thesis.Regular.Catamorphism
 
   open import Thesis.Dissection.Core
+  
   ----------------------------------------------------------------------------------------------
   --                               Relation over Indexed Top-Down Zippers
 
@@ -37,9 +39,11 @@ module Thesis.Dissection.Relation where
           →  IxLt⇓ R X alg t′     ((t₁ , s₁) , eq₁)               ((t₂ ,  s₂) ,  eq₂)
           →  IxLt⇓ R X alg (In t) ((t₁ , h ∷ s₁) , Plug-∷ eq₁ q₁) ((t₂ , h  ∷ s₂) , Plug-∷ eq₂ q₂)
              
-    Base  : ∀ {t} {h₁ h₂} {s₁ s₂} {t₁ t₂} {eq₁ eq₂ q₁ q₂}
-          → Dissection-IxLt (μ R) (Computed R X alg) Computed.Tree R t ((h₁ , plug-μ⇓ R (In (LeafToTree R X t₁)) s₁) ,  q₁)
-                                                                       ((h₂ , plug-μ⇓ R (In (LeafToTree R X t₂)) s₂) , q₂)
+    Base  : ∀ {t} {h₁ h₂} {s₁ s₂} {t₁ t₂} {e₁ e₂} {eq₁ eq₂ q₁ q₂}
+          → PlugZ-μ⇓ R (t₁ , s₁) e₁
+          → PlugZ-μ⇓ R (t₂ , s₂) e₂
+          → Dissection-IxLt (μ R) (Computed R X alg) Computed.Tree R t ((h₁ , e₁) , q₁)
+                                                                       ((h₂ , e₂) , q₂)
           → IxLt⇓ R X alg (In t) ((t₁ , h₁ ∷ s₁) , Plug-∷ eq₁ q₁) ((t₂ , h₂ ∷ s₂) , Plug-∷ eq₂ q₂)
 
 
@@ -70,8 +74,8 @@ module Thesis.Dissection.Relation where
     with Plug-proof-irrelevance q q₁
   acc-Base {q = q} x (acc rs) ac .((_ , _ ∷ _) , Plug-∷ _ q) (Step {q₁ = .q} p)
     | refl = acc (acc-Base x (rs _ p) ac)
-  acc-Base x (acc rs) (acc rs₁) .((_ , _ ∷ _) , Plug-∷ eq₁ q₁) (Base {eq₁ = eq₁} {q₁ = q₁} p)
-    =  acc (acc-Base x (x _ _ q₁ _) (rs₁ _ p))
+  acc-Base x (acc rs) (acc rs₁) .((_ , _ ∷ _) , Plug-∷ _ q₁) (Base {q₁ = q₁} p₁ p₂ r)
+    =  acc (acc-Base x (x _ _ q₁ _) (rs₁ _ r))
 
   
   IxLt⇓-WF : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Well-founded (IxLt⇓ R X alg t)
@@ -91,10 +95,11 @@ module Thesis.Dissection.Relation where
          = acc (acc-Base (all-to-plug {P = λ t → Well-founded (IxLt⇓ R X alg t)} (all-is-wf X R R alg _))
                          (all-to-plug {P = λ t → Well-founded (IxLt⇓ R X alg t)} (all-is-wf X R R alg _) _ _ q₂ (_ , eq₁))
                          (Dissection-IxLt-WF (μ R) (Computed R X alg) Computed.Tree R _ (_ , q₁)))
-       aux R X alg .(In _) .((_ , _ ∷ _) , Plug-∷ _ _) .((_ , _ ∷ _) , Plug-∷ eq₁ q₁) (Base {eq₁ = eq₁} {q₁ = q₁} p)
+       aux R X alg .(In _) .((_ , _ ∷ _) , Plug-∷ _ _) .((_ , _ ∷ _) , Plug-∷ eq₁ q₁) (Base {eq₁ = eq₁} {q₁ = q₁} p₁ p₂ r)
          = acc (acc-Base (all-to-plug {P = λ t → Well-founded (IxLt⇓ R X alg t)} (all-is-wf X R R alg _))
                          (all-to-plug {P = λ t₁ → Well-founded (IxLt⇓ R X alg t₁)} (all-is-wf X R R alg _) _ _ q₁ (_ , eq₁))
-                         (Dissection-IxLt-WF (μ R) (Computed R X alg) Computed.Tree R _ (_ , q₁)))
+                         ((Dissection-IxLt-WF (μ R) (Computed R X alg) Computed.Tree R _ (_ , q₁))))
+    
 
   -----------------------------------------------------------------------------------------------
   --                 Relation over Bottom-Up Zippers
@@ -118,10 +123,10 @@ module Thesis.Dissection.Relation where
           →  Lt R X alg (t₁ , s₁)     (t₂ ,  s₂)
           →  Lt R X alg (t₁ , h ∷ s₁) (t₂ , h  ∷ s₂)
              
-    Base  : ∀ {h₁ h₂} {s₁ s₂} {t₁ t₂}
-          → Dissection-Lt (μ R) (Computed R X alg) R
-                  (h₁ , plug-μ⇓ R (In (LeafToTree R X t₁)) s₁)
-                  (h₂ , plug-μ⇓ R (In (LeafToTree R X t₂)) s₂)
+    Base  : ∀ {h₁ h₂} {s₁ s₂} {t₁ t₂} {e₁ e₂}
+          → PlugZ-μ⇓ R (t₁ , s₁) e₁
+          → PlugZ-μ⇓ R (t₂ , s₂) e₂
+          → Dissection-Lt (μ R) (Computed R X alg) R (h₁ , e₁) (h₂ , e₂)
           → Lt R X alg (t₁ , h₁ ∷ s₁) (t₂ , h₂ ∷ s₂)
 
   -- convert from the un-indexed relation to the indexed once
@@ -132,7 +137,7 @@ module Thesis.Dissection.Relation where
   Lt-to-IxLt⇓ {t = In t} (Plug-∷ eq₁ x₁) (Plug-∷ eq₂ x₂) (Step p)
     with Plug-injective-on-2 x₁ x₂
   ... | refl = Step (Lt-to-IxLt⇓ eq₁ eq₂ p)
-  Lt-to-IxLt⇓ {t = In t} (Plug-∷ eq₁ x₁) (Plug-∷ eq₂ x₂) (Base x)
-    with Plug-μ⇓-to-plug-μ⇓ eq₁ | Plug-μ⇓-to-plug-μ⇓ eq₂
-  ... | refl | refl = Base (Dissection-Lt-to-IxLt x₁ x₂ x)
+  Lt-to-IxLt⇓ (Plug-∷ eq₁ q₁) (Plug-∷ eq₂ q₂) (Base p₁ p₂ r)
+    with Plug-μ⇓-unicity p₁ eq₁ | Plug-μ⇓-unicity p₂ eq₂
+  ... | refl | refl = Base p₁ p₂ (Dissection-Lt-to-IxLt q₁ q₂ r)
 

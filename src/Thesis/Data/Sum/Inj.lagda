@@ -13,4 +13,8 @@ module Thesis.Data.Sum.Inj where
 
   ⊎-injective₁ : ∀ {A B : Set} {x y : A} → (A ⊎ B ∋ inj₁ x) ≡ inj₁ y → x ≡ y
   ⊎-injective₁ refl = refl
+
+
+  ⊎-injective₂ : ∀ {A B : Set} {x y : B} → (A ⊎ B ∋ inj₂ x) ≡ inj₂ y → x ≡ y
+  ⊎-injective₂ refl = refl
 \end{code}

@@ -2,7 +2,9 @@
 module Thesis.Regular.Dissection where
 
   open import Data.Product
+  open import Thesis.Data.Product
   open import Data.Sum
+  open import Thesis.Data.Sum.Inj
   open import Data.Empty
   open import Data.Unit
   open import Relation.Binary.PropositionalEquality
@@ -41,14 +43,31 @@ module Thesis.Regular.Dissection where
     Plug-⨂-inj₁ : ∀ {R Q} {x} {dr} {q} {e}    → Plug ex R dr x e → Plug ex (R ⨂ Q) (inj₁ (dr , q)) x (e , q)
     Plug-⨂-inj₂ : ∀ {R Q} {x} {r r′} {dq} {e} → Fmap ex R r r′   → Plug ex Q dq x e →  Plug ex (R ⨂ Q) (inj₂ (r , dq)) x (r′ , e)
 
-  Plug-to-plug : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {x : X} {t : ⟦ R ⟧ X} →
-                 Plug ex R dr x t → t ≡ plug R ex dr x
-  Plug-to-plug Plug-I = refl
-  Plug-to-plug (Plug-⨁-inj₁ p) = cong inj₁ (Plug-to-plug p)
-  Plug-to-plug (Plug-⨁-inj₂ p) = cong inj₂ (Plug-to-plug p)
-  Plug-to-plug (Plug-⨂-inj₁ p) = cong (_, _) (Plug-to-plug p)
-  Plug-to-plug (Plug-⨂-inj₂ x₁ p) with Fmap-to-fmap x₁
-  ... | refl = cong (_,_ _) (Plug-to-plug p)
+  plug-to-Plug : ∀ {X Y : Set} {ex : Y → X} (R : Reg) (dr : ∇ R Y X) (x : X) → (o : ⟦ R ⟧ X)
+               → plug R ex dr x ≡ o → Plug ex R dr x o
+  plug-to-Plug 0′ () x o p
+  plug-to-Plug 1′ () x o p
+  plug-to-Plug I tt x .x refl     = Plug-I
+  plug-to-Plug (K A) () x o p
+  plug-to-Plug (R ⨁ Q) (inj₁ r) x (inj₁ r′) p = Plug-⨁-inj₁ (plug-to-Plug R r x r′ (⊎-injective₁ p))
+  plug-to-Plug (R ⨁ Q) (inj₁ r) x (inj₂ y) ()
+  plug-to-Plug (R ⨁ Q) (inj₂ q) x (inj₁ y) ()
+  plug-to-Plug (R ⨁ Q) (inj₂ q) x (inj₂ q′) p = Plug-⨁-inj₂ (plug-to-Plug Q q x q′ (⊎-injective₂ p))
+  plug-to-Plug (R ⨂ Q) (inj₁ (dr , q)) x (r′ , q′) p with ×-injective p
+  ... | eq , refl = Plug-⨂-inj₁ (plug-to-Plug R dr x r′ eq)
+  plug-to-Plug (R ⨂ Q) (inj₂ (r , dq)) x (r′ , dq′) p with ×-injective p
+  ... | fm , eq = Plug-⨂-inj₂ {!!} (plug-to-Plug Q dq x dq′ eq)
+  -- Plug-to-plug : -- ∀ {X Y : Set} {ex : Y → X} (R : Reg) (dr : ∇ R Y X) (x : X) (t : ⟦ R ⟧ X) → (o : ⟦ R ⟧ X)
+  --                Plug ex R dr x o → 
+  -- Plug-to-plug 0′ () x t
+  -- Plug-to-plug 1′ () x t
+  -- Plug-to-plug I tt x t = Plug-I
+  -- Plug-to-plug (K A) () x t
+  -- Plug-to-plug (R ⨁ Q) (inj₁ r) x (inj₁ r′) = Plug-⨁-inj₁ (Plug-to-plug R r x r′)
+  -- Plug-to-plug (R ⨁ Q) (inj₁ r) x (inj₂ r′) = {!!}
+  -- Plug-to-plug (R ⨁ Q) (inj₂ q) x t = {!!}
+  -- Plug-to-plug (R ⨂ Q) dr x t = {!!}
+
   -- Plug is proof-irrelevant
   proof-irrelevance : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {x : X} {r : ⟦ R ⟧ X}
                     → (a : Plug ex R dr x r) → (b : Plug ex R dr x r) → a ≡ b
@@ -59,12 +78,22 @@ module Thesis.Regular.Dissection where
   proof-irrelevance (Plug-⨂-inj₂ x₁ a) (Plug-⨂-inj₂ x₂ b) with Fmap-proof-irrelevance x₁ x₂
   proof-irrelevance (Plug-⨂-inj₂ x₁ a) (Plug-⨂-inj₂ .x₁ b) | refl = cong (Plug-⨂-inj₂ x₁) (proof-irrelevance a b)
 
+  Plug-unicity : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {x : X} {r₁ r₂ : ⟦ R ⟧ X}
+               → (a : Plug ex R dr x r₁) → (b : Plug ex R dr x r₂) → r₁ ≡ r₂
+  Plug-unicity Plug-I Plug-I = refl
+  Plug-unicity (Plug-⨁-inj₁ a) (Plug-⨁-inj₁ b) = cong inj₁ (Plug-unicity a b)
+  Plug-unicity (Plug-⨁-inj₂ a) (Plug-⨁-inj₂ b) = cong inj₂ (Plug-unicity a b)
+  Plug-unicity (Plug-⨂-inj₁ a) (Plug-⨂-inj₁ b) = cong (λ z → z , _) (Plug-unicity a b)
+  Plug-unicity (Plug-⨂-inj₂ x₁ a) (Plug-⨂-inj₂ x₂ b) with Fmap-unicity x₁ x₂
+  ... | refl = cong (λ x → _ , x) (Plug-unicity a b)
+  
   Plug-injective-on-2 : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {t : ⟦ R ⟧ X} {a b : X} → Plug ex R dr a t → Plug ex R dr b t → a ≡ b
   Plug-injective-on-2 Plug-I Plug-I = refl
   Plug-injective-on-2 (Plug-⨁-inj₁ p₁) (Plug-⨁-inj₁ p₂)      = Plug-injective-on-2 p₁ p₂
   Plug-injective-on-2 (Plug-⨁-inj₂ p₁) (Plug-⨁-inj₂ p₂)      = Plug-injective-on-2 p₁ p₂
   Plug-injective-on-2 (Plug-⨂-inj₁ p₁) (Plug-⨂-inj₁ p₂)      = Plug-injective-on-2 p₁ p₂
   Plug-injective-on-2 (Plug-⨂-inj₂ x p₁) (Plug-⨂-inj₂ x₁ p₂) = Plug-injective-on-2 p₁ p₂
+
   -- Core definitions
   Dissection : (R : Reg) → (X Y : Set) → Set
   Dissection R X Y = ∇ R Y X × X

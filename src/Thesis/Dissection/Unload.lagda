@@ -30,53 +30,52 @@ module Thesis.Dissection.Unload where
   ------------------------------------------------------------------------------
   --                          unload function
 
-  private
-    -- first-aux performs recursion on the functorial layer of the tree either
-    -- finding whether there are no more left holes to the right.
-    first : {X Y : Set} (R : Reg)
-              → ⟦ R ⟧ Y
-              → ⟦ R ⟧ X ⊎ (∇ R X Y × Y)
-    first 0′ ()
-    first 1′ tt   = inj₁ tt
-    first I x     = inj₂ (tt , x)
-    first (K A) x = inj₁ x
-    first {X} {Y} (R ⨁ Q) (inj₁ r) with first {X} {Y} R r
-    first (R ⨁ Q) (inj₁ r) | inj₁ x        = inj₁ (inj₁ x)
-    first (R ⨁ Q) (inj₁ r) | inj₂ (dr , y) = inj₂ (inj₁ dr , y) 
-    first {X} {Y} (R ⨁ Q) (inj₂ q) with first {X} {Y} Q q
-    first {X} {Y} (R ⨁ Q) (inj₂ q) | inj₁ x        = inj₁ (inj₂ x)
-    first {X} {Y} (R ⨁ Q) (inj₂ q) | inj₂ (dq , y) = inj₂ (inj₂ dq , y)
-    first {X} {Y} (R ⨂ Q) (r , q) with first {X} {Y} R r
-    first {X} {Y} (R ⨂ Q) (r , q) | inj₁ r′ with first {X} {Y} Q q
-    first {X} {Y} (R ⨂ Q) (r , q) | inj₁ r′ | inj₁ q′       = inj₁ (r′ , q′)
-    first {X} {Y} (R ⨂ Q) (r , q) | inj₁ r′ | inj₂ (dq , y) = inj₂ (inj₂ (r′ , dq) , y)
-    first {X} {Y} (R ⨂ Q) (r , q) | inj₂ (dr , y)           = inj₂ (inj₁ (dr , q) , y)
+  -- first-aux performs recursion on the functorial layer of the tree either
+  -- finding whether there are no more left holes to the right.
+  first : {X Y : Set} (R : Reg)
+            → ⟦ R ⟧ Y
+            → ⟦ R ⟧ X ⊎ (∇ R X Y × Y)
+  first 0′ ()
+  first 1′ tt   = inj₁ tt
+  first I x     = inj₂ (tt , x)
+  first (K A) x = inj₁ x
+  first {X} {Y} (R ⨁ Q) (inj₁ r) with first {X} {Y} R r
+  first (R ⨁ Q) (inj₁ r) | inj₁ x        = inj₁ (inj₁ x)
+  first (R ⨁ Q) (inj₁ r) | inj₂ (dr , y) = inj₂ (inj₁ dr , y) 
+  first {X} {Y} (R ⨁ Q) (inj₂ q) with first {X} {Y} Q q
+  first {X} {Y} (R ⨁ Q) (inj₂ q) | inj₁ x        = inj₁ (inj₂ x)
+  first {X} {Y} (R ⨁ Q) (inj₂ q) | inj₂ (dq , y) = inj₂ (inj₂ dq , y)
+  first {X} {Y} (R ⨂ Q) (r , q) with first {X} {Y} R r
+  first {X} {Y} (R ⨂ Q) (r , q) | inj₁ r′ with first {X} {Y} Q q
+  first {X} {Y} (R ⨂ Q) (r , q) | inj₁ r′ | inj₁ q′       = inj₁ (r′ , q′)
+  first {X} {Y} (R ⨂ Q) (r , q) | inj₁ r′ | inj₂ (dq , y) = inj₂ (inj₂ (r′ , dq) , y)
+  first {X} {Y} (R ⨂ Q) (r , q) | inj₂ (dr , y)           = inj₂ (inj₁ (dr , q) , y)
 
-    -- given a dissection and a tree to fill find either the next dissection
-    -- or if none left return the input
-    right : {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} 
-          → (∇ R (Computed Q X alg) (μ Q))
-          → (t : μ Q) → (y : X) → Catamorphism Q alg t y
-          → (⟦ R ⟧ (Computed Q X alg)) ⊎ (∇ R (Computed Q X alg) (μ Q) × μ Q )
-    right 0′ Q () t y eq
-    right 1′ Q () t y eq
-    right I  Q tt t y eq = inj₁ (t ,, y ,, eq)
-    right (K A) Q () t y eq
-    right (R ⨁ Q) P (inj₁ r) t y eq with right R P r t y eq
-    right (R ⨁ Q) P (inj₁ r) t y eq | inj₁ r′        = inj₁ (inj₁ r′)
-    right (R ⨁ Q) P (inj₁ r) t y eq | inj₂ (r′ , mq) = inj₂ (inj₁ r′ , mq)
-    right (R ⨁ Q) P (inj₂ q) t y eq with right Q P q t y eq
-    right (R ⨁ Q) P (inj₂ q) t y eq | inj₁ q′        = inj₁ (inj₂ q′)
-    right (R ⨁ Q) P (inj₂ q) t y eq | inj₂ (q′ , mq) = inj₂ (inj₂ q′ , mq)
-    right (R ⨂ Q) P (inj₁ (dr , q)) t y eq with right R P dr t y eq
-    right {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq | inj₁ r
-      with first {X = Computed P X alg } {Y = μ P}  Q q
-    right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₁ q′        = inj₁ (r , q′) 
-    right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₂ (dq , mq) = inj₂ ((inj₂ (r  , dq)) , mq)
-    right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₂ (dr′ , mq)         = inj₂ ((inj₁ (dr′ , q)) , mq)
-    right (R ⨂ Q) P (inj₂ (r , dq)) t y eq with right Q P dq t y eq
-    right (R ⨂ Q) P (inj₂ (r , dq)) t y eq | inj₁ x          = inj₁ (r , x)
-    right (R ⨂ Q) P (inj₂ (r , dq)) t y eq | inj₂ (dq′ , mq) = inj₂ ((inj₂ (r , dq′)) , mq)
+  -- given a dissection and a tree to fill find either the next dissection
+  -- or if none left return the input
+  right : {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} 
+        → (∇ R (Computed Q X alg) (μ Q))
+        → (t : μ Q) → (y : X) → Catamorphism Q alg t y
+        → (⟦ R ⟧ (Computed Q X alg)) ⊎ (∇ R (Computed Q X alg) (μ Q) × μ Q )
+  right 0′ Q () t y eq
+  right 1′ Q () t y eq
+  right I  Q tt t y eq = inj₁ (t ,, y ,, eq)
+  right (K A) Q () t y eq
+  right (R ⨁ Q) P (inj₁ r) t y eq with right R P r t y eq
+  right (R ⨁ Q) P (inj₁ r) t y eq | inj₁ r′        = inj₁ (inj₁ r′)
+  right (R ⨁ Q) P (inj₁ r) t y eq | inj₂ (r′ , mq) = inj₂ (inj₁ r′ , mq)
+  right (R ⨁ Q) P (inj₂ q) t y eq with right Q P q t y eq
+  right (R ⨁ Q) P (inj₂ q) t y eq | inj₁ q′        = inj₁ (inj₂ q′)
+  right (R ⨁ Q) P (inj₂ q) t y eq | inj₂ (q′ , mq) = inj₂ (inj₂ q′ , mq)
+  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq with right R P dr t y eq
+  right {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq | inj₁ r
+    with first {X = Computed P X alg } {Y = μ P}  Q q
+  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₁ q′        = inj₁ (r , q′) 
+  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₂ (dq , mq) = inj₂ ((inj₂ (r  , dq)) , mq)
+  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₂ (dr′ , mq)         = inj₂ ((inj₁ (dr′ , q)) , mq)
+  right (R ⨂ Q) P (inj₂ (r , dq)) t y eq with right Q P dq t y eq
+  right (R ⨂ Q) P (inj₂ (r , dq)) t y eq | inj₁ x          = inj₁ (r , x)
+  right (R ⨂ Q) P (inj₂ (r , dq)) t y eq | inj₂ (dq′ , mq) = inj₂ ((inj₂ (r , dq′)) , mq)
 
   -- unload function
   unload : {X : Set} (R : Reg)
