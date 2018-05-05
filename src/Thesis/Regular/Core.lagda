@@ -2,7 +2,9 @@
 module Thesis.Regular.Core where
 
   open import Data.Product
+  open import Thesis.Data.Product
   open import Data.Sum
+  open import Thesis.Data.Sum
   open import Data.Unit
   open import Data.Empty
   open import Relation.Binary.PropositionalEquality
@@ -53,14 +55,15 @@ module Thesis.Regular.Core where
   fmap-to-Fmap f 1′ tt tt eq = Fmap-1′
   fmap-to-Fmap f I x .(f x) refl  = Fmap-I
   fmap-to-Fmap f (K A) x .x refl  = Fmap-K
-  fmap-to-Fmap f (R ⨁ Q) (inj₁ r) (inj₁ x) eq = Fmap-⨁₁ (fmap-to-Fmap f R r x {!!})
+  fmap-to-Fmap f (R ⨁ Q) (inj₁ r) (inj₁ x) eq = Fmap-⨁₁ (fmap-to-Fmap f R r x (⊎-injective₁ eq))
   fmap-to-Fmap f (R ⨁ Q) (inj₁ r) (inj₂ y) ()
   fmap-to-Fmap f (R ⨁ Q) (inj₂ q) (inj₁ x) ()
-  fmap-to-Fmap f (R ⨁ Q) (inj₂ q) (inj₂ y) eq = {!!}
-  fmap-to-Fmap f (R ⨂ Q) x y eq = {!!}
+  fmap-to-Fmap f (R ⨁ Q) (inj₂ q) (inj₂ y) eq = Fmap-⨁₂ (fmap-to-Fmap f Q q y (⊎-injective₂ eq))
+  fmap-to-Fmap f (R ⨂ Q) (r , q) (r′ , q′) eq with ×-injective eq
+  ... | eq₁ , eq₂ = Fmap-⨂ (fmap-to-Fmap f R r r′ eq₁) (fmap-to-Fmap f Q q q′ eq₂)
   
   Fmap-to-fmap : ∀ {A B : Set} {f : A → B} {R : Reg} {x : ⟦ R ⟧ A} {y : ⟦ R ⟧ B}
-               → Fmap f R x y → y ≡ fmap R f x
+               → Fmap f R x y → fmap R f x ≡ y
   Fmap-to-fmap Fmap-1′ = refl
   Fmap-to-fmap Fmap-I  = refl
   Fmap-to-fmap Fmap-K  = refl

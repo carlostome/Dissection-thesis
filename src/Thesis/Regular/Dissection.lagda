@@ -56,18 +56,29 @@ module Thesis.Regular.Dissection where
   plug-to-Plug (R ⨂ Q) (inj₁ (dr , q)) x (r′ , q′) p with ×-injective p
   ... | eq , refl = Plug-⨂-inj₁ (plug-to-Plug R dr x r′ eq)
   plug-to-Plug (R ⨂ Q) (inj₂ (r , dq)) x (r′ , dq′) p with ×-injective p
-  ... | fm , eq = Plug-⨂-inj₂ {!!} (plug-to-Plug Q dq x dq′ eq)
-  -- Plug-to-plug : -- ∀ {X Y : Set} {ex : Y → X} (R : Reg) (dr : ∇ R Y X) (x : X) (t : ⟦ R ⟧ X) → (o : ⟦ R ⟧ X)
-  --                Plug ex R dr x o → 
-  -- Plug-to-plug 0′ () x t
-  -- Plug-to-plug 1′ () x t
-  -- Plug-to-plug I tt x t = Plug-I
-  -- Plug-to-plug (K A) () x t
-  -- Plug-to-plug (R ⨁ Q) (inj₁ r) x (inj₁ r′) = Plug-⨁-inj₁ (Plug-to-plug R r x r′)
-  -- Plug-to-plug (R ⨁ Q) (inj₁ r) x (inj₂ r′) = {!!}
-  -- Plug-to-plug (R ⨁ Q) (inj₂ q) x t = {!!}
-  -- Plug-to-plug (R ⨂ Q) dr x t = {!!}
+  ... | fm , eq = Plug-⨂-inj₂ (fmap-to-Fmap _ R r r′ (sym fm)) (plug-to-Plug Q dq x dq′ eq)
 
+  Plug-to-plug : ∀ {X Y : Set} {ex : Y → X} (R : Reg) (dr : ∇ R Y X) (x : X) → (o : ⟦ R ⟧ X)
+               → Plug ex R dr x o → plug R ex dr x ≡ o
+  Plug-to-plug 0′ () x o p
+  Plug-to-plug 1′ () x o p
+  Plug-to-plug I tt x .x Plug-I = refl
+  Plug-to-plug (K A) dr x o ()
+  Plug-to-plug (R ⨁ Q) (inj₁ dr) x .(inj₁ _) (Plug-⨁-inj₁ p) = cong inj₁ (Plug-to-plug R dr x _ p)
+  Plug-to-plug (R ⨁ Q) (inj₂ dq) x .(inj₂ _) (Plug-⨁-inj₂ p) = cong inj₂ (Plug-to-plug Q dq x _ p)
+  Plug-to-plug (R ⨂ Q) .(inj₁ (_ , _)) x (_ , _) (Plug-⨂-inj₁ p)    = cong (_, _) (Plug-to-plug R _ x _ p)
+  Plug-to-plug (R ⨂ Q) .(inj₂ (_ , _)) x (_ , _) (Plug-⨂-inj₂ fm p) = cong₂ _,_ (Fmap-to-fmap fm) (Plug-to-plug Q _ x _ p)
+  
+  Plug-plug-injective-on-2 : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {h : ∇ R Y X} {x y : X}
+                           →  Plug ex R h x (plug R ex h y) → x ≡ y
+  Plug-plug-injective-on-2 {R = 0′} ()
+  Plug-plug-injective-on-2 {R = 1′} ()
+  Plug-plug-injective-on-2 {R = I} Plug-I = refl
+  Plug-plug-injective-on-2 {R = K A} ()
+  Plug-plug-injective-on-2 {R = R ⨁ Q} {inj₁ x} (Plug-⨁-inj₁ p) = Plug-plug-injective-on-2 p
+  Plug-plug-injective-on-2 {R = R ⨁ Q} {inj₂ y} (Plug-⨁-inj₂ p) = Plug-plug-injective-on-2 p
+  Plug-plug-injective-on-2 {R = R ⨂ Q} {inj₁ (dr , q)} (Plug-⨂-inj₁ p)   = Plug-plug-injective-on-2 p
+  Plug-plug-injective-on-2 {R = R ⨂ Q} {inj₂ (r , dq)} (Plug-⨂-inj₂ _ p) = Plug-plug-injective-on-2 p
   -- Plug is proof-irrelevant
   proof-irrelevance : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {x : X} {r : ⟦ R ⟧ X}
                     → (a : Plug ex R dr x r) → (b : Plug ex R dr x r) → a ≡ b

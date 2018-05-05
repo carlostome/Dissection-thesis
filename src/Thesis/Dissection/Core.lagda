@@ -66,11 +66,6 @@ module Thesis.Dissection.Core where
             → Plug-μ⇓ R t hs e → Plug Computed.Tree R h e e′
             → Plug-μ⇓ R t (h ∷ hs) (In e′)
 
-  Plug-μ⇓-to-plug-μ⇓ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {t : μ R} {s : Stack R X alg}
-                     → Plug-μ⇓ R t s (plug-μ⇓ R t s)
-  Plug-μ⇓-to-plug-μ⇓ {s = []} = Plug-[]
-  Plug-μ⇓-to-plug-μ⇓ {s = x ∷ s} = {!!}
-  
   -- Plug-μ⇓-to-plug-μ⇓ {R = R} (Plug-∷ {h = h} eq e)
   --   with Plug-to-plug e
   -- ... | refl = cong (In ∘ plug R Computed.Tree h) (Plug-μ⇓-to-plug-μ⇓ eq)
@@ -95,6 +90,17 @@ module Thesis.Dissection.Core where
   PlugZ-μ⇑ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → UZipper R X alg → μ R →  Set
   PlugZ-μ⇑ R (l , s) t = Plug-μ⇑ R (In (LeafToTree _ _ l)) s t
 
+
+  plug-μ⇑-to-Plug-μ⇑ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (t : μ R) (s : Stack R X alg) (o : μ R)
+                     → plug-μ⇑ R t s ≡ o → Plug-μ⇑ R t s o
+  plug-μ⇑-to-Plug-μ⇑ R t [] .t refl  = Plug-[]
+  plug-μ⇑-to-Plug-μ⇑ R t (h ∷ s) o x = Plug-∷ (plug-to-Plug R h t (plug R Computed.Tree h t) refl) (plug-μ⇑-to-Plug-μ⇑ R (In (plug R Computed.Tree h t)) s o x)
+
+  Plug-μ⇑-to-plug-μ⇑ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (t : μ R) (s : Stack R X alg) (o : μ R)
+                     → Plug-μ⇑ R t s o → plug-μ⇑ R t s ≡ o 
+  Plug-μ⇑-to-plug-μ⇑ R t .[] .t Plug-[] = refl
+  Plug-μ⇑-to-plug-μ⇑ R t .(_ ∷ _) o (Plug-∷ pl plm) with Plug-to-plug R _ t _ pl
+  Plug-μ⇑-to-plug-μ⇑ R t .(_ ∷ _) o (Plug-∷ pl plm) | refl = Plug-μ⇑-to-plug-μ⇑ R _ _ o plm
   Plug-μ⇓-unicity : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {x : μ R} {s : Stack R X alg} {r₁ r₂ : μ R}
                   → Plug-μ⇓ R x s r₁ → Plug-μ⇓ R x s r₂ → r₁ ≡ r₂
   Plug-μ⇓-unicity Plug-[] Plug-[] = refl

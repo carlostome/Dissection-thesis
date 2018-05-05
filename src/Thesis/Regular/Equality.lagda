@@ -24,7 +24,8 @@ module Thesis.Regular.Equality where
 
   ----------------------------------------------------------------------------------------
   --                Heterogeneous equality is an equivalence relation
-  
+
+  -- equality is reflexive
   refl : ∀ {X : Set} {R : Reg} {x} → [ R ]-[ X ] x ≈[ X ] x
   refl {R = 0′} {()}
   refl {R = 1′} {tt} = ≈-1′
@@ -34,6 +35,7 @@ module Thesis.Regular.Equality where
   refl {R = R ⨁ Q} {inj₂ y} = ≈-⨁₂ refl
   refl {R = R ⨂ Q} {_ , _}  = ≈-⨂  refl refl
 
+  -- symmetric
   sym : ∀ {X Y : Set} {R : Reg} {x y} → [ R ]-[ X ] x ≈[ Y ] y → [ R ]-[ Y ] y ≈[ X ] x
   sym ≈-1′ = ≈-1′
   sym ≈-K  = ≈-K
@@ -42,6 +44,7 @@ module Thesis.Regular.Equality where
   sym (≈-⨁₂ eq)     = ≈-⨁₂ (sym eq)
   sym (≈-⨂ eq₁ eq₂) = ≈-⨂ (sym eq₁) (sym eq₂)
 
+  -- and transitive
   trans : ∀ {X Y Z : Set} {R : Reg} {x y z} → [ R ]-[ X ] x ≈[ Y ] y → [ R ]-[ Y ] y ≈[ Z ] z → [ R ]-[ X ] x ≈[ Z ] z
   trans ≈-1′ ≈-1′ = ≈-1′
   trans ≈-K ≈-K   = ≈-K
@@ -68,3 +71,4 @@ module Thesis.Regular.Equality where
   ≈-to-≡ (≈-⨁₁ x₁)   = cong inj₁ (≈-to-≡ x₁)
   ≈-to-≡ (≈-⨁₂ x₁)   = cong inj₂ (≈-to-≡ x₁)
   ≈-to-≡ (≈-⨂ x₁ x₂) = cong₂ _,_ (≈-to-≡ x₁) (≈-to-≡ x₂)
+\end{code}

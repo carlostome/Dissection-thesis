@@ -444,7 +444,8 @@ module Thesis.Dissection.Load where
                       → (l : Leaf Q X) → (hs hs′ : Stack Q X alg)
                       → Prop-Stack X R Q alg f
                       → first R Q r k f hs ≡ inj₁ (l , hs′)
-                      → Σ (Stack Q X alg) λ s → hs′ ≡ s ++ hs
+                      → Σ (Stack Q X alg)
+                        λ s → hs′ ≡ s ++ hs
     first-lemma-stack 0′ Q () k f l hs hs′ p ff
     first-lemma-stack 1′ Q tt k f l hs hs′ p ff   = p (tt , NonRec-1′) hs l hs′ ff 
     first-lemma-stack I Q (In r) k f l hs hs′ p ff  with first-lemma-stack Q Q r id (λ x → inj₁ ∘ (_,_ x)) l (k tt ∷ hs) hs′ Prop-Stack-Init ff
@@ -456,13 +457,10 @@ module Thesis.Dissection.Load where
       = first-lemma-stack R P r (k ∘ inj₁ ∘ (_, q)) (first-⨂-1 R Q P k f q) l hs hs′ (Prop-Stack-first-⨂-1 {_} {R} {Q} {P} {_} {k} {q} {f} p) ff
 
 
-  -- load-stack-lemma : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (t : μ R) (dr : ∇ R (Computed R X alg) (μ R)) (hs : Stack R X alg)
-  --                  → (l′ : Leaf R X)
-  --                  → (h′ : ∇ R (Computed R X alg) (μ R))
-  --                  → (hs′ : Stack R X alg)
-  --                  → load R t (dr ∷ hs) ≡ inj₁ (l′ , hs′)
-  --                  → Σ (Stack R X alg) λ s → hs′ ≡ s ++ (dr ∷ hs) -- × PlugZ-μ⇑ R (l′ , hs′) t    
-  -- load-stack-lemma R (In r) dr hs l′ h′ hs′ x = first-lemma-stack R R r id (λ x → inj₁ ∘ (_,_ x)) l′ (dr ∷ hs) hs′ Prop-Stack-Init x
+  lemma-plug : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (e₁ e₂ : μ R) → (s₁ s₂ : Stack R X alg)
+              → plug-μ⇑ R e₁ (s₁ ++ s₂) ≡ plug-μ⇑ R e₂ s₂ → plug-μ⇑ R e₁ s₁ ≡ e₂
+  lemma-plug R e₁ e₂ [] s₂ x = {!!}
+  lemma-plug R e₁ e₂ (x₁ ∷ s₁) s₂ x = lemma-plug R (In (plug R Computed.Tree x₁ e₁)) e₂ s₁ s₂ x
 
   -- shape of the stack after applying the load function
   load-stack-lemma : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (t : μ R) (dr : ∇ R (Computed R X alg) (μ R)) (hs : Stack R X alg)
@@ -470,5 +468,11 @@ module Thesis.Dissection.Load where
                    → (h′ : ∇ R (Computed R X alg) (μ R))
                    → (hs′ : Stack R X alg)
                    → load R t (dr ∷ hs) ≡ inj₁ (l′ , hs′)
-                   → Σ (Stack R X alg) λ s → hs′ ≡ s ++ (dr ∷ hs)
-  load-stack-lemma R (In r) dr hs l′ h′ hs′ x = first-lemma-stack R R r id (λ x → inj₁ ∘ (_,_ x)) l′ (dr ∷ hs) hs′ Prop-Stack-Init x
+                   → Σ (Stack R X alg) λ s
+                     → hs′ ≡ s ++ (dr ∷ hs) × PlugZ-μ⇑ R (l′ , s) t
+  load-stack-lemma {X} R {alg} (In r) dr hs l′ h′ hs′ x with first-lemma-stack R R r id (λ x → inj₁ ∘ (_,_ x)) l′ (dr ∷ hs) hs′ Prop-Stack-Init x
+  load-stack-lemma {X} R {alg} (In r) dr hs l′ h′ .(s ++ dr ∷ hs) x | s , refl
+    with load-preserves R (In r) (dr ∷ hs) (plug-μ⇑ R (In r) (dr ∷ hs)) (plug-μ⇑-to-Plug-μ⇑ R (In r) (dr ∷ hs) (plug-μ⇑ R (In r) (dr ∷ hs)) refl) (l′ , s ++ dr ∷ hs) x
+  ... | lp with Plug-μ⇑-to-plug-μ⇑ R _ _ _ lp
+  ... | p-to-P with lemma-plug R (In (coerce (proj₁ l′) (proj₂ l′))) (In r) s (dr ∷ hs) p-to-P
+  ... | zz = s , (refl , (plug-μ⇑-to-Plug-μ⇑ R _ s (In r) zz))

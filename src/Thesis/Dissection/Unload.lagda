@@ -30,11 +30,10 @@ module Thesis.Dissection.Unload where
   ------------------------------------------------------------------------------
   --                          unload function
 
-  -- first-aux performs recursion on the functorial layer of the tree either
-  -- finding whether there are no more left holes to the right.
+  -- `first` finds the leftmost hole and the value in it if it exists.
   first : {X Y : Set} (R : Reg)
-            → ⟦ R ⟧ Y
-            → ⟦ R ⟧ X ⊎ (∇ R X Y × Y)
+        → ⟦ R ⟧ X
+        → ⟦ R ⟧ Y ⊎ (∇ R Y X × X)
   first 0′ ()
   first 1′ tt   = inj₁ tt
   first I x     = inj₂ (tt , x)
@@ -51,31 +50,30 @@ module Thesis.Dissection.Unload where
   first {X} {Y} (R ⨂ Q) (r , q) | inj₁ r′ | inj₂ (dq , y) = inj₂ (inj₂ (r′ , dq) , y)
   first {X} {Y} (R ⨂ Q) (r , q) | inj₂ (dr , y)           = inj₂ (inj₁ (dr , q) , y)
 
-  -- given a dissection and a tree to fill find either the next dissection
-  -- or if none left return the input
-  right : {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} 
-        → (∇ R (Computed Q X alg) (μ Q))
-        → (t : μ Q) → (y : X) → Catamorphism Q alg t y
-        → (⟦ R ⟧ (Computed Q X alg)) ⊎ (∇ R (Computed Q X alg) (μ Q) × μ Q )
-  right 0′ Q () t y eq
-  right 1′ Q () t y eq
-  right I  Q tt t y eq = inj₁ (t ,, y ,, eq)
-  right (K A) Q () t y eq
-  right (R ⨁ Q) P (inj₁ r) t y eq with right R P r t y eq
-  right (R ⨁ Q) P (inj₁ r) t y eq | inj₁ r′        = inj₁ (inj₁ r′)
-  right (R ⨁ Q) P (inj₁ r) t y eq | inj₂ (r′ , mq) = inj₂ (inj₁ r′ , mq)
-  right (R ⨁ Q) P (inj₂ q) t y eq with right Q P q t y eq
-  right (R ⨁ Q) P (inj₂ q) t y eq | inj₁ q′        = inj₁ (inj₂ q′)
-  right (R ⨁ Q) P (inj₂ q) t y eq | inj₂ (q′ , mq) = inj₂ (inj₂ q′ , mq)
-  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq with right R P dr t y eq
-  right {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq | inj₁ r
-    with first {X = Computed P X alg } {Y = μ P}  Q q
-  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₁ q′        = inj₁ (r , q′) 
-  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₁ r | inj₂ (dq , mq) = inj₂ ((inj₂ (r  , dq)) , mq)
-  right (R ⨂ Q) P (inj₁ (dr , q)) t y eq | inj₂ (dr′ , mq)         = inj₂ ((inj₁ (dr′ , q)) , mq)
-  right (R ⨂ Q) P (inj₂ (r , dq)) t y eq with right Q P dq t y eq
-  right (R ⨂ Q) P (inj₂ (r , dq)) t y eq | inj₁ x          = inj₁ (r , x)
-  right (R ⨂ Q) P (inj₂ (r , dq)) t y eq | inj₂ (dq′ , mq) = inj₂ ((inj₂ (r , dq′)) , mq)
+  -- given a dissection and a value, try to find the next hole to the
+  -- right along with the value in it.
+  right : {X Y : Set} (R : Reg)
+         → ∇ R Y X
+         → Y
+         → (⟦ R ⟧ Y) ⊎ (∇ R Y X × X)
+  right 0′ () y
+  right 1′ () y
+  right I tt y     = inj₁ y
+  right (K A) () y
+  right (R ⨁ Q) (inj₁ dr) y with right R dr y
+  right (R ⨁ Q) (inj₁ dr) y | inj₁ r         = inj₁ (inj₁ r)
+  right (R ⨁ Q) (inj₁ dr) y | inj₂ (dr′ , x) = inj₂ (inj₁ dr′ , x)
+  right (R ⨁ Q) (inj₂ dq) y with right Q dq y
+  right (R ⨁ Q) (inj₂ dq) y | inj₁ q         = inj₁ (inj₂ q)
+  right (R ⨁ Q) (inj₂ dq) y | inj₂ (dq′ , x) = inj₂ (inj₂ dq′ , x)
+  right (R ⨂ Q) (inj₁ (dr , q)) y with right R dr y
+  right {Y = Y} (R ⨂ Q) (inj₁ (dr , q)) y | inj₁ r′ with first {Y = Y} Q q
+  right {Y = Y} (R ⨂ Q) (inj₁ (dr , q)) y | inj₁ r′ | inj₁ q′       = inj₁ (r′ , q′)
+  right {Y = Y} (R ⨂ Q) (inj₁ (dr , q)) y | inj₁ r′ | inj₂ (dq , x) = inj₂ (inj₂ (r′ , dq) , x)
+  right (R ⨂ Q) (inj₁ (dr , q)) y | inj₂ (dr′ , x) = inj₂ (inj₁ (dr′ , q) , x)
+  right (R ⨂ Q) (inj₂ (r , dq)) y with right Q dq y
+  right (R ⨂ Q) (inj₂ (r , dq)) y | inj₁ q′        = inj₁ (r , q′)
+  right (R ⨂ Q) (inj₂ (r , dq)) y | inj₂ (dq′ , x) = inj₂ (inj₂ (r , dq′) , x)
 
   -- unload function
   unload : {X : Set} (R : Reg)
@@ -84,7 +82,7 @@ module Thesis.Dissection.Unload where
          → List (∇ R (Computed R X alg) (μ R))
          → UZipper R X alg ⊎ X
   unload R alg t x eq []       = inj₂ x
-  unload R alg t x eq (h ∷ hs) with right R R h t x eq
+  unload R alg t x eq (h ∷ hs) with right R h (t ,, x  ,, eq)
   unload R alg t x eq (h ∷ hs) | inj₁ r with compute R R r
   ... | (rx , rp) , p                               = unload R alg (In rp) (alg rx) (Cata p) hs
   unload R alg t x eq (h ∷ hs) | inj₂ (dr , q)      = load R q (dr ∷ hs)
@@ -93,127 +91,135 @@ module Thesis.Dissection.Unload where
   ------------------------------------------------------------------------------
   --                 unload preserves the tree structure
 
-  private
-    first-Fmap : ∀ {X Y : Set} (R : Reg)
-                   → (r : ⟦ R ⟧ Y) → (r′ : ⟦ R ⟧ X)
-                   → (ex : X → Y) → first R r ≡ inj₁ r′ → Fmap ex R r′ r 
-    first-Fmap 0′ () r′ ex eq
-    first-Fmap 1′ tt tt ex eq = Fmap-1′
-    first-Fmap I r r′ ex ()
-    first-Fmap (K A) r .r ex refl = Fmap-K
-    first-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) r′ ex eq
-      with first {X} R r | inspect (first {X} R) r
-    first-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) .(inj₁ x) ex refl
-      | inj₁ x | Is is = Fmap-⨁₁ (first-Fmap R r x ex is)
-    first-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) r′ ex () | inj₂ y | Is is
-    first-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) r′ ex eq
-      with first {X} Q q | inspect (first {X} Q) q
-    first-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) .(inj₂ x) ex refl
-      | inj₁ x | Is is = Fmap-⨁₂ (first-Fmap Q q x ex is)
-    first-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) r′ ex () | inj₂ y | Is is
-    first-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex x
-      with first {X} R r | inspect (first {X} R) r 
-    first-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex x | inj₁ x₁ | Is is
-      with first {X} Q q | inspect (first {X} Q) q
-    first-Fmap {X} {Y} (R ⨂ Q) (r , q) .(r′ , q′) ex refl
-      | inj₁ r′ | Is is | inj₁ q′ | Is is′ = Fmap-⨂ (first-Fmap R r r′ ex is) (first-Fmap Q q q′ ex is′)
-    first-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex () | inj₁ x₁ | Is is | inj₂ y | Is is′
-    first-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex () | inj₂ y | Is is
+  -- when `first` doesn't find a hole then the input is
+  -- heterogeneously equal to the output
+  first-≈ : {X Y : Set} (R : Reg)
+          → (i : ⟦ R ⟧ X)
+          → (o : ⟦ R ⟧ Y)
+          → first R i ≡ inj₁ o → [ R ]-[ X ] i ≈[ Y ] o
+  first-≈ 0′ () o x
+  first-≈ 1′ tt .tt refl = ≈-1′
+  first-≈ I i o ()
+  first-≈ (K A) i .i refl = ≈-K
+  first-≈ {X} {Y} (R ⨁ Q) (inj₁ r) o x with first {X} {Y} R r | inspect (first {X} {Y} R) r
+  first-≈ {X} {Y} (R ⨁ Q) (inj₁ r) .(inj₁ o′) refl | inj₁ o′ | Is is = ≈-⨁₁ (first-≈ R r o′ is)
+  first-≈ {X} {Y} (R ⨁ Q) (inj₁ r) o ()            | inj₂ o′ | Is is
+  first-≈ {X} {Y} (R ⨁ Q) (inj₂ q) o x with first {X} {Y} Q q | inspect (first {X} {Y} Q) q
+  first-≈ {X} {Y} (R ⨁ Q) (inj₂ q) .(inj₂ o′) refl | inj₁ o′ | Is is = ≈-⨁₂ (first-≈ Q q o′ is)
+  first-≈ {X} {Y} (R ⨁ Q) (inj₂ q) o () | inj₂ o′ | Is is
+  first-≈ {X} {Y} (R ⨂ Q) (r , q) o x with first {X} {Y} R r | inspect (first {X} {Y} R) r
+  first-≈ {X} {Y} (R ⨂ Q) (r , q) o x | inj₁ r′ | Is is with first {X} {Y} Q q | inspect (first {X} {Y} Q) q
+  first-≈ {X} {Y} (R ⨂ Q) (r , q) .(r′ , q′) refl | inj₁ r′ | Is is | inj₁ q′ | Is is′ = ≈-⨂ (first-≈ R r r′ is) (first-≈ Q q q′ is′)
+  first-≈ {X} {Y} (R ⨂ Q) (r , q) o () | inj₁ o′ | Is is | inj₂ y | Is is′
+  first-≈ {X} {Y} (R ⨂ Q) (r , q) o () | inj₂ y | Is is
 
-    first-Plug : ∀ {X Y : Set} (R : Reg)
-                   → (r : ⟦ R ⟧ Y) → (dr : ∇ R X Y)
-                   → (y : Y) → (ex : X → Y) → first R r ≡ inj₂ (dr , y) → Plug ex R dr y r
-    first-Plug 0′ () dr y ex eq
-    first-Plug 1′ r () y ex eq
-    first-Plug I r tt .r ex refl = Plug-I
-    first-Plug (K A) r () y ex eq
-    first-Plug {X} (R ⨁ Q) (inj₁ r) dr y ex eq with first {X} R r | inspect (first {X} R) r
-    first-Plug {X} (R ⨁ Q) (inj₁ r) dr y ex () | inj₁ x | Is is
-    first-Plug {X} (R ⨁ Q) (inj₁ r) .(inj₁ dr′) .y′ ex refl
-      | inj₂ (dr′ , y′) | Is is
-      = Plug-⨁-inj₁ (first-Plug R r dr′ y′ ex is)
-    first-Plug {X} (R ⨁ Q) (inj₂ q) dr y ex eq with first {X} Q q | inspect (first {X} Q) q
-    first-Plug {X} (R ⨁ Q) (inj₂ q) dr y ex () | inj₁ x | Is is
-    first-Plug {X} (R ⨁ Q) (inj₂ q) .(inj₂ dq) .y′ ex refl
-      | inj₂ (dq , y′) | Is is
-      = Plug-⨁-inj₂ (first-Plug Q q dq y′ ex is)
-    first-Plug {X} (R ⨂ Q) (r , q) dr y ex eq with first {X} R r | inspect (first {X} R) r
-    first-Plug {X} (R ⨂ Q) (r , q) dr y ex eq
-      | inj₁ r′ | Is is with first {X} Q q | inspect (first {X} Q) q
-    first-Plug {X} (R ⨂ Q) (r , q) dr y ex () | inj₁ r′ | Is is | inj₁ x | Is is′
-    first-Plug {X} (R ⨂ Q) (r , q) .(inj₂ (r′ , dq′)) .y′ ex refl
-      | inj₁ r′ | Is is | inj₂ (dq′ , y′) | Is is′
-      = Plug-⨂-inj₂ (first-Fmap R r r′ ex is) (first-Plug Q q dq′ y′ ex is′)
-    first-Plug {X} (R ⨂ Q) (r , q) .(inj₁ (dr′ , q)) .q′ ex refl
-      | inj₂ (dr′ , q′) | Is is
-      = Plug-⨂-inj₁ (first-Plug R r dr′ q′ ex is)
+  first-Fmap : ∀ {X Y : Set} (R : Reg)
+               → (r : ⟦ R ⟧ X) → (r′ : ⟦ R ⟧ Y)
+               → (ex : Y → X) → first R r ≡ inj₁ r′ → Fmap ex R r′ r 
+  first-Fmap 0′ () r′ ex eq
+  first-Fmap 1′ tt tt ex eq = Fmap-1′
+  first-Fmap I r r′ ex ()
+  first-Fmap (K A) r .r ex refl = Fmap-K
+  first-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) r′ ex eq
+    with first {X} {Y} R r | inspect (first {X} {Y} R) r
+  first-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) .(inj₁ x) ex refl
+    | inj₁ x | Is is = Fmap-⨁₁ (first-Fmap R r x ex is)
+  first-Fmap {X} {Y} (R ⨁ Q) (inj₁ r) r′ ex () | inj₂ y | Is is
+  first-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) r′ ex eq
+    with first {X} {Y} Q q | inspect (first {X} {Y} Q) q
+  first-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) .(inj₂ x) ex refl
+    | inj₁ x | Is is = Fmap-⨁₂ (first-Fmap Q q x ex is)
+  first-Fmap {X} {Y} (R ⨁ Q) (inj₂ q) r′ ex () | inj₂ y | Is is
+  first-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex x
+    with first {X} {Y} R r | inspect (first {X} {Y} R) r 
+  first-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex x | inj₁ x₁ | Is is
+    with first {X} {Y} Q q | inspect (first {X} {Y} Q) q
+  first-Fmap {X} {Y} (R ⨂ Q) (r , q) .(r′ , q′) ex refl
+    | inj₁ r′ | Is is | inj₁ q′ | Is is′ = Fmap-⨂ (first-Fmap R r r′ ex is) (first-Fmap Q q q′ ex is′)
+  first-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex () | inj₁ x₁ | Is is | inj₂ y | Is is′
+  first-Fmap {X} {Y} (R ⨂ Q) (r , q) r′ ex () | inj₂ y | Is is
 
-    right-Fmap : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} (dr : ∇ R (Computed Q X alg) (μ Q))
-               → (t : μ Q) → (y : X) → (eq : Catamorphism Q alg t y)
-               → (r : ⟦ R ⟧ (Computed Q X alg))
-               → right R Q dr t y eq ≡ inj₁ r
-               → ∀ e → Plug Computed.Tree R dr t e → Fmap Computed.Tree R r e
-    right-Fmap 0′ Q () t y eq r right= e p
-    right-Fmap 1′ Q () t y eq r right= e p
-    right-Fmap I Q .tt t y eq (.t ,, .y ,, .eq) refl .t Plug-I = Fmap-I
-    right-Fmap (K A) Q () t y eq r right= e p
-    right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq r x .(inj₁ _) (Plug-⨁-inj₁ p)
-      with right R P x₁ t y eq | inspect (right R P x₁ t y) eq
-    right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq .(inj₁ r′) refl .(inj₁ _) (Plug-⨁-inj₁ p)
-      | inj₁ r′ | Is is = Fmap-⨁₁ (right-Fmap R P x₁ t y eq r′ is _ p)
-    right-Fmap (R ⨁ Q) P (inj₁ x₁) t y eq r () .(inj₁ _) (Plug-⨁-inj₁ p) | inj₂ _ | Is is
-    right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq r x .(inj₂ _) (Plug-⨁-inj₂ p)
-      with right Q P y₁ t y eq | inspect (right Q P y₁ t y) eq
-    right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq .(inj₂ x₁) refl .(inj₂ _) (Plug-⨁-inj₂ p) | inj₁ x₁ | Is is
-      = Fmap-⨁₂ (right-Fmap Q P y₁ t y eq x₁ is _ p)
-    right-Fmap (R ⨁ Q) P (inj₂ y₁) t y eq r () .(inj₂ _) (Plug-⨁-inj₂ p) | inj₂ y₂ | Is is
-    right-Fmap (R ⨂ Q) P (inj₁ (dr , q)) t y eq r′ x (_ , _) (Plug-⨂-inj₁ p)
-      with right R P dr t y eq | inspect (right R P dr t y) eq
-    right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq r′ x (r′′ , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is
-      with first {X = Computed P X alg} {Y = μ P} Q q | inspect (first {X = Computed P X alg} {Y = μ P} Q) q
-    right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq .(r′ , q′) refl (r′′ , _) (Plug-⨂-inj₁ p)
-      | inj₁ r′ | Is is | inj₁ q′ | Is is′ =  Fmap-⨂  (right-Fmap R P dr t y eq r′ is r′′ p) (first-Fmap Q q q′ Computed.Tree is′)
-    right-Fmap {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq r′ () (r′′ , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is | inj₂ y₁ | Is is′
-    right-Fmap (R ⨂ Q) P (inj₁ (dr , q)) t y eq r′ () (_ , _) (Plug-⨂-inj₁ p) | inj₂ y₁ | Is is
-    right-Fmap (R ⨂ Q) P (inj₂ (r  , dq)) t y eq r′ x e p with right Q P dq t y eq | inspect (right Q P dq t y) eq
-    right-Fmap (R ⨂ Q) P (inj₂ (r , dq)) t y eq .(r , x₁) refl (_ , _) (Plug-⨂-inj₂ x p)
-      | inj₁ x₁ | Is is
-      = Fmap-⨂ x (right-Fmap Q P dq t y eq x₁ is _ p)
-    right-Fmap (R ⨂ Q) P (inj₂ (r , dq)) t y eq r′ () e p | inj₂ y₁ | Is is
+  first-Plug : ∀ {X Y : Set} (R : Reg)
+             → (r : ⟦ R ⟧ X) → (dr : ∇ R Y X)
+             → (y : X) → (ex : Y → X) → first R r ≡ inj₂ (dr , y) → Plug ex R dr y r
+  first-Plug 0′ () dr y ex eq
+  first-Plug 1′ r () y ex eq
+  first-Plug I r tt .r ex refl = Plug-I
+  first-Plug (K A) r () y ex eq
+  first-Plug {Y = Y} (R ⨁ Q) (inj₁ r) dr y ex eq with first {Y = Y} R r | inspect (first {Y = Y} R) r
+  first-Plug {Y = Y} (R ⨁ Q) (inj₁ r) dr y ex () | inj₁ x | Is is
+  first-Plug {Y = Y} (R ⨁ Q) (inj₁ r) .(inj₁ dr′) .y′ ex refl
+    | inj₂ (dr′ , y′) | Is is
+    = Plug-⨁-inj₁ (first-Plug R r dr′ y′ ex is)
+  first-Plug {Y = Y} (R ⨁ Q) (inj₂ q) dr y ex eq with first {Y = Y} Q q | inspect (first {Y = Y} Q) q
+  first-Plug {Y = Y} (R ⨁ Q) (inj₂ q) dr y ex () | inj₁ x | Is is
+  first-Plug {Y = Y} (R ⨁ Q) (inj₂ q) .(inj₂ dq) .y′ ex refl
+    | inj₂ (dq , y′) | Is is
+    = Plug-⨁-inj₂ (first-Plug Q q dq y′ ex is)
+  first-Plug {Y = Y} (R ⨂ Q) (r , q) dr y ex eq with first {Y = Y} R r | inspect (first {Y = Y} R) r
+  first-Plug {Y = Y} (R ⨂ Q) (r , q) dr y ex eq
+    | inj₁ r′ | Is is with first {Y = Y} Q q | inspect (first {Y = Y} Q) q
+  first-Plug {Y = Y} (R ⨂ Q) (r , q) dr y ex () | inj₁ r′ | Is is | inj₁ x | Is is′
+  first-Plug {Y = Y} (R ⨂ Q) (r , q) .(inj₂ (r′ , dq′)) .y′ ex refl
+    | inj₁ r′ | Is is | inj₂ (dq′ , y′) | Is is′
+    = Plug-⨂-inj₂ (first-Fmap R r r′ ex is) (first-Plug Q q dq′ y′ ex is′)
+  first-Plug {X} (R ⨂ Q) (r , q) .(inj₁ (dr′ , q)) .q′ ex refl
+    | inj₂ (dr′ , q′) | Is is
+    = Plug-⨂-inj₁ (first-Plug R r dr′ q′ ex is)
 
-    right-Plug : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} (dr : ∇ R (Computed Q X alg) (μ Q))
-               → (t : μ Q) → (y : X) → (eq : Catamorphism Q alg t y)
-               → (dr′ : ∇ R (Computed Q X alg) (μ Q)) → (mq : μ Q) → right R Q dr t y eq ≡ inj₂ (dr′ , mq)
-               → ∀ e → Plug Computed.Tree R dr t e → Plug Computed.Tree R dr′ mq e 
-    right-Plug 0′ Q dr t y eq dr′ mq x () p
-    right-Plug 1′ Q dr t y eq () mq x e p
-    right-Plug I Q dr t y eq dr′ mq () e p
-    right-Plug (K A) Q dr t y eq () mq x e p
-    right-Plug (R ⨁ Q) P (inj₁ x) t y eq x′ mq r-eq .(inj₁ e) (Plug-⨁-inj₁ {e = e} p)
-      with right R P x t y eq | inspect (right R P x t y) eq
-    right-Plug (R ⨁ Q) P (inj₁ x) t y eq x′ mq () .(inj₁ e) (Plug-⨁-inj₁ {e = e} p) | inj₁ _ | _
-    right-Plug (R ⨁ Q) P (inj₁ x) t y eq .(inj₁ dr′) .mq′ refl .(inj₁ e) (Plug-⨁-inj₁ {e = e} p) | inj₂ (dr′ , mq′) | Is is
-      = Plug-⨁-inj₁ ((right-Plug R P x t y eq dr′ mq′ is e p))
-    right-Plug (R ⨁ Q) P (inj₂ x) t y eq x′ mq r-eq .(inj₂ e) (Plug-⨁-inj₂ {e = e} p)
-      with right Q P x t y eq | inspect (right Q P x t y) eq
-    right-Plug (R ⨁ Q) P (inj₂ x) t y eq x′ mq () .(inj₂ e) (Plug-⨁-inj₂ {e = e} p) | inj₁ _ | _
-    right-Plug (R ⨁ Q) P (inj₂ x) t y eq .(inj₂ dr′) .mq′ refl .(inj₂ e) (Plug-⨁-inj₂ {e = e} p) | inj₂ (dr′ , mq′) | Is is
-      = Plug-⨁-inj₂ ((right-Plug Q P x t y eq dr′ mq′ is e p))
-    right-Plug (R ⨂ Q) P (inj₁ (dr , q)) t y eq dr′ mq x e p
-      with right R P dr t y eq | inspect (right R P dr t y) eq
-    right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq dr′ mq x (e , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is
-      with first {X = Computed P X alg} {Y = μ P} Q q | inspect (first {X = Computed P X alg} {Y = μ P} Q) q
-    right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq dr′ mq () (e , _) (Plug-⨂-inj₁ p) | inj₁ r | Is is | inj₁ _ | _
-    right-Plug {X} (R ⨂ Q) P {alg} (inj₁ (dr , q)) t y eq .(inj₂ (r , dq)) .mq′ refl (e , _) (Plug-⨂-inj₁ p)
-      | inj₁ r | Is is | inj₂ (dq , mq′) | Is is′
-      = Plug-⨂-inj₂  (right-Fmap R P dr t y eq r is e p) (first-Plug Q q dq mq′ Computed.Tree is′)
-    right-Plug (R ⨂ Q) P (inj₁ (dr , q)) t y eq .(inj₁ (dr′ , q)) .mq′′ refl (dr′′ , .q) (Plug-⨂-inj₁ p) | inj₂ (dr′ , mq′′) | Is is
-      = Plug-⨂-inj₁ (right-Plug R P dr t y eq dr′ mq′′ is  dr′′ p)
-    right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq dr′ mq x (_ , _) (Plug-⨂-inj₂ p fm)
-      with right Q P dq t y eq | inspect (right Q P dq t y) eq
-    right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq dr′ mq () (_ , _) (Plug-⨂-inj₂ p fm) | inj₁ _ | Is _
-    right-Plug (R ⨂ Q) P (inj₂ (r , dq)) t y eq .(inj₂ (r , dq′)) .mq′ refl (_ , _) (Plug-⨂-inj₂ fm p) | inj₂ (dq′ , mq′) | Is is
-      = Plug-⨂-inj₂  fm (right-Plug Q P dq t y eq dq′ mq′ is _ p)
+  right-Fmap : ∀ {X Y : Set} {ex : Y → X} (R : Reg) (dr : ∇ R Y X)
+             → (y : Y)
+             → (r : ⟦ R ⟧ Y)
+             → right R dr y ≡ inj₁ r
+             → ∀ e → Plug ex R dr (ex y) e → Fmap ex R r e
+  right-Fmap 0′ () y r req e p
+  right-Fmap 1′ () y r req e p
+  right-Fmap {ex = ex} I tt y .y refl .(ex y) Plug-I = Fmap-I
+  right-Fmap (K A) () y r req e p
+  right-Fmap (R ⨁ Q) (inj₁ dr) y r req .(inj₁ _) (Plug-⨁-inj₁ p) with right R dr y | inspect (right R dr) y
+  right-Fmap (R ⨁ Q) (inj₁ dr) y .(inj₁ x) refl .(inj₁ _) (Plug-⨁-inj₁ p) | inj₁ x | Is is = Fmap-⨁₁ (right-Fmap R dr y x is _ p)
+  right-Fmap (R ⨁ Q) (inj₁ dr) y r () .(inj₁ _) (Plug-⨁-inj₁ p) | inj₂ y₁ | Is is
+  right-Fmap (R ⨁ Q) (inj₂ dq) y r req e p with right Q dq y | inspect (right Q dq) y
+  right-Fmap (R ⨁ Q) (inj₂ dq) y .(inj₂ x) refl .(inj₂ _) (Plug-⨁-inj₂ p) | inj₁ x | Is is = Fmap-⨁₂ (right-Fmap Q dq y x is _ p)
+  right-Fmap (R ⨁ Q) (inj₂ dq) y r () .(inj₂ _) (Plug-⨁-inj₂ p) | inj₂ y₁ | Is is
+  right-Fmap (R ⨂ Q) (inj₁ (dr , q)) y x req (_ , _) (Plug-⨂-inj₁ p) with right R dr y | inspect (right R dr) y
+  right-Fmap {Y = Y} (R ⨂ Q) (inj₁ (dr , q)) y x req (_ , _) (Plug-⨂-inj₁ p) | inj₁ x₁ | Is is with first {Y = Y} Q q | inspect (first {Y = Y} Q) q
+  right-Fmap {Y = Y} (R ⨂ Q) (inj₁ (dr , q)) y .(r′ , q′) refl (_ , _) (Plug-⨂-inj₁ p) | inj₁ r′ | Is is | inj₁ q′ | Is is′
+    = Fmap-⨂ (right-Fmap R dr y r′ is _ p) (first-Fmap Q q q′ _ is′)
+  right-Fmap {Y = Y} (R ⨂ Q) (inj₁ (dr , q)) y x () (_ , _) (Plug-⨂-inj₁ p) | inj₁ x₁ | Is is | inj₂ y₁ | Is is′
+  right-Fmap (R ⨂ Q) (inj₁ (dr , q)) y x () (_ , _) (Plug-⨂-inj₁ p) | inj₂ y₁ | Is is
+  right-Fmap (R ⨂ Q) (inj₂ (r , dq)) y x req e p with right Q dq y | inspect (right Q dq) y
+  right-Fmap (R ⨂ Q) (inj₂ (r , dq)) y .(r , q) refl (_ , _) (Plug-⨂-inj₂ fm p) | inj₁ q | Is is = Fmap-⨂ fm (right-Fmap Q dq y q is _ p)
+  right-Fmap (R ⨂ Q) (inj₂ (r , dq)) y x () e p | inj₂ y₁ | Is is
+  
+  right-Plug : ∀ {X Y : Set} {ex : Y → X} (R : Reg) (dr : ∇ R Y X)
+             → (y : Y)
+             → (dr′ : ∇ R Y X) → (x : X) → right R dr y ≡ inj₂ (dr′ , x)
+             → ∀ e → Plug ex R dr (ex y) e → Plug ex R dr′ x e 
+  right-Plug 0′ () y dr′ x req e p
+  right-Plug 1′ () y dr′ x req e p
+  right-Plug I tt y dr′ x () e p
+  right-Plug (K A) () y dr′ x req e p
+  right-Plug (R ⨁ Q) (inj₁ dr) y dr′ x req e p with right R dr y | inspect (right R dr) y
+  right-Plug (R ⨁ Q) (inj₁ dr) y dr′ x () e p | inj₁ r | Is is
+  right-Plug (R ⨁ Q) (inj₁ dr) y .(inj₁ dr′) .x′ refl .(inj₁ _) (Plug-⨁-inj₁ p) | inj₂ (dr′ , x′) | Is is
+    = Plug-⨁-inj₁ (right-Plug R dr y dr′ x′ is _ p) 
+  right-Plug (R ⨁ Q) (inj₂ dq) y dr′ x req e p with right Q dq y | inspect (right Q dq) y
+  right-Plug (R ⨁ Q) (inj₂ dq) y dr′ x () e p | inj₁ r | Is is
+  right-Plug (R ⨁ Q) (inj₂ dq) y .(inj₂ dq′) .x′ refl .(inj₂ _) (Plug-⨁-inj₂ p) | inj₂ (dq′ , x′) | Is is
+    = Plug-⨁-inj₂ (right-Plug Q dq y dq′ x′ is _ p)
+  right-Plug (R ⨂ Q) (inj₁ (dr , q)) y dr′ x req e p with right R dr y | inspect (right R dr) y
+  right-Plug {Y = Y} (R ⨂ Q) (inj₁ (dr , q)) y dr′ x req e p | inj₁ r′ | Is is
+    with first {Y = Y} Q q | inspect (first {Y = Y} Q) q
+  right-Plug {Y = Y} (R ⨂ Q) (inj₁ (dr , q)) y dr′ x () e p | inj₁ r′ | Is is | inj₁ q′ | Is is′
+  right-Plug {Y = Y} {ex} (R ⨂ Q) (inj₁ (dr , q)) y .(inj₂ (r′ , dq)) .x′ refl (_ , _) (Plug-⨂-inj₁ p) | inj₁ r′ | Is is | inj₂ (dq , x′) | Is is′
+    = Plug-⨂-inj₂ (right-Fmap R dr y r′ is _ p) (first-Plug Q q dq x′ ex is′ )
+  right-Plug (R ⨂ Q) (inj₁ (dr , q)) y .(inj₁ (dr′′ , q)) .x′ refl (_ , _) (Plug-⨂-inj₁ p) | inj₂ (dr′′ , x′) | Is is
+    = Plug-⨂-inj₁ (right-Plug R dr y dr′′ x′ is _ p)
+  right-Plug (R ⨂ Q) (inj₂ (r , dq)) y dr′ x req (_ , _) (Plug-⨂-inj₂ x₁ p) with right Q dq y | inspect (right Q dq) y
+  right-Plug (R ⨂ Q) (inj₂ (r , dq)) y dr′ x () (_ , _) (Plug-⨂-inj₂ x₁ p) | inj₁ x₂ | Is is
+  right-Plug (R ⨂ Q) (inj₂ (r , dq)) y .(inj₂ (r , dq′)) .x′ refl (_ , _) (Plug-⨂-inj₂ x₁ p) | inj₂ (dq′ , x′) | Is is
+    = Plug-⨂-inj₂ x₁ (right-Plug Q dq y dq′ x′ is _ p)
 
   -- unload preserves the structure of the tree
   unload-preserves : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X}
@@ -221,14 +227,14 @@ module Thesis.Dissection.Unload where
                    → (z : UZipper R X alg)
                    → ∀ (e : μ R) → Plug-μ⇑ R t s e → unload R alg t x eq s ≡ inj₁ z → PlugZ-μ⇑ R z e
   unload-preserves R t x eq [] z e pl ()
-  unload-preserves R t x eq (h ∷ hs) z e pl unl with right R R h t x eq | inspect (right R R h t x) eq
+  unload-preserves R t x eq (h ∷ hs) z e pl unl with right R h (t ,, x ,, eq) | inspect (right R h) (t ,, x ,, eq)
   unload-preserves R t x eq (h ∷ hs) z e pl unl | inj₁ r | Is is
     with compute R R r | inspect (compute R R) r
   unload-preserves R {alg} t x eq (h ∷ hs) z e (Plug-∷ p pl) unl | inj₁ r | Is is | (rx , rp) , pr | Is is′
-    with right-Fmap R R h t x eq r is _ p | compute-Fmap R R r rx rp pr is′
+    with right-Fmap R h (t ,, x ,, eq) r is _ p | compute-Fmap R R r rx rp pr is′
   ... | fm | (fm′ , _) with Fmap-unicity fm fm′
   unload-preserves R {alg} t x eq (h ∷ hs) z e (Plug-∷ p pl) unl
     | inj₁ r | Is is | (rx , rp) , pr | Is is′ | fm | fm′ , _ | refl = unload-preserves R (In rp) (alg rx) (Cata pr) hs z e pl unl
   unload-preserves R t x eq (h ∷ hs) z e (Plug-∷ p pl) unl | inj₂ (dr , q) | Is is
-    = load-preserves R q (dr ∷ hs) e (Plug-∷ (right-Plug R R h t x eq dr q is _ p) pl) z unl
-  
+    = load-preserves R q (dr ∷ hs) e (Plug-∷ (right-Plug R h (t ,, x ,, eq) dr q is _ p) pl) z unl
+
