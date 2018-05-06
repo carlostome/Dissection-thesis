@@ -101,16 +101,24 @@ module Thesis.Dissection.Core where
   Plug-μ⇑-to-plug-μ⇑ R t .[] .t Plug-[] = refl
   Plug-μ⇑-to-plug-μ⇑ R t .(_ ∷ _) o (Plug-∷ pl plm) with Plug-to-plug R _ t _ pl
   Plug-μ⇑-to-plug-μ⇑ R t .(_ ∷ _) o (Plug-∷ pl plm) | refl = Plug-μ⇑-to-plug-μ⇑ R _ _ o plm
+  
   Plug-μ⇓-unicity : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {x : μ R} {s : Stack R X alg} {r₁ r₂ : μ R}
                   → Plug-μ⇓ R x s r₁ → Plug-μ⇓ R x s r₂ → r₁ ≡ r₂
   Plug-μ⇓-unicity Plug-[] Plug-[] = refl
   Plug-μ⇓-unicity (Plug-∷ x₁ x₃) (Plug-∷ x₂ x₄) with Plug-μ⇓-unicity x₁ x₂
   ... | refl with Plug-unicity x₃ x₄
   ... | refl = refl
-  
-  -- Plug-μ⇓-to-Plug-μ⇑ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R}
-  --                    → PlugZ-μ⇑ R (l , s) t → PlugZ-μ⇓ R (l , reverse s) t
-  -- Plug-μ⇓-to-Plug-μ⇑ {X} {R} {alg} {l} {s = s} {t} x = aux X R alg l s t x (reverseView s)
+
+  plug-μ⇑-++ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (e₁ e₂ : μ R) → (s₁ s₂ : Stack R X alg)
+              → plug-μ⇑ R e₁ (s₁ ++ s₂) ≡ plug-μ⇑ R e₂ s₂ → plug-μ⇑ R e₁ s₁ ≡ e₂
+  plug-μ⇑-++ R e₁ .e₁ [] [] refl = refl
+  plug-μ⇑-++ R e₁ e₂ [] (x₁ ∷ s₂) x = {!!}
+  plug-μ⇑-++ R e₁ e₂ (x₁ ∷ s₁) s₂ x = plug-μ⇑-++ R (In (plug R Computed.Tree x₁ e₁)) e₂ s₁ s₂ x
+
+
+  Plug-μ⇑-to-Plug-μ⇓ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (l : Leaf R X) (s : Stack R X alg) (t : μ R)
+                     → PlugZ-μ⇑ R (l , s) t → PlugZ-μ⇓ R (l , reverse s) t
+  Plug-μ⇑-to-Plug-μ⇓  =  {!!}
   --   where aux : ∀ (X : Set) (R : Reg) (alg : ⟦ R ⟧ X → X) (l : Leaf R X) (s : Stack R X alg) (t : μ R)
   --              → Plug-μ⇑ R (In (LeafToTree R X l)) s t → Reverse s → Plug-μ⇓ R (In (LeafToTree R X l)) (reverse s) t
   --         aux X R alg (l , isl) [] .(In (coerce l isl)) Plug-[] x₂ with reverse []
@@ -121,9 +129,9 @@ module Thesis.Dissection.Core where
 
   -- --                 → Reverse s → plug-μ⇓ R t s ≡ plug-μ⇑ R t (reverse s)
   -- --  
-  -- Plug-μ⇑-to-Plug-μ⇓ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R}
-  --                    → PlugZ-μ⇓ R (l , s) t → PlugZ-μ⇑ R (l , reverse s) t
-  -- Plug-μ⇑-to-Plug-μ⇓ = {!!}
+  Plug-μ⇓-to-Plug-μ⇑ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R}
+                     → PlugZ-μ⇓ R (l , s) t → PlugZ-μ⇑ R (l , reverse s) t
+  Plug-μ⇓-to-Plug-μ⇑ = {!!}
 
   -- Top-down type-indexed Zipper
   data Zipper⇓ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) (t : μ R) : Set where

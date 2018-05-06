@@ -1,15 +1,11 @@
 \begin{code}
-module Thesis.Dissection.Unload where
+module Thesis.Regular.Right where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
   open import Data.Product
   open import Data.Unit    using (⊤; tt)
   open import Data.Empty   using (⊥; ⊥-elim)
   open import Relation.Binary.PropositionalEquality renaming ([_] to Is_)
-  open import Relation.Nullary
-  open import Function
-  open import Data.List
-  open import Induction.WellFounded
 
   open import Thesis.Regular.Core
   open import Thesis.Regular.Equality
@@ -22,14 +18,7 @@ module Thesis.Dissection.Unload where
              ; proof-irrelevance to Plug-proof-irrelevance)
   open import Thesis.Regular.NonRec
     renaming (proof-irrelevance to NonRec-proof-irrelevance)
-  open import Thesis.Regular.Catamorphism
-
-  open import Thesis.Dissection.Core
-  open import Thesis.Dissection.Load
   
-  ------------------------------------------------------------------------------
-  --                          unload function
-
   -- `first` finds the leftmost hole and the value in it if it exists.
   first : {X Y : Set} (R : Reg)
         → ⟦ R ⟧ X
@@ -74,19 +63,6 @@ module Thesis.Dissection.Unload where
   right (R ⨂ Q) (inj₂ (r , dq)) y with right Q dq y
   right (R ⨂ Q) (inj₂ (r , dq)) y | inj₁ q′        = inj₁ (r , q′)
   right (R ⨂ Q) (inj₂ (r , dq)) y | inj₂ (dq′ , x) = inj₂ (inj₂ (r , dq′) , x)
-
-  -- unload function
-  unload : {X : Set} (R : Reg)
-         → (alg : ⟦ R ⟧ X → X)
-         → (t : μ R) → (x : X) → Catamorphism R alg t x
-         → List (∇ R (Computed R X alg) (μ R))
-         → UZipper R X alg ⊎ X
-  unload R alg t x eq []       = inj₂ x
-  unload R alg t x eq (h ∷ hs) with right R h (t ,, x  ,, eq)
-  unload R alg t x eq (h ∷ hs) | inj₁ r with compute R R r
-  ... | (rx , rp) , p                               = unload R alg (In rp) (alg rx) (Cata p) hs
-  unload R alg t x eq (h ∷ hs) | inj₂ (dr , q)      = load R q (dr ∷ hs)
-
 
   ------------------------------------------------------------------------------
   --                 unload preserves the tree structure
@@ -220,21 +196,3 @@ module Thesis.Dissection.Unload where
   right-Plug (R ⨂ Q) (inj₂ (r , dq)) y dr′ x () (_ , _) (Plug-⨂-inj₂ x₁ p) | inj₁ x₂ | Is is
   right-Plug (R ⨂ Q) (inj₂ (r , dq)) y .(inj₂ (r , dq′)) .x′ refl (_ , _) (Plug-⨂-inj₂ x₁ p) | inj₂ (dq′ , x′) | Is is
     = Plug-⨂-inj₂ x₁ (right-Plug Q dq y dq′ x′ is _ p)
-
-  -- unload preserves the structure of the tree
-  unload-preserves : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X}
-                   → (t : μ R) (x : X) (eq : Catamorphism R alg t x) (s : List (∇ R (Computed R X alg) (μ R)))
-                   → (z : UZipper R X alg)
-                   → ∀ (e : μ R) → Plug-μ⇑ R t s e → unload R alg t x eq s ≡ inj₁ z → PlugZ-μ⇑ R z e
-  unload-preserves R t x eq [] z e pl ()
-  unload-preserves R t x eq (h ∷ hs) z e pl unl with right R h (t ,, x ,, eq) | inspect (right R h) (t ,, x ,, eq)
-  unload-preserves R t x eq (h ∷ hs) z e pl unl | inj₁ r | Is is
-    with compute R R r | inspect (compute R R) r
-  unload-preserves R {alg} t x eq (h ∷ hs) z e (Plug-∷ p pl) unl | inj₁ r | Is is | (rx , rp) , pr | Is is′
-    with right-Fmap R h (t ,, x ,, eq) r is _ p | compute-Fmap R R r rx rp pr is′
-  ... | fm | (fm′ , _) with Fmap-unicity fm fm′
-  unload-preserves R {alg} t x eq (h ∷ hs) z e (Plug-∷ p pl) unl
-    | inj₁ r | Is is | (rx , rp) , pr | Is is′ | fm | fm′ , _ | refl = unload-preserves R (In rp) (alg rx) (Cata pr) hs z e pl unl
-  unload-preserves R t x eq (h ∷ hs) z e (Plug-∷ p pl) unl | inj₂ (dr , q) | Is is
-    = load-preserves R q (dr ∷ hs) e (Plug-∷ (right-Plug R h (t ,, x ,, eq) dr q is _ p) pl) z unl
-

@@ -4,7 +4,7 @@ module Thesis.Regular.Dissection where
   open import Data.Product
   open import Thesis.Data.Product
   open import Data.Sum
-  open import Thesis.Data.Sum.Inj
+  open import Thesis.Data.Sum
   open import Data.Empty
   open import Data.Unit
   open import Relation.Binary.PropositionalEquality
@@ -79,6 +79,7 @@ module Thesis.Regular.Dissection where
   Plug-plug-injective-on-2 {R = R ⨁ Q} {inj₂ y} (Plug-⨁-inj₂ p) = Plug-plug-injective-on-2 p
   Plug-plug-injective-on-2 {R = R ⨂ Q} {inj₁ (dr , q)} (Plug-⨂-inj₁ p)   = Plug-plug-injective-on-2 p
   Plug-plug-injective-on-2 {R = R ⨂ Q} {inj₂ (r , dq)} (Plug-⨂-inj₂ _ p) = Plug-plug-injective-on-2 p
+
   -- Plug is proof-irrelevant
   proof-irrelevance : ∀ {X Y : Set} {ex : Y → X} {R : Reg} {dr : ∇ R Y X} {x : X} {r : ⟦ R ⟧ X}
                     → (a : Plug ex R dr x r) → (b : Plug ex R dr x r) → a ≡ b
