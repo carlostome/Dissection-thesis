@@ -1,55 +1,38 @@
-
 \begin{code}
-module Thesis.Fold where
+module Thesis.Tree.Sum where
 
+  open import Data.Sum
+  open import Thesis.Data.Sum
+  open import Data.Product
+  open import Thesis.Data.Product
+  open import Data.Unit
+  open import Data.Empty
+  
+  open import Thesis.Data.List
+  
   open import Induction.WellFounded
   open import Relation.Binary.PropositionalEquality
-  open import Data.Product
-  open import Data.Bool
+
   open import Function
-  open import Data.Sum
-  open import Data.Empty
   open import Data.Nat hiding (_<_)
   open import Data.Nat.Properties
   open import Data.List
   open import Data.List.Properties
   open import Data.List.Reverse
   open import Data.List.All
-  open import Coinduction
-  open import Data.Unit
+  
+  reverse-++ : ∀ {A : Set} (s : List A) (x : A) → reverse (x ∷ s) ≡ reverse s ++ (x ∷ [])
+  reverse-++ xs x = unfold-reverse x xs
 
-  -- some utilities not avaliable in the standard lib v14 (or I can't find them)
-  private
-    ⊎-injective₁ : ∀ {A B : Set} {x y} → (A ⊎ B ∋ inj₁ x) ≡ inj₁ y → x ≡ y
-    ⊎-injective₁ refl = refl
-
-    ×-injective : ∀ {A B : Set} {x y a b} → (A × B ∋ (x , y)) ≡ (a , b) → x ≡ a × y ≡ b
-    ×-injective refl = refl , refl
-
-    ++-assoc : ∀ {A : Set} (xs ys zs : List A) → (xs ++ ys) ++ zs ≡ xs ++ (ys ++ zs)
-    ++-assoc [] ys zs       = refl
-    ++-assoc (x ∷ xs) ys zs = cong (x ∷_) (++-assoc xs ys zs)
-
-    reverse-++ : ∀ {A : Set} (s : List A) (x : A) → reverse (x ∷ s) ≡ reverse s ++ (x ∷ [])
-    reverse-++ xs x = unfold-reverse x xs
-
- 
-    
+  -- binary tree with nat on the leaves
   data Tree : Set where
     Tip   : ℕ → Tree
     Node  : (t₁ t₂ : Tree) → Tree
 
-  Node-inj-inv : ∀ {a b x y} → a ≡ x → b ≡ y → Node a b ≡ Node x y
-  Node-inj-inv refl refl = refl
-
-  Node-injᵣ : ∀ {l r₁ r₂} → r₁ ≡ r₂ → Node l r₁ ≡ Node l r₂
-  Node-injᵣ refl = refl
-
-  Node-injₗ : ∀ {l₁ l₂ r} → l₁ ≡ l₂ → Node l₁ r ≡ Node l₂ r
-  Node-injₗ refl = refl
-
+  -- Node constructor is injective
   Node-inj : ∀ {a b x y} → Node a b ≡ Node x y → a ≡ x × b ≡ y
   Node-inj refl = refl , refl
+
   eval : Tree → ℕ
   eval (Tip x) = x
   eval (Node t t₁) = eval t + eval t₁
@@ -111,8 +94,6 @@ module Thesis.Fold where
                 (lt .(y , inj₂ (plug⇓ (Tip x) s₂ , n , eq) ∷ s₁) .(x , inj₁ (plug⇓ (Tip y) s₁) ∷ s₂) refl eq₂
                     (<-Right-Left {n} {s₁ = s₁} {s₂} {.(plug⇓ (Tip x) s₂)} {.(plug⇓ (Tip y) s₁)} {eq} refl refl))
                 = acc (accR (plug⇓ (Tip y) s₁) (plug⇓ (Tip x) s₂) y s₁ n eq (<-WF (plug⇓ (Tip y) s₁) (y , s₁)))
-  +-lemma : ∀ {a b} {x y} → a ≡ x → b ≡ y → a + b ≡ x + y
-  +-lemma refl refl = refl
 
   load : Tree → Stack → Zipper ⊎ ℕ
   load (Tip x) s      = inj₁ (x , s)
@@ -122,7 +103,7 @@ module Thesis.Fold where
   unload : (t : Tree) → (n : ℕ) → eval t ≡ n → Stack → Zipper ⊎ ℕ
   unload t n eq []                     = inj₂ n
   unload t n eq (Left t′ ∷ s)          = load t′ (Right t n eq ∷ s)
-  unload t n eq (Right t′ n′ eq′  ∷ s) = unload (Node t′ t) (n′ + n) (+-lemma eq′ eq) s
+  unload t n eq (Right t′ n′ eq′  ∷ s) = unload (Node t′ t) (n′ + n) (cong₂ (_+_) eq′ eq) s
           
   step : Zipper → Zipper ⊎ ℕ
   step (n , s)  = unload (Tip n) n refl s
@@ -149,7 +130,7 @@ module Thesis.Fold where
   unload-preserves-plug⇑ : ∀ t n eq s t′ s′ → unload t n eq s ≡ inj₁ (t′ , s′) → plug⇑ t s ≡ plug⇑ (Tip t′) s′
   unload-preserves-plug⇑ t n eq [] t′ s′ ()
   unload-preserves-plug⇑ t n eq (Left x ∷ s) t′ s′ p         = load-preserves-plug⇑ x (inj₂ (t , n , eq) ∷ s) t′ s′ p
-  unload-preserves-plug⇑ t n eq (Right x n′ eq′ ∷ s) t′ s′ p = unload-preserves-plug⇑ (Node x t) (n′ + n) (+-lemma eq′ eq) s t′ s′ p
+  unload-preserves-plug⇑ t n eq (Right x n′ eq′ ∷ s) t′ s′ p = unload-preserves-plug⇑ (Node x t) (n′ + n) (cong₂ (_+_) eq′ eq) s t′ s′ p
 
   step-preserves-plug⇑ : ∀ (z z′ : Zipper) → step z ≡ inj₁ z′ → plugZ⇑ z ≡ plugZ⇑ z′
   step-preserves-plug⇑ (t , s) (t′ , s′) x = unload-preserves-plug⇑ (Tip t) t refl s t′ s′ x
@@ -220,7 +201,7 @@ module Thesis.Fold where
   load-< : ∀ n eq t  s t′ s′
           → load t (Right (Tip n) n eq ∷ s) ≡ inj₁ (t′ , s′)
           → (t′ , reverse s′) < (n , reverse (Left t ∷ s)) 
-  load-< n eq (Tip x) s .x .(inj₂ (Tip n , n , eq) ∷ s) refl with reverse (Right (Tip n ) n eq ∷ s) | reverse-++ s (Right (Tip n) n eq)
+  load-< n eq (Tip x) s .x .(inj₂ (Tip n , n , eq) ∷ s) refl with reverse (Right (Tip n ) n eq ∷ s) | unfold-reverse (Right (Tip n) n eq) s
   load-< n eq (Tip x) s .x .(inj₂ (Tip n , n , eq) ∷ s) refl
     | .(foldl (λ rev x₁ → x₁ ∷ rev) [] s ++ inj₂ (Tip n , n , eq) ∷ []) | refl
     with reverse (Left (Tip x) ∷ s) | reverse-++ s (Left (Tip x))
@@ -293,7 +274,7 @@ module Thesis.Fold where
     | .(foldl _ [] s ++ inj₂ (Tip n , n , eq) ∷ []) | refl | .(foldl _ [] xs ++ inj₁ x ∷ []) | refl
     | .(foldl _ [] s ++ inj₂ (Tip n , n , eq) ∷ inj₁ t₂ ∷ []) | refl
     | .(foldl (λ rev x₁ → x₁ ∷ rev) [] s ++ inj₂ (Tip n , n , eq) ∷ inj₁ t₂ ∷ foldl (λ rev x₁ → x₁ ∷ rev) [] xs ++ inj₁ x ∷ []) | refl
-    = prepend (<-Right-Left refl (Node-inj-inv (sym (trans (plug⇓-++-Left (reverse xs)) (sym (plug⇑-to-plug⇓ (Node (Tip t′) x) xs)))) refl)) (reverse s)
+    = prepend (<-Right-Left refl (cong₂ Node (sym (trans (plug⇓-++-Left (reverse xs)) (sym (plug⇑-to-plug⇓ (Node (Tip t′) x) xs)))) refl)) (reverse s)
 
 
   data Is-inj₂ {A B : Set} : A ⊎ B → Set where
@@ -324,15 +305,15 @@ module Thesis.Fold where
 
   other-lemma : ∀ s → All Is-inj₂ s → ∀ t n eq  t′ s′ → unload t n eq s ≡ inj₁ (t′ , s′) → ⊥
   other-lemma .[] [] t n eq t′ s′ ()
-  other-lemma .(inj₂ (t′′ , n′ , eq′) ∷ _) (is-inj₂ {(t′′ , n′ , eq′)} ∷ x) t n eq t′ s′ p = other-lemma _ x (Node t′′ t) (n′ + n) (+-lemma eq′ eq) t′ s′ p
+  other-lemma .(inj₂ (t′′ , n′ , eq′) ∷ _) (is-inj₂ {(t′′ , n′ , eq′)} ∷ x) t n eq t′ s′ p = other-lemma _ x (Node t′′ t) (n′ + n) (cong₂ (_+_) eq′ eq) t′ s′ p
   
   unload-< : ∀ n eq s t′ s′ → unload (Tip n) n eq s ≡ inj₁ (t′ , s′) → (t′ , reverse s′) < (n , reverse s)
   unload-< n eq [] t′ s′ ()
   unload-< n eq (Left x₁ ∷ s) t′ s′ x                 = load-< n eq x₁ s t′ s′ x
   unload-< n eq (inj₂ (node , val , eq′) ∷ s) t′ s′ p with toView s
-  unload-< n eq (inj₂ (node , val , eq′) ∷ s) t′ s′ p | AllOf .s x = ⊥-elim (other-lemma s x (Node node (Tip n)) (val + n) (+-lemma eq′ eq) t′ s′ p)
+  unload-< n eq (inj₂ (node , val , eq′) ∷ s) t′ s′ p | AllOf .s x = ⊥-elim (other-lemma s x (Node node (Tip n)) (val + n) (cong₂ (_+_) eq′ eq) t′ s′ p)
   unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ x ∷ xs)) t′ s′ p | Prefix pre x xs all
-    with unload-stack-lemma pre x xs (Node node (Tip n)) (val + n) (+-lemma eq′ eq) t′ s′ all p
+    with unload-stack-lemma pre x xs (Node node (Tip n)) (val + n) (cong₂ (_+_) eq′ eq) t′ s′ all p
   unload-< n eq (inj₂ (node , val , eq′) ∷ .(pre ++ inj₁ (Tip t′) ∷ xs)) t′
     .(inj₂ (plug⇑ (Node node (Tip n)) pre , eval (plug⇑ (Node node (Tip n)) pre) , refl) ∷ xs) p
     | Prefix pre .(Tip t′) xs all | .[] , refl , [] , refl
@@ -532,7 +513,7 @@ module Thesis.Fold where
   unload-preserves-evalZipper⇑ : ∀ t n eq s t′ s′ → unload t n eq s ≡ inj₁ (t′ , s′) → evalZipper⇑ n s ≡ evalZipper⇑ t′ s′
   unload-preserves-evalZipper⇑ t n eq [] t′ s′ ()
   unload-preserves-evalZipper⇑ t .(eval t) refl (inj₁ x₁ ∷ s) t′ s′ x               = load-preserves-evalZipper⇑ x₁ (inj₂ (t , eval t , refl) ∷ s) t′ s′ x
-  unload-preserves-evalZipper⇑ t .(eval t) refl (inj₂ (t′′ , n′ , eq′) ∷ s) t′ s′ x = unload-preserves-evalZipper⇑ (Node t′′ t) (n′ + eval t) (+-lemma eq′ refl) s t′ s′ x
+  unload-preserves-evalZipper⇑ t .(eval t) refl (inj₂ (t′′ , n′ , eq′) ∷ s) t′ s′ x = unload-preserves-evalZipper⇑ (Node t′′ t) (n′ + eval t) (cong₂ (_+_) eq′ refl) s t′ s′ x
 
   step-preserves-evalZipper⇑  : ∀ t s t′ s′ → step (t , s) ≡ inj₁ (t′ , s′) →  evalZipper⇑ t s ≡ evalZipper⇑ t′ s′
   step-preserves-evalZipper⇑ t s t′ s′ x = unload-preserves-evalZipper⇑ (Tip t) t refl s t′ s′ x
@@ -544,7 +525,7 @@ module Thesis.Fold where
   unload-preserves-evalZipper⇑2 : ∀ t n eq s r → unload t n eq s ≡ inj₂ r → evalZipper⇑ n s ≡ r
   unload-preserves-evalZipper⇑2 t n eq [] .n refl = refl
   unload-preserves-evalZipper⇑2 t n eq (inj₁ y ∷ s) n′ x = ⊥-elim (load-not-inj₂ y (inj₂ (t , n , eq) ∷ s) n′ x)
-  unload-preserves-evalZipper⇑2 t n eq (inj₂ (t′ , n′ , eq′)  ∷ s) r x = unload-preserves-evalZipper⇑2 (Node t′ t) (n′ + n) (+-lemma eq′ eq) s r x
+  unload-preserves-evalZipper⇑2 t n eq (inj₂ (t′ , n′ , eq′)  ∷ s) r x = unload-preserves-evalZipper⇑2 (Node t′ t) (n′ + n) (cong₂ (_+_) eq′ eq) s r x
 
   lemma : ∀ t s ac n → rec t s ac ≡ n → evalZipper⇑ t s ≡ n
   lemma t s (acc rs) n x with step (t , s) | inspect step (t , s)

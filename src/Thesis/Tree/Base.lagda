@@ -1,5 +1,5 @@
 \begin{code}
-module Thesis.RealFold where
+module Thesis.Tree.Base where
 
   open import Induction.WellFounded
   open import Relation.Binary.PropositionalEquality
@@ -7,7 +7,6 @@ module Thesis.RealFold where
   open import Data.Bool
   open import Function
   open import Data.Sum
-  open import Data.Sum.Properties
   open import Thesis.Data.Sum.Inj
   open import Data.Empty
   open import Data.Nat hiding (_<_)
@@ -18,14 +17,8 @@ module Thesis.RealFold where
   open import Data.List.Reverse
   open import Data.List.All
   open import Data.List.All.Properties
-
+  open import Thesis.Data.List
   open import Data.Unit
-
-  -- some utilities not avaliable in the standard lib v14 (or I can't find them)
-  private
-    ++-assoc : ∀ {A : Set} (xs ys zs : List A) → (xs ++ ys) ++ zs ≡ xs ++ (ys ++ zs)
-    ++-assoc [] ys zs = refl
-    ++-assoc (x ∷ xs) ys zs = cong (_∷_ x) (++-assoc xs ys zs)
 
   -- An algebra for Tree
   record TreeAlg : Set₁ where
@@ -49,6 +42,7 @@ module Thesis.RealFold where
   treeCata tAlg (Tip x)     = (TreeAlg.TipA  tAlg) x
   treeCata tAlg (Node t t₁) = (TreeAlg.NodeA tAlg) (treeCata tAlg t) (treeCata tAlg t₁)
 
+  -- the construction is parametrized by an algebra
   module _ (tAlg : TreeAlg) where
 
     open TreeAlg tAlg
