@@ -34,7 +34,16 @@ module Thesis.Regular.Dissection where
   plug (R ⨁ Q) ex (inj₂ v′) x  = inj₂ (plug Q ex v′ x)
   plug (R ⨂ Q) ex (inj₁ (du , v′)) x = plug R ex du x  , v′
   plug (R ⨂ Q) ex (inj₂ (u′ , dv)) x = fmap R ex u′           , plug Q ex dv x
-  
+
+  plug-injective-on-2 : ∀ {X Y : Set} (R : Reg) (ex : Y → X) (dr : ∇ R Y X) (x y : X) → plug R ex dr x ≡ plug R ex dr y → x ≡ y
+  plug-injective-on-2 0′ ex () x y p
+  plug-injective-on-2 1′ ex () x y p
+  plug-injective-on-2 I ex tt x y p = p
+  plug-injective-on-2 (K A) ex () x y p
+  plug-injective-on-2 (R ⨁ Q) ex (inj₁ x₁) x y p = plug-injective-on-2 R ex x₁ x y (⊎-injective₁ p)
+  plug-injective-on-2 (R ⨁ Q) ex (inj₂ y₁) x y p = plug-injective-on-2 Q ex y₁ x y (⊎-injective₂ p)
+  plug-injective-on-2 (R ⨂ Q) ex (inj₁ (dr , q)) x y p = plug-injective-on-2 R ex dr x y (proj₁ (×-injective p))
+  plug-injective-on-2 (R ⨂ Q) ex (inj₂ (r , dq)) x y p = plug-injective-on-2 Q ex dq x y (proj₂ (×-injective p))
   -- plug reified as a relation
   data Plug {X Y : Set} (ex : Y → X) : (R : Reg) → ∇ R Y X → X → ⟦ R ⟧ X → Set where
     Plug-I       : ∀ {x} → Plug ex I tt x x

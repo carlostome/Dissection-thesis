@@ -1,5 +1,3 @@
-
-{-# OPTIONS --allow-unsolved-metas #-}
 module Thesis.Dissection.Core where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
@@ -11,6 +9,7 @@ module Thesis.Dissection.Core where
   open import Function
   open import Data.List
   open import Data.List.Reverse
+  open import Data.List.Properties
   open import Induction.WellFounded
 
   open import Thesis.Regular.Core
@@ -90,7 +89,6 @@ module Thesis.Dissection.Core where
   PlugZ-μ⇑ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → UZipper R X alg → μ R →  Set
   PlugZ-μ⇑ R (l , s) t = Plug-μ⇑ R (In (LeafToTree _ _ l)) s t
 
-
   plug-μ⇑-to-Plug-μ⇑ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (t : μ R) (s : Stack R X alg) (o : μ R)
                      → plug-μ⇑ R t s ≡ o → Plug-μ⇑ R t s o
   plug-μ⇑-to-Plug-μ⇑ R t [] .t refl  = Plug-[]
@@ -109,29 +107,49 @@ module Thesis.Dissection.Core where
   ... | refl with Plug-unicity x₃ x₄
   ... | refl = refl
 
+  plug-μ⇑-injective-on-1 : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (x y : μ R) (s : Stack R X alg)
+                         → plug-μ⇑ R x s ≡ plug-μ⇑ R y s → x ≡ y
+  plug-μ⇑-injective-on-1 R x .x [] refl    = refl
+  plug-μ⇑-injective-on-1 R x y (h ∷ s) p   = plug-injective-on-2 R Computed.Tree h x y (In-injective (plug-μ⇑-injective-on-1 R _ _ s p))
+   
   plug-μ⇑-++ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (e₁ e₂ : μ R) → (s₁ s₂ : Stack R X alg)
               → plug-μ⇑ R e₁ (s₁ ++ s₂) ≡ plug-μ⇑ R e₂ s₂ → plug-μ⇑ R e₁ s₁ ≡ e₂
   plug-μ⇑-++ R e₁ .e₁ [] [] refl = refl
-  plug-μ⇑-++ R e₁ e₂ [] (x₁ ∷ s₂) x = {!!}
+  plug-μ⇑-++ R e₁ e₂ [] (x₁ ∷ s₂) x = plug-injective-on-2 R Computed.Tree x₁ e₁ e₂ (In-injective (plug-μ⇑-injective-on-1 R _ _ s₂ x))
   plug-μ⇑-++ R e₁ e₂ (x₁ ∷ s₁) s₂ x = plug-μ⇑-++ R (In (plug R Computed.Tree x₁ e₁)) e₂ s₁ s₂ x
 
+  Plug-μ⇓-++ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (e : μ R) (s : Stack R X alg) (e′ : ⟦ R ⟧ (μ R)) (h : ∇ R (Computed R X alg) (μ R))  (t : μ R)
+             → Plug-μ⇓ R (In e′) s t → Plug Computed.Tree R h e e′ → Plug-μ⇓ R e (s ++ [ h ]) t
+  Plug-μ⇓-++ R e .[] e′ h .(In e′) Plug-[] p            = Plug-∷ Plug-[] p
+  Plug-μ⇓-++ R e .(_ ∷ _) e′ h .(In _) (Plug-∷ plμ x) p = Plug-∷ (Plug-μ⇓-++ R e _ e′ h _ plμ p) x
 
   Plug-μ⇑-to-Plug-μ⇓ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (l : Leaf R X) (s : Stack R X alg) (t : μ R)
                      → PlugZ-μ⇑ R (l , s) t → PlugZ-μ⇓ R (l , reverse s) t
-  Plug-μ⇑-to-Plug-μ⇓  =  {!!}
-  --   where aux : ∀ (X : Set) (R : Reg) (alg : ⟦ R ⟧ X → X) (l : Leaf R X) (s : Stack R X alg) (t : μ R)
-  --              → Plug-μ⇑ R (In (LeafToTree R X l)) s t → Reverse s → Plug-μ⇓ R (In (LeafToTree R X l)) (reverse s) t
-  --         aux X R alg (l , isl) [] .(In (coerce l isl)) Plug-[] x₂ with reverse []
-  --         ... | r = {!r!}
-  --         aux X R alg (l , isl) (x ∷ s) t (Plug-∷ x₃ x₁) x₂ = {!x₂!}
-  --                 -- aux (l , isl) .[] .(In (coerce l isl)) Plug-[] [] = ?
-  --         -- aux (l , isl) .(xs ++ x ∷ []) t x₁ (xs ∶ x₂ ∶ʳ x) = {!!}
+  Plug-μ⇑-to-Plug-μ⇓ {X} R (l , isl) s t p = aux X R _ (In (coerce l isl)) s t p
+    where aux : ∀ (X : Set) (R : Reg) (alg : ⟦ R ⟧ X → X) (e : μ R) (s : Stack R X alg) (t : μ R)
+               → Plug-μ⇑ R e s t → Plug-μ⇓ R e (reverse s) t
+          aux X R alg e .[] .e Plug-[] = Plug-[]
+          aux X R alg e .(h ∷ hs) t (Plug-∷ {h = h} {hs} {e′} x pl)
+            with aux X R alg (In e′) hs t pl | reverse (h ∷ hs) | unfold-reverse h hs
+          aux X R alg e .(h ∷ hs) t (Plug-∷ {h = h} {hs} {e′} x pl) | plμ | .(reverse hs ++ h ∷ []) | refl
+            = Plug-μ⇓-++ R e (reverse hs) e′ h t plμ x
 
-  -- --                 → Reverse s → plug-μ⇓ R t s ≡ plug-μ⇑ R t (reverse s)
-  -- --  
-  Plug-μ⇓-to-Plug-μ⇑ : ∀ {X : Set} {R : Reg} {alg : ⟦ R ⟧ X → X} {l : Leaf R X} {s : Stack R X alg} {t : μ R}
+
+  Plug-μ⇑-++ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (e : μ R) (s : Stack R X alg) (e′ : ⟦ R ⟧ (μ R)) (h : ∇ R (Computed R X alg) (μ R))  (t : μ R)
+             → Plug-μ⇑ R e s t → Plug Computed.Tree R h t e′ → Plug-μ⇑ R e (s ++ [ h ]) (In e′)
+  Plug-μ⇑-++ R e .[] e′ h .e Plug-[] pl            = Plug-∷ pl Plug-[]
+  Plug-μ⇑-++ R e .(_ ∷ _) e′ h t (Plug-∷ x plμ) pl = Plug-∷ x (Plug-μ⇑-++ R (In _) _ e′ h t plμ pl)
+
+  Plug-μ⇓-to-Plug-μ⇑ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (l : Leaf R X) (s : Stack R X alg) (t : μ R)
                      → PlugZ-μ⇓ R (l , s) t → PlugZ-μ⇑ R (l , reverse s) t
-  Plug-μ⇓-to-Plug-μ⇑ = {!!}
+  Plug-μ⇓-to-Plug-μ⇑ {X} R {alg} l s t x = aux X R alg (In (LeafToTree R X l)) s t x
+    where aux : ∀ (X : Set) (R : Reg) (alg : ⟦ R ⟧ X → X) (e : μ R) (s : Stack R X alg) (t : μ R)
+                → Plug-μ⇓ R e s t → Plug-μ⇑ R e (reverse s) t
+          aux X R alg e .[] .e Plug-[] = Plug-[]
+          aux X R alg e .(h ∷ hs) .(In e′) (Plug-∷ {h = h} {hs} {e′ = e′} x pl)
+            with aux X R alg e hs _ x | reverse (h ∷ hs) | unfold-reverse h hs
+          aux X R alg e .(h ∷ hs) .(In e′) (Plug-∷ {h = h} {hs} {e′ = e′} x pl) | plμ | .(reverse hs ++ h ∷ []) | refl
+            = Plug-μ⇑-++ R e (reverse hs) e′ h _ plμ pl
 
   -- Top-down type-indexed Zipper
   data Zipper⇓ (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) (t : μ R) : Set where
@@ -142,54 +160,10 @@ module Thesis.Dissection.Core where
     _,_ : (z : UZipper R X alg) → PlugZ-μ⇑ R z t → Zipper⇑ R X alg t 
 
   Zipper⇓-to-Zipper⇑ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇓ R X alg t → Zipper⇑ R X alg t
-  Zipper⇓-to-Zipper⇑ R X alg t ((l , s) , p) = (l , (reverse s)) , {!!}
+  Zipper⇓-to-Zipper⇑ R X alg t ((l , s) , p) = (l , (reverse s)) , Plug-μ⇓-to-Plug-μ⇑ R l s t p
 
   Zipper⇑-to-Zipper⇓ : (R : Reg) (X : Set) (alg : ⟦ R ⟧ X → X) → (t : μ R) → Zipper⇑ R X alg t → Zipper⇓ R X alg t
-  Zipper⇑-to-Zipper⇓ R X alg t ((l , s) , p) = (l , (reverse s)) , {!!}
-
-  -- -- --  
-  -- Plug-μ⇓-++ : {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} → (t : μ R) → (hs : Stack R X alg) → (h : ∇ R (Computed R X alg) (μ R))
-  --            → ∀ e → Plug-μ⇓ R t (hs ++ [ h ]) e →  Σ (⟦ R ⟧ (μ R)) λ e′ → Plug Computed.Tree R h t e′ × Plug-μ⇓ R (In e′) hs e
-  -- Plug-μ⇓-++ R t [] h .(In _) (Plug-∷ Plug-[] x) = _ , (x , Plug-[])
-  -- Plug-μ⇓-++ R t (h′ ∷ hs) h .(In _) (Plug-∷ {e = e} pm pl) with Plug-μ⇓-++ R t hs h e pm
-  -- Plug-μ⇓-++ R t (h′ ∷ hs) h .(In _) (Plug-∷ {e = e} pm pl) |  mr , pm′ , pl′ = {!!} , {!!} , {!!}
-
--- plug-μ⇓-++ R t [] h       = refl
- -- plug-μ⇓-++ R t (x ∷ hs) h = cong (In ∘ (plug R Computed.Tree x)) (plug-μ⇓-++ R t hs h)
-
-  -- plug-μ⇑-++ : (R : Reg) → (t : μ R) → (hs : List (∇ R (μ R) (μ R))) → (h : ∇ R (μ R) (μ R))
-  --            → plug-μ⇑ R t (hs ++ [ h ]) ≡ In (plug R h (plug-μ⇑ R t hs))
-  -- plug-μ⇑-++ R t [] h       = refl
-  -- plug-μ⇑-++ R t (x ∷ hs) h = plug-μ⇑-++ R (In (plug R x t)) hs h
-  
-  -- -- -- plug-μ⇓ and plug-μ⇑ are related by reversing the stack
-  -- -- plug-μ⇓-to-plug-μ⇑ : (R : Reg) → (t : μ R) → (s : List (∇ R (μ R) (μ R)))
-  -- --                    → plug-μ⇓ R t s ≡ plug-μ⇑ R t (reverse s)
-  -- -- plug-μ⇓-to-plug-μ⇑ R t s = aux R t s (reverseView s)
-  -- --       where aux : (R : Reg) → (t : μ R) → (s : List (∇ R (μ R) (μ R)))
-  -- --                 → Reverse s → plug-μ⇓ R t s ≡ plug-μ⇑ R t (reverse s)
-  -- --             aux R t .[] []                          = refl
-  -- --             aux R t .(hs ++ h ∷ []) (hs ∶ re ∶ʳ h)
-  -- --               with reverse (hs ++ [ h ]) | reverse-++-commute hs [ h ]
-  -- --             aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h) | .(h ∷ reverse hs)
-  -- --               | refl with plug-μ⇓ R t (hs ++ [ h ]) | plug-μ⇓-++ R t hs h
-  -- --             aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h) | .(h ∷ reverse hs)
-  -- --               | refl | .(plug-μ⇓ R (In (plug R h t)) hs) | refl
-  -- --               = aux R (In (plug R h t)) hs re
-  
-  -- -- plug-μ⇑-to-plug-μ⇓ : (R : Reg) → (t : μ R) → (s : List (∇ R (μ R) (μ R)))
-  -- --                    → plug-μ⇑ R t s ≡ plug-μ⇓ R t (reverse s)
-  -- -- plug-μ⇑-to-plug-μ⇓ R t s = aux R t s (reverseView s)
-  -- --   where aux : (R : Reg) → (t : μ R) → (s : List (∇ R (μ R) (μ R)))
-  -- --             → Reverse s → plug-μ⇑ R t s ≡ plug-μ⇓ R t (reverse s)
-  -- --         aux R t .[] [] = refl
-  -- --         aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h)
-  -- --           with reverse (hs ++ [ h ]) | reverse-++-commute hs [ h ]
-  -- --         aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h) | .(h ∷ reverse hs)
-  -- --           | refl with plug-μ⇑ R t (hs ++ [ h ]) | plug-μ⇑-++ R t hs h
-  -- --         aux R t .(hs ++ [ h ]) (hs ∶ re ∶ʳ h) | .(h ∷ foldl _ [] hs)
-  -- --           | refl | .(In (plug R h (plug-μ⇑ R t hs))) | refl
-  -- --           = cong (In ∘ plug R h) (aux R t hs re)
+  Zipper⇑-to-Zipper⇓ R X alg t ((l , s) , p) = (l , (reverse s)) , Plug-μ⇑-to-Plug-μ⇓ R l s t p
 
   -- From a Tree with `Computed` in the leaves, split it into a tree
   -- only holding values and another only holding subtrees.

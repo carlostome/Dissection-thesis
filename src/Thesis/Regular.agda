@@ -81,13 +81,29 @@ module Thesis.Regular where
 
   ------------------------------------------------------------------------------
   --                     `step` function                                      --
-    
+
+  MapFold-init : ∀ {X : Set} (R Q : Reg) {alg : ⟦ R ⟧ X → X} (l : ⟦ Q ⟧ X) (isl : NonRec Q l)
+               → MapFold R alg Q (coerce l isl) l
+  MapFold-init R .1′ .tt NonRec-1′        = MapFold-1′
+  MapFold-init R .(K B) l (NonRec-K B .l) = MapFold-K
+  MapFold-init R .(R₁ ⨁ Q) .(inj₁ r) (NonRec-⨁-inj₁ R₁ Q r isl)  = MapFold-⨁₁ (MapFold-init R R₁ r isl)
+  MapFold-init R .(R₁ ⨁ Q) .(inj₂ q) (NonRec-⨁-inj₂ R₁ Q q isl)  = MapFold-⨁₂ (MapFold-init R Q q isl)
+  MapFold-init R .(R₁ ⨂ Q) .(r , q) (NonRec-⨂ R₁ Q r q isl isl₁) = MapFold-⨂  (MapFold-init R R₁ r isl) (MapFold-init R Q q isl₁)
+
+  Cata-init : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X} (l : ⟦ R ⟧ X) (isl : NonRec R l)
+            → Catamorphism R alg (In (coerce l isl)) (alg l)
+  Cata-init R l isl = Cata (MapFold-init R R l isl)
+  
   step : {X : Set} → (R : Reg) → (alg : ⟦ R ⟧ X → X)
        → UZipper R X alg
        → UZipper R X alg ⊎ X
-  step R alg ((l , isl) , s)
-    with compute R R (coerce l isl)
-  ... | (rx , rp) , mFold = unload R alg (In rp) (alg rx) (Cata mFold) s
+  step R alg ((l , isl) , s) = unload R alg (In (coerce l isl)) (alg l) (Cata-init R l isl) s
+
+  step-preserves : {X : Set} → (R : Reg) → (alg : ⟦ R ⟧ X → X)
+                   → (z₁ z₂ : UZipper R X alg) → step R alg z₁ ≡ inj₁ z₂
+                   → ∀ (t : μ R) → PlugZ-μ⇑ R z₁ t → PlugZ-μ⇑ R z₂ t
+  step-preserves R alg ((l , isl) , s) z₂ seq t plug
+    = unload-preserves R (In (coerce l isl)) (alg l) (Cata (MapFold-init R R l isl)) s z₂ t plug seq                 
 
   right-Lt : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} 
            → (dr  : ∇ R (Computed Q X alg) (μ Q)) → (t : μ Q)
@@ -136,10 +152,36 @@ module Thesis.Regular where
   lemma-first-compute 1′ Q tt .tt refl .tt .tt MapFold-1′ ceq = refl
   lemma-first-compute I Q r r′ () rx rm mf ceq
   lemma-first-compute (K A) Q .r′ r′ refl .r′ .r′ .MapFold-K refl = refl
-  lemma-first-compute (R ⨁ Q) P (inj₁ x) r′ feq rx rm mf ceq = {!!}
-  lemma-first-compute (R ⨁ Q) P (inj₂ y) r′ feq rx rm mf ceq = {!!}
-  lemma-first-compute (R ⨂ Q) P r r′ feq rx rm mf ceq = {!!}
-           
+  lemma-first-compute {X} (R ⨁ Q) P {alg} (inj₁ x) r′ feq  rx rm mf ceq
+    with first {Y = Computed P X alg} R x | inspect (first {Y = Computed P X alg} R) x
+  lemma-first-compute {X} (R ⨁ Q) P {alg} (inj₁ x) .(inj₁ r) refl rx rm mf ceq | inj₁ r | Is is
+    with compute R P r | inspect (compute R P) r
+  lemma-first-compute {X} (R ⨁ Q) P {alg} (inj₁ x) .(inj₁ r) refl .(inj₁ rx′) .(inj₁ rm′) .(MapFold-⨁₁ mf′) refl | inj₁ r | Is is | (rx′ , rm′) , mf′ | Is is′
+    = cong inj₁ (lemma-first-compute R P x r is rx′ rm′ mf′ is′)
+  lemma-first-compute {X} (R ⨁ Q) P {alg} (inj₁ x) r′ () rx rm mf ceq | inj₂ y | Is is
+ 
+  lemma-first-compute {X} (R ⨁ Q) P {alg} (inj₂ y) r′ feq rx rm mf ceq
+    with first {Y = Computed P X alg} Q y | inspect (first {Y = Computed P X alg} Q) y
+  lemma-first-compute {X} (R ⨁ Q) P {alg} (inj₂ y) .(inj₂ x) refl rx rm mf ceq | inj₁ x | Is is
+    with compute Q P x | inspect (compute Q P) x
+  lemma-first-compute {X} (R ⨁ Q) P {alg} (inj₂ y) .(inj₂ x) refl .(inj₂ rx′) .(inj₂ rm′) .(MapFold-⨁₂ mf′) refl | inj₁ x | Is is | (rx′ , rm′) , mf′ | Is is′
+    = cong inj₂ (lemma-first-compute Q P y x is rx′ rm′ mf′ is′)
+  lemma-first-compute {X} (R ⨁ Q) P {alg} (inj₂ y) r′ () rx rm mf ceq | inj₂ y₁ | Is is
+  lemma-first-compute {X} (R ⨂ Q) P {alg} (r , q) r′ feq rx rm mf ceq
+    with first {Y = Computed P X alg} R r | inspect (first {Y = Computed P X alg} R) r
+  lemma-first-compute {X} (R ⨂ Q) P {alg} (r , q) r′ feq rx rm mf ceq | inj₁ x | Is is
+    with first {Y = Computed P X alg} Q q | inspect (first {Y = Computed P X alg} Q) q
+  lemma-first-compute {X} (R ⨂ Q) P {alg} (r , q) .(r′ , q′) refl rx rm mf ceq | inj₁ r′ | Is is | inj₁ q′ | Is is′
+    with compute R P r′ | inspect (compute R P) r′ | compute Q P q′ | inspect (compute Q P) q′
+  lemma-first-compute {X} (R ⨂ Q) P {alg} (r , q) .(r′ , q′) refl .(rx′ , qx) .(rm′ , qm) .(MapFold-⨂ mf′ mf′′) refl
+    | inj₁ r′ | Is is | inj₁ q′ | Is is′ | (rx′ , rm′) , mf′ | Is is-cr | (qx , qm) , mf′′ | Is is-cq
+    = cong₂ _,_ (lemma-first-compute R P r r′ is rx′ rm′ mf′ is-cr)
+                (lemma-first-compute Q P q q′ is′ qx qm mf′′ is-cq)
+  lemma-first-compute {X} (R ⨂ Q) P {alg} (r , q) r′ () rx rm mf ceq | inj₁ x | Is is | inj₂ y | Is is′
+  lemma-first-compute {X} (R ⨂ Q) P {alg} (r , q) r′ () rx rm mf ceq | inj₂ y | Is is
+
+
+
   lemma-right-compute : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} 
            → (dr  : ∇ R (Computed Q X alg) (μ Q)) → (t : μ Q)
            → (y : X) → (eq : Catamorphism Q alg t y)
@@ -269,8 +311,36 @@ module Thesis.Regular where
     = prepend (Base (Plug-μ⇑-to-Plug-μ⇓ R l′ s mq′ plug₂) (Plug-μ⇑-to-Plug-μ⇓ R (l , isl) pre mr plug₁)
                     (right-Lt R R x mr x′ ceq dr mq′ req)) (reverse post)
  
-
   step-Lt : ∀ {X : Set} → (R : Reg) → (alg : ⟦ R ⟧ X → X) → (l l′ : Leaf R X) (s s′ : Stack R X alg)
           → step R alg (l , s) ≡ inj₁ (l′ , s′) → Lt R X alg (l′ , reverse s′ ) (l , reverse s)
-  step-Lt {X} R alg (l , isl) l′ s s′ x with compute {X} R R {alg} (coerce l isl)
-  ... | (rx , rm) , mf = ? -- unload-Lt R alg l isl {!!} {!s!} {!!} {!!} x
+  step-Lt {X} R alg (l , isl) l′ s s′ x = unload-Lt R alg l isl l′ s s′ (Cata-init R l isl) x
+
+  step-Ix : {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) → (t : μ R)
+          → Zipper⇑ R X alg t
+          → Zipper⇑ R X alg t ⊎ X
+  step-Ix R alg t (z , x) with step R alg z | inspect (step R alg) z
+  step-Ix R alg t (z , x) | inj₁ z′ | Is is = inj₁ (z′ , (step-preserves R alg z z′ is t x))
+  step-Ix R alg t (z , x) | inj₂ x′ | Is is = inj₂ x′
+
+  step-Ix-Lt : {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) → (t : μ R)
+             → (z₁ z₂ : Zipper⇑ R X alg t)
+             → step-Ix R alg t z₁ ≡ inj₁ z₂ → IxLt⇑ R X alg t z₂ z₁
+  step-Ix-Lt R alg t (((l , isl) , s) , plug₁) (((l′ , isl′) , s′) , plug₂) x with step R alg ((l , isl) , s) | inspect (step R alg) ((l , isl) , s)
+  step-Ix-Lt R alg t (((l , isl) , s) , plug₁) (((.l′ , .isl′) , .s′) , .(step-preserves R alg ((l , isl) , s) ((l′ , isl′) , s′) is t plug₁)) refl
+    | inj₁ ((l′ , isl′) , s′) | Is is = ixLt⇑ (((l′ , isl′) , s′) , step-preserves R alg ((l , isl) , s) ((l′ , isl′) , s′) is t plug₁)
+                                              (((l , isl) , s) , plug₁) (Lt-to-IxLt⇓
+                                              (Plug-μ⇑-to-Plug-μ⇓ R (l′ , isl′) s′ t (step-preserves R alg ((l , isl) , s) ((l′ , isl′) , s′) is t plug₁))
+                                              (Plug-μ⇑-to-Plug-μ⇓ R (l , isl) s t plug₁) (step-Lt R alg (l , isl) (l′ , isl′) s s′ is))
+  step-Ix-Lt R alg t (((l , isl) , s) , plug₁) (((l′ , isl′) , s′) , plug₂) () | inj₂ y | Is is
+
+  rec : {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R) → (z : Zipper⇑ R X alg t) → Acc (IxLt⇑ R X alg t) z → X
+  rec R alg t z (acc rs) with step-Ix R alg t z | inspect (step-Ix R alg t) z
+  rec R alg t z (acc rs) | inj₁ x | Is is = rec R alg t x (rs x (step-Ix-Lt R alg t z x is))
+  rec R alg t z (acc rs) | inj₂ y | Is is = y
+
+  catamorphism : {X : Set} → (R : Reg) → (alg : ⟦ R ⟧ X → X) → μ R → X
+  catamorphism {X} R alg x with load {X} R {alg} x [] | inspect (load {X} R {alg} x) []
+  catamorphism {X} R alg x | inj₁ ((l , isl) , s) | Is is
+    = rec R alg x (((l , isl) , s) , (load-preserves R x [] ((l , isl) , s) is x Plug-[]))
+                  (IxLt⇑-WF R X alg x (((l , isl) , s) , load-preserves R x [] ((l , isl) , s) is x Plug-[]))
+  catamorphism {X} R alg x | inj₂ y | Is _ = y

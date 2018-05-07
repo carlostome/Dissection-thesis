@@ -7,6 +7,7 @@ module Thesis.Regular.Core where
   open import Thesis.Data.Sum
   open import Data.Unit
   open import Data.Empty
+  open import Function
   open import Relation.Binary.PropositionalEquality
     renaming (proof-irrelevance to ≡-proof-irrelevance)
 
@@ -99,3 +100,5 @@ module Thesis.Regular.Core where
   data μ (R : Reg) : Set where
     In : ⟦ R ⟧ (μ R) → μ R
 
+  In-injective : ∀ {R : Reg} → {x y : ⟦ R ⟧ (μ R)} → (μ R ∋ In x) ≡ In y → x ≡ y
+  In-injective refl = refl
