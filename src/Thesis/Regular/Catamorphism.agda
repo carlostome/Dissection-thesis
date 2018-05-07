@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Regular.Catamorphism where
 
   open import Data.Product

@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Dissection.Load where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)

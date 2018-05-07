@@ -1,4 +1,4 @@
-\begin{code}
+
 {-# OPTIONS --allow-unsolved-metas #-}
 module Thesis.Dissection.Core where
 

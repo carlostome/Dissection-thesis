@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Data.Product where
 
   open import Data.Product

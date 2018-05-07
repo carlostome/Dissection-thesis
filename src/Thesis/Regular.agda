@@ -1,4 +1,3 @@
-\begin{code}
 module Thesis.Regular where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
@@ -70,7 +69,8 @@ module Thesis.Regular where
     = load-preserves R q (dr ∷ hs) z unl e (Plug-∷ (right-Plug R h (t ,, x ,, eq) dr q is _ p) pl)
 
   
-  propInit : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (l : ⟦ R ⟧ X) (isl : NonRec R l) → Catamorphism R alg (In (coerce l isl)) (alg l)
+  propInit : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (l : ⟦ R ⟧ X)
+             (isl : NonRec R l) → Catamorphism R alg (In (coerce l isl)) (alg l)
   propInit 0′ alg () isl
   propInit 1′ alg tt NonRec-1′          = Cata MapFold-1′
   propInit I alg l ()

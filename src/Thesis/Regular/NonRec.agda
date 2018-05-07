@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Regular.NonRec where
   
   open import Data.Product

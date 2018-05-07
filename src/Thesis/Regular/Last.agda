@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Regular.Last where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
@@ -46,4 +46,4 @@ module Thesis.Regular.Last where
   Last-Dec (R ⨂ Q) (inj₂ (r , dq)) with Last-Dec Q dq
   Last-Dec (R ⨂ Q) (inj₂ (r , dq)) | yes p = yes (Last-⨂₂ p)
   Last-Dec (R ⨂ Q) (inj₂ (r , dq)) | no ¬p = no λ { (Last-⨂₂ x) → ¬p x}
-\end{code}
+

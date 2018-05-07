@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Regular.First where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
@@ -50,5 +50,5 @@ module Thesis.Regular.First where
   First-unicity (First-⨂₂ x f₁) (First-⨂₂ x′ f₂) | refl with NonRec-proof-irrelevance x x′
   ... | refl = refl
 
-\end{code}
+
 

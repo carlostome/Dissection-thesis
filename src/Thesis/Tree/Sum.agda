@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Tree.Sum where
 
   open import Data.Sum

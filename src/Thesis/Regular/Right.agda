@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Regular.Right where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)

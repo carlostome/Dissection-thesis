@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Regular.Core where
 
   open import Data.Product
@@ -98,4 +98,4 @@ module Thesis.Regular.Core where
 
   data μ (R : Reg) : Set where
     In : ⟦ R ⟧ (μ R) → μ R
-\end{code}
+

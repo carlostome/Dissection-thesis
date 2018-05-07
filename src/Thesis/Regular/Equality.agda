@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Regular.Equality where
 
   open import Data.Unit
@@ -71,4 +71,4 @@ module Thesis.Regular.Equality where
   ≈-to-≡ (≈-⨁₁ x₁)   = cong inj₁ (≈-to-≡ x₁)
   ≈-to-≡ (≈-⨁₂ x₁)   = cong inj₂ (≈-to-≡ x₁)
   ≈-to-≡ (≈-⨂ x₁ x₂) = cong₂ _,_ (≈-to-≡ x₁) (≈-to-≡ x₂)
-\end{code}
+

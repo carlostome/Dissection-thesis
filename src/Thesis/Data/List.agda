@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Data.List where
 
   open import Data.List

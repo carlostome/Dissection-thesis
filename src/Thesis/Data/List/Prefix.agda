@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Data.List.Prefix where
 
   open import Data.List
@@ -20,4 +20,4 @@ module Thesis.Data.List.Prefix where
   prefix dec (x ∷ .(pre ++ y ∷ post)) | OnlyPrefix pre y post all ¬py with dec x
   prefix dec (x ∷ .(pre ++ y ∷ post)) | OnlyPrefix pre y post all ¬py | yes p = OnlyPrefix (x ∷ pre) y post (p ∷ all) ¬py
   prefix dec (x ∷ .(pre ++ y ∷ post)) | OnlyPrefix pre y post all ¬py | no ¬p = OnlyPrefix [] x (pre ++ y ∷ post) [] ¬p
-\end{code}
+

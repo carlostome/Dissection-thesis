@@ -1,4 +1,4 @@
-\begin{code}
+
 module Thesis.Regular.Dissection where
 
   open import Data.Product
