@@ -50,7 +50,7 @@ module Thesis.Regular.Core where
     Fmap-⨂  : ∀ {R Q} {r q} {r′ q′} → Fmap f R r r′ → Fmap f Q q q′ → Fmap f (R ⨂ Q) (r , q) (r′ , q′)
 
   fmap-to-Fmap : ∀ {A B : Set} (f : A → B) (R : Reg) (x : ⟦ R ⟧ A) (y : ⟦ R ⟧ B)
-                → y ≡ fmap R f x → Fmap f R x y
+                → fmap R f x ≡ y → Fmap f R x y
   fmap-to-Fmap f 0′ () y eq
   fmap-to-Fmap f 1′ tt tt eq = Fmap-1′
   fmap-to-Fmap f I x .(f x) refl  = Fmap-I

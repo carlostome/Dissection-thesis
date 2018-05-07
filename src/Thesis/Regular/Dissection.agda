@@ -56,7 +56,7 @@ module Thesis.Regular.Dissection where
   plug-to-Plug (R ⨂ Q) (inj₁ (dr , q)) x (r′ , q′) p with ×-injective p
   ... | eq , refl = Plug-⨂-inj₁ (plug-to-Plug R dr x r′ eq)
   plug-to-Plug (R ⨂ Q) (inj₂ (r , dq)) x (r′ , dq′) p with ×-injective p
-  ... | fm , eq = Plug-⨂-inj₂ (fmap-to-Fmap _ R r r′ (sym fm)) (plug-to-Plug Q dq x dq′ eq)
+  ... | fm , eq = Plug-⨂-inj₂ (fmap-to-Fmap _ R r r′ (fm)) (plug-to-Plug Q dq x dq′ eq)
 
   Plug-to-plug : ∀ {X Y : Set} {ex : Y → X} (R : Reg) (dr : ∇ R Y X) (x : X) → (o : ⟦ R ⟧ X)
                → Plug ex R dr x o → plug R ex dr x ≡ o
