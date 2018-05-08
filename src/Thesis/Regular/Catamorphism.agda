@@ -5,9 +5,10 @@ module Thesis.Regular.Catamorphism where
   open import Data.Sum
   open import Data.Unit
   open import Data.Empty
+  open import Relation.Binary.PropositionalEquality
 
   open import Thesis.Regular.Core
-    
+
   mapFold : ∀ {A : Set} (R Q : Reg) → (⟦ Q ⟧ A -> A) -> ⟦ R ⟧ (μ Q) -> ⟦ R ⟧ A
   mapFold 0′ Q alg ()
   mapFold 1′ Q alg tt    = tt
@@ -30,3 +31,16 @@ module Thesis.Regular.Catamorphism where
   
   data Catamorphism {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) : μ R → X → Set where
     Cata : ∀ {i o} → MapFold R alg R i o → Catamorphism R alg (In i) (alg o)
+
+  MapFold-to-mapFold : ∀ {X : Set} (Q : Reg) (alg : ⟦ Q ⟧ X → X) (R : Reg) (t : ⟦ R ⟧ (μ Q))
+                     → ∀ (x : ⟦ R ⟧ X) → MapFold Q alg R t x → mapFold R Q alg t ≡ x
+  MapFold-to-mapFold Q alg .1′ .tt .tt MapFold-1′ = refl
+  MapFold-to-mapFold Q alg .I .(In i) .(alg o) (MapFold-I {i} {o} p) = cong alg (MapFold-to-mapFold Q alg Q i o p)
+  MapFold-to-mapFold Q alg .(K _) t .t MapFold-K = refl
+  MapFold-to-mapFold Q alg .(_ ⨁ _) .(inj₁ _) .(inj₁ _) (MapFold-⨁₁ p)  = cong inj₁ (MapFold-to-mapFold Q alg _ _ _ p)
+  MapFold-to-mapFold Q alg .(_ ⨁ _) .(inj₂ _) .(inj₂ _) (MapFold-⨁₂ p)  = cong inj₂ (MapFold-to-mapFold Q alg _ _ _ p)
+  MapFold-to-mapFold Q alg .(_ ⨂ _) .(_ , _) .(_ , _) (MapFold-⨂ p₁ p₂) = cong₂ _,_ (MapFold-to-mapFold Q alg _ _ _ p₁)
+                                                                                      (MapFold-to-mapFold Q alg _ _ _ p₂)
+  Cata-to-cata : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R)
+               → ∀ (x : X) → Catamorphism R alg t x → cata R alg t ≡ x
+  Cata-to-cata R alg .(In i) .(alg o) (Cata {i} {o} x) = cong alg (MapFold-to-mapFold R alg R i o x)

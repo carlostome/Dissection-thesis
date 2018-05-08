@@ -180,8 +180,6 @@ module Thesis.Regular where
   lemma-first-compute {X} (R ⨂ Q) P {alg} (r , q) r′ () rx rm mf ceq | inj₁ x | Is is | inj₂ y | Is is′
   lemma-first-compute {X} (R ⨂ Q) P {alg} (r , q) r′ () rx rm mf ceq | inj₂ y | Is is
 
-
-
   lemma-right-compute : ∀ {X : Set} (R Q : Reg) {alg : ⟦ Q ⟧ X → X} 
            → (dr  : ∇ R (Computed Q X alg) (μ Q)) → (t : μ Q)
            → (y : X) → (eq : Catamorphism Q alg t y)
@@ -338,9 +336,54 @@ module Thesis.Regular where
   rec R alg t z (acc rs) | inj₁ x | Is is = rec R alg t x (rs x (step-Ix-Lt R alg t z x is))
   rec R alg t z (acc rs) | inj₂ y | Is is = y
 
-  catamorphism : {X : Set} → (R : Reg) → (alg : ⟦ R ⟧ X → X) → μ R → X
-  catamorphism {X} R alg x with load {X} R {alg} x [] | inspect (load {X} R {alg} x) []
-  catamorphism {X} R alg x | inj₁ ((l , isl) , s) | Is is
+  tail-rec-cata : {X : Set} → (R : Reg) → (alg : ⟦ R ⟧ X → X) → μ R → X
+  tail-rec-cata {X} R alg x with load {X} R {alg} x [] | inspect (load {X} R {alg} x) []
+  tail-rec-cata {X} R alg x | inj₁ ((l , isl) , s) | Is is
     = rec R alg x (((l , isl) , s) , (load-preserves R x [] ((l , isl) , s) is x Plug-[]))
                   (IxLt⇑-WF R X alg x (((l , isl) , s) , load-preserves R x [] ((l , isl) , s) is x Plug-[]))
-  catamorphism {X} R alg x | inj₂ y | Is _ = y
+  tail-rec-cata {X} R alg x | inj₂ y | Is _ = y
+
+
+  ------------------------------------------------------------------------------
+  --                           Correctness proof                              --
+
+  unload-correct : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X)
+                     (t : μ R) (x : X) (eq : Catamorphism R alg t x) (s : Stack R X alg)
+                 → ∀ (y : X) → unload R alg t x eq s ≡ inj₂ y
+                 → ∀ (e : μ R) → Plug-μ⇑ R t s e → Catamorphism R alg e y
+  unload-correct R alg t x eq [] .x refl .t Plug-[] = eq
+  unload-correct R alg t x eq (h ∷ hs) y ul e pl
+    with right R h (t ,, x ,, eq) | inspect (right R h) (t ,, x ,, eq)
+  unload-correct R alg t x eq (h ∷ hs) y ul e pl | inj₁ r | Is is
+    with compute R R r | inspect (compute R R) r
+  unload-correct {X} R alg t x eq (h ∷ hs) y ul e (Plug-∷ pl plμ) | inj₁ r | Is is | (rx , rm) , mFold | Is is′
+    with Plug-unicity pl (lemma-right-compute R R h t x eq r is rx rm mFold is′)
+  ... | refl = unload-correct R alg (In _) (alg rx) (Cata mFold) hs y ul e plμ
+  unload-correct R alg t x eq (h ∷ hs) y ul e pl | inj₂ (dr , mq) | Is _ = ⊥-elim (load-not-inj₂ R mq (dr ∷ hs) y ul)
+
+  step-Ix-correct : {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R) → (z : Zipper⇑ R X alg t)
+                  → ∀ (x : X) → step-Ix R alg t z ≡ inj₂ x → Catamorphism R alg t x
+  step-Ix-correct R alg t (l , eq) x seq with step R alg l | inspect (step R alg) l
+  step-Ix-correct R alg t (l , eq) x () | inj₁ _ | Is is
+  step-Ix-correct R alg t (((l , isl) , s) , eq) .y refl | inj₂ y | Is is
+    = unload-correct R alg (In (coerce l isl)) (alg l) (Cata (MapFold-init R R l isl)) s y is t eq
+ 
+  rec-correct : {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R) → (z : Zipper⇑ R X alg t) → (ac : Acc (IxLt⇑ R X alg t) z)
+              → Catamorphism R alg t (rec R alg t z ac) 
+  rec-correct R alg t z (acc rs) with step-Ix R alg t z | inspect (step-Ix R alg t) z
+  rec-correct R alg t z (acc rs)  | inj₁ z′ | Is is  = rec-correct R alg t z′ (rs z′ (step-Ix-Lt R alg t z z′ is))
+  rec-correct R alg t z (acc rs)  | inj₂ y  | Is is  = step-Ix-correct R alg t z y is
+
+  correctness : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R)
+              → Catamorphism R alg t (tail-rec-cata R alg t)
+  correctness {X} R alg t with load {X} R {alg} t [] | inspect (load {X} R {alg} t) []
+  correctness {X} R alg t | inj₁ ((l , isl) , s)  | Is is
+    = rec-correct R alg t (((l , isl) , s) , (load-preserves R t [] ((l , isl) , s) is t Plug-[]))
+                                             (IxLt⇑-WF R X alg t (((l , isl) , s) , load-preserves R t [] ((l , isl) , s) is t Plug-[]))
+  correctness {X} R alg t | inj₂ y  | Is is       = ⊥-elim (load-not-inj₂ R t [] y is)
+ 
+
+  -- the tail-recursive catamorphism is correct
+  correct : ∀ {X : Set} (R : Reg) (alg : ⟦ R ⟧ X → X) (t : μ R)
+          → cata R alg t ≡ tail-rec-cata R alg t
+  correct R alg t = Cata-to-cata R alg t (tail-rec-cata R alg t) (correctness R alg t)

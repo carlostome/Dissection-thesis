@@ -133,12 +133,12 @@ module Thesis.Dissection.Load where
       first-cps-not-inj₂ (R ⨂ Q) P (r , q) k f pr s x eq  =
         first-cps-not-inj₂ R P r (k ∘ inj₁ ∘ (_, q)) (first-cps-⨂-1 R Q P k f q) (Prop-first-cps-not-inj₂-⨂-1 {_} {R} {Q} {P} {_} {k} {q} {f} pr) s x eq
 
-    load-not-inj₂ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X}
-                   → (t : μ R) → (s : Stack R X alg)
-                   → (x : X)
-                   → load R t s ≡ inj₂ x
-                   → ⊥
-    load-not-inj₂ R (In t) s x leq = first-cps-not-inj₂ R R t id (λ x → inj₁ ∘ (_,_ x)) (λ _ _ _ ()) s x leq
+  load-not-inj₂ : ∀ {X : Set} (R : Reg) {alg : ⟦ R ⟧ X → X}
+                 → (t : μ R) → (s : Stack R X alg)
+                 → (x : X)
+                 → load R t s ≡ inj₂ x
+                 → ⊥
+  load-not-inj₂ R (In t) s x leq = first-cps-not-inj₂ R R t id (λ x → inj₁ ∘ (_,_ x)) (λ _ _ _ ()) s x leq
 
   ------------------------------------------------------------------------------
   --                  `load` preserves the tree structure                     --
