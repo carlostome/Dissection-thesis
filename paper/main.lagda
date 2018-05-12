@@ -10,6 +10,31 @@
 %% For final camera-ready submission, w/ required CCS and ACM Reference
 %\documentclass[sigplan,10pt]{acmart}\settopmatter{}
 
+% TODO notes
+\usepackage[draft]{todonotes}
+
+%% Agda stuff
+\usepackage[conor]{agda}
+\newcommand{\AK}{\AgdaKeyword}
+\newcommand{\AY}{\AgdaSymbol}
+\newcommand{\AN}{\AgdaNumber}
+\newcommand{\AS}{\AgdaSpace}
+\newcommand{\AB}{\AgdaBound}
+\newcommand{\AO}{\AgdaOperator}
+\newcommand{\AI}{\AgdaInductiveConstructor}
+\newcommand{\AC}{\AgdaCoinductiveConstructor}
+\newcommand{\AD}{\AgdaDatatype}
+\newcommand{\AF}{\AgdaFunction}
+\newcommand{\AM}{\AgdaModule}
+\newcommand{\AL}{\AgdaField}
+\newcommand{\AR}{\AgdaArgument}
+\newcommand{\AT}{\AgdaIndent}
+\newcommand{\ARR}{\AgdaRecord}
+\newcommand{\AP}{\AgdaPostulate}
+\newcommand{\APT}{\AgdaPrimitiveType}
+
+
+\newcommand{\nonterm}[1]{\hspace*{-0.1cm}\colorbox{orange!25}{#1}}
 
 %% Conference information
 %% Supplied to authors by publisher for camera-ready submission;
@@ -52,8 +77,6 @@
 %% '\documentclass' and topmatter commands above; see
 %% 'acmart-pacmpl-template.tex'.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 %% Some recommended packages.
 \usepackage{booktabs}   %% For formal tables:
                         %% http://ctan.org/pkg/booktabs
@@ -140,7 +163,19 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-Text of abstract \ldots.
+The functional programming paradigm advocates a style of programming based on
+  higher-order functions over inductively defined datatypes. A fold is the
+  prototypical example of such a function. However, its use for computation
+  comes at a price.  Folds for branching datatype , such as binary trees,
+  are by definition not tail recursive functions.
+
+McBride has proposed a method called
+  \emph{dissection}\cite{McBride:2008:CLM:1328438.1328474}, to transform a fold
+  into its tail-recursive counterpart. Nevertheless, it is not clear why the
+  resulting function terminates, nor it is clear that the transformation
+  preserves the fold's semantics. In this paper we fill the gap by providing a
+  fully machine checked proof of the construction using the proof assistant
+  Agda.
 \end{abstract}
 
 
@@ -178,10 +213,136 @@ Text of abstract \ldots.
 \maketitle
 
 
+%{
+%format Expr  = "\AD{Expr}"
+%format Val   = "\AD{Val}"
+%format Add   = "\AD{Add}"
+%format eval  = "\AF{eval}"
+%format tail-rec-eval  = "\AF{tail\text{-}rec\text{-}eval}"
+%format correct = "\AF{correct}"
+%format +     = "\AF{+}"
+%format Stack = "\AD{Stack}"
+%format Top   = "\AD{Top}"
+%format Left  = "\AD{Left}"
+%format Right = "\AD{Right}"
+%format load  = "\AF{load}"
+%format unload  = "\AF{unload}"
+
+%format plusOp = "\AF{\_+\_}"
+
+% Bound variables
+%format n     = "\AB{n}"
+%format e     = "\AB{e}"
+%format v     = "\AB{v}"
+%format v'     = "\AB{v''}"
+%format stk   = "\AB{stk}"
+%format e1    = "\AB{\ensuremath{e_1}}"
+%format e2    = "\AB{\ensuremath{e_2}}"
+
 \section{Introduction}
 
-Text of paper \ldots
+The type of binary trees is one of the most simple, yet widespread used,
+datastructures in functional programming.  Beyond its elegance and simplicity,
+in its definition lies an embarasing truth: a fold over a binary tree is not a
+tail recursive function. In order to understand the problem, let us introduce
+the type of binary trees.
 
+\begin{code}
+  data Expr : Set where
+    Val  :  Nat   -> Expr
+    Add  :  Expr  -> Expr -> Expr
+\end{code}
+
+We can write an evaluation function that maps binary trees to natural numbers if
+we were to interpret the constructor |Add| as addition.
+
+\begin{code}
+  eval : Expr -> Nat
+  eval (Val n)      = n
+  eval (Add e1 e2)  = eval e1 + eval e2
+\end{code}
+
+The function |eval| is compositional. The value of a node |Add| is computed by
+adding the values denoted by its subexpressions. And here lies the problem. The
+operator |\_+\_| needs both of its parameters to be evaluated before it can further
+reduce. If the expression we want to compute over is very big this poses a
+problem during runtime as the execution stack grows linearly with the size of
+the input.
+
+\todo[inline]{Maybe include something about Optimization through tco => get rid of
+intermediate steps}
+
+In order to solve the problem, we can make the execution stack explicit and
+write a function that performs tail recursion over it. The idea is that we can
+use a list to store both intemediate results and the subtress that still need to
+be processed. We can define such a stack as follows:
+
+\begin{code}
+  data Stack : Set where
+    Top    : Stack
+    Left   : Expr  -> Stack -> Stack
+    Right  : Nat   -> Stack -> Stack
+\end{code}
+
+Two mutually recursive functions that operate over the stack and tree are load
+and unload. The former traverses a tree finding the leftmost leaf while the
+latter dispathes over the stack by accumulating a partial result while looking
+for the next subtree.
+
+%{
+%format loadN   = "\nonterm{" load "}"
+%format unloadN = "\nonterm{" unload "}"
+\begin{code}
+  mutual
+    loadN : Expr -> Stack -> Nat
+    load (Val n)      stk = unloadN n stk
+    load (Add e1 e2)  stk = loadN e1 (Left e2 stk)
+
+    unloadN : Nat -> Stack -> Nat
+    unload v   Top             = v
+    unload v   (Right v' stk)  = unloadN (v' + v) stk
+    unload v   (Left r stk)    = loadN r (Right v stk)
+\end{code}
+%}
+
+A tail recursive version of |eval| can is defined by calling load with the empty
+stack.
+
+\begin{code}
+  tail-rec-eval : Expr → Nat
+  tail-rec-eval e = load e Top
+\end{code}
+
+The reader might have noticed that the names of unload and load are higlighted
+with yellow. This is because Agda's termination checker flags the pair of
+functions as possibly non-terminating. Indeed, the recursive calls are not
+always performed over syntactically smaller arguments. If we assumed that it
+terminates we still do not know if it is correct in the sense that for every
+input |tail-rec-eval| and |eval| agree on the output.
+
+\begin{code}
+  correct : forall (e : Expr) -> eval e == tail-rec-eval e
+  correct = ??
+\end{code}
+
+The main contribution of this paper is to show that we can both prove
+termination and correctness of the construction in Agda. Specifically we show
+how we can encode an ordering relation over stacks, show that the relation is
+well founded and use it to define a tail recursive fold by structural recursion.
+We discuss what are the main challenges that we have to overcome to convinde
+Agda's termination checker that indeed something `goes smaller`. Moreover, our
+approach allows us to get correctness almost for free.
+
+McBride's insight is that we can calculate the type of stacks from the generic
+description of a datatype by using Leibniz rules for derivatives. In later
+sections of the paper, we discuss how to generalize our results to regular tree
+datatypes and by doing so we show that McBride's intuition that the construction
+is correct was true.
+
+%}
+\section{Basic idea}
+
+\section{Conclusion and future work}
 
 %% Acknowledgments
 \begin{acks}                            %% acks environment is optional
@@ -202,7 +363,8 @@ Text of paper \ldots
 
 
 %% Bibliography
-%\bibliography{bibfile}
+\bibliography{main}
+
 
 
 %% Appendix

@@ -56,6 +56,8 @@ main = shakeArgs shakeOptions $ do
   "paper/main" <.> pdf %> \out -> do
     putNormal "Building paper"
     let files = [ "paper" </> file <.> tex | file <- paper_lagda_files]
+        bib   = "paper/main.bib"
         fmt   = "paper/paper.fmt"
-    need (fmt : files)
-    cmd_ "latexmk -pdf -cd -xelatex paper/main.tex"
+        sty   = "paper/agda.sty"
+    need (bib : fmt : sty : files)
+    cmd_ "latexmk -pdf -cd paper/main.tex"
