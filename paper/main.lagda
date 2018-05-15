@@ -35,7 +35,7 @@
 
 
 \newcommand{\nonterm}[1]{\hspace*{-0.1cm}\colorbox{orange!25}{#1}}
-
+\newcommand{\hole}[1]{\colorbox{yellow!50}{\ensuremath{\bigbox_{#1}}}}
 %% Conference information
 %% Supplied to authors by publisher for camera-ready submission;
 %% use defaults for review submission.
@@ -87,6 +87,12 @@
 %include lhs2TeX.sty
 %include polycode.fmt
 %include paper.fmt
+
+% fontsize of code snippets
+\renewcommand\hscodestyle{%
+   \setlength\leftskip{0.25cm}%
+   \footnotesize
+}
 
 \begin{document}
 
@@ -163,11 +169,11 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-The functional programming paradigm advocates a style of programming based on
-  higher-order functions over inductively defined datatypes. A fold is the
-  prototypical example of such a function. However, its use for computation
-  comes at a price.  Folds for branching datatype , such as binary trees,
-  are by definition not tail recursive functions.
+The functional programming paradigm encourages a style of programming based on
+  the use of higher-order functions over inductively defined datatypes. A fold is
+  the prototypical example of such a function. However, its use for computation
+  comes at a price.  Folds for branching datatypes, such as binary trees, are by
+  definition not tail recursive functions.
 
 McBride has proposed a method called
   \emph{dissection}\cite{McBride:2008:CLM:1328438.1328474}, to transform a fold
@@ -215,29 +221,63 @@ McBride has proposed a method called
 
 %{
 %format Expr  = "\AD{Expr}"
-%format Val   = "\AD{Val}"
-%format Add   = "\AD{Add}"
+%format Acc  = "\AD{Acc}"
+%format Val   = "\AI{Val}"
+%format Add   = "\AI{Add}"
+%format acc   = "\AI{acc}"
 %format eval  = "\AF{eval}"
 %format tail-rec-eval  = "\AF{tail\text{-}rec\text{-}eval}"
 %format correct = "\AF{correct}"
 %format +     = "\AF{+}"
 %format Stack = "\AD{Stack}"
-%format Top   = "\AD{Top}"
-%format Left  = "\AD{Left}"
-%format Right = "\AD{Right}"
+%format Top   = "\AI{Top}"
+%format Left  = "\AI{Left}"
+%format Right = "\AI{Right}"
 %format load  = "\AF{load}"
-%format unload  = "\AF{unload}"
-
+%format Well-founded  = "\AF{Well\text{-}founded}"
+%format unload = "\AF{unload}"
+%format reverse = "\AF{reverse}"
+%format rec    = "\AF{rec}"
+%format plugup   = "\AF{plug\ensuremath{\Uparrow}}"
+%format Zipper = "\AD{Zipper}"
+%format Zipperup = "\AD{Zipper\ensuremath{\Uparrow}}"
+%format plugdown   = "\AF{plug\ensuremath{\Downarrow}}"
+%format Zipperdown = "\AD{Zipper\ensuremath{\Downarrow}}"
+%format plugZup = "\AF{plugZ\ensuremath{\Uparrow}}"
+%format plugZdown = "\AF{plugZ\ensuremath{\Downarrow}}"
+%format ??    = "\hole{0}"
+%format ??1    = "\hole{1}"
+%format ??2    = "\hole{2}"
+%format ??3    = "\hole{3}"
+%format plugdown-to-plugup  = plugdown "\AF{\text{-}to\text{-}}"  plugup
+%format plugup-to-plugdown  = plugup "\text{-}to\text{-}"  plugdown
 %format plusOp = "\AF{\_+\_}"
+%format ltOp = "\AD{\_<\_}"
+%format <-Right = "\AI{<\text{-}Right}"
+%format <-Left = "\AI{<\text{-}Left}"
+%format <-Right-Left = "\AI{<\text{-}Right\text{-}Left}"
+%format < = "\AD{<}"
+%format dotted = "\AS{.}\hspace*{-0.1cm}"
 
 % Bound variables
 %format n     = "\AB{n}"
+%format r     = "\AB{r}"
+%format z     = "\AB{z}"
+%format z'     = "\AB{z''}"
 %format e     = "\AB{e}"
 %format v     = "\AB{v}"
 %format v'     = "\AB{v''}"
 %format stk   = "\AB{stk}"
 %format e1    = "\AB{\ensuremath{e_1}}"
 %format e2    = "\AB{\ensuremath{e_2}}"
+%format t    = "\AB{\ensuremath{t}}"
+%format eq    = "\AB{\ensuremath{eq}}"
+%format t1    = "\AB{\ensuremath{t_1}}"
+%format t2    = "\AB{\ensuremath{t_2}}"
+%format s1    = "\AB{\ensuremath{s_1}}"
+%format s2    = "\AB{\ensuremath{s_2}}"
+%format t1'    = "\AB{\ensuremath{t_1}''}"
+%format t2'    = "\AB{\ensuremath{t_2}''}"
 
 \section{Introduction}
 
@@ -264,7 +304,7 @@ we were to interpret the constructor |Add| as addition.
 
 The function |eval| is compositional. The value of a node |Add| is computed by
 adding the values denoted by its subexpressions. And here lies the problem. The
-operator |\_+\_| needs both of its parameters to be evaluated before it can further
+operator |plusOp| needs both of its parameters to be evaluated before it can further
 reduce. If the expression we want to compute over is very big this poses a
 problem during runtime as the execution stack grows linearly with the size of
 the input.
@@ -314,7 +354,7 @@ stack.
 \end{code}
 
 The reader might have noticed that the names of unload and load are higlighted
-with yellow. This is because Agda's termination checker flags the pair of
+with \nonterm{orange}. This is because Agda's termination checker flags the pair of
 functions as possibly non-terminating. Indeed, the recursive calls are not
 always performed over syntactically smaller arguments. If we assumed that it
 terminates we still do not know if it is correct in the sense that for every
@@ -339,9 +379,290 @@ sections of the paper, we discuss how to generalize our results to regular tree
 datatypes and by doing so we show that McBride's intuition that the construction
 is correct was true.
 
-%}
 \section{Basic idea}
 
+The functions |load| and |unload| are marked as non terminating because they are
+not defined by structural recursion over their arguments. In particular, the
+stack passed as an argument to the recursive call of |load| in the definition of
+|unload| is structurally equal in size as the input stack.
+
+Intuitively, |load| and |unload| fold the tree by traversing it from its
+leftmost leaf to its rightmost using the stack to store both partial results and
+the remaining subtrees to fold them as neccesary. The problem arises because the
+stack is simply typed and any information about how the subtrees kept in the
+stack relate to each other and to the original tree is lost once a subtree is
+inserted onto the stack.
+
+However, it is clear that virtually every node (either leaf or not) from the
+original tree is visited at most twice during the computation. First when the
+function |load| decomposes it looking for its leftmost leaf and a second time
+when |unload| is accumulating over the stack searching for another subtree to
+continue. This process is depicted in figure 1.
+
+\begin{figure}[h]
+  \includegraphics[scale=0.25]{figure1}
+\end{figure}
+
+We can argue that because there are finitely many nodes on a tree, |load| and
+|unload| neccesarily terminate. The question is now, How can we encode this
+information in such a way that Agda understand that the fold terminates?
+
+The idea is that |load| and |unload| should not fold  the full input tree in one
+go, but instead they will perform one step of the computation at a time.
+Morover, by defining them by structural recursion over their arguments now they
+are classified as terminating by the termination checker.
+
+\begin{code}
+  load : Expr -> Stack -> Nat * Stack
+  load (Val n)      stk = (n , stk)
+  load (Add e1 e2)  stk = load e1 (Left e2 stk)
+
+  unload : Nat -> Stack -> (Nat * Stack) U+ Nat
+  unload v   Top             = inj2 v
+  unload v   (Right v' stk)  = unload (v' + v) stk
+  unload v   (Left r stk)    = inj1 (load r (Right v stk))
+\end{code}
+
+For example, if we take the same tree in figure 1, after |load| finds the
+initial leftmost leaf we can apply one step of the new |unload| that will end up
+in the next leaf to the right.
+
+
+\begin{figure}[h]
+  \includegraphics[scale=0.25]{figure2}
+\end{figure}
+
+A tail recursive fold corrensponds to repeatedly applying the function |unload|
+until we find a |inj2| whose value is the result of folding the tree.
+
+%{
+%format nrec   = "\nonterm{" rec "}"
+\begin{code}
+  tail-rec-eval : Expr -> Nat
+  tail-rec-eval e = rec (load e Top)
+    where
+      nrec : (Nat * Stack) -> Nat
+      rec (n , stk) with unload n stk
+      ... | inj1 z' = nrec z'
+      ... | inj2 r = r
+\end{code}
+%}
+
+The function |tail-rec-eval| still does not pass the termination checker, The
+variable |z'| is not structurally smaller than |(n , stk)|. However, now we can
+refine it by using well founded recursion to make it structurally recursive by
+performing the recursion over the accessibility predicate instead of the pair
+|Nat * Stack|.
+
+\begin{code}
+  tail-rec-eval : Expr -> Nat
+  tail-rec-eval e = rec (load e Top) ??1
+    where
+      rec : (z : Nat * Stack) -> Acc ltOp z -> Nat
+      rec (n , stk) (acc rs) with unload n stk
+      ... | inj1 z' = rec z' (rs ??2)
+      ... | inj2 r = r
+\end{code}
+
+For the function above to work, we need to find a suitable definition for the
+relation |ltOp| over pairs of |Nat * Stack|, prove that applying |unload|
+results in an smaller element by the relation and finally show that the relation
+is |Well-founded|, so the call to |rec| can be made in the first place. Before
+any of that, we need to revisit Huet's notion of \emph{Zipper} and show how it
+relates to what we are trying to achieve.
+
+\subsection{Zippers up, Zippers down}
+
+Huet introduced \emph{Zippers} to allow a tree datastructure to be efficiently
+updated in a purely functional way. The idea is that any location on a tree,
+either an internal node or a leaf, can be represented by a path to the root and
+the subtree that hangs downwards.
+
+The pair |Nat * Stack| used to compute the tail recursive fold is nothing more
+that a restricted version of the \emph{Zipper} where the locations can only be
+leaves of the tree.
+
+\begin{code}
+  Zipper : Set
+  Zipper = Nat * Stack
+\end{code}
+
+From a |Zipper| we have to be able to reconstruct the original |Expr| which
+will be neccesary later on for the proof that the relation is well founded. For
+this matter, we have to enhance the type of stacks to store not only the partial
+results but also the expressions that where consumed in order to produce them.
+
+\begin{code}
+  Stack : Set
+  Stack = List (Expr U+  (Sigma Nat lambda n ->
+                          Sigma Expr lambda e -> eval e == n))
+  pattern Left t        = inj1 t
+  pattern Right n t eq  = inj2 (n , t , eq)
+\end{code}
+
+The original expression for which a |Nat * Stack| represents a position can be
+reconstructed by forgeting that some part has already been evaluated.
+
+\begin{code}
+  plugup : Expr -> Stack -> Expr
+  plugup e []                      = e
+  plugup e (Left t        :: stk)  = plugup (Add e t) stk
+  plugup e (Right n t eq  :: stk)  = plugup (Add t e) stk
+
+  plugZup : (Nat * Stack) -> Expr
+  plugZup (n , stk) = plugup (Val n) stk
+\end{code}
+
+Our goal is to impose an ordering relation over elements of |Zipper| such that
+for any input the |unload| function delivers a |Zipper| that is smaller by the
+relation when it does not terminate with a value. Because the folding happens
+from left to right, we want the relation to order the leaves of the tree
+accordingly, so the leftmost leaf is the greatest element and the rightmost the
+smallest. Using the example from before, we number the leaves as follows:
+
+\begin{figure}[h]
+  \includegraphics[scale=0.25, angle=90]{figure3}
+\end{figure}
+
+Using the |Stack| as a path from the leaf to the root of the tree is difficult
+if not impossible to encode a smaller than relation that does not relate any two
+elements. Such relation has to be defined by induction on the |Stack| part of the
+|Zipper|. But for any two given stacks a priori we cannot know how many layers
+we have to peel in order to reach a case where one of them is obviously smaller
+that the other.
+
+We can approach the problem by understanding the |Stack| not as a path from the
+leaf up to the root but from the root down to the leaf. This change of
+perspective is realised with a new plug function that does the opposite of
+|plugup|.
+
+\begin{code}
+  plugdown : Expr -> Stack -> Expr
+  plugdown e []                     = e
+  plugdown e (Left t       :: stk)  = Add (plugdown e stk) t
+  plugdown e (Right n _ _  :: stk)  = Add t (plugdown e stk)
+
+  plugZdown : (Nat * Stack) -> Expr
+  plugZdown (n , stk) = plugdown (Val n) stk
+\end{code}
+
+It is clear that both views of the |Zipper| are related. Indeed, to transport
+from one to the other we only have to reverse the stack. We show the equvalence
+with the following lemma\footnote{The other way around only requires to use
+BLABLA of |reverse|}:
+
+\begin{code}
+  plugdown-to-plugup  : forall (e : Expr) (stk : Stack)
+                      → plugdown e stk ==  plugup e (reverse stk)
+\end{code}
+
+
+Why do we need this equivalence? The bottom up view of a |Zipper| is suitable
+for defining the tail recursive fold, alas to prove termination we have to use
+use the top down view to describe the relation we need.
+
+\subsection{A relation on Zipper}
+
+The relation over elements of |Zipper| is defined by induction on the |Stack|.
+If we start in the root of the tree, we can navigate downwards both stacks in
+parallel removing their common prefix. Once we find an |Add| where they
+disagree then whether the first |Zipper| is located in the left or right
+subtree fully determines if its bigger or smaller than the other |Zipper|.
+The following type accounts for this explanation:
+
+\begin{code}
+  data ltOp : Zipper -> Zipper -> Set where
+    <-Right  : (t1 , s1) < (t2 , s2)
+             ->  (t1 , Right l n eq :: s1) < (t2 , Right l n eq :: s2)
+    <-Left   : (t1 , s1) < (t2 , s2)
+             ->  (t1 , Left r :: s1)       < (t2 , Left r :: s2)
+    <-Right-Left  :   (t1' == plugdown (Tip t2) s2)
+                  ->  (t2' == plugdown (Tip t1) s1)
+                  ->  (t1 , Right n t1' eq :: s1) < (t2 , Left t2' :: s2)
+\end{code}
+
+Having the relation defined, we turn our focus to prove that it is well founded.
+This is an important step towards filling the holes that were left open in the
+function |tail-rec-eval|.
+
+A relation is well founded iff all the descending chains starting from an
+arbitrary element are finite. In a theorem prover such as Agda, an alternative
+definition of well foundedness is used which is based on an accesibility
+predicate.
+
+We can try to prove that the relation is well founded by using an auxiliary
+function that allows us to pattern match on the smaller than proof. When doing
+so, the inputs are refined to concrete constructors. Normally the proof either
+makes use of recursion over the proof or over the input, but in the case of the
+|<-Right-Left| constructor we do not have either option, because the smaller
+element is not structurally related to the bigger and the proof does not have
+any recursive structure to use.
+
+\begin{code}
+ <-WF : Well-founded ltOp
+ <-WF x = acc (aux x)
+    where
+      aux : ∀ (x : Zipper)
+          -> ∀ (y : Zipper) -> y < x -> Acc ltOp y
+      aux dotted(t2 , Left t1' :: s2) dotted(t1 , Right n t2' eq :: s1) (<-Right-Left eq1 eq2) = {!!}
+      aux ...
+\end{code}
+
+The proof fails because in |aux| both Zippers |x| and |y| might very well be
+locations of leaves belonging to different trees as far we know. Thanks to the 
+use of dependent types, the property that a Zipper represents a location inside a 
+concrete tree can be made explicit at the type level.
+
+\begin{code}
+  data Zipperdown (e : Expr) : Set where
+    \_,\_ : (z : Zipper) -> plugZdown z == e -> Zipperdown e
+\end{code}
+
+We write a relation that is enforced to only relate Zippers beloging to the same |Expr| by
+indexing the |Zipperdown|
+
+\begin{code}
+  data IxltOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
+    ...
+\end{code}
+
+The concrete details of the relation follow very much the one we gave before
+with the exception that every case has attached a new piece of information
+specifying the concrete |Expr| to which both Zippers stand as locations.
+
+The indexed relation is now suitable for proving well foundedness because by
+introducing the equalities we are able to show how the structure of the two
+input values are related so it is straightforward to use recursion. In concrete,
+the case we explained before now can be proven by learning that |(t2 , s2)|
+stands for a position on the left subtree, and |(t1 , s1)| on the right  of a
+common|Add| node.
+
+% \begin{code}
+%  <-WF : forall (e : Expr) Well-founded ltOp
+%  <-WF x = acc (aux x)
+%     where
+%       aux : ∀ (x : Zipper)
+%           -> ∀ (y : Zipper) -> y < x -> Acc ltOp y
+%       aux dotted(t2 , Left t1' :: s2) dotted(t1 , Right n t2' eq :: s1) (<-Right-Left eq1 eq2) = {!!}
+%       aux ...
+% \end{code}
+
+\todo[inline]{STOP HERE}
+
+\subsection{Termination}
+\subsection{Correctness}
+\section{Regular universe}
+  + Universe interpretation generic programming
+  + Fixpoint
+  + Example??
+\section{Dissection}
+  + Dissection in agda
+  + Plug
+  + Zipper up Zipper down
+  + Make clear the separation between recursion in the functor level and
+  the fix level
+  + relation on dissection?
+  
 \section{Conclusion and future work}
 
 %% Acknowledgments
