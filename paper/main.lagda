@@ -609,8 +609,8 @@ any recursive structure to use.
 \end{code}
 
 The proof fails because in |aux| both Zippers |x| and |y| might very well be
-locations of leaves belonging to different trees as far we know. Thanks to the 
-use of dependent types, the property that a Zipper represents a location inside a 
+locations of leaves belonging to different trees as far we know. Thanks to the
+use of dependent types, the property that a Zipper represents a position inside a
 concrete tree can be made explicit at the type level.
 
 \begin{code}
@@ -618,39 +618,75 @@ concrete tree can be made explicit at the type level.
     \_,\_ : (z : Zipper) -> plugZdown z == e -> Zipperdown e
 \end{code}
 
-We write a relation that is enforced to only relate Zippers beloging to the same |Expr| by
-indexing the |Zipperdown|
+We write a relation that is enforced to only relate Zippers beloging to the same
+|Expr| by using a common value of that type as an of |Zipperdown|
 
 \begin{code}
   data IxltOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
     ...
 \end{code}
 
-The concrete details of the relation follow very much the one we gave before
+The concrete details of the relation follow very much the one we gave before,
 with the exception that every case has attached a new piece of information
-specifying the concrete |Expr| to which both Zippers stand as locations.
+specifying the concrete |Expr| obtained by plugging both Zippers.
 
-The indexed relation is now suitable for proving well foundedness because by
-introducing the equalities we are able to show how the structure of the two
-input values are related so it is straightforward to use recursion. In concrete,
-the case we explained before now can be proven by learning that |(t2 , s2)|
-stands for a position on the left subtree, and |(t1 , s1)| on the right  of a
-common|Add| node.
+The new version of the relation is suitable for proving well foundedness because
+we can pattern match on the equality included in the |Zipperdown| type to show how 
+the overall structure decreases. This allows us to use the recursion we need to
+complete the proof.
+In particular, the case we were not able to prove before, now can be proven by learning that
+|(t2 , s2)| is a position on the left subtree while |(t1 , s1)| is on the
+right subtree of a common |Add| node.
 
-% \begin{code}
-%  <-WF : forall (e : Expr) Well-founded ltOp
-%  <-WF x = acc (aux x)
-%     where
-%       aux : ∀ (x : Zipper)
-%           -> ∀ (y : Zipper) -> y < x -> Acc ltOp y
-%       aux dotted(t2 , Left t1' :: s2) dotted(t1 , Right n t2' eq :: s1) (<-Right-Left eq1 eq2) = {!!}
-%       aux ...
-% \end{code}
+\begin{code}
+  <-WF : forall e -> Well-founded (IxltOp e)
+  <-WF x = acc (aux e x)
+    where
+      aux : forall (e : Expr) -> forall (x : Zipperdown e)
+          -> forall (y : Zipperdown e) -> y < x -> Acc (IxltOp e) y
+      aux dotted(Add (plug )) dotted((t2 , Left t1' :: s2)) , refl) dotted((t1 , Right n t2' eq :: s1), eq2) 
+          (<-Right-Left eq1 eq2) = {!!}
+      aux ...
+\end{code}
+
+We have now the proof of well foundedness for the relation defined over top-down Zippers. We also have proven that
+there is an equivalence between top-down and bottom-up Zippers. We exploit it by using the top-down encoding for
+the termination proof while we use the bottom-up to actually compute in a tail recursive manner.
+
+Thus we prove a lemma stating that if we apply unload to a bottom-up Zipper and this results in another
+Zipper, then the result is smaller by the relation than the input. However, to show it we have to 
+convert them to the top down representation. In overall, what we have is the following lemma:
+
+\begin{code}
+unload-ltop : forall n eq s t' s' -> unload (Tip n) (TipA n) eq s == inj₁ (t' , s') 
+            -> (t' , reverse s') ltOp (n , reverse s) 
+\end{code}
+
+\subsection{Correctness}
+
+Indexing the \emph{Zipper} with an expression allow us to prove correcness of
+the transformation easily. The expression during the fold does not change, thus
+in every step of the computation the result of its evaluation remains constant.
+
+By using induction over the definition of unload, we can prove that when |unload| 
+delivers a value, it corresponds to the result of evaluating of the input expression.
+In order to do so, we enrich the type of |unload| to include the expression that has already
+been folded and we have its result. 
+
+\begin{code}
+  unload : (e : Expr) -> (n : Nat) -> eval e == n -> Stack -> (Nat * Stack) U+ Nat
+
+  unload-correct  : forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack) (x : Nat)
+                  -> unload e n eq s ≡ inj2 x -> eval e == x
+\end{code}
+
+Proving correctness of the whole transformation amounts to show that it holds for the
+auxiliary recursor that we use to write the function |tail-rec-eval|. We use well founded 
+recursion to do structural recursion over the accesibility predicate and use the lemma 
+|unload-correct| in the base case.
 
 \todo[inline]{STOP HERE}
 
-\subsection{Termination}
-\subsection{Correctness}
 \section{Regular universe}
   + Universe interpretation generic programming
   + Fixpoint
