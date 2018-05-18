@@ -12,7 +12,7 @@
 
 \begin{document}
 
-\title{Verified and terminating dissections}
+\title{Dissection: verified and terminating}
 
 \author{Carlos Tom\'e Corti\~nas}
 \affiliation{
@@ -32,132 +32,64 @@
 
 
 \begin{abstract}
-% The functional programming paradigm encourages a style of programming based on
-%   the use of higher-order functions over inductively defined datatypes. A fold is
-%   the prototypical example of such a function. However, its use for computation
-%   comes at a price.  Folds for branching datatypes, such as binary trees, are by
-%   definition not tail recursive functions.
-
-%   McBride has proposed a method called
-%   \emph{dissection}\cite{McBride:2008:CLM:1328438.1328474}, to
-%   transform a fold into its tail-recursive counterpart. Nevertheless,
-%   it is not clear why the resulting function terminates, nor it is
-%   clear that the transformation preserves the fold's semantics. In
-%   this paper we fill the gap by providing a fully machine checked
-%   proof of the construction using the proof assistant Agda.
+  Lorem ipsum sic dolor amet.  Lorem ipsum sic dolor amet.  Lorem
+  ipsum sic dolor amet.  Lorem ipsum sic dolor amet.  Lorem ipsum sic
+  dolor amet.  Lorem ipsum sic dolor amet.  Lorem ipsum sic dolor
+  amet.
   \todo{Write abstract}
 \end{abstract}
 
-
 \include{ccs}
 
-%% Keywords
-%% comma separated list
 \keywords{datatype generic programming, catamorphisms, dissection,
-  dependent types, Agda, \todo{Keywords?}}
-
+  dependent types, Agda, well-founded recursion \todo{Keywords?}}
 
 \maketitle
 
-
-%{
-%format Expr  = "\AD{Expr}"
-%format Acc  = "\AD{Acc}"
-%format Val   = "\AI{Val}"
-%format Add   = "\AI{Add}"
-%format acc   = "\AI{acc}"
-%format eval  = "\AF{eval}"
-%format tail-rec-eval  = "\AF{tail\text{-}rec\text{-}eval}"
-%format correct = "\AF{correct}"
-%format +     = "\AF{+}"
-%format Stack = "\AD{Stack}"
-%format Top   = "\AI{Top}"
-%format Left  = "\AI{Left}"
-%format Right = "\AI{Right}"
-%format load  = "\AF{load}"
-%format Well-founded  = "\AF{Well\text{-}founded}"
-%format unload = "\AF{unload}"
-%format reverse = "\AF{reverse}"
-%format rec    = "\AF{rec}"
-%format plugup   = "\AF{plug\ensuremath{\Uparrow}}"
-%format Zipper = "\AD{Zipper}"
-%format Zipperup = "\AD{Zipper\ensuremath{\Uparrow}}"
-%format plugdown   = "\AF{plug\ensuremath{\Downarrow}}"
-%format Zipperdown = "\AD{Zipper\ensuremath{\Downarrow}}"
-%format plugZup = "\AF{plugZ\ensuremath{\Uparrow}}"
-%format plugZdown = "\AF{plugZ\ensuremath{\Downarrow}}"
-%format ??    = "\hole{0}"
-%format ??1    = "\hole{1}"
-%format ??2    = "\hole{2}"
-%format ??3    = "\hole{3}"
-%format plugdown-to-plugup  = plugdown "\AF{\text{-}to\text{-}}"  plugup
-%format plugup-to-plugdown  = plugup "\text{-}to\text{-}"  plugdown
-%format plusOp = "\AF{\_+\_}"
-%format ltOp = "\AD{\_<\_}"
-%format <-Right = "\AI{<\text{-}Right}"
-%format <-Left = "\AI{<\text{-}Left}"
-%format <-Right-Left = "\AI{<\text{-}Right\text{-}Left}"
-%format < = "\AD{<}"
-%format dotted = "\AS{.}\hspace*{-0.1cm}"
-
-% Bound variables
-%format n     = "\AB{n}"
-%format r     = "\AB{r}"
-%format z     = "\AB{z}"
-%format z'     = "\AB{z''}"
-%format e     = "\AB{e}"
-%format v     = "\AB{v}"
-%format v'     = "\AB{v''}"
-%format stk   = "\AB{stk}"
-%format e1    = "\AB{\ensuremath{e_1}}"
-%format e2    = "\AB{\ensuremath{e_2}}"
-%format t    = "\AB{\ensuremath{t}}"
-%format eq    = "\AB{\ensuremath{eq}}"
-%format t1    = "\AB{\ensuremath{t_1}}"
-%format t2    = "\AB{\ensuremath{t_2}}"
-%format s1    = "\AB{\ensuremath{s_1}}"
-%format s2    = "\AB{\ensuremath{s_2}}"
-%format t1'    = "\AB{\ensuremath{t_1}''}"
-%format t2'    = "\AB{\ensuremath{t_2}''}"
+%include main.fmt
 
 \section{Introduction}
 
-The type of binary trees is one of the most simple, yet widespread
-used, datastructures in functional programming.  Beyond its elegance
-and simplicity, in its definition lies an embarasing truth: a fold
-over a binary tree is not a tail recursive function. In order to
-understand the problem, let us introduce the type of binary trees.
+Folds, or \emph{catamorphisms}, are a pervasive
+programming pattern. A fold generalizes many simple traversals over an
+algebraic data type. Functions implemented by means of a fold are
+\emph{compositional} and structurally recursive. Consider, for
+instance, the following expression data type, written in the
+dependently typed programming language Agda\todo{citation}:
 
 \begin{code}
   data Expr : Set where
     Val  :  Nat   -> Expr
     Add  :  Expr  -> Expr -> Expr
 \end{code}
-
-We can write an evaluation function that maps binary trees to natural
-numbers if we were to interpret the constructor |Add| as addition.
-
+%
+We can write a write a simple evaluator, mapping expressions to
+natural numbers, as follows:
+%
 \begin{code}
   eval : Expr -> Nat
   eval (Val n)      = n
   eval (Add e1 e2)  = eval e1 + eval e2
 \end{code}
+%
+In the case for |Add e1 e2|, the |eval| function makes two recursive
+calls and sums their results. Such a function can be implemented by a
+fold, passing the addition and identity functions as the argument
+algebra.
 
-The function |eval| is compositional. The value of a node |Add| is
-computed by adding the values denoted by its subexpressions. And here
-lies the problem. The operator |plusOp| needs both of its parameters
-to be evaluated before it can further reduce. If the expression we
-want to compute over is very big this poses a problem during runtime
-as the execution stack grows linearly with the size of the input.
+Unfortunately, all in the garden is not rosy. The operator |plusOp|
+needs both of its parameters to be fully evaluated before it can
+reduce further. When evaluating large expressions, the size of the
+stack used during execution grows linearly with the size of the input,
+potentially leading to a stack overflow, causing the execution of the
+program to halt unexpectedly.
 
-\todo{Maybe include something about Optimization through tco => get
-  rid of intermediate steps}
-
-In order to solve the problem, we can make the execution stack
-explicit and write a function that performs tail recursion over
-it. The idea is that we can use a list to store both intemediate
-results and the subtress that still need to be processed. We can
-define such a stack as follows:
+To address this problem, we can rewrite the evaluator to be
+\emph{tail recursive}. Modern compilers typically map tail recursive
+functions to machine code that runs in constant memory. To write such
+a tail recursive function, we need to introduce an explicit stack
+storing both intemediate results and the subtrees that have not yet
+been evaluated. We can define such a stack as follows:
 
 \begin{code}
   data Stack : Set where
@@ -166,10 +98,11 @@ define such a stack as follows:
     Right  : Nat   -> Stack -> Stack
 \end{code}
 
-Two mutually recursive functions that operate over the stack and tree
-are load and unload. The former traverses a tree finding the leftmost
-leaf while the latter dispathes over the stack by accumulating a
-partial result while looking for the next subtree.
+We can define a tail-recursive evaluation function by means of a
+pair of mutually recursive functions |load| and |unload|. The |load|
+function traverses the input expression, pushing subtrees on the
+stack; the |unload| function unloads the stack, while accumulating a
+(partial) result.
 
 %{
 %format loadN   = "\nonterm{" load "}"
@@ -187,45 +120,47 @@ partial result while looking for the next subtree.
 \end{code}
 %}
 
-A tail recursive version of |eval| can is defined by calling load with
-the empty stack.
+We can now define a tail recursive version of |eval| by
+calling |load| with an initially empty stack:
 
 \begin{code}
   tail-rec-eval : Expr → Nat
   tail-rec-eval e = load e Top
 \end{code}
 
-The reader might have noticed that the names of unload and load are
-higlighted with \nonterm{orange}. This is because Agda's termination
-checker flags the pair of functions as possibly
-non-terminating. Indeed, the recursive calls are not always performed
-over syntactically smaller arguments. If we assumed that it terminates
-we still do not know if it is correct in the sense that for every
-input |tail-rec-eval| and |eval| agree on the output.
+Implementing this tail recursive evaluator has come at a price: Agda's
+termination checker flags the |load| and |unload| functions as
+potentially non-terminating by highlighting them
+\nonterm{orange}. Indeed, in the very last clause of the |unload|
+function a recursive call is made to arguments that are not
+syntactically smaller. Furthermore, it is not clear at all that the
+tail recursive evaluator produces the same result as our original
+one. It is precisely these questions that this paper tackles by
+means of the following novel contributions:
 
-\begin{code}
-  correct : forall (e : Expr) -> eval e == tail-rec-eval e
-  correct = ??
-\end{code}
+\begin{itemize}
+\item We give a verified proof of termination of |tail-rec-eval| using
+  a carefully chosen \emph{well-founded relation}
+  (Section~\ref{sec:basics}). After redefining |tail-rec-eval| using
+  this relation, we prove that it agrees with the |eval| function on
+  all inputs.
+\item We generalize this construction, inspired by McBride's
+  generalization of Danvy's work on abstract machines. To do so, we
+  define a universe of algebraic data types and a generic fold
+  (Section~\ref{sec:universe}). Subsequently we show how to turn any
+  structurally recursive function defined using a fold into a tail
+  recursive variant (Section~\ref{sec:dissection}). 
+\item Finally, we sketch how the proofs of termination and semantics
+  preservation from our example are generalized to the generic fold
+  over arbitrary types in our universe (Section~\ref{correctness}).
+\end{itemize}
 
-The main contribution of this paper is to show that we can both prove
-termination and correctness of the construction in Agda. Specifically
-we show how we can encode an ordering relation over stacks, show that
-the relation is well founded and use it to define a tail recursive
-fold by structural recursion.  We discuss what are the main challenges
-that we have to overcome to convinde Agda's termination checker that
-indeed something `goes smaller`. Moreover, our approach allows us to
-get correctness almost for free.
-
-McBride's insight is that we can calculate the type of stacks from the
-generic description of a datatype by using Leibniz rules for
-derivatives. In later sections of the paper, we discuss how to
-generalize our results to regular tree datatypes and by doing so we
-show that McBride's intuition that the construction is correct was
-true.
+All the constructions and proofs presented in this paper have been
+implemented in Agda\todo{citation}. The corresponding code is freely
+available online.\footnote{\todo{url}}
 
 \section{Basic idea}
-
+\label{sec:basics}
 The functions |load| and |unload| are marked as non terminating
 because they are not defined by structural recursion over their
 arguments. In particular, the stack passed as an argument to the
@@ -531,7 +466,7 @@ unload-ltop : forall n eq s t' s' -> unload (Tip n) (TipA n) eq s == inj₁ (t' 
 \end{code}
 
 \subsection{Correctness}
-
+\label{sec:basic-correctness}
 Indexing the \emph{Zipper} with an expression allow us to prove
 correcness of the transformation easily. The expression during the
 fold does not change, thus in every step of the computation the result
@@ -559,16 +494,22 @@ recursion over the accesibility predicate and use the lemma
 \todo[inline]{STOP HERE}
 
 \section{Regular universe}
+\label{sec:universe}
   + Universe interpretation generic programming
   + Fixpoint
   + Example??
 \section{Dissection}
+\label{sec:dissection}  
   + Dissection in agda
   + Plug
   + Zipper up Zipper down
   + Make clear the separation between recursion in the functor level and
   the fix level
   + relation on dissection?
+
+\section{Termination and correctness, generically}
+\label{sec:dissection}  
+
   
 \section{Conclusion and future work}
 

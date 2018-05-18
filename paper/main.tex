@@ -44,11 +44,10 @@
 %% Conference information
 %% Supplied to authors by publisher for camera-ready submission;
 %% use defaults for review submission.
-\acmConference[PL'17]{ACM SIGPLAN Conference on Programming Languages}{January 01--03, 2017}{New York, NY, USA}
-\acmYear{2017}
-\acmISBN{} % \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
-\acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
-\startPage{1}
+\acmConference[TyDe'18]{ACM SIGPLAN Workshop on Type-driven
+Development (TyDe)}{January 01--03, 2017}{St. Louis, MO, USA}
+\acmYear{2018} \acmISBN{} % \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
+\acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn} \startPage{1}
 
 %% Copyright information
 %% Supplied to authors (based on authors' rights management selection;
@@ -369,7 +368,7 @@
 
 \begin{document}
 
-\title{Verified and terminating dissections}
+\title{Dissection: verified and terminating}
 
 \author{Carlos Tom\'e Corti\~nas}
 \affiliation{
@@ -389,44 +388,31 @@
 
 
 \begin{abstract}
-% The functional programming paradigm encourages a style of programming based on
-%   the use of higher-order functions over inductively defined datatypes. A fold is
-%   the prototypical example of such a function. However, its use for computation
-%   comes at a price.  Folds for branching datatypes, such as binary trees, are by
-%   definition not tail recursive functions.
-
-%   McBride has proposed a method called
-%   \emph{dissection}\cite{McBride:2008:CLM:1328438.1328474}, to
-%   transform a fold into its tail-recursive counterpart. Nevertheless,
-%   it is not clear why the resulting function terminates, nor it is
-%   clear that the transformation preserves the fold's semantics. In
-%   this paper we fill the gap by providing a fully machine checked
-%   proof of the construction using the proof assistant Agda.
+  Lorem ipsum sic dolor amet.  Lorem ipsum sic dolor amet.  Lorem
+  ipsum sic dolor amet.  Lorem ipsum sic dolor amet.  Lorem ipsum sic
+  dolor amet.  Lorem ipsum sic dolor amet.  Lorem ipsum sic dolor
+  amet.
   \todo{Write abstract}
 \end{abstract}
 
-
 \include{ccs}
 
-%% Keywords
-%% comma separated list
 \keywords{datatype generic programming, catamorphisms, dissection,
-  dependent types, Agda, \todo{Keywords?}}
-
+  dependent types, Agda, well-founded recursion \todo{Keywords?}}
 
 \maketitle
-
 
 
 % Bound variables
 
 \section{Introduction}
 
-The type of binary trees is one of the most simple, yet widespread used,
-datastructures in functional programming.  Beyond its elegance and simplicity,
-in its definition lies an embarasing truth: a fold over a binary tree is not a
-tail recursive function. In order to understand the problem, let us introduce
-the type of binary trees.
+Folds, or \emph{catamorphisms}, are a pervasive
+programming pattern. A fold generalizes many simple traversals over an
+algebraic data type. Functions implemented by means of a fold are
+\emph{compositional} and structurally recursive. Consider, for
+instance, the following expression data type, written in the
+dependently typed programming language Agda\todo{citation}:
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -451,10 +437,10 @@ the type of binary trees.
 \>[19]{}\to \;\AD{Expr}\;\to \;\AD{Expr}{}\<[E]%
 \ColumnHook
 \end{hscode}\resethooks
-
-We can write an evaluation function that maps binary trees to natural numbers if
-we were to interpret the constructor \ensuremath{\AI{Add}} as addition.
-
+%
+We can write a write a simple evaluator, mapping expressions to
+natural numbers, as follows:
+%
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
 \column{3}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -469,21 +455,25 @@ we were to interpret the constructor \ensuremath{\AI{Add}} as addition.
 \>[21]{}\mathrel{=}\;\AF{eval}\;\AB{\ensuremath{e_1}}\;\AF{+}\;\AF{eval}\;\AB{\ensuremath{e_2}}{}\<[E]%
 \ColumnHook
 \end{hscode}\resethooks
+%
+In the case for \ensuremath{\AI{Add}\;\AB{\ensuremath{e_1}}\;\AB{\ensuremath{e_2}}}, the \ensuremath{\AF{eval}} function makes two recursive
+calls and sums their results. Such a function can be implemented by a
+fold, passing the addition and identity functions as the argument
+algebra.
 
-The function \ensuremath{\AF{eval}} is compositional. The value of a node \ensuremath{\AI{Add}} is computed by
-adding the values denoted by its subexpressions. And here lies the problem. The
-operator \ensuremath{\AF{\_+\_}} needs both of its parameters to be evaluated before it can further
-reduce. If the expression we want to compute over is very big this poses a
-problem during runtime as the execution stack grows linearly with the size of
-the input.
+Unfortunately, all in the garden is not rosy. The operator \ensuremath{\AF{\_+\_}}
+needs both of its parameters to be fully evaluated before it can
+reduce further. When evaluating large expressions, the size of the
+stack used during execution grows linearly with the size of the input,
+potentially leading to a stack overflow, causing the execution of the
+program to halt unexpectedly.
 
-\todo[inline]{Maybe include something about Optimization through tco => get rid of
-intermediate steps}
-
-In order to solve the problem, we can make the execution stack explicit and
-write a function that performs tail recursion over it. The idea is that we can
-use a list to store both intemediate results and the subtress that still need to
-be processed. We can define such a stack as follows:
+To address this problem, we can rewrite the evaluator to be
+\emph{tail recursive}. Modern compilers typically map tail recursive
+functions to machine code that runs in constant memory. To write such
+a tail recursive function, we need to introduce an explicit stack
+storing both intemediate results and the subtrees that have not yet
+been evaluated. We can define such a stack as follows:
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -510,10 +500,11 @@ be processed. We can define such a stack as follows:
 \ColumnHook
 \end{hscode}\resethooks
 
-Two mutually recursive functions that operate over the stack and tree are load
-and unload. The former traverses a tree finding the leftmost leaf while the
-latter dispathes over the stack by accumulating a partial result while looking
-for the next subtree.
+We can define a tail-recursive evaluation function by means of a
+pair of mutually recursive functions \ensuremath{\AF{load}} and \ensuremath{\AF{unload}}. The \ensuremath{\AF{load}}
+function traverses the input expression, pushing subtrees on the
+stack; the \ensuremath{\AF{unload}} function unloads the stack, while accumulating a
+(partial) result.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -556,8 +547,8 @@ for the next subtree.
 \ColumnHook
 \end{hscode}\resethooks
 
-A tail recursive version of \ensuremath{\AF{eval}} can is defined by calling load with the empty
-stack.
+We can now define a tail recursive version of \ensuremath{\AF{eval}} by
+calling \ensuremath{\AF{load}} with an initially empty stack:
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -569,69 +560,74 @@ stack.
 \ColumnHook
 \end{hscode}\resethooks
 
-The reader might have noticed that the names of unload and load are higlighted
-with \nonterm{orange}. This is because Agda's termination checker flags the pair of
-functions as possibly non-terminating. Indeed, the recursive calls are not
-always performed over syntactically smaller arguments. If we assumed that it
-terminates we still do not know if it is correct in the sense that for every
-input \ensuremath{\AF{tail\text{-}rec\text{-}eval}} and \ensuremath{\AF{eval}} agree on the output.
+Implementing this tail recursive evaluator has come at a price: Agda's
+termination checker flags the \ensuremath{\AF{load}} and \ensuremath{\AF{unload}} functions as
+potentially non-terminating by highlighting them
+\nonterm{orange}. Indeed, in the very last clause of the \ensuremath{\AF{unload}}
+function a recursive call is made to arguments that are not
+syntactically smaller. Furthermore, it is not clear at all that the
+tail recursive evaluator produces the same result as our original
+one. It is precisely these questions that this paper tackles by
+means of the following novel contributions:
 
-\begin{hscode}\SaveRestoreHook
-\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
-\column{3}{@{}>{\hspre}l<{\hspost}@{}}%
-\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
-\>[3]{}\AF{correct}\;\mathbin{:}\;\forall\;(\AB{e}\;\mathbin{:}\;\AD{Expr})\;\to \;\AF{eval}\;\AB{e}\;\AD{\ensuremath{\equiv}}\;\AF{tail\text{-}rec\text{-}eval}\;\AB{e}{}\<[E]%
-\\
-\>[3]{}\AF{correct}\;\mathrel{=}\;\hole{0}{}\<[E]%
-\ColumnHook
-\end{hscode}\resethooks
+\begin{itemize}
+\item We give a verified proof of termination of \ensuremath{\AF{tail\text{-}rec\text{-}eval}} using
+  a carefully chosen \emph{well-founded relation}
+  (Section~\ref{sec:basics}). After redefining \ensuremath{\AF{tail\text{-}rec\text{-}eval}} using
+  this relation, we prove that it agrees with the \ensuremath{\AF{eval}} function on
+  all inputs.
+\item We generalize this construction, inspired by McBride's
+  generalization of Danvy's work on abstract machines. To do so, we
+  define a universe of algebraic data types and a generic fold
+  (Section~\ref{sec:universe}). Subsequently we show how to turn any
+  structurally recursive function defined using a fold into a tail
+  recursive variant (Section~\ref{sec:dissection}). 
+\item Finally, we sketch how the proofs of termination and semantics
+  preservation from our example are generalized to the generic fold
+  over arbitrary types in our universe (Section~\ref{correctness}).
+\end{itemize}
 
-The main contribution of this paper is to show that we can both prove
-termination and correctness of the construction in Agda. Specifically we show
-how we can encode an ordering relation over stacks, show that the relation is
-well founded and use it to define a tail recursive fold by structural recursion.
-We discuss what are the main challenges that we have to overcome to convinde
-Agda's termination checker that indeed something `goes smaller`. Moreover, our
-approach allows us to get correctness almost for free.
-
-McBride's insight is that we can calculate the type of stacks from the generic
-description of a datatype by using Leibniz rules for derivatives. In later
-sections of the paper, we discuss how to generalize our results to regular tree
-datatypes and by doing so we show that McBride's intuition that the construction
-is correct was true.
+All the constructions and proofs presented in this paper have been
+implemented in Agda\todo{citation}. The corresponding code is freely
+available online.\footnote{\todo{url}}
 
 \section{Basic idea}
+\label{sec:basics}
+The functions \ensuremath{\AF{load}} and \ensuremath{\AF{unload}} are marked as non terminating
+because they are not defined by structural recursion over their
+arguments. In particular, the stack passed as an argument to the
+recursive call of \ensuremath{\AF{load}} in the definition of \ensuremath{\AF{unload}} is structurally
+equal in size as the input stack.
 
-The functions \ensuremath{\AF{load}} and \ensuremath{\AF{unload}} are marked as non terminating because they are
-not defined by structural recursion over their arguments. In particular, the
-stack passed as an argument to the recursive call of \ensuremath{\AF{load}} in the definition of
-\ensuremath{\AF{unload}} is structurally equal in size as the input stack.
+Intuitively, \ensuremath{\AF{load}} and \ensuremath{\AF{unload}} fold the tree by traversing it from
+its leftmost leaf to its rightmost using the stack to store both
+partial results and the remaining subtrees to fold them as
+neccesary. The problem arises because the stack is simply typed and
+any information about how the subtrees kept in the stack relate to
+each other and to the original tree is lost once a subtree is inserted
+onto the stack.
 
-Intuitively, \ensuremath{\AF{load}} and \ensuremath{\AF{unload}} fold the tree by traversing it from its
-leftmost leaf to its rightmost using the stack to store both partial results and
-the remaining subtrees to fold them as neccesary. The problem arises because the
-stack is simply typed and any information about how the subtrees kept in the
-stack relate to each other and to the original tree is lost once a subtree is
-inserted onto the stack.
-
-However, it is clear that virtually every node (either leaf or not) from the
-original tree is visited at most twice during the computation. First when the
-function \ensuremath{\AF{load}} decomposes it looking for its leftmost leaf and a second time
-when \ensuremath{\AF{unload}} is accumulating over the stack searching for another subtree to
-continue. This process is depicted in figure 1.
+However, it is clear that virtually every node (either leaf or not)
+from the original tree is visited at most twice during the
+computation. First when the function \ensuremath{\AF{load}} decomposes it looking for
+its leftmost leaf and a second time when \ensuremath{\AF{unload}} is accumulating over
+the stack searching for another subtree to continue. This process is
+depicted in figure 1.
 
 \begin{figure}[h]
   \includegraphics[scale=0.25]{figure1}
 \end{figure}
 
-We can argue that because there are finitely many nodes on a tree, \ensuremath{\AF{load}} and
-\ensuremath{\AF{unload}} neccesarily terminate. The question is now, How can we encode this
-information in such a way that Agda understand that the fold terminates?
+We can argue that because there are finitely many nodes on a tree,
+\ensuremath{\AF{load}} and \ensuremath{\AF{unload}} neccesarily terminate. The question is now, How
+can we encode this information in such a way that Agda understand that
+the fold terminates?
 
-The idea is that \ensuremath{\AF{load}} and \ensuremath{\AF{unload}} should not fold  the full input tree in one
-go, but instead they will perform one step of the computation at a time.
-Morover, by defining them by structural recursion over their arguments now they
-are classified as terminating by the termination checker.
+The idea is that \ensuremath{\AF{load}} and \ensuremath{\AF{unload}} should not fold the full input
+tree in one go, but instead they will perform one step of the
+computation at a time.  Morover, by defining them by structural
+recursion over their arguments now they are classified as terminating
+by the termination checker.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -664,17 +660,18 @@ are classified as terminating by the termination checker.
 \ColumnHook
 \end{hscode}\resethooks
 
-For example, if we take the same tree in figure 1, after \ensuremath{\AF{load}} finds the
-initial leftmost leaf we can apply one step of the new \ensuremath{\AF{unload}} that will end up
-in the next leaf to the right.
+For example, if we take the same tree in figure 1, after \ensuremath{\AF{load}} finds
+the initial leftmost leaf we can apply one step of the new \ensuremath{\AF{unload}}
+that will end up in the next leaf to the right.
 
 
 \begin{figure}[h]
   \includegraphics[scale=0.25]{figure2}
 \end{figure}
 
-A tail recursive fold corrensponds to repeatedly applying the function \ensuremath{\AF{unload}}
-until we find a \ensuremath{\AI{inj\ensuremath{_2}}} whose value is the result of folding the tree.
+A tail recursive fold corrensponds to repeatedly applying the function
+\ensuremath{\AF{unload}} until we find a \ensuremath{\AI{inj\ensuremath{_2}}} whose value is the result of folding
+the tree.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -703,11 +700,10 @@ until we find a \ensuremath{\AI{inj\ensuremath{_2}}} whose value is the result o
 \ColumnHook
 \end{hscode}\resethooks
 
-The function \ensuremath{\AF{tail\text{-}rec\text{-}eval}} still does not pass the termination checker, The
-variable \ensuremath{\AB{z'}} is not structurally smaller than \ensuremath{(\AB{n}\;\Varid{,}\;\AB{stk})}. However, now we can
-refine it by using well founded recursion to make it structurally recursive by
-performing the recursion over the accessibility predicate instead of the pair
-\ensuremath{\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack}}.
+The function \ensuremath{\AF{tail\text{-}rec\text{-}eval}} still does not pass the termination
+checker, The variable \ensuremath{\AB{z'}} is not structurally smaller than \ensuremath{(\AB{n}\;\Varid{,}\;\AB{stk})}. However, now we can refine it by using well founded recursion
+to make it structurally recursive by performing the recursion over the
+accessibility predicate instead of the pair \ensuremath{\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack}}.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -736,23 +732,25 @@ performing the recursion over the accessibility predicate instead of the pair
 \ColumnHook
 \end{hscode}\resethooks
 
-For the function above to work, we need to find a suitable definition for the
-relation \ensuremath{\AD{\_<\_}} over pairs of \ensuremath{\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack}}, prove that applying \ensuremath{\AF{unload}}
-results in an smaller element by the relation and finally show that the relation
-is \ensuremath{\AF{Well\text{-}founded}}, so the call to \ensuremath{\AF{rec}} can be made in the first place. Before
-any of that, we need to revisit Huet's notion of \emph{Zipper} and show how it
-relates to what we are trying to achieve.
+For the function above to work, we need to find a suitable definition
+for the relation \ensuremath{\AD{\_<\_}} over pairs of \ensuremath{\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack}}, prove that
+applying \ensuremath{\AF{unload}} results in an smaller element by the relation and
+finally show that the relation is \ensuremath{\AF{Well\text{-}founded}}, so the call to \ensuremath{\AF{rec}}
+can be made in the first place. Before any of that, we need to revisit
+Huet's notion of \emph{Zipper} and show how it relates to what we are
+trying to achieve.
 
 \subsection{Zippers up, Zippers down}
 
-Huet introduced \emph{Zippers} to allow a tree datastructure to be efficiently
-updated in a purely functional way. The idea is that any location on a tree,
-either an internal node or a leaf, can be represented by a path to the root and
-the subtree that hangs downwards.
+Huet introduced \emph{Zippers} to allow a tree datastructure to be
+efficiently updated in a purely functional way. The idea is that any
+location on a tree, either an internal node or a leaf, can be
+represented by a path to the root and the subtree that hangs
+downwards.
 
-The pair \ensuremath{\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack}} used to compute the tail recursive fold is nothing more
-that a restricted version of the \emph{Zipper} where the locations can only be
-leaves of the tree.
+The pair \ensuremath{\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack}} used to compute the tail recursive fold is
+nothing more that a restricted version of the \emph{Zipper} where the
+locations can only be leaves of the tree.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -764,10 +762,11 @@ leaves of the tree.
 \ColumnHook
 \end{hscode}\resethooks
 
-From a \ensuremath{\AD{Zipper}} we have to be able to reconstruct the original \ensuremath{\AD{Expr}} which
-will be neccesary later on for the proof that the relation is well founded. For
-this matter, we have to enhance the type of stacks to store not only the partial
-results but also the expressions that where consumed in order to produce them.
+From a \ensuremath{\AD{Zipper}} we have to be able to reconstruct the original \ensuremath{\AD{Expr}}
+which will be neccesary later on for the proof that the relation is
+well founded. For this matter, we have to enhance the type of stacks
+to store not only the partial results but also the expressions that
+where consumed in order to produce them.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -792,8 +791,9 @@ results but also the expressions that where consumed in order to produce them.
 \ColumnHook
 \end{hscode}\resethooks
 
-The original expression for which a \ensuremath{\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack}} represents a position can be
-reconstructed by forgeting that some part has already been evaluated.
+The original expression for which a \ensuremath{\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack}} represents a
+position can be reconstructed by forgeting that some part has already
+been evaluated.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -820,28 +820,30 @@ reconstructed by forgeting that some part has already been evaluated.
 \ColumnHook
 \end{hscode}\resethooks
 
-Our goal is to impose an ordering relation over elements of \ensuremath{\AD{Zipper}} such that
-for any input the \ensuremath{\AF{unload}} function delivers a \ensuremath{\AD{Zipper}} that is smaller by the
-relation when it does not terminate with a value. Because the folding happens
-from left to right, we want the relation to order the leaves of the tree
-accordingly, so the leftmost leaf is the greatest element and the rightmost the
-smallest. Using the example from before, we number the leaves as follows:
+Our goal is to impose an ordering relation over elements of \ensuremath{\AD{Zipper}}
+such that for any input the \ensuremath{\AF{unload}} function delivers a \ensuremath{\AD{Zipper}} that
+is smaller by the relation when it does not terminate with a
+value. Because the folding happens from left to right, we want the
+relation to order the leaves of the tree accordingly, so the leftmost
+leaf is the greatest element and the rightmost the smallest. Using the
+example from before, we number the leaves as follows:
 
 \begin{figure}[h]
   \includegraphics[scale=0.25, angle=90]{figure3}
 \end{figure}
 
-Using the \ensuremath{\AD{Stack}} as a path from the leaf to the root of the tree is difficult
-if not impossible to encode a smaller than relation that does not relate any two
-elements. Such relation has to be defined by induction on the \ensuremath{\AD{Stack}} part of the
-\ensuremath{\AD{Zipper}}. But for any two given stacks a priori we cannot know how many layers
-we have to peel in order to reach a case where one of them is obviously smaller
-that the other.
+Using the \ensuremath{\AD{Stack}} as a path from the leaf to the root of the tree is
+difficult if not impossible to encode a smaller than relation that
+does not relate any two elements. Such relation has to be defined by
+induction on the \ensuremath{\AD{Stack}} part of the \ensuremath{\AD{Zipper}}. But for any two given
+stacks a priori we cannot know how many layers we have to peel in
+order to reach a case where one of them is obviously smaller that the
+other.
 
-We can approach the problem by understanding the \ensuremath{\AD{Stack}} not as a path from the
-leaf up to the root but from the root down to the leaf. This change of
-perspective is realised with a new plug function that does the opposite of
-\ensuremath{\AF{plug\ensuremath{\Uparrow}}}.
+We can approach the problem by understanding the \ensuremath{\AD{Stack}} not as a path
+from the leaf up to the root but from the root down to the leaf. This
+change of perspective is realised with a new plug function that does
+the opposite of \ensuremath{\AF{plug\ensuremath{\Uparrow}}}.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -868,10 +870,10 @@ perspective is realised with a new plug function that does the opposite of
 \ColumnHook
 \end{hscode}\resethooks
 
-It is clear that both views of the \ensuremath{\AD{Zipper}} are related. Indeed, to transport
-from one to the other we only have to reverse the stack. We show the equvalence
-with the following lemma\footnote{The other way around only requires to use
-BLABLA of \ensuremath{\AF{reverse}}}:
+It is clear that both views of the \ensuremath{\AD{Zipper}} are related. Indeed, to
+transport from one to the other we only have to reverse the stack. We
+show the equvalence with the following lemma\footnote{The other way
+  around only requires to use BLABLA of \ensuremath{\AF{reverse}}}:
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -888,18 +890,20 @@ BLABLA of \ensuremath{\AF{reverse}}}:
 \end{hscode}\resethooks
 
 
-Why do we need this equivalence? The bottom up view of a \ensuremath{\AD{Zipper}} is suitable
-for defining the tail recursive fold, alas to prove termination we have to use
-use the top down view to describe the relation we need.
+Why do we need this equivalence? The bottom up view of a \ensuremath{\AD{Zipper}} is
+suitable for defining the tail recursive fold, alas to prove
+termination we have to use use the top down view to describe the
+relation we need.
 
 \subsection{A relation on Zipper}
 
-The relation over elements of \ensuremath{\AD{Zipper}} is defined by induction on the \ensuremath{\AD{Stack}}.
-If we start in the root of the tree, we can navigate downwards both stacks in
-parallel removing their common prefix. Once we find an \ensuremath{\AI{Add}} where they
-disagree then whether the first \ensuremath{\AD{Zipper}} is located in the left or right
-subtree fully determines if its bigger or smaller than the other \ensuremath{\AD{Zipper}}.
-The following type accounts for this explanation:
+The relation over elements of \ensuremath{\AD{Zipper}} is defined by induction on the
+\ensuremath{\AD{Stack}}.  If we start in the root of the tree, we can navigate
+downwards both stacks in parallel removing their common prefix. Once
+we find an \ensuremath{\AI{Add}} where they disagree then whether the first \ensuremath{\AD{Zipper}}
+is located in the left or right subtree fully determines if its bigger
+or smaller than the other \ensuremath{\AD{Zipper}}.  The following type accounts for
+this explanation:
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -941,21 +945,22 @@ The following type accounts for this explanation:
 \ColumnHook
 \end{hscode}\resethooks
 
-Having the relation defined, we turn our focus to prove that it is well founded.
-This is an important step towards filling the holes that were left open in the
-function \ensuremath{\AF{tail\text{-}rec\text{-}eval}}.
+Having the relation defined, we turn our focus to prove that it is
+well founded.  This is an important step towards filling the holes
+that were left open in the function \ensuremath{\AF{tail\text{-}rec\text{-}eval}}.
 
-A relation is well founded iff all the descending chains starting from an
-arbitrary element are finite. In a theorem prover such as Agda, an alternative
-definition of well foundedness is used which is based on an accesibility
-predicate.
+A relation is well founded iff all the descending chains starting from
+an arbitrary element are finite. In a theorem prover such as Agda, an
+alternative definition of well foundedness is used which is based on
+an accesibility predicate.
 
-We can try to prove that the relation is well founded by using an auxiliary
-function that allows us to pattern match on the smaller than proof. When doing
-so, the inputs are refined to concrete constructors. Normally the proof either
-makes use of recursion over the proof or over the input, but in the case of the
-\ensuremath{\AI{<\text{-}Right\text{-}Left}} constructor we do not have either option, because the smaller
-element is not structurally related to the bigger and the proof does not have
+We can try to prove that the relation is well founded by using an
+auxiliary function that allows us to pattern match on the smaller than
+proof. When doing so, the inputs are refined to concrete
+constructors. Normally the proof either makes use of recursion over
+the proof or over the input, but in the case of the \ensuremath{\AI{<\text{-}Right\text{-}Left}}
+constructor we do not have either option, because the smaller element
+is not structurally related to the bigger and the proof does not have
 any recursive structure to use.
 
 \begin{hscode}\SaveRestoreHook
@@ -985,10 +990,11 @@ any recursive structure to use.
 \ColumnHook
 \end{hscode}\resethooks
 
-The proof fails because in \ensuremath{\Varid{aux}} both Zippers \ensuremath{\Varid{x}} and \ensuremath{\Varid{y}} might very well be
-locations of leaves belonging to different trees as far we know. Thanks to the
-use of dependent types, the property that a Zipper represents a position inside a
-concrete tree can be made explicit at the type level.
+The proof fails because in \ensuremath{\Varid{aux}} both Zippers \ensuremath{\Varid{x}} and \ensuremath{\Varid{y}} might very
+well be locations of leaves belonging to different trees as far we
+know. Thanks to the use of dependent types, the property that a Zipper
+represents a position inside a concrete tree can be made explicit at
+the type level.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -1002,8 +1008,9 @@ concrete tree can be made explicit at the type level.
 \ColumnHook
 \end{hscode}\resethooks
 
-We write a relation that is enforced to only relate Zippers beloging to the same
-\ensuremath{\AD{Expr}} by using a common value of that type as an of \ensuremath{\AD{Zipper\ensuremath{\Downarrow}}}
+We write a relation that is enforced to only relate Zippers beloging
+to the same \ensuremath{\AD{Expr}} by using a common value of that type as an of
+\ensuremath{\AD{Zipper\ensuremath{\Downarrow}}}
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -1017,17 +1024,19 @@ We write a relation that is enforced to only relate Zippers beloging to the same
 \ColumnHook
 \end{hscode}\resethooks
 
-The concrete details of the relation follow very much the one we gave before,
-with the exception that every case has attached a new piece of information
-specifying the concrete \ensuremath{\AD{Expr}} obtained by plugging both Zippers.
+The concrete details of the relation follow very much the one we gave
+before, with the exception that every case has attached a new piece of
+information specifying the concrete \ensuremath{\AD{Expr}} obtained by plugging both
+Zippers.
 
-The new version of the relation is suitable for proving well foundedness because
-we can pattern match on the equality included in the \ensuremath{\AD{Zipper\ensuremath{\Downarrow}}} type to show how 
-the overall structure decreases. This allows us to use the recursion we need to
-complete the proof.
-In particular, the case we were not able to prove before, now can be proven by learning that
-\ensuremath{(\AB{\ensuremath{t_2}}\;\Varid{,}\;\AB{\ensuremath{s_2}})} is a position on the left subtree while \ensuremath{(\AB{\ensuremath{t_1}}\;\Varid{,}\;\AB{\ensuremath{s_1}})} is on the
-right subtree of a common \ensuremath{\AI{Add}} node.
+The new version of the relation is suitable for proving well
+foundedness because we can pattern match on the equality included in
+the \ensuremath{\AD{Zipper\ensuremath{\Downarrow}}} type to show how the overall structure
+decreases. This allows us to use the recursion we need to complete the
+proof.  In particular, the case we were not able to prove before, now
+can be proven by learning that \ensuremath{(\AB{\ensuremath{t_2}}\;\Varid{,}\;\AB{\ensuremath{s_2}})} is a position on the left
+subtree while \ensuremath{(\AB{\ensuremath{t_1}}\;\Varid{,}\;\AB{\ensuremath{s_1}})} is on the right subtree of a common \ensuremath{\AI{Add}}
+node.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -1060,13 +1069,17 @@ right subtree of a common \ensuremath{\AI{Add}} node.
 \ColumnHook
 \end{hscode}\resethooks
 
-We have now the proof of well foundedness for the relation defined over top-down Zippers. We also have proven that
-there is an equivalence between top-down and bottom-up Zippers. We exploit it by using the top-down encoding for
-the termination proof while we use the bottom-up to actually compute in a tail recursive manner.
+We have now the proof of well foundedness for the relation defined
+over top-down Zippers. We also have proven that there is an
+equivalence between top-down and bottom-up Zippers. We exploit it by
+using the top-down encoding for the termination proof while we use the
+bottom-up to actually compute in a tail recursive manner.
 
-Thus we prove a lemma stating that if we apply unload to a bottom-up Zipper and this results in another
-Zipper, then the result is smaller by the relation than the input. However, to show it we have to 
-convert them to the top down representation. In overall, what we have is the following lemma:
+Thus we prove a lemma stating that if we apply unload to a bottom-up
+Zipper and this results in another Zipper, then the result is smaller
+by the relation than the input. However, to show it we have to convert
+them to the top down representation. In overall, what we have is the
+following lemma:
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -1080,15 +1093,17 @@ convert them to the top down representation. In overall, what we have is the fol
 \end{hscode}\resethooks
 
 \subsection{Correctness}
+\label{sec:basic-correctness}
+Indexing the \emph{Zipper} with an expression allow us to prove
+correcness of the transformation easily. The expression during the
+fold does not change, thus in every step of the computation the result
+of its evaluation remains constant.
 
-Indexing the \emph{Zipper} with an expression allow us to prove correcness of
-the transformation easily. The expression during the fold does not change, thus
-in every step of the computation the result of its evaluation remains constant.
-
-By using induction over the definition of unload, we can prove that when \ensuremath{\AF{unload}} 
-delivers a value, it corresponds to the result of evaluating of the input expression.
-In order to do so, we enrich the type of \ensuremath{\AF{unload}} to include the expression that has already
-been folded and we have its result. 
+By using induction over the definition of unload, we can prove that
+when \ensuremath{\AF{unload}} delivers a value, it corresponds to the result of
+evaluating of the input expression.  In order to do so, we enrich the
+type of \ensuremath{\AF{unload}} to include the expression that has already been
+folded and we have its result.
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -1104,24 +1119,31 @@ been folded and we have its result.
 \ColumnHook
 \end{hscode}\resethooks
 
-Proving correctness of the whole transformation amounts to show that it holds for the
-auxiliary recursor that we use to write the function \ensuremath{\AF{tail\text{-}rec\text{-}eval}}. We use well founded 
-recursion to do structural recursion over the accesibility predicate and use the lemma 
+Proving correctness of the whole transformation amounts to show that
+it holds for the auxiliary recursor that we use to write the function
+\ensuremath{\AF{tail\text{-}rec\text{-}eval}}. We use well founded recursion to do structural
+recursion over the accesibility predicate and use the lemma
 \ensuremath{\Varid{unload-correct}} in the base case.
 
 \todo[inline]{STOP HERE}
 
 \section{Regular universe}
+\label{sec:universe}
   + Universe interpretation generic programming
   + Fixpoint
   + Example??
 \section{Dissection}
+\label{sec:dissection}  
   + Dissection in agda
   + Plug
   + Zipper up Zipper down
   + Make clear the separation between recursion in the functor level and
   the fix level
   + relation on dissection?
+
+\section{Termination and correctness, generically}
+\label{sec:dissection}  
+
   
 \section{Conclusion and future work}
 
