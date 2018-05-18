@@ -461,14 +461,14 @@ calls and sums their results. Such a function can be implemented by a
 fold, passing the addition and identity functions as the argument
 algebra.
 
-Unfortunately, all in the garden is not rosy. The operator \ensuremath{\AF{\_+\_}}
+Unfortunately, not all in the garden is rosy. The operator \ensuremath{\AF{\_+\_}}
 needs both of its parameters to be fully evaluated before it can
 reduce further. When evaluating large expressions, the size of the
 stack used during execution grows linearly with the size of the input,
 potentially leading to a stack overflow, causing the execution of the
 program to halt unexpectedly.
 
-To address this problem, we can rewrite the evaluator to be
+To address this problem, we can manually rewrite the evaluator to be
 \emph{tail recursive}. Modern compilers typically map tail recursive
 functions to machine code that runs in constant memory. To write such
 a tail recursive function, we need to introduce an explicit stack
@@ -501,8 +501,8 @@ been evaluated. We can define such a stack as follows:
 \end{hscode}\resethooks
 
 We can define a tail-recursive evaluation function by means of a
-pair of mutually recursive functions \ensuremath{\AF{load}} and \ensuremath{\AF{unload}}. The \ensuremath{\AF{load}}
-function traverses the input expression, pushing subtrees on the
+pair of mutually recursive functions, \ensuremath{\AF{load}} and \ensuremath{\AF{unload}}. The \ensuremath{\AF{load}}
+function traverses the expressions, pushing subtrees on the
 stack; the \ensuremath{\AF{unload}} function unloads the stack, while accumulating a
 (partial) result.
 
@@ -567,8 +567,9 @@ potentially non-terminating by highlighting them
 function a recursive call is made to arguments that are not
 syntactically smaller. Furthermore, it is not clear at all that the
 tail recursive evaluator produces the same result as our original
-one. It is precisely these questions that this paper tackles by
-means of the following novel contributions:
+one. Writing such tail recursive functions by hand is both tedious and
+error-prone. It is precisely these issues that this paper tackles
+by making the following novel contributions:
 
 \begin{itemize}
 \item We give a verified proof of termination of \ensuremath{\AF{tail\text{-}rec\text{-}eval}} using
@@ -576,20 +577,24 @@ means of the following novel contributions:
   (Section~\ref{sec:basics}). After redefining \ensuremath{\AF{tail\text{-}rec\text{-}eval}} using
   this relation, we prove that it agrees with the \ensuremath{\AF{eval}} function on
   all inputs.
-\item We generalize this construction, inspired by McBride's
-  generalization of Danvy's work on abstract machines. To do so, we
-  define a universe of algebraic data types and a generic fold
+\item We generalize this construction, inspired by McBride and Danvy's
+  work on calculating abstract machines from their recursive
+  counterparts. To do so, we define a universe of algebraic data types
+  and a generic fold operation
   (Section~\ref{sec:universe}). Subsequently we show how to turn any
-  structurally recursive function defined using a fold into a tail
-  recursive variant (Section~\ref{sec:dissection}). 
+  structurally recursive function defined using a fold into its tail
+  recursive counterpart (Section~\ref{sec:dissection}).
 \item Finally, we sketch how the proofs of termination and semantics
   preservation from our example are generalized to the generic fold
-  over arbitrary types in our universe (Section~\ref{correctness}).
+  over arbitrary types in our universe
+  (Section~\ref{correctness}). 
+
 \end{itemize}
 
 All the constructions and proofs presented in this paper have been
-implemented in Agda\todo{citation}. The corresponding code is freely
+implemented in and checked by Agda. The corresponding code is freely
 available online.\footnote{\todo{url}}
+
 
 \section{Basic idea}
 \label{sec:basics}
