@@ -82,7 +82,7 @@
                         %% http://ctan.org/pkg/booktabs
 \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
-
+\usepackage{ bbold }
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
 %include polycode.fmt
@@ -259,6 +259,7 @@ McBride has proposed a method called
 %format < = "\AD{<}"
 %format dotted = "\AS{.}\hspace*{-0.1cm}"
 
+
 % Bound variables
 %format n     = "\AB{n}"
 %format r     = "\AB{r}"
@@ -278,7 +279,6 @@ McBride has proposed a method called
 %format s2    = "\AB{\ensuremath{s_2}}"
 %format t1'    = "\AB{\ensuremath{t_1}''}"
 %format t2'    = "\AB{\ensuremath{t_2}''}"
-
 \section{Introduction}
 
 The type of binary trees is one of the most simple, yet widespread used,
@@ -687,20 +687,155 @@ recursion to do structural recursion over the accesibility predicate and use the
 
 \todo[inline]{STOP HERE}
 
-\section{Regular universe}
-  + Universe interpretation generic programming
-  + Fixpoint
-  + Example??
+
+%{
+\section{Generic tail recursive fold}
+% Datatypes
+%format Reg = "\AD{Reg}" 
+%format mu  = "\AD{\ensuremath{\mu}}"
+
+% Constructors
+%format One   = "\AI{\ensuremath{\mathbb{1}}}"
+%format Zero  = "\AI{\ensuremath{\mathbb{0}}}"
+%format I   = "\AI{I}"
+%format K   = "\AI{K}"
+%format O+Op  = "\AI{\_\ensuremath{\oplus}\_}"
+%format O*Op  = "\AI{\_\ensuremath{\otimes}\_}"
+%format O+  = "\AI{\ensuremath{\oplus}}"
+%format O*  = "\AI{\ensuremath{\otimes}}"
+
+% Functions
+%format interp = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
+%format interpl = "\AF{\ensuremath{\llbracket}}"
+%format interpr = "\AF{\ensuremath{\rrbracket}}"
+
+% Bound variables
+%format A   = "\AB{A}"
+%format X   = "\AB{X}"
+%format R   = "\AB{R}"
+%format Q   = "\AB{Q}"
+
+
+Up until now, we have proven that we can encode a correct tail recursive fold
+for "evaluating" binary trees. In this section, we will show how we can extend
+the same ideas to generically construct a the tail recursive fold for a class of
+algebraic datatypes.
+
++ Generic programming
+
++ High level idea of dissection as calculating the type of element in the stack
+
+\subsection{The \emph{regular} universe}
+
+In a dependently typed programming language such as Agda, the usual approach to
+show that a construction works in the generic case, is to model the class of
+datatypes that it can handle as a type of codes and define an interpretation
+function that maps them to Agda types.
+
+We introduce the universe of \emph{regular} tree types by defining the universe,
+|Reg|, and the interpretation function | interp : Reg -> (Set -> Set) |.
+
+\begin{code}
+  data Reg : Set1 where
+    Zero  : Reg
+    One   : Reg
+    I     : Reg
+    K     : (A : Set) -> Reg
+    O+Op  : (R Q : Reg)  -> Reg
+    O*Op  : (R Q : Reg) -> Reg
+\end{code}
+
+\begin{code}
+  interp : Reg -> Set -> Set
+  interpl Zero interpr X   = Bot
+  interpl One interpr X    = Top
+  interpl I interpr X      = X
+  interpl (K A) interpr X  = A
+  interpl (R O+ Q) interpr X = interpl R interpr X U+ interpl Q interpr X
+  interpl (R O* Q) interpr X = interpl R interpr X * interpl Q interpr X
+\end{code}
+
+The type |Reg| serves as a generic encoding of non-recursive datatypes that are
+functors over Agda small types, i.e. |Set|. We can witness such statement by
+providing a function \emph{fmap} that fullfils the expected laws.
+
+CODE HERE
+
+In order to represent recursive datatypes we need to interpret a code |R : Reg|
+over itself. We tie the knot by defining the fixed point of a code |R|.
+
+\begin{code}
+  data mu (R : Reg) : Set where
+    In : interpl R interpr (mu R) -> mu R
+\end{code}
+
+The common feature of the datatypes that |mu R| is able to represent is that
+they have a tree-like structure of finite depth with finite branching at each
+node. For example, the type of expressions used in the previous section is
+isomorphic to the terms of type |mu (One O+ (I O* I))|.
+
+\begin{code}
+MORE CODE
+\end{code}
+
+The definition of a recursive datatype comes associated with a function to
+consume terms of that type by exploiting the recursive structure. In a generic
+setting, this functions are dubbed \emph{catamorphism} because they allow to
+tear down (from the ancient Greek, $k\alpha\tau\alpha$) a term into a single
+value.
+
+Given an algebra of type |interpr R interpl X -> X| we can fold a term of type
+|mu R| easily by unpacking the functor, \emph{fmapping} the catamorphism, and
+finally applying the algebra.
+
+\begin{code}
+MORE CODE (DO WE NEED TO TALK ABOUT MAPFOLD?)
+\end{code}
+
+Our goal is to develop a tail recursive version of the \emph{catamorphims},
+again prove that it terminates and show that it is correct with regard to
+|catamorphism|.
+
 \section{Dissection}
-  + Dissection in agda
+
+The main idea we presented in the previous section is that by pointing at the
+leaves of a tree, using a \emph{Zipper}, we can define a function unload to move
+one step forward to the right of the tree while computing a partial value for
+the fold.
+
+Thus if we are to extend this solution we first need to put our focus in what
+is a Zipper in the generic case. Before thinking about the leaf part of it, we
+will explain how the stack is constructed.
+
+Recalling from before, a stack represents a path either from the root of the
+tree to a leaf or from the leaf to the root. Each element of the stack is a
+value that represents a node with a hole on it. For example, in the case of
+|Expr| the |Left| constructor stands for a |Add| without the left subexpression.
+
+McBride main contribution in BLABLA, is to show that we can define a syntactic
+operation over codes of type |Reg| to calculate the type of elements in the
+stack for the generic case.
+
+
+
+
+The first step to derive a generic solution is to define what means in the
+generic case to be a 
+stack 
+For the type of expressions it was easy to define a datatype that allows us to
+distinguish a hole 
+
+  + Dissection as generically calculate the type of stacks in agda
   + Plug
   + Zipper up Zipper down
+  + relation on dissection?
   + Make clear the separation between recursion in the functor level and
   the fix level
-  + relation on dissection?
-  
+
+%}
 \section{Conclusion and future work}
 
+%}
 %% Acknowledgments
 \begin{acks}                            %% acks environment is optional
                                         %% contents suppressed with 'anonymous'
