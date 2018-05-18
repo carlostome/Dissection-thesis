@@ -1,8 +1,6 @@
 
 \documentclass[sigplan,10pt,review]{acmart}
 
-
-
 %% For double-blind review submission, w/ CCS and ACM Reference
 %\documentclass[sigplan,10pt,review,anonymous]{acmart}\settopmatter{printfolios=true}
 %% For single-blind review submission, w/o CCS and ACM Reference (max submission space)
@@ -15,7 +13,10 @@
 \settopmatter{printfolios=true,printccs=false,printacmref=false}
 
 % TODO notes
-\usepackage[draft]{todonotes}
+%\usepackage[draft]{todonotes}
+\usepackage{xcolor}
+\newcommand\todo[1]{\textcolor{red}{\textbf{TODO:~}#1}}
+
 
 %% Agda stuff
 \usepackage[conor]{agda}
@@ -388,27 +389,29 @@
 
 
 \begin{abstract}
-The functional programming paradigm encourages a style of programming based on
-  the use of higher-order functions over inductively defined datatypes. A fold is
-  the prototypical example of such a function. However, its use for computation
-  comes at a price.  Folds for branching datatypes, such as binary trees, are by
-  definition not tail recursive functions.
+% The functional programming paradigm encourages a style of programming based on
+%   the use of higher-order functions over inductively defined datatypes. A fold is
+%   the prototypical example of such a function. However, its use for computation
+%   comes at a price.  Folds for branching datatypes, such as binary trees, are by
+%   definition not tail recursive functions.
 
-  McBride has proposed a method called
-  \emph{dissection}\cite{McBride:2008:CLM:1328438.1328474}, to
-  transform a fold into its tail-recursive counterpart. Nevertheless,
-  it is not clear why the resulting function terminates, nor it is
-  clear that the transformation preserves the fold's semantics. In
-  this paper we fill the gap by providing a fully machine checked
-  proof of the construction using the proof assistant Agda.
+%   McBride has proposed a method called
+%   \emph{dissection}\cite{McBride:2008:CLM:1328438.1328474}, to
+%   transform a fold into its tail-recursive counterpart. Nevertheless,
+%   it is not clear why the resulting function terminates, nor it is
+%   clear that the transformation preserves the fold's semantics. In
+%   this paper we fill the gap by providing a fully machine checked
+%   proof of the construction using the proof assistant Agda.
+  \todo{Write abstract}
 \end{abstract}
 
 
-\include{ccs.tex}
+\include{ccs}
 
 %% Keywords
 %% comma separated list
-\keywords{keyword1, keyword2, keyword3}  %% \keywords are mandatory in final camera-ready submission
+\keywords{datatype generic programming, catamorphisms, dissection,
+  dependent types, Agda, \todo{Keywords?}}
 
 
 \maketitle
@@ -983,8 +986,8 @@ any recursive structure to use.
 \end{hscode}\resethooks
 
 The proof fails because in \ensuremath{\Varid{aux}} both Zippers \ensuremath{\Varid{x}} and \ensuremath{\Varid{y}} might very well be
-locations of leaves belonging to different trees as far we know. Thanks to the 
-use of dependent types, the property that a Zipper represents a location inside a 
+locations of leaves belonging to different trees as far we know. Thanks to the
+use of dependent types, the property that a Zipper represents a position inside a
 concrete tree can be made explicit at the type level.
 
 \begin{hscode}\SaveRestoreHook
@@ -999,8 +1002,8 @@ concrete tree can be made explicit at the type level.
 \ColumnHook
 \end{hscode}\resethooks
 
-We write a relation that is enforced to only relate Zippers beloging to the same \ensuremath{\AD{Expr}} by
-indexing the \ensuremath{\AD{Zipper\ensuremath{\Downarrow}}}
+We write a relation that is enforced to only relate Zippers beloging to the same
+\ensuremath{\AD{Expr}} by using a common value of that type as an of \ensuremath{\AD{Zipper\ensuremath{\Downarrow}}}
 
 \begin{hscode}\SaveRestoreHook
 \column{B}{@{}>{\hspre}l<{\hspost}@{}}%
@@ -1014,31 +1017,100 @@ indexing the \ensuremath{\AD{Zipper\ensuremath{\Downarrow}}}
 \ColumnHook
 \end{hscode}\resethooks
 
-The concrete details of the relation follow very much the one we gave before
+The concrete details of the relation follow very much the one we gave before,
 with the exception that every case has attached a new piece of information
-specifying the concrete \ensuremath{\AD{Expr}} to which both Zippers stand as locations.
+specifying the concrete \ensuremath{\AD{Expr}} obtained by plugging both Zippers.
 
-The indexed relation is now suitable for proving well foundedness because by
-introducing the equalities we are able to show how the structure of the two
-input values are related so it is straightforward to use recursion. In concrete,
-the case we explained before now can be proven by learning that \ensuremath{(\AB{\ensuremath{t_2}}\;\Varid{,}\;\AB{\ensuremath{s_2}})}
-stands for a position on the left subtree, and \ensuremath{(\AB{\ensuremath{t_1}}\;\Varid{,}\;\AB{\ensuremath{s_1}})} on the right  of a
-common\ensuremath{\AI{Add}} node.
+The new version of the relation is suitable for proving well foundedness because
+we can pattern match on the equality included in the \ensuremath{\AD{Zipper\ensuremath{\Downarrow}}} type to show how 
+the overall structure decreases. This allows us to use the recursion we need to
+complete the proof.
+In particular, the case we were not able to prove before, now can be proven by learning that
+\ensuremath{(\AB{\ensuremath{t_2}}\;\Varid{,}\;\AB{\ensuremath{s_2}})} is a position on the left subtree while \ensuremath{(\AB{\ensuremath{t_1}}\;\Varid{,}\;\AB{\ensuremath{s_1}})} is on the
+right subtree of a common \ensuremath{\AI{Add}} node.
 
-% \begin{code}
-%  <-WF : forall (e : Expr) Well-founded ltOp
-%  <-WF x = acc (aux x)
-%     where
-%       aux : ∀ (x : Zipper)
-%           -> ∀ (y : Zipper) -> y < x -> Acc ltOp y
-%       aux dotted(t2 , Left t1' :: s2) dotted(t1 , Right n t2' eq :: s1) (<-Right-Left eq1 eq2) = {!!}
-%       aux ...
-% \end{code}
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{3}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{7}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{11}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[3]{}\Varid{<-WF}\;\mathbin{:}\;\forall\;\AB{e}\;\to \;\AF{Well\text{-}founded}\;(\Conid{IxltOp}\;\AB{e}){}\<[E]%
+\\
+\>[3]{}\Varid{<-WF}\;\Varid{x}\;\mathrel{=}\;\AI{acc}\;(\Varid{aux}\;\AB{e}\;\Varid{x}){}\<[E]%
+\\
+\>[3]{}\hsindent{2}{}\<[5]%
+\>[5]{}\AK{where}{}\<[E]%
+\\
+\>[5]{}\hsindent{2}{}\<[7]%
+\>[7]{}\Varid{aux}\;\mathbin{:}\;\forall\;(\AB{e}\;\mathbin{:}\;\AD{Expr})\;\to \;\forall\;(\Varid{x}\;\mathbin{:}\;\AD{Zipper\ensuremath{\Downarrow}}\;\AB{e}){}\<[E]%
+\\
+\>[7]{}\hsindent{4}{}\<[11]%
+\>[11]{}\to \;\forall\;(\Varid{y}\;\mathbin{:}\;\AD{Zipper\ensuremath{\Downarrow}}\;\AB{e})\;\to \;\Varid{y}\;\AD{<}\;\Varid{x}\;\to \;\AD{Acc}\;(\Conid{IxltOp}\;\AB{e})\;\Varid{y}{}\<[E]%
+\\
+\>[5]{}\hsindent{2}{}\<[7]%
+\>[7]{}\Varid{aux}\;\AS{.}\hspace*{-0.1cm}\;(\AI{Add}\;(\Varid{plug}))\;\AS{.}\hspace*{-0.1cm}\;((\AB{\ensuremath{t_2}}\;\Varid{,}\;\AI{Left}\;\AB{\ensuremath{t_1}'}\;\hspace{.4em}\AI{:\hspace{-.1em}:}\hspace{.4em}\;\AB{\ensuremath{s_2}}))\;\Varid{,}\;\AI{refl})\;\AS{.}\hspace*{-0.1cm}\;((\AB{\ensuremath{t_1}}\;\Varid{,}\;\AI{Right}\;\AB{n}\;\AB{\ensuremath{t_2}'}\;\AB{\ensuremath{eq}}\;\hspace{.4em}\AI{:\hspace{-.1em}:}\hspace{.4em}\;\AB{\ensuremath{s_1}})\;\Varid{,}\;\Varid{eq2})\;{}\<[E]%
+\\
+\>[7]{}\hsindent{4}{}\<[11]%
+\>[11]{}(\AI{<\text{-}Right\text{-}Left}\;\Varid{eq1}\;\Varid{eq2})\;\mathrel{=}\;\{\mskip1.5mu \mathbin{!!}\mskip1.5mu\}\;{}\<[E]%
+\\
+\>[5]{}\hsindent{2}{}\<[7]%
+\>[7]{}\Varid{aux}\;\Varid{...}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+We have now the proof of well foundedness for the relation defined over top-down Zippers. We also have proven that
+there is an equivalence between top-down and bottom-up Zippers. We exploit it by using the top-down encoding for
+the termination proof while we use the bottom-up to actually compute in a tail recursive manner.
+
+Thus we prove a lemma stating that if we apply unload to a bottom-up Zipper and this results in another
+Zipper, then the result is smaller by the relation than the input. However, to show it we have to 
+convert them to the top down representation. In overall, what we have is the following lemma:
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{13}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{unload-ltop}\;\mathbin{:}\;\forall\;\AB{n}\;\AB{\ensuremath{eq}}\;\Varid{s}\;\Varid{t'}\;\Varid{s'}\;\to \;\AF{unload}\;(\Conid{Tip}\;\AB{n})\;(\Conid{TipA}\;\AB{n})\;\AB{\ensuremath{eq}}\;\Varid{s}\;\AD{\ensuremath{\equiv}}\;\Varid{inj₁}\;(\Varid{t'}\;\Varid{,}\;\Varid{s'}){}\<[E]%
+\\
+\>[B]{}\hsindent{13}{}\<[13]%
+\>[13]{}\to \;(\Varid{t'}\;\Varid{,}\;\AF{reverse}\;\Varid{s'})\;\AD{\_<\_}\;(\AB{n}\;\Varid{,}\;\AF{reverse}\;\Varid{s}){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\subsection{Correctness}
+
+Indexing the \emph{Zipper} with an expression allow us to prove correcness of
+the transformation easily. The expression during the fold does not change, thus
+in every step of the computation the result of its evaluation remains constant.
+
+By using induction over the definition of unload, we can prove that when \ensuremath{\AF{unload}} 
+delivers a value, it corresponds to the result of evaluating of the input expression.
+In order to do so, we enrich the type of \ensuremath{\AF{unload}} to include the expression that has already
+been folded and we have its result. 
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{3}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{19}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[3]{}\AF{unload}\;\mathbin{:}\;(\AB{e}\;\mathbin{:}\;\AD{Expr})\;\to \;(\AB{n}\;\mathbin{:}\;\AD{\ensuremath{\mathbb{N}}})\;\to \;\AF{eval}\;\AB{e}\;\AD{\ensuremath{\equiv}}\;\AB{n}\;\to \;\AD{Stack}\;\to \;(\AD{\ensuremath{\mathbb{N}}}\;\AF{\ensuremath{\times}}\;\AD{Stack})\;\AD{\ensuremath{\uplus}}\;\AD{\ensuremath{\mathbb{N}}}{}\<[E]%
+\\[\blanklineskip]%
+\>[3]{}\Varid{unload-correct}\;{}\<[19]%
+\>[19]{}\mathbin{:}\;\forall\;(\AB{e}\;\mathbin{:}\;\AD{Expr})\;(\AB{n}\;\mathbin{:}\;\AD{\ensuremath{\mathbb{N}}})\;(\AB{\ensuremath{eq}}\;\mathbin{:}\;\AF{eval}\;\AB{e}\;\AD{\ensuremath{\equiv}}\;\AB{n})\;(\Varid{s}\;\mathbin{:}\;\AD{Stack})\;(\Varid{x}\;\mathbin{:}\;\AD{\ensuremath{\mathbb{N}}}){}\<[E]%
+\\
+\>[19]{}\to \;\AF{unload}\;\AB{e}\;\AB{n}\;\AB{\ensuremath{eq}}\;\Varid{s}\;\Varid{≡}\;\AI{inj\ensuremath{_2}}\;\Varid{x}\;\to \;\AF{eval}\;\AB{e}\;\AD{\ensuremath{\equiv}}\;\Varid{x}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+Proving correctness of the whole transformation amounts to show that it holds for the
+auxiliary recursor that we use to write the function \ensuremath{\AF{tail\text{-}rec\text{-}eval}}. We use well founded 
+recursion to do structural recursion over the accesibility predicate and use the lemma 
+\ensuremath{\Varid{unload-correct}} in the base case.
 
 \todo[inline]{STOP HERE}
 
-\subsection{Termination}
-\subsection{Correctness}
 \section{Regular universe}
   + Universe interpretation generic programming
   + Fixpoint
@@ -1083,3 +1155,11 @@ common\ensuremath{\AI{Add}} node.
 Text of appendix \ldots
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% TeX-command-default: "lagda2pdf"
+%%% End: 
+
+

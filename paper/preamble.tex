@@ -10,7 +10,10 @@
 \settopmatter{printfolios=true,printccs=false,printacmref=false}
 
 % TODO notes
-\usepackage[draft]{todonotes}
+%\usepackage[draft]{todonotes}
+\usepackage{xcolor}
+\newcommand\todo[1]{\textcolor{red}{\textbf{TODO:~}#1}}
+
 
 %% Agda stuff
 \usepackage[conor]{agda}
