@@ -409,6 +409,7 @@ TSWLatexianTemp*
 # expex forward references with \gathertags
 
 ### Vim ###
+*.vim
 # swap
 [._]*.s[a-v][a-z]
 [._]*.sw[a-p]
