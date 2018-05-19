@@ -12,7 +12,7 @@
 
 \begin{document}
 
-\title{Dissection: verified and terminating}
+\title{Dissection: terminating and correct}
 
 \author{Carlos Tom\'e Corti\~nas}
 \affiliation{
@@ -156,9 +156,9 @@ by making the following novel contributions:
   preservation from our example are generalized to the generic fold
   over arbitrary types in our universe
   (Section~\ref{correctness}). 
-
 \end{itemize}
-
+Together these results give a verified function that computes a tail
+recursive traversal from any algebra for any algebraic data type.
 All the constructions and proofs presented in this paper have been
 implemented in and checked by Agda. The corresponding code is freely
 available online.\footnote{\todo{url}}
