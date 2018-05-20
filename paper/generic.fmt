@@ -1,0 +1,34 @@
+% Datatypes
+%format Reg = "\AD{Reg}"
+%format mu  = "\AD{\ensuremath{\mu}}"
+
+% Constructors
+%format One   = "\AI{\ensuremath{\mathbb{1}}}"
+%format Zero  = "\AI{\ensuremath{\mathbb{0}}}"
+%format I     = "\AI{I}"
+%format K     = "\AI{K}"
+%format O+Op  = "\AI{\_\ensuremath{\oplus}\_}"
+%format O*Op  = "\AI{\_\ensuremath{\otimes}\_}"
+%format O+    = "\AI{\ensuremath{\oplus}}"
+%format O*    = "\AI{\ensuremath{\otimes}}"
+%format In    = "\AI{In}"
+
+% Functions
+%format interp  = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
+%format interpl = "\AF{\ensuremath{\llbracket}}"
+%format interpr = "\AF{\ensuremath{\rrbracket}}"
+%format fmap    = "\AF{fmap}"
+%format catamorphism = "\AF{cata}"
+%format mapFold      = "\AF{map-fold}"
+%format nabla        = "\AF{\ensuremath{\nabla}}"
+
+% Bound variables
+%format A   = "\AB{A}"
+%format X   = "\AB{X}"
+%format Y   = "\AB{Y}"
+%format R   = "\AB{R}"
+%format Q   = "\AB{Q}"
+%format x   = "\AB{x}"
+%format y   = "\AB{y}"
+%format f   = "\AB{f}"
+%format alg = "\AB{\ensuremath{\psi}}"

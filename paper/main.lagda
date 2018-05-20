@@ -16,11 +16,11 @@
 
 \author{Carlos Tom\'e Corti\~nas}
 \affiliation{
-  \department{Department of Information and Computing Sciences}  
+  \department{Department of Information and Computing Sciences}
   \institution{University of Utrecht}
-  \country{The Netherlands}          
+  \country{The Netherlands}
 }
-\email{first1.last1@@inst1.edu}      
+\email{first1.last1@@inst1.edu}
 
 \author{Wouter Swierstra}
 \affiliation{
@@ -47,6 +47,8 @@
 \maketitle
 
 \section{Introduction}
+%{ begining of intro.fmt
+%include intro.fmt
 
 Folds, or \emph{catamorphisms}, are a pervasive
 programming pattern. A fold generalizes many simple traversals over an
@@ -102,9 +104,6 @@ function traverses the expressions, pushing subtrees on the
 stack; the |unload| function unloads the stack, while accumulating a
 (partial) result.
 
-%{
-%format loadN   = "\nonterm{" load "}"
-%format unloadN = "\nonterm{" unload "}"
 \begin{code}
   mutual
     loadN : Expr -> Stack -> Nat
@@ -116,7 +115,6 @@ stack; the |unload| function unloads the stack, while accumulating a
     unload v   (Right v' stk)  = unloadN (v' + v) stk
     unload v   (Left r stk)    = loadN r (Right v stk)
 \end{code}
-%}
 
 We can now define a tail recursive version of |eval| by
 calling |load| with an initially empty stack:
@@ -153,7 +151,7 @@ by making the following novel contributions:
 \item Finally, we sketch how the proofs of termination and semantics
   preservation from our example are generalized to the generic fold
   over arbitrary types in our universe
-  (Section~\ref{correctness}). 
+  (Section~\ref{correctness}).
 
 \end{itemize}
 
@@ -223,9 +221,6 @@ that will end up in the next leaf to the right.
 A tail recursive fold corrensponds to repeatedly applying the function
 |unload| until we find a |inj2| whose value is the result of folding
 the tree.
-
-%{
-%format nrec   = "\nonterm{" rec "}"
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e = rec (load e Top)
@@ -235,7 +230,6 @@ the tree.
       ... | inj1 z' = nrec z'
       ... | inj2 r = r
 \end{code}
-%}
 
 The function |tail-rec-eval| still does not pass the termination
 checker, The variable |z'| is not structurally smaller than |(n ,
@@ -446,7 +440,7 @@ node.
     where
       aux : forall (e : Expr) -> forall (x : Zipperdown e)
           -> forall (y : Zipperdown e) -> y < x -> Acc (IxltOp e) y
-      aux dotted(Add (plug )) dotted((t2 , Left t1' :: s2)) , refl) dotted((t1 , Right n t2' eq :: s1), eq2) 
+      aux dotted(Add (plug )) dotted((t2 , Left t1' :: s2)) , refl) dotted((t1 , Right n t2' eq :: s1), eq2)
           (<-Right-Left eq1 eq2) = {!!}
       aux ...
 \end{code}
@@ -464,8 +458,8 @@ them to the top down representation. In overall, what we have is the
 following lemma:
 
 \begin{code}
-unload-ltop : forall n eq s t' s' -> unload (Tip n) (TipA n) eq s == inj₁ (t' , s') 
-            -> (t' , reverse s') ltOp (n , reverse s) 
+unload-ltop : forall n eq s t' s' -> unload (Tip n) (TipA n) eq s == inj₁ (t' , s')
+            -> (t' , reverse s') ltOp (n , reverse s)
 \end{code}
 
 \subsection{Correctness}
@@ -497,52 +491,27 @@ recursion over the accesibility predicate and use the lemma
 \todo[inline]{STOP HERE}
 
 
-%{
+%} end of intro.fmt
+
 \section{Generic tail recursive fold}
-% Datatypes
-%format Reg = "\AD{Reg}" 
-%format mu  = "\AD{\ensuremath{\mu}}"
-
-% Constructors
-%format One   = "\AI{\ensuremath{\mathbb{1}}}"
-%format Zero  = "\AI{\ensuremath{\mathbb{0}}}"
-%format I   = "\AI{I}"
-%format K   = "\AI{K}"
-%format O+Op  = "\AI{\_\ensuremath{\oplus}\_}"
-%format O*Op  = "\AI{\_\ensuremath{\otimes}\_}"
-%format O+  = "\AI{\ensuremath{\oplus}}"
-%format O*  = "\AI{\ensuremath{\otimes}}"
-
-% Functions
-%format interp = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
-%format interpl = "\AF{\ensuremath{\llbracket}}"
-%format interpr = "\AF{\ensuremath{\rrbracket}}"
-
-% Bound variables
-%format A   = "\AB{A}"
-%format X   = "\AB{X}"
-%format R   = "\AB{R}"
-%format Q   = "\AB{Q}"
-
+%{ begining of generic.fmt
+%include generic.fmt
 
 Up until now, we have proven that we can encode a correct tail recursive fold
 for "evaluating" binary trees. In this section, we will show how we can extend
-the same ideas to generically construct a the tail recursive fold for a class of
-algebraic datatypes.
+the same ideas to generically construct a tail recursive fold covering a wide
+range of datatypes once and for all.
 
-+ Generic programming
 
 + High level idea of dissection as calculating the type of element in the stack
 
 \subsection{The \emph{regular} universe}
 
 In a dependently typed programming language such as Agda, the usual approach to
-show that a construction works in the generic case, is to model the class of
-datatypes that it can handle as a type of codes and define an interpretation
-function that maps them to Agda types.
-
-We introduce the universe of \emph{regular} tree types by defining the universe,
-|Reg|, and the interpretation function | interp : Reg -> (Set -> Set) |.
+encode a generic solution is to define a type of representations; the universe;
+and an interpretation function that mapping values of the representation type
+into types. Our choice of universe is that of \emph{regular} tree types as given
+by \todo{cite}.
 
 \begin{code}
   data Reg : Set1 where
@@ -564,49 +533,100 @@ We introduce the universe of \emph{regular} tree types by defining the universe,
   interpl (R O* Q) interpr X = interpl R interpr X * interpl Q interpr X
 \end{code}
 
-The type |Reg| serves as a generic encoding of non-recursive datatypes that are
-functors over Agda small types, i.e. |Set|. We can witness such statement by
-providing a function \emph{fmap} that fullfils the expected laws.
+The codes of our universe, |Reg|, are capable of representing non-recursive
+functorial datatypes. This claim is sustained by the fact that we interpret them
+as functors over Agda small types, i.e. |Set -> Set| , and that we can define a
+law abiding fmap\footnote{Proofs are left for the reader.}.
 
-CODE HERE
+\begin{code}
+  fmap : (R : Reg) -> (X -> Y) -> interpl R interpr X -> interpl R interpr Y
+  fmap Zero f ()
+  fmap One  f tt  = tt
+  fmap I f x      = f x
+  fmap (K A) f x  = x
+  fmap (R O+ Q) f (inj1 x)  = inj1 (fmap R f x)
+  fmap (R O+ Q) f (inj2 y)  = inj2 (fmap Q f y)
+  fmap (R O* Q) f (x , y)   = fmap R f x , fmap Q f y
+\end{code}
 
-In order to represent recursive datatypes we need to interpret a code |R : Reg|
-over itself. We tie the knot by defining the fixed point of a code |R|.
+In order to enhance the expressiveness of our generic construction to handle
+recursive datatypes we have to tie the knot over the functor. We do so by
+introducing the fixed point of a code interpreted over itself.
 
 \begin{code}
   data mu (R : Reg) : Set where
     In : interpl R interpr (mu R) -> mu R
 \end{code}
 
-The common feature of the datatypes that |mu R| is able to represent is that
-they have a tree-like structure of finite depth with finite branching at each
-node. For example, the type of expressions used in the previous section is
-isomorphic to the terms of type |mu (One O+ (I O* I))|.
+The common feature of the datatypes that we can represent through |mu R| is
+that they have a tree-like structure of finite depth with finite branching at
+each node. For example, the type of expressions |Expr| can be represented
+(representations are not unique) by the type |mu (One O+ (I O* I))|.
+
+A recursive datatype always comes in pair with a recursive eliminator, fold,
+capable of collapsing terms of such type into a single value. As |mu R| is used
+to represent recursive types, we can define a generic operation fold to consume
+terms into values. The generic fold is historically dubbed \emph{catamorphim}.
 
 \begin{code}
-MORE CODE
+  catamorphism : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
+  catamorphism R alg (In r) = alg (fmap R (catamorphism R alg) r)
 \end{code}
 
-The definition of a recursive datatype comes associated with a function to
-consume terms of that type by exploiting the recursive structure. In a generic
-setting, this functions are dubbed \emph{catamorphism} because they allow to
-tear down (from the ancient Greek, $k\alpha\tau\alpha$) a term into a single
-value.
-
-Given an algebra of type |interpr R interpl X -> X| we can fold a term of type
-|mu R| easily by unpacking the functor, \emph{fmapping} the catamorphism, and
-finally applying the algebra.
+However, this is a definition that Agda cannot cope with because of the
+higher-order argument to fmap. We shall rewrite |catamorphim| to fuse together
+the \emph{fmap} with the \emph{fold} so termination checker warnings are avoided
+all along.
 
 \begin{code}
-MORE CODE (DO WE NEED TO TALK ABOUT MAPFOLD?)
+  mapFold : (R Q : Reg) -> (interpl Q interpr X -> X) -> interpl R interpr (mu Q) -> interpl R interpr A
+  mapFold Zero Q alg ()
+  mapFold One Q alg tt    = tt
+  mapFold I Q alg (In x)  = alg (mapFold Q Q alg x)
+  mapFold (K A) Q alg x   = x
+  mapFold (R O+ Q) P alg (inj1 x)  = inj2 (mapFold R P alg x)
+  mapFold (R O+ Q) P alg (inj2 y)  = inj2 (mapFold Q P alg y)
+  mapFold (R O* Q) P alg (x , y)   = mapFold R P alg x , mapFold Q P alg y
+
+  catamorphism : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
+  catamorphism R alg (In r) = mapFold R R alg r
 \end{code}
 
-Our goal is to develop a tail recursive version of the \emph{catamorphims},
-again prove that it terminates and show that it is correct with regard to
-|catamorphism|.
+Our goal in the rest of this section is to show how to develop a tail recursive
+function that terminates and is correct with regard to |catamorphism|.
 
-\section{Dissection}
+\subsection{Dissection}
 
+If we recall from the previous section, it is central to our work to is to
+delineate what means to be a leaf in the tree structure. In the case of |Expr|
+it was easy to define an ad-hoc stack type to represent the the path from or to
+the leaf such that paired with a natural number denoted a position of a leaf
+within a |Expr| value.
+
+In the regular universe, as McBride showed us\todo{cite}, from the code of a
+type it is possible to automatically calculate the type of elements of the
+stack. The idea is that within a functorial structure we can distinguish
+exactly one variable occurrence so that the variables appearing to its left of
+it can have a different type than the variables on its right.
+
+\begin{code}
+  nabla : (R : Reg) → (Set → Set → Set)
+  nabla Zero  X Y  = Bot
+  nabla One   X Y  = Bot
+  nabla I     X Y  = Top
+  nabla (K A) X Y  = Bot
+  nabla (R O+ Q) X Y = nabla R X Y U+ nabla Q X Y
+  nabla (R O* Q) X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
+\end{code}
+
+
+calculate the The generic case though things are not quite straightforward. First we need to
+be able to talk of how can we take an internal node and the internal nodes of
+the datatype that are missing some part (they have a hole) notion of elements
+of the stack and secondly we have to define whahhh
+
+
+ along wa  defined the positions of the leaves in the tree like structure
 The main idea we presented in the previous section is that by pointing at the
 leaves of a tree, using a \emph{Zipper}, we can define a function unload to move
 one step forward to the right of the tree while computing a partial value for
@@ -626,13 +646,11 @@ operation over codes of type |Reg| to calculate the type of elements in the
 stack for the generic case.
 
 
-
-
 The first step to derive a generic solution is to define what means in the
-generic case to be a 
-stack 
+generic case to be a
+stack
 For the type of expressions it was easy to define a datatype that allows us to
-distinguish a hole 
+distinguish a hole
 
   + Dissection as generically calculate the type of stacks in agda
   + Plug
@@ -640,12 +658,11 @@ distinguish a hole
   + relation on dissection?
   + Make clear the separation between recursion in the functor level and
   the fix level
-<<<<<<< HEAD
 
-%}
+%} end of generic.fmt
+
 \section{Conclusion and future work}
 
-%}
 %% Acknowledgments
 \begin{acks}                            %% acks environment is optional
                                         %% contents suppressed with 'anonymous'
@@ -681,6 +698,6 @@ Text of appendix \ldots
 %%% mode: latex
 %%% TeX-master: t
 %%% TeX-command-default: "lagda2pdf"
-%%% End: 
+%%% End:
 
 

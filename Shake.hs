@@ -15,6 +15,10 @@ lagda = "lagda"
 tex :: FilePath
 tex = "tex"
 
+-- fmt file extension
+fmt :: FilePath
+fmt = "fmt"
+
 -- lagda files used to build the thesis
 thesis_lagda_files :: [String]
 thesis_lagda_files = [ "main" , "tree" , "problem" , "background"]
@@ -22,6 +26,9 @@ thesis_lagda_files = [ "main" , "tree" , "problem" , "background"]
 -- lagda files used for the paper
 paper_lagda_files :: [String]
 paper_lagda_files = [ "main" ]
+
+paper_fmt_files :: [String]
+paper_fmt_files = [ "paper" , "intro" , "generic" ]
 
 main :: IO ()
 main = shakeArgs shakeOptions $ do
@@ -31,6 +38,10 @@ main = shakeArgs shakeOptions $ do
     putNormal "Cleaning files in thesis"
     cmd_ "latexmk -c -cd thesis/main.tex"
     removeFilesAfter "thesis" ["*.tex", "*.bbl"]
+
+    putNormal "Cleaning files in paper"
+    cmd_ "latexmk -c -cd paper/main.tex"
+    removeFilesAfter "paper" ["*.tex", "*.bbl"]
 
   phony "thesis" $ do
     need ["thesis/main" <.> pdf]
@@ -55,9 +66,9 @@ main = shakeArgs shakeOptions $ do
 
   "paper/main" <.> pdf %> \out -> do
     putNormal "Building paper"
-    let files = [ "paper" </> file <.> tex | file <- paper_lagda_files]
-        bib   = "paper/main.bib"
-        fmt   = "paper/paper.fmt"
-        sty   = "paper/agda.sty"
-    need (bib : fmt : sty : files)
+    let files      = [ "paper" </> file <.> tex | file <- paper_lagda_files]
+        bib        = "paper/main.bib"
+        fmtFiles   = [ "paper" </> file <.> fmt | file <- paper_fmt_files]
+        sty        = "paper/agda.sty"
+    need (bib : sty : (files ++ fmtFiles))
     cmd_ "latexmk -pdf -cd paper/main.tex"
