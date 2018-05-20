@@ -162,7 +162,7 @@ implemented in and checked by Agda. The corresponding code is freely
 available online.\footnote{\todo{url}}
 
 
-\section{Basic idea}
+\section{Termination and tail-recursion}
 \label{sec:basics}
 The functions |load| and |unload| are marked as non terminating
 because they are not defined by structural recursion over their

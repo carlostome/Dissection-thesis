@@ -89,7 +89,6 @@ anaconda-mode/
 *.fls
 *.out
 *.toc
-*.fmt
 *.fot
 *.cb
 *.cb2
