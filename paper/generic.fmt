@@ -21,6 +21,7 @@
 %format catamorphism = "\AF{cata}"
 %format mapFold      = "\AF{map-fold}"
 %format nabla        = "\AF{\ensuremath{\nabla}}"
+%format plug        = "\AF{\ensuremath{plug}}"
 
 % Bound variables
 %format A   = "\AB{A}"
@@ -31,4 +32,9 @@
 %format x   = "\AB{x}"
 %format y   = "\AB{y}"
 %format f   = "\AB{f}"
+%format r   = "\AB{r}"
+%format q   = "\AB{q}"
+%format dq   = "\AB{dq}"
+%format dr   = "\AB{dr}"
 %format alg = "\AB{\ensuremath{\psi}}"
+%format eta = "\AB{\ensuremath{\eta}}"

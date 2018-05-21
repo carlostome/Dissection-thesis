@@ -488,7 +488,6 @@ it holds for the auxiliary recursor that we use to write the function
 recursion over the accesibility predicate and use the lemma
 |unload-correct| in the base case.
 
-\todo[inline]{STOP HERE}
 
 
 %} end of intro.fmt
@@ -496,14 +495,17 @@ recursion over the accesibility predicate and use the lemma
 \section{Generic tail recursive fold}
 %{ begining of generic.fmt
 %include generic.fmt
+Our solution extends naturally to a more general case than only |Expr| and
+|eval|.  In this section, we will show how we can reuse the ideas presented so
+far, to generically construct a correct tail recursive fold once and for all
+for a wide range of algebraic datatypes.
 
-Up until now, we have proven that we can encode a correct tail recursive fold
-for "evaluating" binary trees. In this section, we will show how we can extend
-the same ideas to generically construct a tail recursive fold covering a wide
-range of datatypes once and for all.
-
-
-+ High level idea of dissection as calculating the type of element in the stack
+The common feature of the types that we can encode using the \emph{regular}
+universe have, as the name suggests, a tree-like structure of finite depth and
+finite branching. We shall exploit this commonality to generalize our solution
+by defining: the type of \emph{Zipper} used to locate leaves of the tree; the
+pair of |load| and |unload| functions that perform one step of the fold; and a
+well founded relation to prove termination and correcness of the construction.
 
 \subsection{The \emph{regular} universe}
 
@@ -558,11 +560,6 @@ introducing the fixed point of a code interpreted over itself.
     In : interpl R interpr (mu R) -> mu R
 \end{code}
 
-The common feature of the datatypes that we can represent through |mu R| is
-that they have a tree-like structure of finite depth with finite branching at
-each node. For example, the type of expressions |Expr| can be represented
-(representations are not unique) by the type |mu (One O+ (I O* I))|.
-
 A recursive datatype always comes in pair with a recursive eliminator, fold,
 capable of collapsing terms of such type into a single value. As |mu R| is used
 to represent recursive types, we can define a generic operation fold to consume
@@ -574,7 +571,7 @@ terms into values. The generic fold is historically dubbed \emph{catamorphim}.
 \end{code}
 
 However, this is a definition that Agda cannot cope with because of the
-higher-order argument to fmap. We shall rewrite |catamorphim| to fuse together
+higher-order argument to fmap. We rewrite |catamorphism| to fuse together
 the \emph{fmap} with the \emph{fold} so termination checker warnings are avoided
 all along.
 
@@ -592,22 +589,31 @@ all along.
   catamorphism R alg (In r) = mapFold R R alg r
 \end{code}
 
-Our goal in the rest of this section is to show how to develop a tail recursive
-function that terminates and is correct with regard to |catamorphism|.
 
 \subsection{Dissection}
 
-If we recall from the previous section, it is central to our work to is to
-delineate what means to be a leaf in the tree structure. In the case of |Expr|
-it was easy to define an ad-hoc stack type to represent the the path from or to
-the leaf such that paired with a natural number denoted a position of a leaf
-within a |Expr| value.
+Given a generic representation of a type, we can automatically calculate the
+type of its one hole context by a method dubbed \emph{dissection} that resembles to the
+rules of derivative calculus as devised by Leibniz.
 
-In the regular universe, as McBride showed us\todo{cite}, from the code of a
-type it is possible to automatically calculate the type of elements of the
-stack. The idea is that within a functorial structure we can distinguish
-exactly one variable occurrence so that the variables appearing to its left of
-it can have a different type than the variables on its right.
+In a |mu R| type there are two recursive structures, the explicit one have the
+induced by taking the fixed point of interpreting |R| over itself and the
+implicit within the functor layer that can be recursive due to the possibility
+of combining functors either as products, |O*Op|, or coproducts |O+Op|.
+
+Dissection takes the functorial layer and allow us to programatically derive all
+the possible ways of distinguishing exactly a occurrence of the variable such
+that the variables to its left may take a different type from the variables to
+the right.
+
+By using the analogy of a functor |F| as a container of things of a base type
+|A|, then if we take a representation\footnote{Representations are not unique}
+for the expression type |Expr|, |One O+ (I O* I)|, we dissect it as depicted in
+the following picture.
+
+\todo{PIC HERE}
+
+We shall now define in Agda the dissection operation by induction over |Reg|.
 
 \begin{code}
   nabla : (R : Reg) → (Set → Set → Set)
@@ -619,23 +625,30 @@ it can have a different type than the variables on its right.
   nabla (R O* Q) X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
 \end{code}
 
+The last line of the definition is the interesting one. To \emph{dissect} a
+product of things we either \emph{dissect} the left component pairing it with
+the second component interpreted over the second variable |Y|; or we
+\emph{dissect} the second component and pair it with the first interpreted over
+|X|. This \emph{or} is what will give us all the possible combinations.
 
-calculate the The generic case though things are not quite straightforward. First we need to
-be able to talk of how can we take an internal node and the internal nodes of
-the datatype that are missing some part (they have a hole) notion of elements
-of the stack and secondly we have to define whahhh
+Having a \emph{dissection}, |R X Y|, we can show that we can reconstruct the
+original structure by \emph{plugging} operation given a element of type |X| to
+plug in the hole. However, the type |X| does not need to agree with |Y| as long as
+we can recover |X|s from |Y|s.
 
+\begin{code}
+  plug : (R : Reg) -> (Y -> X) -> nabla R Y X -> X -> interpl R interpr X
+  plug Zero   eta () x
+  plug One    eta () x
+  plug I eta tt x  = x
+  plug (K A)  eta () x
+  plug (R O+ Q) eta (inj1 r) x  = inj1 (plug R eta r x)
+  plug (R O+ Q) eta (inj2 q) x  = inj2 (plug Q eta q x)
+  plug (R O* Q) eta (inj1 (dr , q)) x = plug R eta dr x  , q
+  plug (R O* Q) eta (inj2 (r , dq)) x = fmap R eta r           , plug Q eta dq x
+\end{code}
 
- along wa  defined the positions of the leaves in the tree like structure
-The main idea we presented in the previous section is that by pointing at the
-leaves of a tree, using a \emph{Zipper}, we can define a function unload to move
-one step forward to the right of the tree while computing a partial value for
-the fold.
-
-Thus if we are to extend this solution we first need to put our focus in what
-is a Zipper in the generic case. Before thinking about the leaf part of it, we
-will explain how the stack is constructed.
-
+\todo[inline]{STOP HERE}
 Recalling from before, a stack represents a path either from the root of the
 tree to a leaf or from the leaf to the root. Each element of the stack is a
 value that represents a node with a hole on it. For example, in the case of
