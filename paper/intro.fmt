@@ -37,6 +37,7 @@
 %format < = "\AD{<}"
 %format dotted = "\AS{.}\hspace*{-0.1cm}"
 
+%format <-Well-founded = "\AF{<\text{-}Well-founded}"
 
 % Bound variables
 %format n     = "\AB{n}"

@@ -1,4 +1,3 @@
-
 \documentclass[sigplan,10pt,review]{acmart}
 
 %include preamble.tex
@@ -12,7 +11,7 @@
 
 \begin{document}
 
-\title{Dissection: verified and terminating}
+\title{Dissection: terminating and correct}
 
 \author{Carlos Tom\'e Corti\~nas}
 \affiliation{
@@ -50,12 +49,12 @@
 %{ begining of intro.fmt
 %include intro.fmt
 
-Folds, or \emph{catamorphisms}, are a pervasive
-programming pattern. A fold generalizes many simple traversals over an
-algebraic data type. Functions implemented by means of a fold are
-\emph{compositional} and structurally recursive. Consider, for
-instance, the following expression data type, written in the
-dependently typed programming language Agda\todo{citation}:
+Folds, or \emph{catamorphisms}, are a pervasive programming
+pattern. Folds generalize many simple traversals over algebraic data
+types. Functions implemented by means of a fold are both compositional
+and structurally recursive. Consider, for instance, the following
+expression data type, written in the dependently typed programming
+language Agda\cite{norell}:
 
 \begin{code}
   data Expr : Set where
@@ -73,23 +72,22 @@ natural numbers, as follows:
 \end{code}
 %
 In the case for |Add e1 e2|, the |eval| function makes two recursive
-calls and sums their results. Such a function can be implemented by a
+calls and sums their results. Such a function can be implemented using a
 fold, passing the addition and identity functions as the argument
 algebra.
 
 Unfortunately, not all in the garden is rosy. The operator |plusOp|
 needs both of its parameters to be fully evaluated before it can
-reduce further. When evaluating large expressions, the size of the
+reduce further. As a result, the size of the
 stack used during execution grows linearly with the size of the input,
-potentially leading to a stack overflow, causing the execution of the
-program to halt unexpectedly.
+potentially leading to a stack overflow on large inputs.
 
 To address this problem, we can manually rewrite the evaluator to be
 \emph{tail recursive}. Modern compilers typically map tail recursive
 functions to machine code that runs in constant memory. To write such
 a tail recursive function, we need to introduce an explicit stack
 storing both intemediate results and the subtrees that have not yet
-been evaluated. We can define such a stack as follows:
+been evaluated.
 
 \begin{code}
   data Stack : Set where
@@ -139,22 +137,21 @@ by making the following novel contributions:
 \item We give a verified proof of termination of |tail-rec-eval| using
   a carefully chosen \emph{well-founded relation}
   (Section~\ref{sec:basics}). After redefining |tail-rec-eval| using
-  this relation, we prove that it agrees with the |eval| function on
-  all inputs.
-\item We generalize this construction, inspired by McBride and Danvy's
-  work on calculating abstract machines from their recursive
-  counterparts. To do so, we define a universe of algebraic data types
-  and a generic fold operation
-  (Section~\ref{sec:universe}). Subsequently we show how to turn any
-  structurally recursive function defined using a fold into its tail
-  recursive counterpart (Section~\ref{sec:dissection}).
+  this relation, we can prove the evaluators equal in Agda.
+\item We generalize this construction, inspired by
+  McBride~\cite{dissection}'s work on \emph{dissections}, to show how
+  to calculate an abstract machine from an algebra. To
+  do so, we define a universe of algebraic data types and a generic
+  fold operation (Section~\ref{sec:universe}). Subsequently we show
+  how to turn any structurally recursive function defined using a fold
+  into its tail recursive counterpart (Section~\ref{sec:dissection}).
 \item Finally, we sketch how the proofs of termination and semantics
   preservation from our example are generalized to the generic fold
   over arbitrary types in our universe
-  (Section~\ref{correctness}).
-
+  (Section~\ref{correctness}). 
 \end{itemize}
-
+Together these results give a verified function that computes a tail
+recursive traversal from any algebra for any algebraic data type.
 All the constructions and proofs presented in this paper have been
 implemented in and checked by Agda. The corresponding code is freely
 available online.\footnote{\todo{url}}
@@ -162,100 +159,102 @@ available online.\footnote{\todo{url}}
 
 \section{Termination and tail-recursion}
 \label{sec:basics}
-The functions |load| and |unload| are marked as non terminating
-because they are not defined by structural recursion over their
-arguments. In particular, the stack passed as an argument to the
-recursive call of |load| in the definition of |unload| is structurally
-equal in size as the input stack.
+Before tackling the generic case, we will present the termination
+and correctness proof for the tail recursive evaluator presented in
+the introduction in some detail.
 
-Intuitively, |load| and |unload| fold the tree by traversing it from
-its leftmost leaf to its rightmost using the stack to store both
-partial results and the remaining subtrees to fold them as
-neccesary. The problem arises because the stack is simply typed and
-any information about how the subtrees kept in the stack relate to
-each other and to the original tree is lost once a subtree is inserted
-onto the stack.
+The problematic call for Agda's termination checker is the last clause
+of the |unload| function, that calls |load| on the expression stored
+on the top of the stack. At this point, there is no reason to believe
+that the expression on the top of the stack is structurally smaller in
+any way. Indeed, if we were to redefine |load| as follows:
+\begin{code}
+    load (Add e1 e2)  stk = load e1 (Left (f e2) stk)
+\end{code}
+we might use some function |f : Expr -> Expr| to push \emph{arbitrary}
+expressions on the stack, potentially leading to non-termination.
 
-However, it is clear that virtually every node (either leaf or not)
-from the original tree is visited at most twice during the
-computation. First when the function |load| decomposes it looking for
-its leftmost leaf and a second time when |unload| is accumulating over
-the stack searching for another subtree to continue. This process is
-depicted in figure 1.
+From the definition of |load|, however, it is clear that we only ever
+push subtrees of the input on the stack. As a result, every node in
+the original tree is visited at twice during the execution: first when
+the function |load| traverses the tree, until it finds the leftmost
+leaf; second when |unload| inspects the stack in searching of an
+unevaluated subtree. This process is depicted in
+Figure~\ref{fig:load-unload}.
 
-\begin{figure}[h]
-  \includegraphics[scale=0.25]{figure1}
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.25]{figure1}  
+  \caption{Traversing a tree with |load| and |unload|}
+  \label{fig:load-unload}
 \end{figure}
 
-We can argue that because there are finitely many nodes on a tree,
-|load| and |unload| neccesarily terminate. The question is now, How
-can we encode this information in such a way that Agda understand that
-the fold terminates?
+As there are finitely many nodes on a tree, the depicted traversal
+using |load| and |unload| must terminate -- but how can we convince
+Agda's termination checker of this?
 
-The idea is that |load| and |unload| should not fold the full input
-tree in one go, but instead they will perform one step of the
-computation at a time.  Morover, by defining them by structural
-recursion over their arguments now they are classified as terminating
-by the termination checker.
-
+As a first approximation, we will revise the definitions of |load| and
+|unload|. Rather than consuming the entire input in one go with a pair
+of mutually recursive functions, we begin by defining |load| as follows:
 \begin{code}
   load : Expr -> Stack -> Nat * Stack
   load (Val n)      stk = (n , stk)
   load (Add e1 e2)  stk = load e1 (Left e2 stk)
+\end{code}
+Rather than call |unload| upon reaching a value, we return the current
+stack and the value of the leftmost leaf.
 
+The |unload| function is defined by recursion over the stack as
+before, but with one crucial difference. Instead of always returning the
+final result, it may also return a new configuration of our abstract
+machine, that is, a pair |Nat * Stack|:
+\begin{code}
   unload : Nat -> Stack -> (Nat * Stack) U+ Nat
   unload v   Top             = inj2 v
   unload v   (Right v' stk)  = unload (v' + v) stk
   unload v   (Left r stk)    = inj1 (load r (Right v stk))
 \end{code}
+Both these functions are now accepted by Agda's termination checker as
+they are clearly structurally recursive.
 
-For example, if we take the same tree in figure 1, after |load| finds
-the initial leftmost leaf we can apply one step of the new |unload|
-that will end up in the next leaf to the right.
-
-
-\begin{figure}[h]
-  \includegraphics[scale=0.25]{figure2}
-\end{figure}
-
-A tail recursive fold corrensponds to repeatedly applying the function
-|unload| until we find a |inj2| whose value is the result of folding
-the tree.
+We can use both these functions to define the following evaluator:
+%{
+%format nrec   = "\nonterm{" rec "}"
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e = rec (load e Top)
     where
       nrec : (Nat * Stack) -> Nat
       rec (n , stk) with unload n stk
-      ... | inj1 z' = nrec z'
+      ... | inj1 (n' , stk') = nrec (n' , stk')
       ... | inj2 r = r
 \end{code}
-
-The function |tail-rec-eval| still does not pass the termination
-checker, The variable |z'| is not structurally smaller than |(n ,
-stk)|. However, now we can refine it by using well founded recursion
-to make it structurally recursive by performing the recursion over the
-accessibility predicate instead of the pair |Nat * Stack|.
-
+%}
+Here we use |load| to compute the initial configuration of our machine
+and repeatedly call |unload| until it returns a value.  This version
+of our evaluator, however, does not pass the termination checker. The
+new state, |(n' , stk')|, is not structurally smaller than the initial
+state |(n , stk)|. If we work under the assumption that we have a
+relation between the states |Nat * Stack| that decreases after every call to
+|unload|, and a proof that the relation is well founded, we can define the
+following version of the tail recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e = rec (load e Top) ??1
     where
       rec : (z : Nat * Stack) -> Acc ltOp z -> Nat
       rec (n , stk) (acc rs) with unload n stk
-      ... | inj1 z' = rec z' (rs ??2)
+      ... | inj1 (n' , stk') = rec (n' , stk') (rs ??2)
       ... | inj2 r = r
 \end{code}
 
-For the function above to work, we need to find a suitable definition
-for the relation |ltOp| over pairs of |Nat * Stack|, prove that
-applying |unload| results in an smaller element by the relation and
-finally show that the relation is |Well-founded|, so the call to |rec|
-can be made in the first place. Before any of that, we need to revisit
-Huet's notion of \emph{Zipper} and show how it relates to what we are
-trying to achieve.
+To complete this definition, we still need to define a suitable
+well-founded relation |ltOp| between configurations of type |Nat *
+Stack| and prove that the calls to |unload| produce smaller
+states. Before we can do so, however, we need to revisit the
+\emph{zippers} underlying this traversal.
 
-\subsection{Zippers up, Zippers down}
+\subsection*{Zippers up, Zippers down}
 
 Huet introduced \emph{Zippers} to allow a tree datastructure to be
 efficiently updated in a purely functional way. The idea is that any
@@ -351,7 +350,7 @@ suitable for defining the tail recursive fold, alas to prove
 termination we have to use use the top down view to describe the
 relation we need.
 
-\subsection{A relation on Zipper}
+\subsection*{A relation on Zipper}
 
 The relation over elements of |Zipper| is defined by induction on the
 |Stack|.  If we start in the root of the tree, we can navigate
@@ -462,7 +461,7 @@ unload-ltop : forall n eq s t' s' -> unload (Tip n) (TipA n) eq s == inj₁ (t' 
             -> (t' , reverse s') ltOp (n , reverse s)
 \end{code}
 
-\subsection{Correctness}
+\subsection*{Correctness}
 \label{sec:basic-correctness}
 Indexing the \emph{Zipper} with an expression allow us to prove
 correcness of the transformation easily. The expression during the
@@ -597,13 +596,13 @@ interpr X -> X| is correct with regard to |catamorphism|.
 \label{sec:dissection}
 
 Given a generic representation of a type, we can automatically calculate the
-type of its one hole context by a method dubbed \emph{dissection} that resembles to the
-rules of derivative calculus as devised by Leibniz.
+type of its one hole context by a method dubbed \emph{dissection} that resembles
+to the rules of derivative calculus as devised by Leibniz.
 
-In a |mu R| type there are two recursive structures, the explicit one have the
-induced by taking the fixed point of interpreting |R| over itself and the
-implicit within the functor layer that can be recursive due to the possibility
-of combining functors either as products, |O*Op|, or coproducts |O+Op|.
+In a |mu R| type there are two recursive structures, the explicit one induced by
+taking the fixed point of interpreting |R| over itself and the implicit
+recursion given by the fact that the functor layer can be recursive due to the
+possibility of combining functors as products, |O*Op|, or coproducts |O+Op|.
 
 Dissection takes the functorial layer and allow us to programatically derive all
 the possible ways of distinguishing exactly a occurrence of the variable such
