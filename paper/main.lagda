@@ -62,7 +62,7 @@ language Agda\cite{norell}:
     Add  :  Expr  -> Expr -> Expr
 \end{code}
 %
-We can write a write a simple evaluator, mapping expressions to
+We can write a simple evaluator, mapping expressions to
 natural numbers, as follows:
 %
 \begin{code}
@@ -132,7 +132,7 @@ tail recursive evaluator produces the same result as our original
 one. Writing such tail recursive functions by hand is both tedious and
 error-prone. It is precisely these issues that this paper tackles
 by making the following novel contributions:
-
+\todo{be consistent naming tail recursive}
 \begin{itemize}
 \item We give a verified proof of termination of |tail-rec-eval| using
   a carefully chosen \emph{well-founded relation}
@@ -507,11 +507,17 @@ well founded relation to prove termination and correcness of the construction.
 \subsection{The \emph{regular} universe}
 \label{sec:universe}
 
-In a dependently typed programming language such as Agda, the usual approach to
-encode a generic solution is to define a type of representations; the universe;
-and an interpretation function that mapping values of the representation type
-into types. Our choice of universe is that of \emph{regular} tree types as given
-by \todo{cite}.
+In a dependently typed programming language such as Agda, it is a common approach to
+devise a generic solution by defining a type of codes, the universe,
+and an interpretation function mapping a codes into types. An element of the 
+universe serves as the generic representation of a concrete datatype while its
+interpretation let us define functions generically.
+
+The expressiveness of a generic approach is highly tied to the choice of the universe. 
+The richer is its structure, the more variety of datatypes it allows to 
+encode. In this paper, we present a generic tail recursive catamorphism for the universe
+of \emph{regular} tree types\todo{cite}. The universe and its interpretation functions are
+as follows:
 
 \begin{code}
   data Reg : Set1 where
@@ -521,9 +527,7 @@ by \todo{cite}.
     K     : (A : Set) -> Reg
     O+Op  : (R Q : Reg)  -> Reg
     O*Op  : (R Q : Reg) -> Reg
-\end{code}
 
-\begin{code}
   interp : Reg -> Set -> Set
   interpl Zero interpr X   = Bot
   interpl One interpr X    = Top
@@ -533,10 +537,11 @@ by \todo{cite}.
   interpl (R O* Q) interpr X = interpl R interpr X * interpl Q interpr X
 \end{code}
 
-The codes of our universe, |Reg|, are capable of representing non-recursive
-functorial datatypes. This claim is sustained by the fact that we interpret them
-as functors over Agda small types, i.e. |Set -> Set| , and that we can define a
-law abiding fmap\footnote{Proofs are left for the reader.}.
+So far, the type codes in the universe we defined, |Reg|, are only capable of representing 
+non-recursive functorial datatypes such as \emph{Maybe} or \emph{Either}. 
+This claim is sustained by the fact that codes are interpreted as
+functors over Agda small types, i.e. |Set -> Set|, and that we can write a law abiding 
+\emph{fmap}\footnote{Proofs are left for the reader.}.
 
 \begin{code}
   fmap : (R : Reg) -> (X -> Y) -> interpl R interpr X -> interpl R interpr Y
@@ -549,28 +554,30 @@ law abiding fmap\footnote{Proofs are left for the reader.}.
   fmap (R O* Q) f (x , y)   = fmap R f x , fmap Q f y
 \end{code}
 
-In order to enhance the expressiveness of our generic construction to handle
-recursive datatypes we have to tie the knot over the functor. We do so by
-introducing the fixed point of a code interpreted over itself.
+We can represent recursive datatypes in the \emph{regular} universe by introducing 
+the least fixed point of a code interpreted over itself. A generic code |R| serves as the 
+pattern functor where recursive positions are marked using the |I| constructor. 
+The fixed point ties the knot explicitly. For example, commonly recursive 
+datatypes such as \emph{List}s or \emph{Binary trees} are now expressible.
 
 \begin{code}
   data mu (R : Reg) : Set where
     In : interpl R interpr (mu R) -> mu R
 \end{code}
 
-A recursive datatype always comes in pair with a recursive eliminator, fold,
-capable of collapsing terms of such type into a single value. As |mu R| is used
-to represent recursive types, we can define a generic operation fold to consume
-terms into values. The generic fold is historically dubbed \emph{catamorphim}.
+The definition of a recursive datatype is always accompanied by a recursor or eliminator, 
+the fold, capable of consuming terms of such type into a single value of possibly a different 
+type. Because we can represent a recursive datatype as a term of type |mu R| for some |R|,
+it is customary to define the fold generically\footnote{Historically a generic fold is named \emph{catamorphism}}.
 
 \begin{code}
   catamorphism : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
   catamorphism R alg (In r) = alg (fmap R (catamorphism R alg) r)
 \end{code}
 
-However, this is a definition that Agda cannot cope with because of the
-higher-order argument to fmap. We rewrite |catamorphism| to fuse together
-the \emph{fmap} with the \emph{fold} so termination checker warnings are avoided
+Agda's termination checker cannot cope with such definition. The use of a higher-order 
+argument to |fmap| is the culprit. To avoid the problem, we rewrite |catamorphism| to 
+fuse together \emph{fmap} with the \emph{fold} so termination checker warnings are avoided
 all along.
 
 \begin{code}
@@ -587,8 +594,8 @@ all along.
   catamorphism R alg (In r) = mapFold R R alg r
 \end{code}
 
-We aim to encode a tail recursive function that given an algebra |interpl R
-interpr X -> X| is correct with regard to |catamorphism|.
+Given an algebra |interpl R interpr X -> X| the \emph{tail-recursive} function that we develop 
+in the rest of the paper is extensionally equivalent to |catamorphism|.
 
 \subsection{Dissection}
 \label{sec:dissection}
@@ -651,7 +658,8 @@ type |X|. The type of variables to the left, |X|, does not need to agree with
 
 \subsection{Generic Zippers}
 
-A dissection tell us how to calculate the type of one hole contexts from given
+Calculating the \emph{dissection} of a code gives us the type of the one hole context
+of the functorial layer of a from given
 representation without taking into account the recursive structure introduced by
 |mu|.
 
