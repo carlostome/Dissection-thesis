@@ -21,6 +21,7 @@
 %format NonRec-+1  = "\AI{NonRec-\ensuremath{\oplus_1}}"
 %format NonRec-+2  = "\AI{NonRec-\ensuremath{\oplus_2}}"
 %format NonRec-*  = "\AI{NonRec-\ensuremath{\otimes}}"
+%format _,_,_ = "\AI{\_,\_,\_}"
 
 % Functions
 %format interp  = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
@@ -40,8 +41,11 @@
 %format Zipper = "\AF{Zipper}"
 %format first-cps = "\AF{first-cps}"
 %format load = "\AF{load}"
+%format unload = "\AF{unload}"
 %format cont   = "\AF{cont}"
 %format cont'   = "\AF{cont''}"
+%format right = "\AF{right}"
+
 
 % Bound variables
 %format A   = "\AB{A}"

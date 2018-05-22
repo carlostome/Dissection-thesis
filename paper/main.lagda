@@ -148,13 +148,13 @@ by making the following novel contributions:
 \item Finally, we sketch how the proofs of termination and semantics
   preservation from our example are generalized to the generic fold
   over arbitrary types in our universe
-  (Section~\ref{correctness}). 
+  (Section~\ref{correctness}).
 \end{itemize}
 Together these results give a verified function that computes a tail
 recursive traversal from any algebra for any algebraic data type.
 All the constructions and proofs presented in this paper have been
 implemented in and checked by Agda. The corresponding code is freely
-available online.\footnote{\todo{url}}
+available online.\footnote{\url{https://github.com/carlostome/Dissection-thesis}}
 
 
 \section{Termination and tail-recursion}
@@ -184,7 +184,7 @@ Figure~\ref{fig:load-unload}.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.25]{figure1}  
+  \includegraphics[scale=0.25]{figure1}
   \caption{Traversing a tree with |load| and |unload|}
   \label{fig:load-unload}
 \end{figure}
@@ -487,8 +487,6 @@ it holds for the auxiliary recursor that we use to write the function
 recursion over the accesibility predicate and use the lemma
 |unload-correct| in the base case.
 
-
-
 %} end of intro.fmt
 
 \section{Generic tail recursive fold}
@@ -665,6 +663,7 @@ come and a proof of the fact.
 
 \begin{code}
  record Computed (R : Reg) (X : Set) (alg : interpl R interpr X → X) : Set where
+    constructor _,_,_
     field
       Tree  : μ R
       Value : X
@@ -685,7 +684,7 @@ root down to the subtree or from the subtree up to the root. We account for both
 cases:
 
 \begin{code}
-  plug-mudown  : (R : Reg) -> {alg : interpl R interpr X -> X} 
+  plug-mudown  : (R : Reg) -> {alg : interpl R interpr X -> X}
                -> mu R -> Stack R X alg → mu R
   plug-mudown R t []         = t
   plug-mudown R t (h :: hs)  = In (plug R Computed.Tree h (plug-mudown R t hs))
@@ -714,11 +713,11 @@ are able to replace the type |X| for any other type |Y|.
   data NonRec : (R : Reg) → interpl R interpl X → Set where
     NonRec-One  : NonRec One tt
     NonRec-K    : (B : Set) → (b : B) → NonRec (K B) b
-    NonRec-+1   : (R Q : Reg) → (r : interpl R interpr X) 
+    NonRec-+1   : (R Q : Reg) → (r : interpl R interpr X)
                 → NonRec R r → NonRec (R O+ Q) (inj1 r)
-    NonRec-+2   : (R Q : Reg) → (q : interpl Q interpr X) 
+    NonRec-+2   : (R Q : Reg) → (q : interpl Q interpr X)
                 → NonRec Q q → NonRec (R O+ Q) (inj2 q)
-    NonRec-*    : (R Q : Reg) → (r : interpl R interpr X) → (q : interpl Q interpr X) 
+    NonRec-*    : (R Q : Reg) → (r : interpl R interpr X) → (q : interpl Q interpr X)
                 → NonRec R r → NonRec Q q → NonRec (R O* Q) (r , q)
 
   coerce : (R : Reg) -> (x : interpl R interpr X) → NonRec R x -> interpl R interpr Y
@@ -763,7 +762,7 @@ part.
 The function |load| traverses the input term to find the occurrence of the
 leftmost subtree, it loads the \emph{dissection} of the one hole context after
 popping out the subtree and stores it in the \emph{stack}. We write |load| by
-appealing to an ancillary definition |first-cps|, that uses continuation-passing 
+appealing to an ancillary definition |first-cps|, that uses continuation-passing
 style to keep the definition tail recursive. This is a direct consequence of the
 implicit recursive structure at the functorial level.
 
@@ -772,11 +771,11 @@ first-cps : (R Q : Reg) {alg : interpl Q interpr X -> X}
           -> interpl R interpr (mu Q)
           -> (nabla R (Computed Q X alg) (mu Q) -> (nabla Q (Computed Q X alg) (mu Q))) -- 1
           -> (Leaf R X -> Stack Q X alg -> Zipper Q X alg U+ X) -- 2
-          -> Stack Q X alg 
+          -> Stack Q X alg
           -> Zipper Q X alg U+ X
 first-cps = ...
 
-load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R 
+load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R
       -> Stack R X alg -> Zipper R X alg U+ X
 load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
@@ -828,6 +827,34 @@ and return the leaf as is.
       where cont' (l' , isl') = f (l , l') (NonRec-* R Q l l' isl isl')
 \end{code}
 
+Armed with |load| we turn our attention to |unload|. First of all, it is necessary
+to define an auxiliary function, |right|, that given dissection and an element
+to fill the hole finds either a new one hole context and the value inhabiting it
+or it realizes there no occurrences of the variable left thus returning the full
+structure.
+
+\begin{code}
+  right  : (R : Reg) -> nabla R X Y -> X -> (interpl R interpr X) U+ (nabla R X Y * Y)
+\end{code}
+
+Its definition is simply by induction over the code |R|, with the special case
+of the product that needs to use another ancillary definition to look for the
+leftmost occurence of the variable position within |interpl R interpr X|.
+
+We are ready to define |unload| by calling |right| and dispatching accordingly.
+
+\begin{code}
+  unload : (R : Reg)
+         -> (alg : interpl R interpr X → X)
+         -> (t : μ R) -> (x : X) -> catamorphism R alg t == x
+         -> Stack R X alg
+         -> Zipper R X alg U+ X
+  unload R alg t x eq []        = inj2 x
+  unload R alg t x eq (h :: hs) with right R h (t , x , eq)
+  unload R alg t x eq (h :: hs) | inj1 r with compute R R r
+  ... | (rx , rp) , p                               = unload R alg (In rp) (alg rx) (cong alg p) hs
+  unload R alg t x eq (h :: hs) | inj2 (dr , q)     = load R q (dr :: hs)
+\end{code}
 
 \todo{STOP HERE}
 
@@ -845,7 +872,7 @@ and return the leaf as is.
 
 + unload to a smaller position by the relation
 + tail recursive fold
-+ correctness for free by indexed 
++ correctness for free by indexed
 + The proof holds
 
 %} end of generic.fmt
