@@ -71,6 +71,7 @@
 %format ++     = "\AF{\ensuremath{++}}"
 %format >>=    = "\AF{$>>=$}"
 %format Delta  = "\AF{$\Delta$}"
+%format .      = "\AF{\ensuremath{\circ}}"
 
 %% Non-colored stuff
 %format *               = "\AF{\ensuremath{\times}}"

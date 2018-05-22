@@ -6,7 +6,7 @@
 
 % fontsize of code snippets
 \renewcommand\hscodestyle{%
-   \setlength\leftskip{0.25cm}%
+   \setlength\leftskip{0.1cm}%
    \footnotesize
 }
 
@@ -508,6 +508,7 @@ pair of |load| and |unload| functions that perform one step of the fold; and a
 well founded relation to prove termination and correcness of the construction.
 
 \subsection{The \emph{regular} universe}
+\label{sec:universe}
 
 In a dependently typed programming language such as Agda, the usual approach to
 encode a generic solution is to define a type of representations; the universe;
@@ -589,8 +590,11 @@ all along.
   catamorphism R alg (In r) = mapFold R R alg r
 \end{code}
 
+We aim to encode a tail recursive function that given an algebra |interpl R
+interpr X -> X| is correct with regard to |catamorphism|.
 
 \subsection{Dissection}
+\label{sec:dissection}
 
 Given a generic representation of a type, we can automatically calculate the
 type of its one hole context by a method dubbed \emph{dissection} that resembles to the
@@ -625,16 +629,16 @@ We shall now define in Agda the dissection operation by induction over |Reg|.
   nabla (R O* Q) X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
 \end{code}
 
-The last line of the definition is the interesting one. To \emph{dissect} a
-product of things we either \emph{dissect} the left component pairing it with
-the second component interpreted over the second variable |Y|; or we
-\emph{dissect} the second component and pair it with the first interpreted over
-|X|. This \emph{or} is what will give us all the possible combinations.
+The last clause of |nabla| definition's is the interesting one. To
+\emph{dissect} a product of things we either \emph{dissect} the left component
+pairing it with the second component interpreted over the second variable |Y|;
+or we \emph{dissect} the second component and pair it with the first interpreted
+over |X|. This \emph{or} is what will give us all the possible combinations.
 
 Having a \emph{dissection}, |R X Y|, we can show that we can reconstruct the
-original structure by \emph{plugging} operation given a element of type |X| to
-plug in the hole. However, the type |X| does not need to agree with |Y| as long as
-we can recover |X|s from |Y|s.
+original structure by means of a \emph{plugging} operation given a element of
+type |X|. The type of variables to the left, |X|, does not need to agree with
+|Y| as long as we can recover |X|s from |Y|s.
 
 \begin{code}
   plug : (R : Reg) -> (Y -> X) -> nabla R Y X -> X -> interpl R interpr X
@@ -648,29 +652,188 @@ we can recover |X|s from |Y|s.
   plug (R O* Q) eta (inj2 (r , dq)) x = fmap R eta r           , plug Q eta dq x
 \end{code}
 
-\todo[inline]{STOP HERE}
-Recalling from before, a stack represents a path either from the root of the
-tree to a leaf or from the leaf to the root. Each element of the stack is a
-value that represents a node with a hole on it. For example, in the case of
-|Expr| the |Left| constructor stands for a |Add| without the left subexpression.
+\subsection{Generic Zippers}
 
-McBride main contribution in BLABLA, is to show that we can define a syntactic
-operation over codes of type |Reg| to calculate the type of elements in the
-stack for the generic case.
+A dissection tell us how to calculate the type of one hole contexts from given
+representation without taking into account the recursive structure introduced by
+|mu|.
+
+A path within a tree is a list of \emph{dissections} and a subtree. On the left
+part of the \emph{dissection} we store the results of the subtrees that we have
+already processed while on the right the subtrees that are still to be consumed.
+We do not only want the partial results but also the subtree from which they
+come and a proof of the fact.
+
+\begin{code}
+ record Computed (R : Reg) (X : Set) (alg : interpl R interpr X → X) : Set where
+    field
+      Tree  : μ R
+      Value : X
+      Proof : catamorphism R alg Tree == Value
+\end{code}
+
+A \emph{stack} in the generic case is then a list of \emph{dissections} over
+|Computed| and subtrees of type |mu R|. We have to embed the algebra in the
+\emph{stack} because we store the proofs.
+
+\begin{code}
+  Stack : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
+  Stack R X alg = List (nabla R (Computed R X alg) (mu R))
+\end{code}
+
+The path, as in the |Expr| example, can be understood either as going from the
+root down to the subtree or from the subtree up to the root. We account for both
+cases:
+
+\begin{code}
+  plug-mudown  : (R : Reg) -> {alg : interpl R interpr X -> X} 
+               -> mu R -> Stack R X alg → mu R
+  plug-mudown R t []         = t
+  plug-mudown R t (h :: hs)  = In (plug R Computed.Tree h (plug-mudown R t hs))
+
+  plug-muup  : (R : Reg) -> {alg : interpl R interpr X -> X}
+             -> mu R → Stack R X alg → mu R
+  plug-muup R t []         = t
+  plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
+\end{code}
 
 
-The first step to derive a generic solution is to define what means in the
-generic case to be a
-stack
-For the type of expressions it was easy to define a datatype that allows us to
-distinguish a hole
+We are not interested in any path but only those that point directly to one of
+the leaves of the tree. But first, we should ask ourselves, what is a leaf in a
+generic structure?
 
-  + Dissection as generically calculate the type of stacks in agda
-  + Plug
-  + Zipper up Zipper down
-  + relation on dissection?
-  + Make clear the separation between recursion in the functor level and
-  the fix level
+The |I| constructor of the type |Reg| flags the occurrence of the type variable.
+If it is not present in some part of the type, such as in the left side of the
+coproduct |One O+ (I O* I)|, then it is possible to build a term of that type
+does not mention elements of the type variable at all.
+
+Generically, we can encode a predicate that checks whether a value of type |
+interpl R interpr X| uses the variable |X|. In case the predicate is true, we
+are able to replace the type |X| for any other type |Y|.
+
+\begin{code}
+  data NonRec : (R : Reg) → interpl R interpl X → Set where
+    NonRec-One  : NonRec One tt
+    NonRec-K    : (B : Set) → (b : B) → NonRec (K B) b
+    NonRec-+1   : (R Q : Reg) → (r : interpl R interpr X) 
+                → NonRec R r → NonRec (R O+ Q) (inj1 r)
+    NonRec-+2   : (R Q : Reg) → (q : interpl Q interpr X) 
+                → NonRec Q q → NonRec (R O+ Q) (inj2 q)
+    NonRec-*    : (R Q : Reg) → (r : interpl R interpr X) → (q : interpl Q interpr X) 
+                → NonRec R r → NonRec Q q → NonRec (R O* Q) (r , q)
+
+  coerce : (R : Reg) -> (x : interpl R interpr X) → NonRec R x -> interpl R interpr Y
+    ...
+\end{code}
+
+In the fixed point structure given by |mu|, the constructor |I| marks the
+occurrences of subtrees, thus if the type variable is not part of the term, i.e.
+|NonRec| holds, the term is a leaf of the tree.
+
+\begin{code}
+  Leaf : Reg -> Set -> Set
+  Leaf R X = Sigma (interpl R interpr X) (NonRec R)
+\end{code}
+
+Now, we are ready to give the type of \emph{Zipper} in the generic construction.
+
+\begin{code}
+  Zipper : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
+  Zipper R X alg = Leaf R X * Stack R X alg
+\end{code}
+
+Equally important is that we are able to \emph{plug} back together the full
+tree. We can do so by embedding the leaf part into a tree using |coerce| and
+then just \emph{plug}\footnote{It works analogously for the bottom-up
+\emph{Zipper}.}
+
+\begin{code}
+  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → μ R →  Set
+  plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
+\end{code}
+
+\todo{STOP HERE}
+
+\subsection{One step of a fold}
+
+We need a means to perform one step of the computation at a time. We can rescue
+the ideas of the pair of functions, |load| and |unload| and adapt them to work
+over a generic representation. First, we will focus our attention in the |load|
+part.
+
+The function |load| traverses the input term to find the occurrence of the
+leftmost subtree, it loads the \emph{dissection} of the one hole context after
+popping out the subtree and stores it in the \emph{stack}. We write |load| by
+appealing to an ancillary definition |first-cps|, that uses continuation-passing 
+style to keep the definition tail recursive. This is a direct consequence of the
+implicit recursive structure at the functorial level.
+
+\begin{code}
+first-cps : (R Q : Reg) {alg : interpl Q interpr X -> X}
+          -> interpl R interpr (mu Q)
+          -> (nabla R (Computed Q X alg) (mu Q) -> (nabla Q (Computed Q X alg) (mu Q))) -- 1
+          -> (Leaf R X -> Stack Q X alg -> Zipper Q X alg U+ X) -- 2
+          -> Stack Q X alg 
+          -> Zipper Q X alg U+ X
+first-cps = ...
+
+load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R 
+      -> Stack R X alg -> Zipper R X alg U+ X
+load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
+\end{code}
+
+There are two continuations as arguments of |first-cps|. The first, |-- 1| , is used
+to gradually build the \emph{dissection} corresponding to the functorial layer
+we are traversing. The second, |-- 2|, serves to continue on another branch in case
+one of the non-recursive base cases is reached.
+
+We shall fill the definition of |first-cps| by cases.  The clauses for the bases
+cases are as expected. In |Zero| there is nothing to be done. |One| and |K A|
+consists of applying the continuation to the tree and the \emph{stack}.
+
+\begin{code}
+  first-cps Zero Q () _
+  first-cps One  Q x k f s    = f (tt , NonRec-One) s
+  first-cps (K A) Q x k f s   = f (x , NonRec-K A x) s
+\end{code}
+
+In case we find an occurrence of a recursive subtree, we discard the current
+continuation for when we do not find subtrees, and use plain recursion. The
+\emph{stack} passed in the recursive call is incremented with a new element that
+corresponds to the \emph{dissection} of the functor layer up to
+that point.
+
+\begin{code}
+  first-cps I Q (In x) k f s  = first-cps Q Q x id (lambda z  → inj1 . prodOp z) (k tt :: s)
+\end{code}
+
+For the coproduct, both cases are very similar, just having to account for the
+use of different constructors in the continuations.
+
+\begin{code}
+  first-cps (R O+ Q) P (inj1 x) k f s = first-cps R P x  (k . inj1) cont s
+    where cont (l , isl) = f ((inj1 l) , NonRec-+1 R Q l isl)
+  first-cps (R O+ Q) P (inj2 y) k f s = first-cps Q P y  (k . inj2) (lambda -> ...) s
+\end{code}
+
+The interesting clause is the one that deals with the product. First we recurse
+on the left part of it trying to find a subtree to recurse over. However, it may
+be the case that on the left component there are not subtrees at all, thus we
+pass as a continuation a call to |first-cps| over the right part of the product.
+This might fail as well to find a subtree in which case we have to give up
+and return the leaf as is.
+
+\begin{code}
+  first-cps (R O* Q) P (r , q) k f s  = first-cps R P r  (k . inj1 . (_, q)) cont s
+    where cont (l , isl) = first-cps Q P q (k . inj2 . prodOp (coerce l isl)) cont'
+      where cont' (l' , isl') = f (l , l') (NonRec-* R Q l l' isl isl')
+\end{code}
+
+Now we turn our attention to |unload|.
+\todo{STOP HERE}
+%   + relation on dissection?
+%   + Make clear the separation between recursion in the functor level and
+%   the fix level
 
 %} end of generic.fmt
 

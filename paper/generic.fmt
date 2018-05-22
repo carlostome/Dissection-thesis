@@ -1,6 +1,9 @@
 % Datatypes
 %format Reg = "\AD{Reg}"
 %format mu  = "\AD{\ensuremath{\mu}}"
+%format NonRec = "\AD{NonRec}"
+%format Computed = "\AD{Computed}"
+%format Expr = "\AD{Expr}"
 
 % Constructors
 %format One   = "\AI{\ensuremath{\mathbb{1}}}"
@@ -12,6 +15,12 @@
 %format O+    = "\AI{\ensuremath{\oplus}}"
 %format O*    = "\AI{\ensuremath{\otimes}}"
 %format In    = "\AI{In}"
+%format prodOp = "\AI{\_\text{,}\_}"
+%format NonRec-One = "\AI{NonRec-\ensuremath{\mathbb{1}}}"
+%format NonRec-K   = "\AI{NonRec-K}"
+%format NonRec-+1  = "\AI{NonRec-\ensuremath{\oplus_1}}"
+%format NonRec-+2  = "\AI{NonRec-\ensuremath{\oplus_2}}"
+%format NonRec-*  = "\AI{NonRec-\ensuremath{\otimes}}"
 
 % Functions
 %format interp  = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
@@ -21,7 +30,18 @@
 %format catamorphism = "\AF{cata}"
 %format mapFold      = "\AF{map-fold}"
 %format nabla        = "\AF{\ensuremath{\nabla}}"
-%format plug        = "\AF{\ensuremath{plug}}"
+%format plug         = "\AF{plug}"
+%format plug-muup      = "\AF{plug-\ensuremath{\mu \Uparrow}}"
+%format plug-mudown    = "\AF{plug-\ensuremath{\mu \Downarrow}}"
+%format plugZ-mudown    = "\AF{plugZ-\ensuremath{\mu \Downarrow}}"
+%format coerce = "\AF{coerce}"
+%format Leaf   = "\AF{Leaf}"
+%format Stack  = "\AF{Stack}"
+%format Zipper = "\AF{Zipper}"
+%format first-cps = "\AF{first-cps}"
+%format load = "\AF{load}"
+%format cont   = "\AF{cont}"
+%format cont'   = "\AF{cont''}"
 
 % Bound variables
 %format A   = "\AB{A}"
@@ -38,3 +58,14 @@
 %format dr   = "\AB{dr}"
 %format alg = "\AB{\ensuremath{\psi}}"
 %format eta = "\AB{\ensuremath{\eta}}"
+%format l   = "\AB{l}"
+%format isl   = "\AB{isl}"
+%format l'   = "\AB{l''}"
+%format isl'   = "\AB{isl''}"
+
+% Record fields
+%format Tree  = "\AL{Tree}"
+%format Value = "\AL{Value}"
+%format Proof = "\AL{Proof}"
+%format Computed.Tree = "\AL{Computed.Tree}"
+

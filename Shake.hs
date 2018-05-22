@@ -62,7 +62,7 @@ main = shakeArgs shakeOptions $ do
         fmt   = "thesis/thesis.fmt"
         sty   = "thesis/agda.sty"
     need (bib : fmt : sty : files)
-    cmd_ "latexmk -pdf -cd -xelatex thesis/main.tex"
+    cmd_ "latexmk -f -pdf -cd -xelatex thesis/main.tex"
 
   "paper/main" <.> pdf %> \out -> do
     putNormal "Building paper"
@@ -71,4 +71,4 @@ main = shakeArgs shakeOptions $ do
         fmtFiles   = [ "paper" </> file <.> fmt | file <- paper_fmt_files]
         sty        = "paper/agda.sty"
     need (bib : sty : (files ++ fmtFiles))
-    cmd_ "latexmk -pdf -cd paper/main.tex"
+    cmd_ "latexmk -f -pdf -cd paper/main.tex"
