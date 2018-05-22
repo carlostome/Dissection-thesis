@@ -752,7 +752,7 @@ then just \emph{plug}\footnote{It works analogously for the bottom-up
   plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
 \end{code}
 
-\todo{STOP HERE}
+\todo{define Zipper up and down or just mention}
 
 \subsection{One step of a fold}
 
@@ -829,11 +829,25 @@ and return the leaf as is.
       where cont' (l' , isl') = f (l , l') (NonRec-* R Q l l' isl isl')
 \end{code}
 
-Now we turn our attention to |unload|.
+
 \todo{STOP HERE}
-%   + relation on dissection?
-%   + Make clear the separation between recursion in the functor level and
-%   the fix level
+
++ Unload
++ Load / unload preserve the tree strucuture
+
+\subsection{Relation over Generic \emph{Zipper}s}
+
++ Relation over dissections
++ Relation over recursive
++ Indexed relation
++ Proof of well foundedness
+
+\subsection{Putting the pieces together}
+
++ unload to a smaller position by the relation
++ tail recursive fold
++ correctness for free by indexed 
++ The proof holds
 
 %} end of generic.fmt
 
