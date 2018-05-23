@@ -558,17 +558,20 @@ We can represent recursive datatypes in the \emph{regular} universe by introduci
 the least fixed point of a code interpreted over itself. A generic code |R| serves as the 
 pattern functor where recursive positions are marked using the |I| constructor. 
 The fixed point ties the knot explicitly. For example, commonly recursive 
-datatypes such as \emph{List}s or \emph{Binary trees} are now expressible.
+datatypes such as \emph{List}s or \emph{Binary trees} are expressible in the
+universe.
 
 \begin{code}
   data mu (R : Reg) : Set where
     In : interpl R interpr (mu R) -> mu R
 \end{code}
 
-The definition of a recursive datatype is always accompanied by a recursor or eliminator, 
-the fold, capable of consuming terms of such type into a single value of possibly a different 
-type. Because we can represent a recursive datatype as a term of type |mu R| for some |R|,
-it is customary to define the fold generically\footnote{Historically a generic fold is named \emph{catamorphism}}.
+The definition of a recursive datatype is always accompanied by a recursor or
+eliminator, the fold, capable of consuming terms of such type into a single
+value of possibly a different type. Because we can represent a recursive
+datatype as a term of type |mu R| for some |R|, it is customary to define the
+fold generically\footnote{Historically the generic fold is named
+\emph{catamorphism}}.
 
 \begin{code}
   catamorphism : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
@@ -594,8 +597,9 @@ all along.
   catamorphism R alg (In r) = mapFold R R alg r
 \end{code}
 
-Given an algebra |interpl R interpr X -> X| the \emph{tail-recursive} function that we develop 
-in the rest of the paper is extensionally equivalent to |catamorphism|.
+Given an algebra |interpl R interpr X -> X| the \emph{tail-recursive} function
+that we develop in the rest of the section is extensionally equivalent to
+|catamorphism|.
 
 \subsection{Dissection}
 \label{sec:dissection}
@@ -639,23 +643,29 @@ pairing it with the second component interpreted over the second variable |Y|;
 or we \emph{dissect} the second component and pair it with the first interpreted
 over |X|. This \emph{or} is what will give us all the possible combinations.
 
-Having a \emph{dissection}, |R X Y|, we can show that we can reconstruct the
-original structure by means of a \emph{plugging} operation given a element of
-type |X|. The type of variables to the left, |X|, does not need to agree with
-|Y| as long as we can recover |X|s from |Y|s.
+A \emph{dissection} is formally defined as the pair of the one-hole context and
+the missing value that can fill the context.
 
 \begin{code}
-  plug : (R : Reg) -> (Y -> X) -> nabla R Y X -> X -> interpl R interpr X
-  plug Zero   eta () x
-  plug One    eta () x
-  plug I eta tt x  = x
-  plug (K A)  eta () x
-  plug (R O+ Q) eta (inj1 r) x  = inj1 (plug R eta r x)
-  plug (R O+ Q) eta (inj2 q) x  = inj2 (plug Q eta q x)
-  plug (R O* Q) eta (inj1 (dr , q)) x = plug R eta dr x  , q
-  plug (R O* Q) eta (inj2 (r , dq)) x = fmap R eta r           , plug Q eta dq x
+  Dissection : (R : Reg) -> (X Y : Set) -> Set
+  Dissection R X Y = nabla R Y X * X
 \end{code}
 
+Given a \emph{dissection} we can show how to reconstruct the original structure
+by means of a \emph{plugging} operation.  The type of variables to the left,
+|X|, does not need to agree with |Y| as long as we can recover |X|s from |Y|s.
+
+\begin{code}
+  plug : (R : Reg) -> (Y -> X) -> Dissection R Y X -> interpl R interpr X
+  plug Zero   eta (() , x)
+  plug One    eta (() , x)
+  plug I eta (tt , x)  = x
+  plug (K A)  eta (() , x)
+  plug (R O+ Q) eta (inj1 r , x)  = inj1 (plug R eta (r , x))
+  plug (R O+ Q) eta (inj2 q , x)  = inj2 (plug Q eta (q , x))
+  plug (R O* Q) eta (inj1 (dr , q) , x) = plug R eta (dr , x)  , q
+  plug (R O* Q) eta (inj2 (r , dq) , x) = fmap R eta r           , plug Q eta (dq , x)
+\end{code}
 \subsection{Generic Zippers}
 
 Calculating the \emph{dissection} of a code gives us the type of the one hole context
@@ -844,12 +854,18 @@ structure.
 \begin{code}
   right  : (R : Reg) -> nabla R X Y -> X -> (interpl R interpr X) U+ (nabla R X Y * Y)
 \end{code}
+\todo{Should we give the definition?}
 
 Its definition is simply by induction over the code |R|, with the special case
 of the product that needs to use another ancillary definition to look for the
 leftmost occurence of the variable position within |interpl R interpr X|.
 
-We are ready to define |unload| by calling |right| and dispatching accordingly.
+The function |unload| is defined by induction over the \emph{stack}. If the
+\emph{stack} is empty the job is done and a final value is returned. In case the
+\emph{stack} has at least one \emph{dissection} in its head, the function
+|right| is called to check whether there are any more holes left. If there are
+none, a recursive call to |unload|, otherwise, if there is still a subtree to be
+processed, it a call to the function |load| is made to traverse it to its leftmost leaf.
 
 \begin{code}
   unload : (R : Reg)
@@ -860,20 +876,94 @@ We are ready to define |unload| by calling |right| and dispatching accordingly.
   unload R alg t x eq []        = inj2 x
   unload R alg t x eq (h :: hs) with right R h (t , x , eq)
   unload R alg t x eq (h :: hs) | inj1 r with compute R R r
-  ... | (rx , rp) , p                               = unload R alg (In rp) (alg rx) (cong alg p) hs
-  unload R alg t x eq (h :: hs) | inj2 (dr , q)     = load R q (dr :: hs)
+  ... | (rx , rr) , eq'  = unload R alg (In rp) (alg rx) (cong alg eq') hs
+  unload R alg t x eq (h :: hs) | inj2 (dr , q) = load R q (dr :: hs)
 \end{code}
+
+When the function |right| returns a |inj1| it means that there are not any
+subtrees left in the \emph{dissection}. If we take a closer look, the type of
+the |r| in |inj1 r| is | interpl R interpr (Computed R X alg) |. The functor
+|interpl R interpr| is storing at its leaves both values, subtrees and proofs.
+
+However, what is needed for the recursive call is: First, the functor
+intrepreted over values, | interpl R interpr X|, in order to apply the algebra;
+Second, the functor interpreted over subtrees, | interpl R interpr (mu R)|, to
+keep the original subtree where the value came from; Third, the proof that the
+value equals to applying a |catamorphism| over the subtree.  The function
+|compute| massages |r| to adapt the arguments for the recursive call to |unload|.
+
+\todo{unload preserves}
 
 \todo{STOP HERE}
 
-+ Unload
-+ Load / unload preserve the tree strucuture
-
 \subsection{Relation over Generic \emph{Zipper}s}
 
-+ Relation over dissections
-+ Relation over recursive
-+ Indexed relation
+We can engineer a well-founded relation over elements of |Zipperdown| by
+explicity separating the functorial layer from the recursive layer induced by
+the fixed point. At the functor level, we impose to order over terms of a
+\emph{dissection}, while in the fixed point level the order is defined by
+induction over the \emph{stack} by checking whether the heads are equal or
+not.
+
+Before specifying the concrete relation over \emph{dissections}, |<NablaOp|, the
+the relation over \emph{Zipper}s is defined as follows:
+
+\begin{code}
+  data <ZOp : Zipper R X alg -> Zipper R X alg -> Set where
+    Step  :  (t1 , s1) <Z (t2 ,  s2) -> (t1 , h :: s1) <Z (t2 , h  :: s2)
+
+    Base  : plugZ-mudown R (t1 , s1) == e1 -> plugZ-mudown R (t2 , s2) == e1
+          -> (h1 , e1) <Nabla (h2 , e2) -> (t1 , h1 :: s1) <Z (t2 , h2 :: s2)
+\end{code}
+
+The constructor |Step| takes care of the case where both \emph{stack}s store the
+same \emph{dissection} at the head. In such case, both \emph{Zipper} point to a
+leaf in the same subtree thus we only have to recursively check if the relation
+holds within that subtree.
+
+When the head of both \emph{stack}s is different, this means that the leaves
+point to by both \emph{Zipper}s reside in distinct subtrees. The order over the
+subtrees is given by the relation over \emph{dissections}. Now we specify how
+such relation looks like:
+
+\begin{code}
+  data <NablaOp : (R : Reg) → nabla R X Y * Y → nabla R X Y * Y → Set where
+    step-+1  :   llcorner  R lrcorner      (r , t1)       <Nabla    (r' , t2)
+             ->  llcorner R O+ Q lrcorner  (inj1 r , t1)  <Nabla (inj1 r' , t2)
+
+    step-+2  :   llcorner   Q              (q , t2)       <Nabla (q' , t2)
+             ->  llcorner R O+ Q lrcorner  (inj2 q , t1)  <Nabla (inj2 q' , t2)
+
+    step-*1  :   llcorner R lrcorner       (dr , t1)             <Nabla (dr' , t2)
+             ->  llcorner R O* Q lrcorner  (inj1 (dr , q) , t1)  <Nabla (inj1 (dr' , q) , t2)
+
+    step-*2  :   llcorner Q lrcorner       (dq , t1)             <Nabla (dq' , t2)
+             ->  llcorner R O* Q lrcorner  (inj2 (r , dq) , t1)  <Nabla (inj2 (r , dq') , t2)
+
+    base-*   :   llcorner R O* Q lrcorner (inj2 (r , dq) , t1)   <Nabla  (inj1 (dr , q) , t2)
+\end{code}
+
+The idea is that the order we want to impose an order over elements of the
+\emph{dissection} such that the ones with holes more to the right are smaller to
+those with holes more to the left. Most of the constructors of the relation are
+there just to recurse over the structure of the \emph{dissection}, with the
+exception of |base-*|.
+
+This constructor is the one that determines the order. The idea is that the
+\emph{dissection} of a product functor raises two possibilities, either the
+distinguished variable is in the left or in the right component and |base-*|
+states the order between them.
+
+In order to prove well-foundedness of the given relations we resort to the same
+technique we explained in the first part of the paper (Section~\ref{todo}). We 
+introduce a new relation that is type indexed by the tree, in this case |mu R|, to
+which both \emph{Zipper} plug. The relations are an exact copy of the ones we
+just defined with the addition that every constructors is indexed explicitly
+with the tree. The signature for the indexed relations is as follows:
+
+% \begin{code}
+%   data IxLt : (R : Reg) → (tx : interpl R interpr X) → Sigma ( tx → IxDissection R X Y ex tₓ → Set where
+% \end{code}
 + Proof of well foundedness
 
 \subsection{Putting the pieces together}
