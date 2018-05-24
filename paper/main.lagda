@@ -48,7 +48,7 @@
 %include main.fmt
 
 \section{Introduction}
-
+\label{sec:intro}
 Folds, or \emph{catamorphisms}, are a pervasive programming
 pattern. Folds generalize many simple traversals over algebraic data
 types. Functions implemented by means of a fold are both compositional
@@ -142,17 +142,19 @@ by making the following novel contributions:
   a carefully chosen \emph{well-founded relation}
   (Section~\ref{sec:basics}). After redefining |tail-rec-eval| using
   this relation, we can prove the evaluators equal in Agda.
-\item We generalize this construction, inspired by
-  McBride~\cite{dissection}'s work on \emph{dissections}, to show how
-  to calculate an abstract machine from an algebra. To
-  do so, we define a universe of algebraic data types and a generic
-  fold operation (Section~\ref{sec:universe}). Subsequently we show
-  how to turn any structurally recursive function defined using a fold
-  into its tail recursive counterpart (Section~\ref{sec:dissection}).
+\item We generalize this relation and its corresponding proof of
+  well-foundedness, inspired by
+  \citeauthor{dissection}'s~ work on
+  \emph{dissections}~\cite{dissection}, to show how to calculate an abstract machine
+  from an algebra. To do so, we define a universe of algebraic data
+  types and a generic fold operation
+  (Section~\ref{sec:universe}). Subsequently we show how to turn any
+  structurally recursive function defined using a fold into its tail
+  recursive counterpart (Section~\ref{sec:dissection}).
 \item Finally, we sketch how the proofs of termination and semantics
   preservation from our example are generalized to the generic fold
   over arbitrary types in our universe
-  (Section~\ref{correctness}). 
+  (Section~\ref{sec:correctness}). 
 \end{itemize}
 Together these results give a verified function that computes a tail
 recursive traversal from any algebra for any algebraic data type.
@@ -246,40 +248,55 @@ the tail recursive evaluator:
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e = rec (load e Top) ??1
     where
-      rec : (z : Nat * Stack) -> Acc ltOp z -> Nat
+      rec : (c : Nat * Stack) -> Acc ltOp c -> Nat
       rec (n , stk) (acc rs) with unload n stk
       ... | inj1 (n' , stk') = rec (n' , stk') (rs ??2)
-      ... | inj2 r = r
+      ... | inj2 v = v
 \end{code}
 
 To complete this definition, we still need to define a suitable
 well-founded relation |ltOp| between configurations of type |Nat *
-Stack| and prove that the calls to |unload| produce smaller
+Stack| and prove that the calls to |unload| produce `smaller'
 states. Before we can do so, however, we need to revisit the
-\emph{zippers} underlying this traversal.
+\emph{zipper} underlying this traversal.
 
-\subsection*{Zippers up, Zippers down}
+\section{Well-foundedness tree traversals }
 
-Huet introduced \emph{Zippers} to allow a tree datastructure to be
-efficiently updated in a purely functional way. The idea is that any
-location on a tree, either an internal node or a leaf, can be
-represented by a path to the root and the subtree that hangs
-downwards.
+In this section, we will define a relation between the configurations
+of our abstract machine, |Nat * Stack|, and prove this relation is
+well-founded. Our tail recursive evaluator processes the leaves of our
+input expression in a left-to-right fashion. The leftmost leaf -- that
+is the first leaf found after the initial call to |load| -- is the
+greatest element; the rightmost leaf is the smallest. In our example
+tree from Section~\ref{sec:intro}, we would number the leaves as
+follows:
 
-The pair |Nat * Stack| used to compute the tail recursive fold is
-nothing more that a restricted version of the \emph{Zipper} where the
-locations can only be leaves of the tree.
+\begin{figure}[h]
+  \includegraphics[scale=0.25, angle=90]{figure3}
+\end{figure}
 
-\begin{code}
-  Zipper : Set
-  Zipper = Nat * Stack
-\end{code}
+There are two central problems with our choice of |Stack| data type
+that we must overcome in this section:
 
-From a |Zipper| we have to be able to reconstruct the original |Expr|
-which will be neccesary later on for the proof that the relation is
-well founded. For this matter, we have to enhance the type of stacks
-to store not only the partial results but also the expressions that
-where consumed in order to produce them.
+\begin{enumerate}
+\item The |Stack| data type is `upside down.' As demonstrated by
+  \citeauthor{dissection}, such stacks arise as a generalization of
+  \emph{zippers}~\cite{huet}. A zipper allows efficient navigation
+  through our expression tree, but makes it harder to compare the
+  relative positions of two leaves the original tree. The top of a
+  stack stores information about neighbouring nodes, but to compare
+  two leaves we need global information regarding their relative
+  positions to the root.
+\item The |Stack| data type is too liberal. As we evaluate our input
+  expression the configuration of our abstract machine changes
+  constantly, but satisfies one important \emph{invariant}: each
+  configuration is a decomposition of the original input. Unless the
+  |Stack| data type captures this invariant, we will be hard pressed
+  to prove the well-foundedness of any relation defined on stacks.
+\end{enumerate}
+
+These considerations lead us to to redefine our |Stack| data type as
+follows:
 
 \begin{code}
   Stack : Set
@@ -287,12 +304,17 @@ where consumed in order to produce them.
                           Sigma Expr lambda e -> eval e == n))
   pattern Left t        = inj1 t
   pattern Right n t eq  = inj2 (n , t , eq)
+
+  Zipper : Expr -> Set
+  Zipper e = Nat * Stack e
 \end{code}
+\wouter{I would suggest introducing a custom data type for stacks
+  here, parameterized by the original input expression.}
 
 The original expression for which a |Nat * Stack| represents a
 position can be reconstructed by forgeting that some part has already
-been evaluated.
-
+been evaluated.  \wouter{Why are we talking about plugging at this
+  point? Weren't we supposed to define a relation?}
 \begin{code}
   plugup : Expr -> Stack -> Expr
   plugup e []                      = e
@@ -302,31 +324,22 @@ been evaluated.
   plugZup : (Nat * Stack) -> Expr
   plugZup (n , stk) = plugup (Val n) stk
 \end{code}
+\wouter{How do these definitions change if we revise stacks to be expr
+  indexed?}
 
-Our goal is to impose an ordering relation over elements of |Zipper|
-such that for any input the |unload| function delivers a |Zipper| that
-is smaller by the relation when it does not terminate with a
-value. Because the folding happens from left to right, we want the
-relation to order the leaves of the tree accordingly, so the leftmost
-leaf is the greatest element and the rightmost the smallest. Using the
-example from before, we number the leaves as follows:
+We would like to define a well-founded relation on zippers that
+decreases during the execution of our tail-recursive evaluation
+function. As this evaluator processes the leaves left-to-right, this
+relation should order the leaves of the tree accordingly. 
 
-\begin{figure}[h]
-  \includegraphics[scale=0.25, angle=90]{figure3}
-\end{figure}
-
-Using the |Stack| as a path from the leaf to the root of the tree is
-difficult if not impossible to encode a smaller than relation that
-does not relate any two elements. Such relation has to be defined by
-induction on the |Stack| part of the |Zipper|. But for any two given
-stacks a priori we cannot know how many layers we have to peel in
-order to reach a case where one of them is obviously smaller that the
-other.
-
-We can approach the problem by understanding the |Stack| not as a path
-from the leaf up to the root but from the root down to the leaf. This
-change of perspective is realised with a new plug function that does
-the opposite of |plugup|.
+Unfortunately, zippers are not the right datastructure to define such
+a relation. The central problem is that zippers store the path
+\emph{to} the root. This allows for efficient navigation: to move
+upwards we simply inspect the top of the current stack. When comparing
+two positions in the tree, however, we want to compare the path
+\emph{from} the root to determine their relative positions This change
+of perspective is realised with a new plug function that does the
+opposite of |plugup|.
 
 \begin{code}
   plugdown : Expr -> Stack -> Expr
@@ -341,29 +354,18 @@ the opposite of |plugup|.
 It is clear that both views of the |Zipper| are related. Indeed, to
 transport from one to the other we only have to reverse the stack. We
 show the equvalence with the following lemma\footnote{The other way
-  around only requires to use BLABLA of |reverse|}:
+  around only requires to use \todo{BLABLA} of |reverse|}:
 
 \begin{code}
   plugdown-to-plugup  : forall (e : Expr) (stk : Stack)
                       → plugdown e stk ==  plugup e (reverse stk)
 \end{code}
 
-
-Why do we need this equivalence? The bottom up view of a |Zipper| is
-suitable for defining the tail recursive fold, alas to prove
-termination we have to use use the top down view to describe the
-relation we need.
-
-\subsection*{A relation on Zipper}
-
-The relation over elements of |Zipper| is defined by induction on the
-|Stack|.  If we start in the root of the tree, we can navigate
-downwards both stacks in parallel removing their common prefix. Once
-we find an |Add| where they disagree then whether the first |Zipper|
-is located in the left or right subtree fully determines if its bigger
-or smaller than the other |Zipper|.  The following type accounts for
-this explanation:
-
+With these definitions in place, we can finally define a suitable
+relation and prove its well-foundedness. The relation |ltOp| is
+defined by simultaneously traversing two paths from the root:
+\wouter{Shouldn't we really be defining separate types for zippers and
+  reverse zippers?}
 \begin{code}
   data ltOp : Zipper -> Zipper -> Set where
     <-Right  : (t1 , s1) < (t2 , s2)
@@ -374,15 +376,16 @@ this explanation:
                   ->  (t2' == plugdown (Tip t1) s1)
                   ->  (t1 , Right n t1' eq :: s1) < (t2 , Left t2' :: s2)
 \end{code}
+The |<-Right| and |<-Left| constructors to strip off their common
+prefix of the two zippers. The only base case, |<-Right-Left|,
+corresponds to an |Add| constructor where the two paths diverge.
 
-Having the relation defined, we turn our focus to prove that it is
-well founded.  This is an important step towards filling the holes
-that were left open in the function |tail-rec-eval|.
-
-A relation is well founded iff all the descending chains starting from
-an arbitrary element are finite. In a theorem prover such as Agda, an
-alternative definition of well foundedness is used which is based on
-an accesibility predicate.
+Next, we would like to show that this relation is indeed
+\emph{well-founded}. A relation is well-founded if and only iff all
+the descending chains starting from an arbitrary element are
+finite. Put differently, such a well-foundedness proof guarantees that
+our |tail-rec-eval| function will terminate on all possible inputs
+after a finite number of recursive calls. 
 
 We can try to prove that the relation is well founded by using an
 auxiliary function that allows us to pattern match on the smaller than
@@ -508,7 +511,7 @@ recursion over the accesibility predicate and use the lemma
   + relation on dissection?
 
 \section{Termination and correctness, generically}
-\label{sec:dissection}  
+\label{sec:correctness}  
 
   
 \section{Conclusion and future work}
