@@ -34,6 +34,8 @@
 %format Unit   = "\AD{Unit}"
 %format flip   = "\AD{flip}"
 %format Bot    = "\AD{$\bot$}"
+%format Top    = "\AD{$\top$}"
+%format tt     = "\AI{$tt$}"
 %format All    = "\AD{$All$}"
 %format String = "\AD{\ensuremath{String}}"
 %format Sigma  = "\AD{\ensuremath{\Sigma}}"
@@ -69,6 +71,7 @@
 %format ++     = "\AF{\ensuremath{++}}"
 %format >>=    = "\AF{$>>=$}"
 %format Delta  = "\AF{$\Delta$}"
+%format .      = "\AF{\ensuremath{\circ}}"
 
 %% Non-colored stuff
 %format *               = "\AF{\ensuremath{\times}}"
