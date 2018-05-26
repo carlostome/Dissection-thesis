@@ -19,7 +19,7 @@
   \institution{University of Utrecht}
   \country{The Netherlands}
 }
-\email{first1.last1@@inst1.edu}
+\email{c.tomecortinas@@students.uu.nl}
 
 \author{Wouter Swierstra}
 \affiliation{
@@ -187,7 +187,7 @@ Figure~\ref{fig:load-unload}.
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.25]{figure1}
+  \includegraphics{figure1}
   \caption{Traversing a tree with |load| and |unload|}
   \label{fig:load-unload}
 \end{figure}
@@ -284,8 +284,11 @@ rightmost leaf is the smallest. In our example tree from
 Section~\ref{sec:intro}, we would number the leaves as follows:
 
 \begin{figure}[h]
-  \includegraphics[scale=0.25, angle=90]{figure3}
+  \includegraphics[angle=90]{figure2}
+  \caption{Numbered leaves of the tree}
+  \label{fig:numbered}
 \end{figure}
+
 
 This section aims to formalize this notion of ordering over |Zipper| (or
 configurations of the abstract maching) and prove it is well-founded. However,
@@ -322,14 +325,17 @@ part of the zipper denotes the path from that leaf up to the root. Continuing
 with the previous example, the |Zipper| that corresponds with the leaf numbered
 3 is:
 
-\todo{PIC HERE}
+\begin{figure}[h]
+  \includegraphics{figure3}
+  \caption{Example of \emph{zipper} for leaf number 3}
+  \label{fig:example_zipper}
+\end{figure}
 
 We would like to enforce at the type level that a value of |Zipper| represents
 the location of a leaf within a concrete expression. For this, we need the
 expression to be explicitly avaliable. However, the subexpressions originally
 located to the left of the path are not present anymore. The fold at the point
-of reaching the leaf number 3 has consumed all the subexpressions to its left,
-marked as a and b in the figure.
+of reaching the leaf number 3 has consumed all the subexpressions to its left.
 
 In order to keep the information we need, we rewrite the type of |Stack| so
 evaluated subexpressions are kept along with the result of their evaluation. It
@@ -373,7 +379,6 @@ For an expression |e : Expr|, any two terms of type |Zipperup t| are
 configurations of the abstract machine during the tail recursive fold over the
 expression |e|.
 
-\carlos{Up until this point section 3 has a good structure/content}
 
 \subsection{Up-down \emph{Zipper}}
 \label{subsec:topdown}
@@ -386,7 +391,11 @@ the leaf with respect to the expression and other leaves. If we continue with
 the example, let us consider the |Zipper| corresponding to leaves numbered 3 and
 4.
 
-\todo{STUFF}
+\begin{figure}[h]
+  \includegraphics{figure4}
+  \caption[angle=90]{Comparison of \emph{zipper} for leaves 4 and 3}
+  \label{fig:example_zipper}
+\end{figure}
 
 The natural way to define a relation is by induction over the stack, indeed
 there is not really much other option. We can start by comparing the first
@@ -444,8 +453,12 @@ between |Zipperup| and |Zipperdown|.
 
 \begin{code}
  Zipperdown-to-Zipperup : (e : Expr) → Zipperdown e -> Zipperup e
+ Zipperdown-to-Zipperup t ((n , s) , eq)
+    = (n , (reverse s)) , (trans (sym (plugup-to-plugdown (Tip n) s)) eq)
 
  Zipperup-to-Zipperdown : (e : Expr) -> Zipperup e -> Zipperdown e
+   = ...
+
 \end{code}
 
 \subsection{Relation over \emph{Zipper}}
@@ -485,7 +498,7 @@ that one of the |Zipperdown| is pointing to a leaf in the left subexpression
 while the other is located in the right. Thus determining which one is smaller
 is simple, it is the one on the right subtree, i.e. constructor |Right|.
 
-We can prove that the relation is well-founded:
+We can prove that the relation we just defined is \emph{well-founded}.
 
 \begin{code}
     <-WF : forall (e : Expr) -> Well-founded (llcorner e lrcornerltOp)
@@ -499,7 +512,7 @@ We can prove that the relation is well-founded:
 The proof follows the standard schema when proving well-foundedness\carlos{after
 studying the standard library almost all the proof they have have this kind of
 shape}. It uses an auxiliary function that quantifies over the type of elements
-of the relation and returns a proof that the accesibility predicate is true for
+of the relation and returns a proof that the accessibility predicate is true for
 every smaller element. 
 
 The relation we defined is not just one relation, but a family of relations, one
@@ -521,7 +534,18 @@ not syntactically related thus a recursive call is not possible.  By the end of
 the day, proving that a relation is well founded amounts to show Agda's
 termination checker that something syntactically decreases.
 
-\subsection*{Correctness}
+\carlos{Up until this point section 3 has a good structure/content}
+\subsection{Assembling the pieces together}
+\label{sec:basic-assembling}
+
++ We have a well founded relation
++ We have zipper up and Zipper down
++ We should prove that unload goes to a smaller element (is hard in the indexed
+relation we shall fall back)
+
+Then we join the pieces together and we have a tail recursive terminating fold
+
+\subsection{Correctness}
 \label{sec:basic-correctness}
 Indexing the \emph{Zipper} with an expression allow us to prove
 correcness of the transformation easily. The expression during the
