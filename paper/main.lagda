@@ -151,7 +151,7 @@ by making the following novel contributions:
 \item Finally, we sketch how the proofs of termination and semantics
   preservation from our example are generalized to the generic fold
   over arbitrary types in our universe
-  (Section~\ref{sec:correctness}). 
+  (Section~\ref{sec:correctness}).
 \end{itemize}
 Together these results give a verified function that computes a tail
 recursive traversal from any algebra for any algebraic data type.
@@ -187,7 +187,7 @@ Figure~\ref{fig:load-unload}.
 
 \begin{figure}
   \centering
-  \includegraphics{figure1}
+  \input{figures/figure1}
   \caption{Traversing a tree with |load| and |unload|}
   \label{fig:load-unload}
 \end{figure}
@@ -344,9 +344,9 @@ of their evaluation. Moreover, we store a proof witnessing the fact. This, will
 be useful later to show correctness.
 
 \begin{code}
-  data Stack : Set where
-    Left   : Expr -> Stack -> Stack
-    Right  : (n : Nat) -> (e : Expr) -> eval e == n -> Stack -> Stack
+  data Stack2 : Set where
+    Left   : Expr -> Stack2 -> Stack2
+    Right  : (n : Nat) -> (e : Expr) -> eval e == n -> Stack2 -> Stack2
     Top    : Stack
 \end{code}
 
@@ -355,12 +355,12 @@ a concrete state of the machine during the fold, by means of a \emph{plugging}
 function.
 
 \begin{code}
-  plugup : Expr -> Stack -> Expr
+  plugup : Expr -> Stack2 -> Expr
   plugup e []                      = e
   plugup e (Left t        :: stk)  = plugup (Add e t) stk
   plugup e (Right n t eq  :: stk)  = plugup (Add t e) stk
 
-  plugZup : (Nat * Stack) -> Expr
+  plugZup : Zipper -> Expr
   plugZup (n , stk) = plugup (Val n) stk
 \end{code}
 
@@ -423,23 +423,26 @@ the stack rather than how it is defined. As such, we can define the new
 interpretation as another kind of \emph{plugging} function:
 
 \begin{code}
-  plugdown : Expr -> Stack -> Expr
+  plugdown : Expr -> Stack2 -> Expr
   plugdown e []                     = e
   plugdown e (Left t       :: stk)  = Add (plugdown e stk) t
   plugdown e (Right n _ _  :: stk)  = Add t (plugdown e stk)
 
-  plugZdown : (Nat * Stack) -> Expr
+  plugZdown : Zipper -> Expr
   plugZdown (n , stk) = plugdown (Val n) stk
 \end{code}
 
-We can convert from one interpretation of the |Stack| to the other by reversing
+We can convert from one interpretation of the |Stack2| to the other by reversing
 the stack. Both interpretations are equivalent in the sense that if one
 \emph{plug}s to an expression, its conversion \emph{plug}'s (in a different way)
 to the same expression.
 
 \begin{code}
-  plugdown-to-plugup  : forall (e : Expr) (stk : Stack)
-                      → plugdown e stk ==  plugup e (reverse stk)
+  convert : Zipper -> Zipper
+  convert (n , s) = (n , reverse s)
+
+  plugdown-to-plugup  : forall (z : Zipper)
+                      → plugZdown z ==  plugZup (convert z)
 \end{code}
 
 Finally, we can create a new wrapper around |Zipper| that enforces at the type
@@ -450,13 +453,13 @@ level that the |Zipper| plugs, or is a leaf, of a concrete expression.
     prodOp : (z : Zipper) -> plugZup z == e -> Zipperdown e
 \end{code}
 
-As a collorary of the property\todo{ref somehow}, we can switch back and forward
+As a corollary of the property\todo{ref somehow}, we can switch back and forward
 between |Zipperup| and |Zipperdown|.
 
 \begin{code}
  Zipperdown-to-Zipperup : (e : Expr) → Zipperdown e -> Zipperup e
- Zipperdown-to-Zipperup t ((n , s) , eq)
-    = (n , (reverse s)) , (trans (sym (plugup-to-plugdown (Tip n) s)) eq)
+ Zipperdown-to-Zipperup t (z , eq)
+    = (convert z) , (trans (sym (plugup-to-plugdown z)) eq)
 
  Zipperup-to-Zipperdown : (e : Expr) -> Zipperup e -> Zipperdown e
    = ...
@@ -466,13 +469,15 @@ between |Zipperup| and |Zipperdown|.
 \label{subsec:relation}
 
 Finally, we write the ordering relation over over values of type |Zipperdown|.
-Nevertheless, we shall keep both interpretation of zippers around: the type
-|Zipperup| will be used only for computing the fold; the type |Zipperdown| will
-be used to encode the relation and prove termination.
+Nevertheless, we shall keep both interpretation of the \emph{zipper} around: the
+type |Zipperup| will be used for computing the fold; the type |Zipperdown|
+will be used to prove termination.
 
 The relation is type indexed by a concrete expression that indexes both values,
-thus it is \emph{statically} enforced that they are leaves of the same tree. The
-the relation definition is as follows:
+thus it is not a single relation but a family of relations one for every element
+of type |Expr|. By indexing both |Zipperdown| arguments with the same expression
+we ensure the relation imposes an order over configurations of the same abstract
+machine. The relation is encoded as follows.
 
 \begin{code}
   data IxLtOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
@@ -481,8 +486,8 @@ the relation definition is as follows:
     <-StepL  : llcorner l lrcorner (t1 , s1) < (t2 , s2)
              ->  llcorner Add l r lrcorner (t1 , Left r :: s1)       < (t2 , Left r :: s2)
 
-    <-Base  :   (e1 == plugdown (Val t2) s2)
-            ->  (e2 == plugdown (Val t1) s1)
+    <-Base  :   (e1 == plugZdown t2 s2)
+            ->  (e2 == plugZdown t1 s1)
             ->  llcorner Add e1 e2 lrcorner (t1 , Right n e1 eq :: s1) < (t2 , Left e2 :: s2)
 \end{code}
 
@@ -499,34 +504,35 @@ that one of the |Zipperdown| is pointing to a leaf in the left subexpression
 while the other is located in the right. Thus determining which one is smaller
 is simple, it is the one on the right subtree, i.e. constructor |Right|.
 
-The proof that the relation is well-founded is as follows:
+Now we turn into showing that the relation is \emph{well-founded}. A sketch of
+the proof is.
 
 \begin{code}
-    <-WF : forall (e : Expr) -> Well-founded (llcorner e lrcornerltOp)
+    <-WF : forall (e : Expr) -> Well-founded (llcorner e lrcornerLtOp)
     <-WF e x = acc (aux e x)
           where
             aux : forall (e : Expr)  (x : Zipperdown e)
                                      (y : Zipperdown e) → llcorner t lrcorner y < x → Acc (llcorner e lrcornerLtOp) y
             aux = ...
 \end{code}
-The proof follows the standard schema when proving well-foundedness
+
 
 \carlos{after studying the standard library almost all the proofs about well
 foundedness of relations have this kind of
-shape}. 
+shape}.
 
-It uses an auxiliary function that quantifies over the type of elements
-of the relation and returns a proof that the accessibility predicate is true for
-every smaller element.
+The proof follows the standard schema of many well-foundeness proofs as found in
+Agda's standard library~\todo{ref} It uses an auxiliary function that quantifies
+over the type of elements of the relation and returns a proof that the
+accessibility predicate is true for every smaller element.
 
-The relation we defined is not just one relation, but a family of relations, one
-for each value of type |Expr|. Thus, the ancillary function |aux| quantifies
-over elements of such type.
+Because the relation we we defined is not just one relation, but a family of
+them, the ancillary function |aux| quantifies over elements of type |Expr|.
 
-Why to go through the hassle of defining a type indexed relation and a parametrized
-proof of well-foundedness? The fact is that if the type index was not present,
-thus the relation would be defined over terms of type |Zipper|, then it is not
-possible to complete the well founded proof.
+Why to go through the hassle of defining a type indexed relation and a
+parametrized proof of well-foundedness? The fact is that if the type index was
+not present, thus the relation would be defined over terms of type |Zipper|,
+then it is not possible to complete the well founded proof.
 
 A well foundedness proof works by appealing either to the recursive structure of
 the smaller than proof, for example in the inductive cases, or to the recursive
@@ -538,8 +544,6 @@ not syntactically related thus a recursive call is not possible.  By the end of
 the day, proving that a relation is well founded amounts to show Agda's
 termination checker that something syntactically decreases.
 
-\carlos{Up until this point section 3 has a good structure/content}
-
 \subsection{Assembling the pieces together}
 \label{sec:basic-assembling}
 
@@ -550,7 +554,7 @@ delivers a smaller configuration by the relation.
 
 There are a couple of minor mismatches on how the function |unload| works that
 we need to fix before proceeding with the proof. The function is defined to
-treat the |Stack| part of the |Zipper| as a \emph{stack} pushing and popping
+treat the |Stack2| part of the |Zipper| as a \emph{stack} pushing and popping
 elements from the top. This corresponds with the view of the stack as
 a path from the leaf up to the root. Moreover, the function |unload| is defined
 over elements of type |Zipper| with no type level information attached.
@@ -559,69 +563,75 @@ We can solve the first problem by proving that |unload| preserves the overall
 input expression of the |Zipper| it takes as an argument.
 
 \begin{code}
-  unload-preserves-plugup  : (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack) (z' : Zipper)
-                             -> unload e x eq s == inj1 z'
-                             -> forall (t : Expr) -> plugup e s == t -> plugZup z' == t
+  unload-preserves-plugup  : forall (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack2) (z' : Zipper)
+                           -> unload e x eq s == inj1 z'
+                           -> forall (t : Expr) -> plugup e s == t -> plugZup z' == t
   unload-preserves-plugup = ...
 \end{code}
 
-Using such definition we can write a new type-indexed function that performs one
-step of the fold. It unwraps a element of type |Zipperup| calls |unload| (whose
-type has suffered some changes to account for the new type of |Stack|
-,Section~\ref{todo}) and returns either a value of the same type or a natural
-number if the computation is done.
+We can write a new type-indexed function that performs one step of the fold. It
+unwraps a element of type |Zipperup e| calls |unload| (whose type has suffered
+some changes to account for the new type of |Stack2| ,Section~\ref{subsec:stack}) and
+returns either a new value of the same type |Zipperup e| or a natural number
+if the fold terminates.
 
 \begin{code}
   step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
   step e ((n , s) , eq)
-    with unload (Tip n) n refl | Inspect (unload (Tip n) n refl) s
-    ... | inj1 z' | [ ueq ]  = (z' , unload-preserves-plugup (Tip n) n refl s z' ueq e eq)
-    ... | inj2 x             = inj2 x
+    with unload (Val n) n refl | inspect (unload (Val n) n refl) s
+    ... | inj1 z' | [ Is ]  = (z' , unload-preserves-plugup (Val n) n refl s z' Is e eq)
+    ... | inj2 x            = inj2 x
 \end{code}
 
-Thus the required lemma to prove is:
+Finally, we define the theorem that proofs that applying |step| over a configuration
+delivers a smaller configuration.
 
 \begin{code}
   step-< : (e : Expr) -> (z z' : Zipperup e) -> step e z == inj1 z'
-         -> llcorner e lrcorner Zipperup-to-Zipperdown z' < Zipperup-to-Zipperdonw z
+         -> llcorner e lrcorner Zipperup-to-Zipperdown z' < Zipperup-to-Zipperdown z
   step-< = ...
 \end{code}
 
-From our experience working with the type indexed relation in this kind of proof
-is very tedious because besides dealing with the logic of the proof itself one
-has to take care of the type index during recursive calls and so. In order to
-prove the theorem, it is much easier to define another relation over plain
-elements of type |Zipper| and prove that with enough evidence there exists an
-injection between both.
+The proof of such theorem is very tedious because the type index has to be
+preserved makes difficult to articulate auxiliary lemmas that help with the
+distinct cases. Instead, a much easier approach is to define another relation
+over plain elements of type |Zipper| and prove that with enough evidence there
+exists an injection between both.
 
 \begin{code}
   data LtOp :  Zipper -> Zipper -> Set where
     ...
 
-  to : forall (e : Tree) (z1 z2 : Zipper) (eq1 : plugZdown z1 == e) (eq2 : plugZdown z₂ == t) → z1 ltOp z2 → llcorner e rrcorner (z1 , eq1) < (z2 , eq2)
+  to  : forall (e : Expr) (z1 z2 : Zipper)
+      -> (eq1 : plugZdown z1 == e) (eq2 : plugZdown z2 == e)
+      -> z1 ltOp z2 -> llcorner e lrcorner (z1 , eq1) < (z2 , eq2)
   to = ...
 \end{code}
 
-Thus proving that the function |step| delivers a smaller element the following
-lemma has to be completed.o
+Thus to complete the previous theorem is sufficient to show that the function
+|unload| delivers a smaller |Zipper| by the plain relation (because we have
+already proven that |unload| preserves the input expression).
 
 \begin{code}
-  unload-< : forall (n : Nat) eq s t' s' → unload (Tip n) n refl s ≡ inj1 (t' , s') → (t' , reverse s′) ltOp (n , reverse s)
+  unload-<  : forall (n : Nat) (s : Stack2) (e : Expr) (s' : Stack2)
+            -> unload (Val n) n refl s ≡ inj1 (t' , s')
+            -> (t' , reverse s') ltOp (n , reverse s)
   unload-< = ...
 \end{code}
 
-The proof is done by induction over the stack and using an ancillary definition
-that captures how the function affects the shape of the stack. It is a long
-proof thus we decided not to include it here. It can be found in the online
-repository.
+The proof is done by induction over the stack supported by an ancillary
+definition that captures how the function affects the shape of the stack. It is
+a long proof (around 200 lines of code) thus we decided not to include it here.
+It can be found in the online repository.
 
-Finally, the function |tail-rec-eval| is completed as follows.
+The function |tail-rec-eval| is completed as follows.
 
 \begin{code}
-  rec : (e : Expr) -> (z : Zipperdown e) -> Acc (llcorner e lrcornerLtOp) z -> Zipperdown e U+ Nat
-  rec e z (acc rs) = with step e (Zipperdown-to-Zipperup z) | inspect (step e) z
-  ... | inj2 n  | _      = inj2 n
-  ... | inj1 z' | [ Is ] = rec e (Zipperup-to-Zipperdown z') (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
+  rec : (e : Expr) -> (z : Zipperup e)
+      -> Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z) -> Zipperup e U+ Nat
+  rec e z (acc rs) = with step e z | inspect (step e) z
+  ... | inj2 n  | _       = inj2 n
+  ... | inj1 z' | [ Is ]  = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
 
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e = rec e (load e stk) (<-WF e)
@@ -629,30 +639,52 @@ Finally, the function |tail-rec-eval| is completed as follows.
 
 \subsection{Correctness}
 \label{sec:basic-correctness}
-Indexing the \emph{Zipper} with an expression allow us to prove
-correctness of the transformation easily. The expression during the
-fold does not change, thus in every step of the computation the result
-of its evaluation remains constant.
 
-By using induction over the definition of unload, we can prove that
-when |unload| delivers a value, it corresponds to the result of
-evaluating of the input expression.  In order to do so, we enrich the
-type of |unload| to include the expression that has already been
-folded and we have its result.
+Indexing the data type \emph{zipper} with the input expression allow us to prove
+correctness of the transformation easily. The type of the function |step|
+enforces at the type level that the tail recursive fold is constantly executed
+over the same input expression.
+
+Proving the function |tail-rec-eval| to be correct amounts to show that the
+recursor, |rec|, is correct w.r.t. the evaluation function |eval|. We can prove
+the lemma by exploiting induction over the accessibility predicate. Thus we only
+remain to fulfill the base case, when the function |step| returns a natural
+number.
 
 \begin{code}
-  unload : (e : Expr) -> (n : Nat) -> eval e == n -> Stack -> (Nat * Stack) U+ Nat
-
-  unload-correct  : forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack) (x : Nat)
-                  -> unload e n eq s ≡ inj2 x -> eval e == x
+  rec-correct  : (e : Expr) → (z : Zipperup e)
+               -> (ac : Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z))
+               -> eval e == rec e z ac
+  rec-correct e z (acc rs)
+    with step e z | inspect (step e) z
+  ...  | inj1 z'  | [ Is ]
+       = rec-correct e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is))
+  ...  | inj2 n   | [ Is ] = step-correct n e eq z
 \end{code}
 
-Proving correctness of the whole transformation amounts to show that
-it holds for the auxiliary recursor that we use to write the function
-|tail-rec-eval|. We use well founded recursion to do structural
-recursion over the accesibility predicate and use the lemma
-|unload-correct| in the base case.
+Because |step| is defined as a wrapper over |unload| to prove |step-correct|
+suffices to show that such property holds for the function |unload|. The proof
+stored in the |Stack2| along with induction is enough to prove it.
 
+\begin{code}
+  unload-correct  : forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack2)
+                  -> unload t n eq s ≡ inj2 n -> eval (plugup t s) == n
+  unload-correct t n eq [] .n refl  = eq
+  unload-correct t n eq (Left x :: s) ()
+  unload-correct t n eq (Right n' t' eq' :: s) pr
+    = unload-correct (Add t' t) (n' + n) (cong2 plusOp eq' eq) s a p
+\end{code}
+
+The main theorem is proven by making a direct use of the ancillary lemma
+|rec-correct|.  The accessibility predicate for the input expression is given by
+the \emph{well-foundedness} proof.
+
+\begin{code}
+  correctness : forall (e : Expr) -> eval e == tail-rec-eval e
+  correctness e = rec-correct e (load e [] , _) (<-WF e (load e []))
+\end{code}
+
+\carlos{maybe add some phrase here saying how cool this is!}
 %} end of intro.fmt
 
 \section{Generic tail recursive fold}
@@ -675,12 +707,12 @@ well founded relation to prove termination and correcness of the construction.
 
 In a dependently typed programming language such as Agda, it is a common approach to
 devise a generic solution by defining a type of codes, the universe,
-and an interpretation function mapping a codes into types. An element of the 
+and an interpretation function mapping a codes into types. An element of the
 universe serves as the generic representation of a concrete datatype while its
 interpretation let us define functions generically.
 
-The expressiveness of a generic approach is highly tied to the choice of the universe. 
-The richer is its structure, the more variety of datatypes it allows to 
+The expressiveness of a generic approach is highly tied to the choice of the universe.
+The richer is its structure, the more variety of datatypes it allows to
 encode. In this paper, we present a generic tail recursive catamorphism for the universe
 of \emph{regular} tree types\todo{cite}. The universe and its interpretation functions are
 as follows:
@@ -703,10 +735,10 @@ as follows:
   interpl (R O* Q) interpr X = interpl R interpr X * interpl Q interpr X
 \end{code}
 
-So far, the type codes in the universe we defined, |Reg|, are only capable of representing 
-non-recursive functorial datatypes such as \emph{Maybe} or \emph{Either}. 
+So far, the type codes in the universe we defined, |Reg|, are only capable of representing
+non-recursive functorial datatypes such as \emph{Maybe} or \emph{Either}.
 This claim is sustained by the fact that codes are interpreted as
-functors over Agda small types, i.e. |Set -> Set|, and that we can write a law abiding 
+functors over Agda small types, i.e. |Set -> Set|, and that we can write a law abiding
 \emph{fmap}\footnote{Proofs are left for the reader.}.
 
 \begin{code}
@@ -720,10 +752,10 @@ functors over Agda small types, i.e. |Set -> Set|, and that we can write a law a
   fmap (R O* Q) f (x , y)   = fmap R f x , fmap Q f y
 \end{code}
 
-We can represent recursive datatypes in the \emph{regular} universe by introducing 
-the least fixed point of a code interpreted over itself. A generic code |R| serves as the 
-pattern functor where recursive positions are marked using the |I| constructor. 
-The fixed point ties the knot explicitly. For example, commonly recursive 
+We can represent recursive datatypes in the \emph{regular} universe by introducing
+the least fixed point of a code interpreted over itself. A generic code |R| serves as the
+pattern functor where recursive positions are marked using the |I| constructor.
+The fixed point ties the knot explicitly. For example, commonly recursive
 datatypes such as \emph{List}s or \emph{Binary trees} are expressible in the
 universe.
 
@@ -744,8 +776,8 @@ fold generically\footnote{Historically the generic fold is named
   catamorphism R alg (In r) = alg (fmap R (catamorphism R alg) r)
 \end{code}
 
-Agda's termination checker cannot cope with such definition. The use of a higher-order 
-argument to |fmap| is the culprit. To avoid the problem, we rewrite |catamorphism| to 
+Agda's termination checker cannot cope with such definition. The use of a higher-order
+argument to |fmap| is the culprit. To avoid the problem, we rewrite |catamorphism| to
 fuse together \emph{fmap} with the \emph{fold} so termination checker warnings are avoided
 all along.
 
@@ -1121,7 +1153,7 @@ distinguished variable is in the left or in the right component and |base-*|
 states the order between them.
 
 In order to prove well-foundedness of the given relations we resort to the same
-technique we explained in the first part of the paper (Section~\ref{todo}). We 
+technique we explained in the first part of the paper (Section~\ref{todo}). We
 introduce a new relation that is type indexed by the tree, in this case |mu R|, to
 which both \emph{Zipper} plug. The relations are an exact copy of the ones we
 just defined with the addition that every constructors is indexed explicitly
