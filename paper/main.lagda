@@ -514,12 +514,14 @@ to fix our universe of discourse.
 
 \subsection*{The regular universe}
 \label{sec:universe}
-\todo{Citations}
-In a dependently typed programming language such as Agda, we can represent a
-collection of types closed under certain operations as a \emph{universe}, that
-is, a data type represeting the `codes' of our universe and a `decoding'
-function that maps each code to its corresponding type. We have chosen the
-following universe of \emph{regular} types\todo{citation?}:
+
+In a dependently typed programming language such as Agda, we can
+represent a collection of types closed under certain operations as a
+\emph{universe}~\cite{altenkirch-mcbride,martin-loef}, that is, a data
+type |U : Set| describing the inhabitants of our universe together
+with its semantics, |el : U -> Set|, mapping each element of |U| to
+its corresponding type. We have chosen the following universe of
+\emph{regular} types\cite{morris-regular, noort-regular}:
 \begin{code}
   data Reg : Set1 where
     Zero  : Reg
@@ -538,7 +540,6 @@ the introduction in this universe as follows:
   expr : Reg
   expr = K Nat O+ (I O* I)
 \end{code}
- 
 Note that as the constant functor |K| takes an arbitrary type |A| as its
 argument, the entire data type lives in |Set1|. This could easily be remedied by
 stratifying this universe explicitly and parametrising our development by a base
@@ -554,7 +555,6 @@ We can interpret the inhabitants of |Reg| as a functor of type |Set -> Set|:
   interpl (R O+ Q) interpr X   = interpl R interpr X U+ interpl Q interpr X
   interpl (R O* Q) interpr X   = interpl R interpr X * interpl Q interpr X
 \end{code}
-
 To show that this interpretation is indeed functorial, we can define the
 following |fmap| operation:
 \begin{code}
@@ -573,12 +573,13 @@ associated with the elements of our universe:
   data mu (R : Reg) : Set where
     In : interpl R interpr (mu R) -> mu R
 \end{code}
-Next, we can define a \emph{generic} fold, or \emph{catamorphism}, to work on
-the inhabitants of the regular universe. For each code |R : Reg|, the |cata R|
-function takes an \emph{algebra} of type |interpl R interpr X -> X| as
-argument. This algebra assigns semantics to the `constructors' of |R|. Folding
-over a tree of type |mu R| corresponds to repeatedly the algebra to every
-subtree:
+Next, we can define a \emph{generic} fold, or \emph{catamorphism}, to
+work on the inhabitants of the regular universe. For each code |R :
+Reg|, the |cata R| function takes an \emph{algebra} of type |interpl R
+interpr X -> X| as argument. This algebra assigns semantics to the
+`constructors' of |R|. Folding over a tree of type |mu R| corresponds
+to recursively folding over each subtree and assembling the results
+using the argument algebra:
 \begin{spec}
   cataN : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
   cata R alg (In r) = alg (fmap R (cataN R alg) r)
@@ -586,21 +587,10 @@ subtree:
 Unfortunately, Agda's termination checker does not accept this definition. The
 problem, once again, is that the recursive calls to |cata| are not made to
 structurally smaller trees, but rather |cata| is passed as an argument to the
-higher-order function |map| that is used to recurse over the subtrees of type
-|mu R|.
+higher-order function |fmap|.
 
-To address this, we can fuse the |map| and |fold| functions into a single
+To address this, we can fuse the |fmap| and |cata| functions into a single
 |mapFold| function~\cite{norell-notes}:
-
-\begin{code}
-  catamorphism : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
-  catamorphism R alg (In r) = alg (fmap R (catamorphism R alg) r)
-\end{code}
-
-Agda's termination checker cannot cope with such definition. The use of a higher-order 
-argument to |fmap| is the culprit. To avoid the problem, we rewrite |catamorphism| to 
-fuse together \emph{fmap} with the \emph{fold} so termination checker warnings are avoided
-all along.
 \begin{code}
   mapFold : (R Q : Reg) -> (interpl Q interpr X -> X) -> interpl R interpr (mu Q) -> interpl R interpr A
   mapFold Zero     Q alg ()
@@ -619,11 +609,19 @@ We can now define |cata| in terms of |mapFold| as follows:
 This definition is indeed accepted by Agda's termination checker.
 
 \paragraph{Example}
-\todo{Expressions and evaluation as folds}
+We can now revisit our example evaluator from the introduction. To
+define the evaluator using the generic |cata| function, we instantiate
+the catamorphism to work on the expressions and pass the desired algebra:
+\fixme{what is the notation for cross?}
+\begin{code}
+  eval : mu expr -> Nat
+  eval = cata expr [ id , plusOp ]
+\end{code}
 
-Given an algebra |interpl R interpr X -> X| the \emph{tail-recursive} function
-that we develop in the rest of the section is extensionally equivalent to
-|cata|.
+In the remainder of this paper, we will develop an alternative
+traversal that maps any algebra to a tail-recursive function that is
+guaranteed to terminate and produce the same result as
+the corresponding catamorphism.
 
 \subsection*{Dissection}
 \label{sec:dissection}
@@ -707,7 +705,7 @@ come and a proof of the fact.
  record Computed (R : Reg) (X : Set) (alg : interpl R interpr X → X) : Set where
     constructor _,_,_
     field
-      Tree  : μ R
+      Tree  : mu R
       Value : X
       Proof : catamorphism R alg Tree == Value
 \end{code}
@@ -752,7 +750,7 @@ interpl R interpr X| uses the variable |X|. In case the predicate is true, we
 are able to replace the type |X| for any other type |Y|.
 
 \begin{code}
-  data NonRec : (R : Reg) → interpl R interpl X → Set where
+  data NonRec : (R : Reg) → interpl R interpr X → Set where
     NonRec-One  : NonRec One tt
     NonRec-K    : (B : Set) → (b : B) → NonRec (K B) b
     NonRec-+1   : (R Q : Reg) → (r : interpl R interpr X)
@@ -1001,37 +999,27 @@ with the tree. The signature for the indexed relations is as follows:
 
 %} end of generic.fmt
 
->>>>>>> master
-\section{Conclusion and future work}
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection*{Related work}
+Danvy and dissection
+
+Generics in Agda
+
+\subsection*{Future work}
+
+\subsection*{Conclusion}
+
 
 %% Acknowledgments
-\begin{acks}                            %% acks environment is optional
-                                        %% contents suppressed with 'anonymous'
-  %% Commands \grantsponsor{<sponsorID>}{<name>}{<url>} and
-  %% \grantnum[<url>]{<sponsorID>}{<number>} should be used to
-  %% acknowledge financial support and will be used by metadata
-  %% extraction tools.
-  This material is based upon work supported by the
-  \grantsponsor{GS100000001}{National Science
-    Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
-  No.~\grantnum{GS100000001}{nnnnnnn} and Grant
-  No.~\grantnum{GS100000001}{mmmmmmm}.  Any opinions, findings, and
-  conclusions or recommendations expressed in this material are those
-  of the author and do not necessarily reflect the views of the
-  National Science Foundation.
-\end{acks}
+% \begin{acks}
+% \end{acks}
 
 
 %% Bibliography
 \bibliography{main}
 
-
-
-%% Appendix
-\appendix
-\section{Appendix}
-
-Text of appendix \ldots
 
 \end{document}
 
