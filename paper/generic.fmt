@@ -10,6 +10,13 @@
 %format <NablaOp = "\AD{\ensuremath{\llcorner\_\lrcorner\_<_{\nabla}\_}}"
 %format llcorner = "\AD{\ensuremath{\llcorner}}"
 %format lrcorner = "\AD{\ensuremath{\lrcorner}}"
+%format Zipperup   = "\AD{Zipper\ensuremath{_\scaleto{\Uparrow}{^\scaleto{G}{3pt}}}"
+%format Zipperdown = "\AD{Zipper\ensuremath{_{\scaleto{\Downarrow}{4pt}}^{\scaleto{G}{4pt}}}}"
+%format IxDissection = "\AD{\ensuremath{\mathcal{D}_x}}"
+%format IxLt ="\AD{\ensuremath{\llcorner\_\lrcorner\llcorner\_\lrcorner\_<_{\nabla}\_}}"
+%format IxLtdown ="\AD{\ensuremath{\llcorner\_\lrcorner\llcorner\_\lrcorner\_<_{\mathds{Z}_{\scaleto{\Downarrow}{2pt}}}\_}}"
+%format lrcornerIxLtdown = "\AD{\ensuremath{\lrcorner\_<_{\mathds{Z}_{\scaleto{\Downarrow}{2pt}}}\_}}"
+%format lrcornerllcorner = "\AD{\ensuremath{\lrcorner\llcorner}}"
 
 % Constructors
 %format One   = "\AI{\ensuremath{\mathbb{1}}}"
@@ -53,7 +60,7 @@
 %format plugZ-mudown    = "\AF{plugZ-\ensuremath{\mu \Downarrow}}"
 %format coerce = "\AF{coerce}"
 %format Leaf   = "\AF{Leaf}"
-%format Stack  = "\AF{Stack}"
+%format Stack  = "\AF{Stack\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format Zipper = "\AF{Zipper}"
 %format first-cps = "\AF{first-cps}"
 %format load = "\AF{load}"
@@ -65,6 +72,8 @@
 %format compute = "\AF{compute}"
 %format Dissection = "\AF{\ensuremath{\mathcal{D}}}"
 %format plugD         = "\AF{plug\DJ}"
+%format Well-founded  = "\AF{Well-founded}"
+%format IxLtdown-WF ="\AF{\ensuremath{\llcorner\_\lrcorner\llcorner\_\lrcorner\_<_{\mathds{Z}_{\scaleto{\Downarrow}{2pt}}}\_}-WF}"
 
 
 % Bound variables
@@ -104,6 +113,8 @@
 %format e1   = "\AB{\ensuremath{e_1}}"
 %format e2   = "\AB{\ensuremath{e_2}}"
 %format isl'   = "\AB{isl''}"
+%format tx   = "\AB{t\ensuremath{_{x}}}"
+%format t   = "\AB{t}"
 
 % Record fields
 %format Tree  = "\AL{Tree}"
