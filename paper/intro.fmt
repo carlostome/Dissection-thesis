@@ -4,8 +4,9 @@
 %format Stack  = "\AD{Stack}"
 %format Stack2 = "\AD{Stack}"
 %format Zipper   = "\AD{Zipper}"
-%format Zipperup   = "\AD{Zipper\ensuremath{\Uparrow}}"
-%format Zipperdown = "\AD{Zipper\ensuremath{\Downarrow}}"
+%format ZipperType   = "\AD{Config}"
+%format Zipperup   = "\AD{Config\ensuremath{\Uparrow}}"
+%format Zipperdown = "\AD{Config\ensuremath{\Downarrow}}"
 
 %format LtOp = "\AD{\ensuremath{\_<\_}}"
 %format IxLtOp = "\AD{\ensuremath{\llcorner\_\lrcorner\_<\_}}"
