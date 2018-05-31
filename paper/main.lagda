@@ -869,9 +869,9 @@ different plug operations on these stacks:
   plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
 \end{code}
 
-To define the configurations of our abstract machine, we are
-interested in \emph{any} through our initial input, but want to
-restrict ourselves to those paths that lead to a leaf. But what
+To define the configurations of our abstract machine, we are not
+interested in \emph{any} position in our initial input, but want to
+restrict ourselves to those stacks denote a \emph{leaf}. But what
 constitutes a leaf in this generic setting?
 
 To describe leaves, we introduce the following predicate |NonRec|,
