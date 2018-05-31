@@ -1096,15 +1096,20 @@ value equals to applying a |catamorphism| over the subtree.  The function
 
 \subsection{Relation over Generic \emph{Zipper}s}
 
-We can engineer a well-founded relation over elements of |Zipperdown| by
-explicity separating the functorial layer from the recursive layer induced by
-the fixed point. At the functor level, we impose to order over terms of a
-\emph{dissection}, while in the fixed point level the order is defined by
-induction over the \emph{stack} by checking whether the heads are equal or
-not.
+We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
+t|, for some concrete tree |t : mu R|, by explicity separating the functorial layer
+from the recursive layer induced by the fixed point. At the functor level, we
+impose the order over \emph{dissection}s of |R|, while at the fixed point level
+we define an order inductively over the \emph{stack}s.
 
-Before specifying the concrete relation over \emph{dissections}, |<NablaOp|, the
-the relation over \emph{Zipper}s is defined as follows:
+Towards reducing the clutter of the definition, we give a non type-indexed
+relation over terms of type |Zipper|. We can later use the same technique as in
+Section~\ref{sec:basic-assembling} to recover a fully type-indexed relation over
+elements of type |Zipperdown t| by requiring that the \emph{zipper}s respect the
+invariant, |plugZ-mudown z == t|.
+
+The relation is defined by induction over the |Stack| part of the |zipper|s
+as follows.
 
 \begin{code}
   data <ZOp : Zipper R X alg -> Zipper R X alg -> Set where
@@ -1114,18 +1119,27 @@ the relation over \emph{Zipper}s is defined as follows:
           -> (h1 , e1) <Nabla (h2 , e2) -> (t1 , h1 :: s1) <Z (t2 , h2 :: s2)
 \end{code}
 
-The constructor |Step| takes care of the case where both \emph{stack}s store the
-same \emph{dissection} at the head. In such case, both \emph{Zipper} point to a
-leaf in the same subtree thus we only have to recursively check if the relation
-holds within that subtree.
+The relation has only two constructors:
 
-When the head of both \emph{stack}s is different, this means that the leaves
-point to by both \emph{Zipper}s reside in distinct subtrees. The order over the
-subtrees is given by the relation over \emph{dissections}. Now we specify how
-such relation looks like:
+\begin{itemize}
+\item The constructor |Step| covers the
+inductive case. When the head of both \emph{stack}s is the same, i.e. both
+|Zipper| point to leaves in the same subtree, it forgets about the shared
+structure and focuses on the specific subtree. Thus it expects a proof on the
+\emph{zipper}s with the head removed from the \emph{stack}s.
+\item The constructor |Base| accounts for the case
+when the head of the \emph{stack}s is different. This means that the \emph{zipper}s
+are located on different subtrees of the same internal node. In such case, the
+relation we are defining relies on an auxiliary relation |<NablaOp| that orders
+\emph{dissection}s of type |Dissection R (Computed R X alg) (mu R)|.
+\end{itemize}
+
+The ancillary relation does not neccesitate to be aware of the recursive nature
+of its input. It can be written in a more general form over \emph{dissection}s
+interpreted on any sets |X| and |Y|. Its definition is the following.
 
 \begin{code}
-  data <NablaOp : (R : Reg) → nabla R X Y * Y → nabla R X Y * Y → Set where
+  data <NablaOp : (R : Reg) → Dissection R X Y → Dissection R X Y → Set where
     step-+1  :   llcorner  R lrcorner      (r , t1)       <Nabla    (r' , t2)
              ->  llcorner R O+ Q lrcorner  (inj1 r , t1)  <Nabla (inj1 r' , t2)
 
@@ -1141,39 +1155,73 @@ such relation looks like:
     base-*   :   llcorner R O* Q lrcorner (inj2 (r , dq) , t1)   <Nabla  (inj1 (dr , q) , t2)
 \end{code}
 
-The idea is that the order we want to impose an order over elements of the
-\emph{dissection} such that the ones with holes more to the right are smaller to
-those with holes more to the left. Most of the constructors of the relation are
-there just to recurse over the structure of the \emph{dissection}, with the
-exception of |base-*|.
+The idea is that we order elements of a \emph{dissection} in such a way
+that the more the hole is to the right, the smallest that element should be.
 
-This constructor is the one that determines the order. The idea is that the
-\emph{dissection} of a product functor raises two possibilities, either the
-distinguished variable is in the left or in the right component and |base-*|
-states the order between them.
+All the constructors but the last one are defined by induction over the code of
+the \emph{dissection}. The base case, constructor |base-*|, is the responsible for
+determining which \emph{dissection} is smaller.
 
-In order to prove well-foundedness of the given relations we resort to the same
-technique we explained in the first part of the paper (Section~\ref{todo}). We
-introduce a new relation that is type indexed by the tree, in this case |mu R|, to
-which both \emph{Zipper} plug. The relations are an exact copy of the ones we
-just defined with the addition that every constructors is indexed explicitly
-with the tree. The signature for the indexed relations is as follows:
+The \emph{dissection} of the product of two functors, |R O* Q|, has two possible
+values. It is either a term of type |nabla R X Y * interpl Q interpr Y|, such as
+|inj1 (dr , q)| or a term of type |interpl R interpr X * nabla Q X Y| like |inj2
+(r , dq)|. The former indicates that the hole inhabits the left component of the
+pair while the latter reveals that the hole is in the right component.  Thus by
+the criteria we explained before, the latter is defined as being smaller to the
+former.
 
-% \begin{code}
-%   data IxLt : (R : Reg) → (tx : interpl R interpr X) → Sigma ( tx → IxDissection R X Y ex tₓ → Set where
-% \end{code}
-+ Proof of well foundedness
+Both relations we just defined are opportune to order terms of type |Zipper|, or
+configurations of the abstract machine, but not strong enough to allow us to
+prove that they are \emph{well-founded}.
+
+In order to prove such property, we write a type-indexed version of each
+relation. The first relation, |<ZOp|, has to be type-indexed by the tree of
+type |mu R| to which both \emph{zipper} recursively plug through
+|plugZ-mudown|. And the auxiliary relation, |<NablaOp|, needs to be
+type-indexed by the functor of type | interpl R interpr X | to which both
+\emph{dissections} |plug|. The signature of both relations is as follows.
+
+\begin{code}
+  data IxLt  :  (R : Reg) -> (tx : interpl R interpr X) 
+             -> IxDissection R X Y eta tx -> IxDissection R X Y eta tx → Set where
+
+
+  data IxLtdown  (R : Reg)  : (t : μ R) 
+             -> Zipperdown R X alg t -> Zipperdown R X alg t -> Set where
+\end{code}
+
+The proof of \emph{well-foundedness} of |IxLtdown| adopts the same ideas as the
+proof for the non generic example given in Section~\ref{subsec:relation}. Because of the
+dependency bewteen the two relations, the proof relies on the relation |IxLt| being
+also \emph{well-founded}. The full proof can be found in the accompanying code,
+therefore here we only spell its signature.
+
+\begin{code}
+  IxLtdown-WF : (R : Reg)  -> (t : μ R) 
+                           -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
+\end{code}
 
 \subsection{Putting the pieces together}
 
 + unload to a smaller position by the relation
+	+ right to smaller on the dissection layer
+
++ type indexed step => uses equivalence between the zippers
+
 + tail recursive fold
+
+\subsection{Correctness generically}
 + correctness for free by indexed
 + The proof holds
 
 %} end of generic.fmt
 
 \section{Conclusion and future work}
+
++ Regular universe kind of limited
++ Generalize to other universes
++ Discuss why not to use other techniques
+
 
 %% Acknowledgments
 \begin{acks}                            %% acks environment is optional
