@@ -583,7 +583,7 @@ if the fold terminates.
     ... | inj2 x            = inj2 x
 \end{code}
 
-Finally, we define the theorem that proofs that applying |step| over a configuration
+Finally, we define the theorem that proves that applying |step| over a configuration
 delivers a smaller configuration.
 
 \begin{code}
@@ -592,8 +592,8 @@ delivers a smaller configuration.
   step-< = ...
 \end{code}
 
-The proof of such theorem is very tedious because the type index has to be
-preserved makes difficult to articulate auxiliary lemmas that help with the
+The proof of such theorem is very tedious. Because the type index has to be
+preserved, it is difficult to articulate auxiliary lemmas that help with the
 distinct cases. Instead, a much easier approach is to define another relation
 over plain elements of type |Zipper| and prove that with enough evidence there
 exists an injection between both.
@@ -624,7 +624,7 @@ definition that captures how the function affects the shape of the stack. It is
 a long proof (around 200 lines of code) thus we decided not to include it here.
 It can be found in the online repository.
 
-The function |tail-rec-eval| is completed as follows.
+The function |tail-rec-eval| is now completed as follows.
 
 \begin{code}
   rec : (e : Expr) -> (z : Zipperup e)
@@ -1177,9 +1177,9 @@ prove that they are \emph{well-founded}.
 In order to prove such property, we write a type-indexed version of each
 relation. The first relation, |<ZOp|, has to be type-indexed by the tree of
 type |mu R| to which both \emph{zipper} recursively plug through
-|plugZ-mudown|. And the auxiliary relation, |<NablaOp|, needs to be
-type-indexed by the functor of type | interpl R interpr X | to which both
-\emph{dissections} |plug|. The signature of both relations is as follows.
+|plugZ-mudown|. The auxiliary relation, |<NablaOp|, needs to be type-indexed by
+the functor of type | interpl R interpr X | to which both \emph{dissections}
+|plug|. The signature of both relations is as follows.
 
 \begin{code}
   data IxLt  :  (R : Reg) -> (tx : interpl R interpr X) 
@@ -1201,18 +1201,114 @@ therefore here we only spell its signature.
                            -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
-\subsection{Putting the pieces together}
+\subsection{A Generic Tail-Recursive \emph{Catamorphism}}
 
-+ unload to a smaller position by the relation
-	+ right to smaller on the dissection layer
+We are ready to construct a generic tail recursive machine. In order to so we
+have to develop the necessary glue to put the pieces together. We follow the 
+same outline as in Section~\ref{sec:basic-assembling}.
 
-+ type indexed step => uses equivalence between the zippers
+The first point is to build a wrapper around the function |unload| that performs
+one step of the \emph{catamorphism}. The function |step| statically enforces
+that the input tree remains the same both in its argument and in its result.
 
-+ tail recursive fold
+\begin{code}
+  step  : (R : Reg) → (alg : interpl R interpr X → X) -> (t : mu R)
+        -> Zipperup R X alg t -> Zipperup R X alg t U+ X
+\end{code}
+
+We omit the full definition, but basically the function |step| performs a call
+to |unload| by coercing the leaf in the |Zipperdown| argument to a generic tree. 
+To show that |unload| preserves the invariant, it uses the following ancillary lemma.
+
+\begin{code}
+  unload-preserves  : forall (R : Reg) {alg : interpl R interpr X → X}
+                    → (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg)
+                    → (z : Zipper R X alg)
+                    → forall  (e : μ R) → plug-muup R t s == e 
+                              → unload R alg t x eq s == inj1 z → plug-muup R z == e
+\end{code}
+
+The second phase require us to show that applying the function |step| to a
+configuration of the abstract machine delivers a smaller value by the relation.
+As the function |step| is an envelope over the function |unload|, we only have
+to prove that the property holds for the latter. 
+
+The function |unload| does mainly two things. First, it calls the function
+|right| to check whether there are any more holes to the right and then
+dispatches to either |load|, in case there is a hole, or recursively to itself
+in case there is not.  When there is a hole left, a new \emph{dissection} is
+returned by |right|. Thus showing that the new configuration is smaller amounts
+to show that the \emph{dissection} returned by |right| is smaller by |<NablaOp|.
+We do so with the following lemma.
+
+\begin{code}
+  right-<  : ∀ (R Q : Reg) (alg : interpl Q interpr X → X)
+           → (dr  : nabla R (Computed Q X alg) (mu Q)) → (t : mu Q)
+           → (y : X) → (eq : catamorphism Q alg t == y)
+           → (dr' : nabla R (Computed Q X alg) (mu Q)) → (t' : mu Q)
+           → right R dr (t , y , eq) == inj2 (dr' , t')
+           → llcorner R lrcorner ((dr' , t')) <Nabla ((dr , t)) 
+\end{code}
+
+The bits of how the function |unload|, hence |step|, delivers a smaller value are
+rather mechanic. By induction over the input \emph{stack} one can know whether
+the \emph{catamorphism} is done or not. If it has not terminated, there is at
+least one \emph{dissection} in the top of the \emph{stack}.  The function
+|right| applied to that element returns either a smaller \emph{dissection} or a
+tree with all values on the leaves (plus subtrees and proofs).  In the latter
+case using induction over the \emph{stack} suffices, while in the former, we can
+use the previous lemma |right-<|. The signature of the theorem is
+the following.
+
+\begin{code}
+  step-<  : (R : Reg) (alg : interpl R interpr X → X) → (t : mu R)
+          → (z1 z2 : Zipperup R X alg t)
+          → step R alg t z1 == inj1 z2 → llcorner R lrcornerllcorner z2 lrcorner <ZOp z1
+\end{code}
+
+Finally, we can write the \emph{tail-recursive machine}, |tail-rec-cata|, as the
+combination of an auxiliary recursor over the accessibility predicate and a main
+function that initiates the computation.
+
+\begin{code}
+  rec  : (R : Reg) (alg : interpl R interpr X → X) (t : mu R) 
+       → (z : Zipperup R X alg t) 
+       → Acc (llcorner R lrcornerllcorner t lrcornerIxLtdown ) (Zipperup-to-Zipperdown z) → X
+  rec R alg t z (acc rs) with step R alg t z | inspect (step R alg t) z
+  ... | inj1 x |  [ Is  ] = rec R alg t x (rs x (step-< R alg t z x Is))
+  ... | inj2 y |  [ _   ] = y
+
+  tail-rec-cata : (R : Reg) → (alg : interpl R interpr X → X) → mu R → X
+  tail-rec-cata R alg x 
+    = rec R alg (load R alg x []) (IxLtdown-WF R (load R alg x []))
+\end{code}
 
 \subsection{Correctness generically}
-+ correctness for free by indexed
-+ The proof holds
+
+As before, the correctness of |tail-rec-cata| with regard to the function
+|catamorphism| is guaranteed by the parametrization of the construction by the
+input tree. 
+
+The proof is straight-forward by exploiting induction over the accessibility
+predicate in the auxiliary recursor. In the base case, when the function |step|
+returns a ground value of type |X|, we have to show that such value is is the
+result of applying the \emph{catamorphism} to the input. Because |step| is a
+wrapper around |unload| we prove the following lemma.
+
+\begin{code}
+  unload-correct  : ∀ (R : Reg) (alg : interpl R interpr X → X)
+                     (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg) (y : X)  
+                  → unload R alg t x eq s == inj2 y
+                  → ∀ (e : mu R) → plug-muup R t s == e → catamorphism R alg e == y
+\end{code}
+
+Correctness is then given by the following theorem.
+
+\begin{code}
+  correctness  : forall (R : Reg) (alg : interpl R interpr X → X) (t : mu R)
+               → cata R alg t == tail-rec-cata R alg t
+\end{code}
+
 
 %} end of generic.fmt
 
