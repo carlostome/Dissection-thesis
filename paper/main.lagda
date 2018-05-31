@@ -796,7 +796,7 @@ configurations for any type in our universe. The key definition,
   nabla (R O+ Q)  X Y = nabla R X Y U+ nabla Q X Y
   nabla (R O* Q)  X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
 \end{code}
-This operation generalizes the zippers, by defining a bifunctor |nabl
+This operation generalizes the zippers, by defining a bifunctor |nabla
 R X Y|. You may find it useful to think of the special case, |nabla
 (mu R) Y| as a configuration of an abstract machine traversing a tree
 of type |mu R| to produce a result of type |Y|. The last clause of the
@@ -813,7 +813,7 @@ the missing value that can fill the context.
   Dissection R X Y = nabla R Y X * X
 \end{code}
 We can reconstruct Huet's zippers by instantiating both |X| and |Y| to
-|mu R|. \todo{is that right?}
+|mu R|.
 
 Given a \emph{dissection}, we can define a |plug| operation that
 `reconstructs' assembles the the context and current value in focus to
@@ -830,7 +830,7 @@ produce a value of type |interpl R interpr X|:
   plug (R O* Q)  eta  (inj2 (r , dq) , x)  = (fmap R eta r , plug Q eta (dq , x))
 \end{code}
 
-\subsection*{Generic Zippers}
+\subsection*{Generic configurations}
 
 While the \emph{dissection} computes the bifunctor \emph{underlying}
 our configurations, we still need to take a fixpoint of this
@@ -1053,7 +1053,7 @@ value equals to applying a |catamorphism| over the subtree.  The function
 
 \todo{STOP HERE}
 
-\subsection*{Relation over Generic \emph{Zipper}s}
+\subsection*{Relation over generic configurations}
 
 We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
 t|, for some concrete tree |t : mu R|, by explicity separating the functorial layer
@@ -1160,7 +1160,7 @@ therefore here we only spell its signature.
                            -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
-\subsection{A Generic Tail-Recursive \emph{Catamorphism}}
+\subsection{A Generic tail recursive machine}
 
 We are ready to construct a generic tail recursive machine. In order to so we
 have to develop the necessary glue to put the pieces together. We follow the 
@@ -1242,7 +1242,7 @@ function that initiates the computation.
     = rec R alg (load R alg x []) (IxLtdown-WF R (load R alg x []))
 \end{code}
 
-\subsection{Correctness Generically}
+\subsection{Correctness, generically}
 
 As before, the correctness of |tail-rec-cata| with regard to the function
 |catamorphism| is guaranteed by the parametrization of the construction by the
