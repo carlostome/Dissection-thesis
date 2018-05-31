@@ -31,7 +31,8 @@
 
 
 \begin{abstract}
-  Folds are a useful abstraction. Yet they are not tail recursive. Writing tail
+  Folds are a useful abstraction in every functional programmer's toolbox. Yet they
+  are not tail recursive functions. Writing tail
   recursive functions by hand is boring/hard. This paper attempts to nail down
   the generic construction that produces the tail recursive counterpart of any
   recursive function defined as a fold. This allows programmers to work at a
@@ -199,12 +200,13 @@ As a first approximation, we will revise the definitions of |load| and
 |unload|. Rather than consuming the entire input in one go with a pair
 of mutually recursive functions, we begin by defining |load| as follows:
 \begin{code}
-  load : Expr -> Stack -> Nat * Stack
-  load (Val n)      stk = (n , stk)
+  load : Expr -> Stack -> (Nat * Stack) U+ Nat
+  load (Val n)      stk = inj1 (n , stk)
   load (Add e1 e2)  stk = load e1 (Left e2 stk)
 \end{code}
-Rather than call |unload| upon reaching a value, we return the current
-stack and the value of the leftmost leaf.
+Rather than call |unload| upon reaching a value, we return\footnote{Even though
+the function always returns a |Nat * Stack|, we wrap it in a sum type to keep
+|unload| tail-recursive} the current stack and the value of the leftmost leaf.
 
 The |unload| function is defined by recursion over the stack as
 before, but with one crucial difference. Instead of always returning the
@@ -214,7 +216,7 @@ machine, that is, a pair |Nat * Stack|:
   unload : Nat -> Stack -> (Nat * Stack) U+ Nat
   unload v   Top             = inj2 v
   unload v   (Right v' stk)  = unload (v' + v) stk
-  unload v   (Left r stk)    = inj1 (load r (Right v stk))
+  unload v   (Left r stk)    = load r (Right v stk)
 \end{code}
 Both these functions are now accepted by Agda's termination checker as
 they are clearly structurally recursive.
