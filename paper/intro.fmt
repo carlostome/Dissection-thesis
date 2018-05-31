@@ -65,6 +65,8 @@
 %format < = "\AD{<}"
 %format dotted = "\AS{.}\hspace*{-0.1cm}"
 %format prodOp = "\AI{\_\text{,}\_}"
+%format convert   = "\AF{convert}"
+
 
 %format <-Well-founded = "\AF{<\text{-}Well-founded}"
 
@@ -87,9 +89,11 @@
 %format s     = "\AB{s}"
 %format s'     = "\AB{s''}"
 %format x     = "\AB{x}"
+%format y     = "\AB{y}"
 %format v     = "\AB{v}"
 %format v'     = "\AB{v''}"
 %format stk   = "\AB{stk}"
+%format stk'  = "\AB{stk''}"
 %format e1    = "\AB{\ensuremath{e_1}}"
 %format e2    = "\AB{\ensuremath{e_2}}"
 %format t    = "\AB{\ensuremath{t}}"

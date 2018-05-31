@@ -20,6 +20,7 @@
 %format Zipper = "\AD{Zipper}"
 %format Zipperup = "\AD{Zipper\ensuremath{\Uparrow}}"
 %format plugdown   = "\AF{plug\ensuremath{\Downarrow}}"
+%format convert   = "\AF{convert}"
 %format Zipperdown = "\AD{Zipper\ensuremath{\Downarrow}}"
 %format plugZup = "\AF{plugZ\ensuremath{\Uparrow}}"
 %format plugZdown = "\AF{plugZ\ensuremath{\Downarrow}}"
