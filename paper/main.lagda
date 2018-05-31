@@ -229,12 +229,13 @@ We can use both these functions to define the following evaluator:
     where
       nrec : (Nat * Stack) -> Nat
       rec (n , stk) with unload n stk
-      ... | inj1 (n' , stk') = nrec (n' , stk')
+      ... | inj1 (n' , stk' ) = nrec (n' , stk')
       ... | inj2 r = r
-\end{code}
+\end{code}\todo{fix formatting of |stk'|}
 %}
 Here we use |load| to compute the initial configuration of our machine
--- that is the leftmost leaf in our initial expression. We proceed by
+-- that is, it finds the leftmost leaf in our initial expression and its associated stack.
+We proceed by
 repeatedly calling |unload| until it returns a value.  This version of
 our evaluator, however, does not pass the termination checker. The new
 state, |(n' , stk')|, is not structurally smaller than the initial
@@ -259,23 +260,29 @@ well-foundedness is the topic of the next section.
 
 \section{Well-founded tree traversals }
 
-Configurations of the abstract machine are a variation of Huet's
-\emph{zippers}. The zipper of a datatype such as |Expr| is pair of a (sub)expression
-and its \emph{context}. We can reassemble the original expression, by \emph{plugging} together
-the subexpression into its context. A value of the zipper locates the subexpression
-within the bigger expression. As demonstrated by~\citet{dissection}, the type |Stack| is a
-generalization of the zipper, allowing the values to the left and right of the current subtree
-to have different types.
+The configurations of our abstract machine can be seen as a variation
+of Huet's \emph{zippers}~\cite{huet}. The zipper associated with an
+expression |e : Expr| is pair of a (sub)expression of |e| and its
+\emph{context}. We can reassemble the original expression, by
+\emph{plugging} together the subexpression into its context. As
+demonstrated by~\citet{dissection}, the zippers can be generalized
+further to \emph{dissections}, where the values to the left and right
+of the current subtree may have different types.
 
-The type of configurations goes a step beyond and constrains the zipper to
-represent only paths from leaves of the input expression (with possibly
-evaluated subtrees) up to the root. The subexpression on the zipper pair is
-substituted by the natural number inhabiting the specific leaf.
+In the example evaluator from the previous section, the configurations
+of the abstract machine are given by the type |Nat * Stack|. In this
+way, we \emph{only ever navigate to the leaves of our input
+  expression}. We will therefore consider a special case of
+dissections, where we the current subexpression in focus is always a
+leaf. We can represent as a pair of the value stored in the current
+leaf (|Nat|) and the current context (|Stack|):
 
 \begin{code}
-  Zipper : Set
-  Zipper = Nat * Stack
+  ZipperType : Set
+  ZipperType = Nat * Stack
 \end{code}
+\todo{Zipper is a bad name -- it's not really a zipper. Configuration?
+  AbstractMachineState?}
 
 The tail recursive evaluator, |tail-rec-eval| processes the leaves of the input
 expression in a left-to-right fashion. The leftmost leaf -- that is the first
@@ -290,13 +297,13 @@ Section~\ref{sec:intro}, we would number the leaves as follows:
 \end{figure}
 
 
-This section aims to formalize the relation that orders elements to type
-|Zipper| (or configurations of the abstract maching) and prove it is
-\emph{well-founded}. However, before doing so there are two central problems
-with our choice of |Zipper| data type:
+This section aims to formalize the relation that orders elements of
+the |ZipperType| type (or configurations of the abstract maching) and
+prove it is \emph{well-founded}. However, before doing so there are
+two central problems with our choice of |ZipperType| data type:
 
 \begin{enumerate}
-\item The |Zipper| data type is too liberal. As we evaluate our input expression
+\item The |ZipperType| data type is too liberal. As we evaluate our input expression
   the configuration of our abstract machine changes constantly, but satisfies
   one important \emph{invariant}: each configuration is a decomposition of the
   original input. Unless this invariant is captured, it will be hard pressed
@@ -309,7 +316,7 @@ with our choice of |Zipper| data type:
     regarding their relative positions to the root.
 \end{enumerate}
 
-To address these specific problems we: First, refine the type of |Zipper| so the
+To address these specific problems we: First, refine the type of |ZipperType| so the
 invariant can be captured, Section~\ref{subsec:stack}; Second, we explore a
 different view of stacks, as reversed paths, so we can easily write the order
 relation, Section~\ref{subsec:topdown}.
@@ -317,12 +324,12 @@ relation, Section~\ref{subsec:topdown}.
 Finally we define the relation over configurations,
 Section~\ref{subsec:relation}, and sketch the proof of it is well-foundedness.
 
-\subsection{Invariant preserving |Zipper|}
+\subsection{Invariant preserving |ZipperType|}
 \label{subsec:stack}
 
-A |Zipper| positions a concrete leaf with respect to an expression. The |Stack|
+A |ZipperType| positions a concrete leaf with respect to an expression. The |Stack|
 part of the zipper denotes the path from that leaf up to the root. Continuing
-with the previous example, the |Zipper| that corresponds with the leaf numbered
+with the previous example, the |ZipperType| that corresponds with the leaf numbered
 3 is:
 
 \begin{figure}[h]
@@ -331,7 +338,7 @@ with the previous example, the |Zipper| that corresponds with the leaf numbered
   \label{fig:example_zipper}
 \end{figure}
 
-We would like to enforce at the type level that a value of |Zipper| represents
+We would like to enforce at the type level that a value of |ZipperType| represents
 the location of a leaf within a concrete expression. For this, we need that
 expression to be explicitly available. However, the subexpressions originally
 located to the left of the path are not present anymore. In the example, the
@@ -360,35 +367,35 @@ function.
   plugup e (Left t        :: stk)  = plugup (Add e t) stk
   plugup e (Right n t eq  :: stk)  = plugup (Add t e) stk
 
-  plugZup : Zipper -> Expr
+  plugZup : ZipperType -> Expr
   plugZup (n , stk) = plugup (Val n) stk
 \end{code}
 
-Any two distinct terms of type |Zipper| may very well represent states of a fold
+Any two distinct terms of type |ZipperType| may very well represent states of a fold
 over two entirely different expressions. If we are to compare positions within a
 expression we better make sure both values locate leaves of the same tree. By
 leveraging dependent types we can \emph{statically} enforce such requirement by
-defining a new wrapper data type over |Zipper| such that it is type indexed by
+defining a new wrapper data type over |ZipperType| such that it is type indexed by
 the expression to which it \emph{plug}s.
 
 \begin{code}
   data Zipperup (e : Expr) : Set where
-    prodOp : (z : Zipper) -> plugZup z == e -> Zipperup e
+    prodOp : (z : ZipperType) -> plugZup z == e -> Zipperup e
 \end{code}
 
 For a given expression |e : Expr|, any two terms of type |Zipperup t| are
 configurations of the same abstract machine during the tail recursive fold over
 the expression |e|.
 
-\subsection{Up-down \emph{Zipper}}
+\subsection{Up-down \emph{ZipperType}}
 \label{subsec:topdown}
 
-The interpretation of the |Stack| in the |Zipper| as a path from the leaf of the
+The interpretation of the |Stack| in the |ZipperType| as a path from the leaf of the
 up to the root of the input expression is not well suited for defining an
 ordering relation. The problem arises because the stack only stores local
 information about the direct neighbours but fails to show the global position of
 the leaf with respect to the expression and other leaves. Continuing with with
-the example expression, let us consider the value of |Zipper| corresponding to
+the example expression, let us consider the value of |ZipperType| corresponding to
 leaves with numbers 3 and 4.
 
 \begin{figure}[h]
@@ -428,7 +435,7 @@ interpretation as another kind of \emph{plugging} function:
   plugdown e (Left t       :: stk)  = Add (plugdown e stk) t
   plugdown e (Right n _ _  :: stk)  = Add t (plugdown e stk)
 
-  plugZdown : Zipper -> Expr
+  plugZdown : ZipperType -> Expr
   plugZdown (n , stk) = plugdown (Val n) stk
 \end{code}
 
@@ -438,19 +445,19 @@ the stack. Both interpretations are equivalent in the sense that if one
 to the same expression.
 
 \begin{code}
-  convert : Zipper -> Zipper
+  convert : ZipperType -> ZipperType
   convert (n , s) = (n , reverse s)
 
-  plugdown-to-plugup  : forall (z : Zipper)
+  plugdown-to-plugup  : forall (z : ZipperType)
                       → plugZdown z ==  plugZup (convert z)
 \end{code}
 
-Finally, we can create a new wrapper around |Zipper| that enforces at the type
-level that the |Zipper| plugs, or is a leaf, of a concrete expression.
+Finally, we can create a new wrapper around |ZipperType| that enforces at the type
+level that the |ZipperType| plugs, or is a leaf, of a concrete expression.
 
 \begin{code}
   data Zipperdown (e : Expr) : Set where
-    prodOp : (z : Zipper) -> plugZup z == e -> Zipperdown e
+    prodOp : (z : ZipperType) -> plugZup z == e -> Zipperdown e
 \end{code}
 
 As a corollary of the property\todo{ref somehow}, we can switch back and forward
@@ -465,7 +472,7 @@ between |Zipperup| and |Zipperdown|.
    = ...
 \end{code}
 
-\subsection{Relation over \emph{Zipper}}
+\subsection{Relation over \emph{ZipperType}}
 \label{subsec:relation}
 
 Finally, we write the ordering relation over over values of type |Zipperdown|.
@@ -531,7 +538,7 @@ them, the ancillary function |aux| quantifies over elements of type |Expr|.
 
 Why to go through the hassle of defining a type indexed relation and a
 parametrized proof of well-foundedness? The fact is that if the type index was
-not present, thus the relation would be defined over terms of type |Zipper|,
+not present, thus the relation would be defined over terms of type |ZipperType|,
 then it is not possible to complete the well founded proof.
 
 A well foundedness proof works by appealing either to the recursive structure of
@@ -554,16 +561,16 @@ delivers a smaller configuration by the relation.
 
 There are a couple of minor mismatches on how the function |unload| works that
 we need to fix before proceeding with the proof. The function is defined to
-treat the |Stack2| part of the |Zipper| as a \emph{stack} pushing and popping
+treat the |Stack2| part of the |ZipperType| as a \emph{stack} pushing and popping
 elements from the top. This corresponds with the view of the stack as
 a path from the leaf up to the root. Moreover, the function |unload| is defined
-over elements of type |Zipper| with no type level information attached.
+over elements of type |ZipperType| with no type level information attached.
 
 We can solve the first problem by proving that |unload| preserves the overall
-input expression of the |Zipper| it takes as an argument.
+input expression of the |ZipperType| it takes as an argument.
 
 \begin{code}
-  unload-preserves-plugup  : forall (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack2) (z' : Zipper)
+  unload-preserves-plugup  : forall (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack2) (z' : ZipperType)
                            -> unload e x eq s == inj1 z'
                            -> forall (t : Expr) -> plugup e s == t -> plugZup z' == t
   unload-preserves-plugup = ...
@@ -595,21 +602,21 @@ delivers a smaller configuration.
 The proof of such theorem is very tedious because the type index has to be
 preserved makes difficult to articulate auxiliary lemmas that help with the
 distinct cases. Instead, a much easier approach is to define another relation
-over plain elements of type |Zipper| and prove that with enough evidence there
+over plain elements of type |ZipperType| and prove that with enough evidence there
 exists an injection between both.
 
 \begin{code}
-  data LtOp :  Zipper -> Zipper -> Set where
+  data LtOp :  ZipperType -> ZipperType -> Set where
     ...
 
-  to  : forall (e : Expr) (z1 z2 : Zipper)
+  to  : forall (e : Expr) (z1 z2 : ZipperType)
       -> (eq1 : plugZdown z1 == e) (eq2 : plugZdown z2 == e)
       -> z1 ltOp z2 -> llcorner e lrcorner (z1 , eq1) < (z2 , eq2)
   to = ...
 \end{code}
 
 Thus to complete the previous theorem is sufficient to show that the function
-|unload| delivers a smaller |Zipper| by the plain relation (because we have
+|unload| delivers a smaller |ZipperType| by the plain relation (because we have
 already proven that |unload| preserves the input expression).
 
 \begin{code}
@@ -698,7 +705,7 @@ for a wide range of algebraic datatypes.
 The common feature of the types that we can encode using the \emph{regular}
 universe have, as the name suggests, a tree-like structure of finite depth and
 finite branching. We shall exploit this commonality to generalize our solution
-by defining: the type of \emph{Zipper} used to locate leaves of the tree; the
+by defining: the type of `zipper' used to locate leaves of the tree; the
 pair of |load| and |unload| functions that perform one step of the fold; and a
 well founded relation to prove termination and correcness of the construction.
 
