@@ -17,6 +17,7 @@
 %format then   = "\AK{then}"
 %format else   = "\AK{else}"
 %format record = "\AK{record}"
+%format constructor = "\AK{constructor}"
 
 %% Agda standard types
 %format Set    = "\AP{Set}"

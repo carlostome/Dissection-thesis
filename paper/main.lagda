@@ -652,7 +652,7 @@ tail-recursive evaluator.
 \section{A generic tail recursive traversal}
 %{ begining of generic.fmt
 %include generic.fmt
-The previous section showed how to prove how our hand-written tail
+The previous section showed how to prove that our hand-written tail
 recursive evaluation function was both terminating and equal to our
 original evaluator.  In this section, we will show how we can
 generalize this construction to compute a tail-recursive equivalent of
@@ -672,7 +672,7 @@ represent a collection of types closed under certain operations as a
 type |U : Set| describing the inhabitants of our universe together
 with its semantics, |el : U -> Set|, mapping each element of |U| to
 its corresponding type. We have chosen the following universe of
-\emph{regular} types\cite{morris-regular, noort-regular}:
+\emph{regular} types~\cite{morris-regular, noort-regular}:
 \begin{code}
   data Reg : Set1 where
     Zero  : Reg
@@ -706,7 +706,7 @@ We can interpret the inhabitants of |Reg| as a functor of type |Set -> Set|:
   interpl (R O+ Q) interpr X   = interpl R interpr X U+ interpl Q interpr X
   interpl (R O* Q) interpr X   = interpl R interpr X * interpl Q interpr X
 \end{code}
-To show that this interpretation is indeed functorial, we can define the
+To show that this interpretation is indeed functorial, we define the
 following |fmap| operation:
 \begin{code}
   fmap : (R : Reg) -> (X -> Y) -> interpl R interpr X -> interpl R interpr Y
@@ -772,86 +772,73 @@ the catamorphism to work on the expressions and pass the desired algebra:
 In the remainder of this paper, we will develop an alternative
 traversal that maps any algebra to a tail-recursive function that is
 guaranteed to terminate and produce the same result as
-the corresponding catamorphism.
+the corresponding call to |cata|.
 
 \subsection*{Dissection}
 \label{sec:dissection}
 
-Given a generic representation of a type, we can automatically calculate the
-type of its one hole context by a method dubbed \emph{dissection} that resembles
-to the rules of derivative calculus as devised by Leibniz.
-
-In a |mu R| type there are two recursive structures, the explicit one induced by
-taking the fixed point of interpreting |R| over itself and the implicit
-recursion given by the fact that the functor layer can be recursive due to the
-possibility of combining functors as products, |O*Op|, or coproducts |O+Op|.
-
-Dissection takes the functorial layer and allow us to programatically derive all
-the possible ways of distinguishing exactly a occurrence of the variable such
-that the variables to its left may take a different type from the variables to
-the right.
-
-By using the analogy of a functor |F| as a container of things of a base type
-|A|, then if we take a representation\footnote{Representations are not unique}
-for the expression type |Expr|, |One O+ (I O* I)|, we dissect it as depicted in
-the following picture.
-
-\todo{PIC HERE}
-
-We shall now define in Agda the dissection operation by induction over |Reg|.
-
+As we mentioned in the previous section, the configurations of our
+abstract machine from the introduction are instances of McBride's
+dissections~\citeyearpar{dissection}. We briefly recap this
+construction, showing how to calculate type of abstract machine
+configurations for any type in our universe. The key definition,
+|nabla|, computes a bifunctor for each element in of our universe:
 \begin{code}
   nabla : (R : Reg) → (Set → Set → Set)
-  nabla Zero  X Y  = Bot
-  nabla One   X Y  = Bot
-  nabla I     X Y  = Top
-  nabla (K A) X Y  = Bot
-  nabla (R O+ Q) X Y = nabla R X Y U+ nabla Q X Y
-  nabla (R O* Q) X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
+  nabla Zero      X Y  = Bot
+  nabla One       X Y  = Bot
+  nabla I         X Y  = Top
+  nabla (K A)     X Y  = Bot
+  nabla (R O+ Q)  X Y = nabla R X Y U+ nabla Q X Y
+  nabla (R O* Q)  X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
 \end{code}
-
-The last clause of |nabla| definition's is the interesting one. To
-\emph{dissect} a product of things we either \emph{dissect} the left component
-pairing it with the second component interpreted over the second variable |Y|;
-or we \emph{dissect} the second component and pair it with the first interpreted
-over |X|. This \emph{or} is what will give us all the possible combinations.
+This operation generalizes the zippers, by defining a bifunctor |nabl
+R X Y|. You may find it useful to think of the special case, |nabla
+(mu R) Y| as a configuration of an abstract machine traversing a tree
+of type |mu R| to produce a result of type |Y|. The last clause of the
+definition of |nabla| is of particular interest: to \emph{dissect} a
+product, we either \emph{dissect} the left component pairing it with
+the second component interpreted over the second variable |Y|; or we
+\emph{dissect} the second component and pair it with the first
+interpreted over |X|.
 
 A \emph{dissection} is formally defined as the pair of the one-hole context and
 the missing value that can fill the context.
-
 \begin{code}
   Dissection : (R : Reg) -> (X Y : Set) -> Set
   Dissection R X Y = nabla R Y X * X
 \end{code}
+We can reconstruct Huet's zippers by instantiating both |X| and |Y| to
+|mu R|. \todo{is that right?}
 
-Given a \emph{dissection} we can show how to reconstruct the original structure
-by means of a \emph{plugging} operation.  The type of variables to the left,
-|X|, does not need to agree with |Y| as long as we can recover |X|s from |Y|s.
-
+Given a \emph{dissection}, we can define a |plug| operation that
+`reconstructs' assembles the the context and current value in focus to
+produce a value of type |interpl R interpr X|:
 \begin{code}
   plug : (R : Reg) -> (Y -> X) -> Dissection R Y X -> interpl R interpr X
-  plug Zero   eta (() , x)
-  plug One    eta (() , x)
-  plug I eta (tt , x)  = x
-  plug (K A)  eta (() , x)
-  plug (R O+ Q) eta (inj1 r , x)  = inj1 (plug R eta (r , x))
-  plug (R O+ Q) eta (inj2 q , x)  = inj2 (plug Q eta (q , x))
-  plug (R O* Q) eta (inj1 (dr , q) , x) = plug R eta (dr , x)  , q
-  plug (R O* Q) eta (inj2 (r , dq) , x) = fmap R eta r           , plug Q eta (dq , x)
+  plug Zero      eta  (() , x)
+  plug One       eta  (() , x)
+  plug I         eta  (tt , x)             = x
+  plug (K A)     eta  (() , x)
+  plug (R O+ Q)  eta  (inj1 r , x)         = inj1 (plug R eta (r , x))
+  plug (R O+ Q)  eta  (inj2 q , x)         = inj2 (plug Q eta (q , x))
+  plug (R O* Q)  eta  (inj1 (dr , q) , x)  = (plug R eta (dr , x) , q)
+  plug (R O* Q)  eta  (inj2 (r , dq) , x)  = (fmap R eta r , plug Q eta (dq , x))
 \end{code}
-\subsection{Generic Zippers}
 
-Calculating the \emph{dissection} of a code gives us the type of the one hole context
-of the functorial layer of a from given
-representation without taking into account the recursive structure introduced by
-|mu|.
+\subsection*{Generic Zippers}
 
-A path within a tree is a list of \emph{dissections} and a subtree. On the left
-part of the \emph{dissection} we store the results of the subtrees that we have
-already processed while on the right the subtrees that are still to be consumed.
-We do not only want the partial results but also the subtree from which they
-come and a proof of the fact.
+While the \emph{dissection} computes the bifunctor \emph{underlying}
+our configurations, we still need to take a fixpoint of this
+bifunctor.  Each configuration consists of a list of
+\emph{dissections} and the current subtree in focus. To the left of
+the current subtree in focus, we store the partial results arising
+from the subtrees that we have already processed; on the right, we
+store the subtrees that still need to be visited.
 
+As we did for the |Stack2| data type from the introduction, we also
+choose to store the original subtrees that have been visited and their
+corresponding correctness proofs:
 \begin{code}
  record Computed (R : Reg) (X : Set) (alg : interpl R interpr X → X) : Set where
     constructor _,_,_
@@ -859,21 +846,17 @@ come and a proof of the fact.
       Tree  : mu R
       Value : X
       Proof : catamorphism R alg Tree == Value
-\end{code}
 
-A \emph{stack} in the generic case is then a list of \emph{dissections} over
-|Computed| and subtrees of type |mu R|. We have to embed the algebra in the
-\emph{stack} because we store the proofs.
-
-\begin{code}
   Stack : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
   Stack R X alg = List (nabla R (Computed R X alg) (mu R))
 \end{code}
+A \emph{stack} in a list of \emph{dissections}. To the left we have
+the |Computed| results; to the right, we have the subtrees of type |mu
+R|. Note that the |Stack| data type is parametrised by the algebra
+|alg|, as the |Proof| field of the |Computed| record refers to it.
 
-The path, as in the |Expr| example, can be understood either as going from the
-root down to the subtree or from the subtree up to the root. We account for both
-cases:
-
+As we saw in Section~\ref{sec:basic-correctness}, we can define two
+different plug operations on these stacks:
 \begin{code}
   plug-mudown  : (R : Reg) -> {alg : interpl R interpr X -> X}
                -> mu R -> Stack R X alg → mu R
@@ -886,20 +869,14 @@ cases:
   plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
 \end{code}
 
+To define the configurations of our abstract machine, we are
+interested in \emph{any} through our initial input, but want to
+restrict ourselves to those paths that lead to a leaf. But what
+constitutes a leaf in this generic setting?
 
-We are not interested in any path but only those that point directly to one of
-the leaves of the tree. But first, we should ask ourselves, what is a leaf in a
-generic structure?
-
-The |I| constructor of the type |Reg| flags the occurrence of the type variable.
-If it is not present in some part of the type, such as in the left side of the
-coproduct |One O+ (I O* I)|, then it is possible to build a term of that type
-does not mention elements of the type variable at all.
-
-Generically, we can encode a predicate that checks whether a value of type |
-interpl R interpr X| uses the variable |X|. In case the predicate is true, we
-are able to replace the type |X| for any other type |Y|.
-
+To describe leaves, we introduce the following predicate |NonRec|,
+stating when a tree of type |interpl R interpr X| does not refer to
+the variable |X|, that will be used to represent recursive subtrees:
 \begin{code}
   data NonRec : (R : Reg) → interpl R interpr X → Set where
     NonRec-One  : NonRec One tt
@@ -911,36 +888,38 @@ are able to replace the type |X| for any other type |Y|.
     NonRec-*    : (R Q : Reg) → (r : interpl R interpr X) → (q : interpl Q interpr X)
                 → NonRec R r → NonRec Q q → NonRec (R O* Q) (r , q)
 
-  coerce : (R : Reg) -> (x : interpl R interpr X) → NonRec R x -> interpl R interpr Y
+\end{code}
+Crucially, any non-recursive subtree is independent of |X| -- as is
+exhibited by the following coercion function:
+\begin{code}
+  coerce : (R : Reg) -> (x : interpl R interpr X) → NonRec R x -> interpl R interpr Y  
 \end{code}
 
-In the fixed point structure given by |mu|, the constructor |I| marks the
-occurrences of subtrees, thus if the type variable is not part of the term, i.e.
-|NonRec| holds, the term is a leaf of the tree.
-
+We can now define the notion of leaf generically, as a substructure
+without recursive subtrees:
 \begin{code}
   Leaf : Reg -> Set -> Set
   Leaf R X = Sigma (interpl R interpr X) (NonRec R)
 \end{code}
 
-Now, we are ready to give the type of \emph{Zipper} in the generic construction.
-
+Just as we saw previously, a configuration is now given by the current
+leaf in focus and the stack, given by a dissection, storing partial
+results and unprocessed subtrees:
+%format ZipperType = Config
 \begin{code}
-  Zipper : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
-  Zipper R X alg = Leaf R X * Stack R X alg
+  ZipperType : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
+  ZipperType R X alg = Leaf R X * Stack R X alg
 \end{code}
 
-Equally important is that we are able to \emph{plug} back together the full
-tree. We can do so by embedding the leaf part into a tree using |coerce| and
-then just \emph{plug}\footnote{It works analogously for the bottom-up
-\emph{Zipper}.}
-
+Finally, we can recompute the original tree using a |plug| function as before:
 \begin{code}
-  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → μ R →  Set
+  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → ZipperType R X alg → μ R →  Set
   plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
 \end{code}
+Note that the |coerce| function is used to embed a leaf into a larger
+tree. A similar function can be defined for the `bottom-up' zippers,
+that work on a reversed stack.
 
-\todo{define Zipper up and down or just mention}
 
 \subsection*{One step of a fold}
 

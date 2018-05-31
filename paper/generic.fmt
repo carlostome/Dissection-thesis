@@ -70,6 +70,7 @@
 %format Leaf   = "\AF{Leaf}"
 %format Stack  = "\AF{Stack\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format Zipper = "\AF{Zipper}"
+%format ZipperType = "\AF{Config}"
 %format first-cps = "\AF{first-cps}"
 %format load = "\AF{load\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format unload = "\AF{unload\ensuremath{^{\scaleto{G}{4pt}}}}"
