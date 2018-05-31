@@ -2,11 +2,11 @@
 %format Expr   = "\AD{Expr}"
 %format Acc    = "\AD{Acc}"
 %format Stack  = "\AD{Stack}"
-%format Stack2 = "\AD{Stack}"
+%format Stack2 = "\AD{Stack\ensuremath{^{+}}}"
 %format Zipper   = "\AD{Zipper}"
 %format ZipperType   = "\AD{Config}"
-%format Zipperup   = "\AD{Config\ensuremath{\Uparrow}}"
-%format Zipperdown = "\AD{Config\ensuremath{\Downarrow}}"
+%format Zipperup   = "\AD{Config\ensuremath{_{\Uparrow}}}"
+%format Zipperdown = "\AD{Config\ensuremath{_{\Downarrow}}}"
 
 %format LtOp = "\AD{\ensuremath{\_<\_}}"
 %format IxLtOp = "\AD{\ensuremath{\llcorner\_\lrcorner\_<\_}}"
@@ -42,6 +42,7 @@
 %format correctness = "\AF{correctness}"
 %format sym = "\AF{sym}"
 %format trans = "\AF{trans}"
+%format bot-elim = "\AF{\ensuremath{\bot}-elim}"
 
 %format eval  = "\AF{eval}"
 %format tail-rec-eval  = "\AF{tail\text{-}rec\text{-}eval}"
