@@ -186,8 +186,7 @@ unevaluated subtree. This process is depicted in
 Figure~\ref{fig:load-unload}.
 
 \begin{figure}
-  \centering
-  \input{figures/figure1}
+  \includegraphics{figure4}
   \caption{Traversing a tree with |load| and |unload|}
   \label{fig:load-unload}
 \end{figure}
@@ -205,10 +204,10 @@ of mutually recursive functions, we begin by defining |load| as follows:
   load (Add e1 e2)  stk = load e1 (Left e2 stk)
 \end{code}
 Rather than call |unload| upon reaching a value, we return\footnote{Even though
-the function always returns a |Nat * Stack|, we wrap it in a sum type to keep
-|unload| tail-recursive} the current stack and the value of the leftmost leaf.
+the function always returns a |Nat * Stack|, we enclose it in a sum type to keep
+|unload| tail-recursive.} the current stack and the value of the leftmost leaf.
 
-The |unload| function is defined by recursion over the stack as
+The function |unload| is defined by recursion over the stack as
 before, but with one crucial difference. Instead of always returning the
 final result, it may also return a new configuration of our abstract
 machine, that is, a pair |Nat * Stack|:
@@ -325,7 +324,7 @@ Section~\ref{subsec:relation}, and sketch the proof of that it is well-founded.
 \label{subsec:stack}
 
 The |ZipperType| denotes a leaf in our input expression. In the
-previous example, the following |ZipperType| corresponds to third leaf:
+previous example, the following |ZipperType| corresponds to the third leaf:
 
 \begin{figure}[h]
   \includegraphics{figure3}
@@ -351,7 +350,7 @@ In order to record the necessary information, we redefine the |Stack| type as fo
 \end{code}
 The |Right| constructor now not only stores the value |n|, but also
 records the subexpression |e| and the proof that |e| evaluates to
-|n|. Although it we are modifying the definition of the |Stack| data
+|n|. Although we are modifying the definition of the |Stack| data
 type, we claim that the expression |e| and equality are not necessary
 at run-time, but only required for the proof of well-foundedness -- a
 point we will return to in our discussion (Section~\ref{sec:discussion}).
@@ -385,12 +384,12 @@ For a given expression |e : Expr|, any two terms of type |Zipperup e| are
 configurations of the same abstract machine during the tail recursive fold over
 the expression |e|.
 
-\subsection{Configuring up and down}
+\subsection{Up and down configurations}
 \label{subsec:topdown}
 
 Next, we would like to formalize the left-to-right order on the configurations
 of our abstract machine.
-The |Stack| in the |ZipperType| represents path upwards, from the leaf to the
+The |Stack| in the |ZipperType| represents a path upwards, from the leaf to the
 root of the input expression.
 This is useful when navigating to neighbouring nodes, but makes it harder
 to compare the relative positions of two configurations.
@@ -399,18 +398,17 @@ leaves with numbers 3 and 4 in our running example:
 
 \begin{figure}[h]
   \includegraphics{figure4}
-  \caption[angle=90]{Comparison of \emph{configurations} for leaves 4 and 3}
+  \caption{Comparison of \emph{configurations} for leaves 4 and 3}
   \label{fig:example_zipper}
 \end{figure}
 
-The natural way to define the desired order relation is by induction over the |Stack|.
-However, there is a problem. The first element of both stacks does not provide
-us with sufficient information to decide which position is `smaller.'
-The top of the stack only
-stores information about the location of the leaf with respect to the \emph{parent}
-node. This \emph{local} information cannot be used to decide
-which one of the leaves is located in a position further to the right in the original
-input expression.
+The natural way to define the desired order relation is by induction over the
+|Stack|.  However, there is a problem. The first element of both stacks does not
+provide us with sufficient information to decide which position is `smaller.'
+The top of the stack only stores information about the location of the leaf with
+respect to its \emph{parent} node. This kind \emph{local} information cannot be
+used to decide which one of the leaves is located in a position further to the
+right in the original input expression.
 
 Instead, we would like to compare the \emph{last} elements of both
 stacks.  The common suffix of the stacks shows that both positions are
@@ -523,10 +521,9 @@ bottom-up. Furthermore, the function |unload| as defined previously
 manipulates elements of the |ZipperType| directly, with no further
 constraints relating these to the original input expression.
 
-In the remainder of this section, we will reconcile these differences,
-complete the definition of our tail recursive evaluator, sketch the
-proofs of well-foundedness of our relation, and finally prove
-correctness of the tail-recursive evaluator. 
+In the remainder of this section, we will reconcile these differences, complete
+the definition of our tail recursive evaluator and finally prove its
+correctness.
 
 \paragraph{Decreasing recursive calls}
 
@@ -543,11 +540,11 @@ terminates:
   step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
   step e ((n , stk) , eq)
     with unload (Val n) n refl 
-    ... | inj1 (n' , stk')  = ((n',stk') , ...)
+    ... | inj1 (n' , stk')  = ((n' , stk' ) , ...)
     ... | inj2 v            = inj2 v
 \end{code}
 We have omitted the second component of the result returned in the
-first branch, corresponding to a proof that |plugZup (n',stk') ==
+first branch, corresponding to a proof that |plugZup (n' , stk') ==
 e|. The crucial lemma that we need to show to complete this proof,
 demonstrates that the |unload| function respects our invariant:
 \begin{code}
@@ -557,12 +554,12 @@ demonstrates that the |unload| function respects our invariant:
     -> forall (t : Expr) -> plugup e s == t -> plugZup z' == t
 \end{code}
 
-Finally, we can define the prove that the |step| function always returns
-a smaller configuration.
+Finally, we can define the theorem stating that the |step| function always
+returns a smaller configuration.
 
 \begin{code}
-  step-< : (e : Expr) -> (z z' : Zipperup e) -> step e z == inj1 z'
-         -> llcorner e lrcorner Zipperup-to-Zipperdown z' < Zipperup-to-Zipperdown z
+  step-<  : (e : Expr) -> (z z' : Zipperup e) -> step e z == inj1 z'
+          -> llcorner e lrcorner Zipperup-to-Zipperdown z' < Zipperup-to-Zipperdown z
 \end{code}
 
 Proving this statement directly is tedious, as there are many cases to
@@ -586,24 +583,28 @@ Thus to complete the previous theorem, it is sufficient to show that the functio
 
 \begin{code}
   unload-<  : forall (n : Nat) (s : Stack2) (e : Expr) (s' : Stack2)
-            -> unload (Val n) n refl s ≡ inj1 (t' , s')
+            -> unload (Val n) n refl s == inj1 (t' , s')
             -> (t' , reverse s') ltOp (n , reverse s)
 \end{code}
 The proof is done by induction over the stack supported; the complete
-proof is requires some bookkeeping, covering around 200 lines of code,
+proof requires some bookkeeping, covering around 200 lines of code,
 but is conceptually not complicated.
 
 The function |tail-rec-eval| is now completed as follows.
 \begin{code}
-  rec : (e : Expr) -> (z : Zipperup e)
-      -> Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z) -> Zipperup e U+ Nat
+  rec  : (e : Expr) -> (z : Zipperup e)
+       -> Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z) -> Zipperup e U+ Nat
   rec e z (acc rs) = with step e z | inspect (step e) z
   ...  | inj2 n  | _       = inj2 n
   ...  | inj1 z' | [ Is ]
        = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
-
+\end{code}
+\newpage
+\begin{code}
   tail-rec-eval : Expr -> Nat
-  tail-rec-eval e = rec e (load e stk) (<-WF e)
+  tail-rec-eval e with load e []
+  ... | inj1 z = rec e (z , ...) (<-WF e z)
+  ... | inj2 ...
 \end{code}
 Agda's termination checker now accepts that the repeated calls to
 |rec| are on strictly smaller configurations.
@@ -611,12 +612,12 @@ Agda's termination checker now accepts that the repeated calls to
 \paragraph*{Correctness}
 \label{sec:basic-correctness}
 
-As we have indexed our configuration data types with the input
-expression, proving correctness of is relatively straightforward. The
-type of the function |step| guarantees the new configuration points to
-a leaf in the input expression.
+As we have indexed our configuration data types with the input expression,
+proving correctness of it is relatively straightforward. The type of the
+function |step| guarantees that the configuration returned points to a leaf in
+the input expression.
 
-Proving the function |tail-rec-eval| to correct amounts to showing
+Proving the function |tail-rec-eval| correct amounts to show
 that the auxiliary function, |rec|, that is iterated until a value is
 produced, will behave the same as the original evaluator, |eval|. This
 is expressed by the following lemma, proven by induction over the
@@ -631,21 +632,22 @@ accessibility predicate:
        = rec-correct e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is))
   ...  | inj2 n   | [ Is ] = step-correct n e eq z
 \end{code}
-At this point, we still need to prove the |step-correct| lemma that it
-repeatedly applied.  As the |step| function is defined as a wrapper
-around the |unload| function, it suffices to prove the following
-property of |unload|:
+At this point, we still need to prove the |step-correct| lemma that it is
+repeatedly applied.  As the |step| function is defined as a wrapper around the
+|unload| function, it suffices to prove the following property of |unload|:
 \begin{code}
   unload-correct  : forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack2)
-                  -> unload t n eq s ≡ inj2 n -> eval (plugup t s) == n
+                  -> unload e n eq s ≡ inj2 n -> eval (plugup e s) == n
 \end{code}
-This proof follows immediately by induction over |s : Stack|.
+This proof follows immediately by induction over |s : Stack2|.
 
 The main correctness theorem now states that |eval| and
 |tail-rec-eval| are equal for all inputs:
 \begin{code}
   correctness : forall (e : Expr) -> eval e == tail-rec-eval e
-  correctness e = rec-correct e (load e [] , _) (<-WF e (load e []))
+  correctness e with load e []
+  ... | inj1 z = rec-correct e (z , ...) (<-WF e z)
+  ... | inj2 _ = bot-elim ...
 \end{code}
 This finally completes the definition and verification of a
 tail-recursive evaluator. 
@@ -654,7 +656,7 @@ tail-recursive evaluator.
 \section{A generic tail recursive traversal}
 %{ begining of generic.fmt
 %include generic.fmt
-The previous section showed how to prove how our hand-written tail
+The previous section showed how to prove that our hand-written tail
 recursive evaluation function was both terminating and equal to our
 original evaluator.  In this section, we will show how we can
 generalize this construction to compute a tail-recursive equivalent of
@@ -664,7 +666,7 @@ algebraic datatype.
 Before we can define any such data type generic constructions, however, we need
 to fix our universe of discourse.
 
-\subsection*{The regular universe}
+\subsection*{The \emph{regular} universe}
 \label{sec:universe}
 
 
@@ -687,8 +689,8 @@ its corresponding type. We have chosen the following universe of
 Types in this universe are formed from the empty type (|Zero|), unit type
 (|One|), and constant types (|K A|); the |I| constructor is used to refer to
 recursive subtrees. Finally, the universe is closed under both coproducts
-(|O+Op|) and products (|O*Op|). We could represent our expression data type from
-the introduction in this universe as follows:
+(|O+Op|) and products (|O*Op|). We could represent the \emph{pattern} functor of
+our expression data type from the introduction in this universe as follows:
 \begin{code}
   expr : Reg
   expr = K Nat O+ (I O* I)
@@ -944,20 +946,29 @@ then just \emph{plug}\footnote{It works analogously for the bottom-up
 
 \todo{define Zipper up and down or just mention}
 
-\subsection*{One step of a fold}
+\subsection{One step of a catamorphism}
+\label{subsec:onestep}
 
-We need a means to perform one step of the computation at a time. We can rescue
-the ideas of the pair of functions, |load| and |unload| and adapt them to work
-over a generic representation. First, we will focus our attention in the |load|
-part.
-
+%{
+%format load = "\AF{load}"
+%format unload = "\AF{unload}"
+In order to write a tail recursive catamorphism, we start by defining the
+generic operations that correspond to the functions |load| and |unload| given in
+the introduction (Section~\ref{sec:basics}).
+%}
+\subsection*{Load}
 The function |load| traverses the input term to find the occurrence of the
-leftmost subtree, it loads the \emph{dissection} of the one hole context after
-popping out the subtree and stores it in the \emph{stack}. We write |load| by
-appealing to an ancillary definition |first-cps|, that uses continuation-passing
-style to keep the definition tail recursive. This is a direct consequence of the
-implicit recursive structure at the functorial level.
+leftmost leaf. If at the functor layer there exists a subtree, it stores its
+\emph{dissection}  on the stack and recursively continues on the subtree. On the
+other hand, if there are no subtrees left, the input tree is already a leaf and
+thus is returned.
 
+We write |load| by appealing to an ancillary definition |first-cps|, that uses
+continuation-passing style both to convince Agda's termination checker\footnote{We
+cannot just write a function that searches for the leftmost subtree and then
+call |load| on it because for Agda that subtree is not syntactically smaller}
+and to keep the definition tail recursive. This is a direct consequence of the
+implicit recursive structure at the functorial level.
 \begin{code}
 first-cps : (R Q : Reg) {alg : interpl Q interpr X -> X}
           -> interpl R interpr (mu Q)
@@ -971,55 +982,46 @@ load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R
       -> Stack R X alg -> Zipper R X alg U+ X
 load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
-
-There are two continuations as arguments of |first-cps|. The first, |-- 1| , is used
+The function |first-cps| has two continuations as arguments. The first,|-- 1|, is used
 to gradually build the \emph{dissection} corresponding to the functorial layer
-we are traversing. The second, |-- 2|, serves to continue on another branch in case
+we are traversing. The second,|-- 2|, serves to continue on another branch in case
 one of the non-recursive base cases is reached.
 
-We shall fill the definition of |first-cps| by cases.  The clauses for the bases
-cases are as expected. In |Zero| there is nothing to be done. |One| and |K A|
-consists of applying the continuation to the tree and the \emph{stack}.
-
+We shall fill the definition of |first-cps| by cases.  The clauses for the base
+cases are as expected. In |Zero| there is nothing to be done. The |One| and
+|K A| codes consist of applying the second continuation to the tree and the \emph{stack}.
 \begin{code}
   first-cps Zero Q () _
   first-cps One  Q x k f s    = f (tt , NonRec-One) s
   first-cps (K A) Q x k f s   = f (x , NonRec-K A x) s
 \end{code}
-
 In case we find an occurrence of a recursive subtree, we discard the current
 continuation for when we do not find subtrees, and use plain recursion. The
 \emph{stack} passed in the recursive call is incremented with a new element that
-corresponds to the \emph{dissection} of the functor layer up to
-that point.
-
+corresponds to the \emph{dissection} of the functor layer up to that point.
 \begin{code}
   first-cps I Q (In x) k f s  = first-cps Q Q x id (lambda z  → inj1 . prodOp z) (k tt :: s)
 \end{code}
-
-For the coproduct, both cases are very similar, just having to account for the
+In the coproduct, both cases are similar, just having to account for the
 use of different constructors in the continuations.
-
 \begin{code}
   first-cps (R O+ Q) P (inj1 x) k f s = first-cps R P x  (k . inj1) cont s
     where cont (l , isl) = f ((inj1 l) , NonRec-+1 R Q l isl)
   first-cps (R O+ Q) P (inj2 y) k f s = first-cps Q P y  (k . inj2) (lambda -> ...) s
 \end{code}
-
 The interesting clause is the one that deals with the product. First we recurse
 on the left part of it trying to find a subtree to recurse over. However, it may
 be the case that on the left component there are not subtrees at all, thus we
 pass as a continuation a call to |first-cps| over the right part of the product.
-This might fail as well to find a subtree in which case we have to give up
-and return the leaf as is.
-
+This might fail as well to find a subtree in which case we have to give up and
+return the leaf as is.
 \begin{code}
   first-cps (R O* Q) P (r , q) k f s  = first-cps R P r  (k . inj1 . (_, q)) cont s
     where cont (l , isl) = first-cps Q P q (k . inj2 . prodOp (coerce l isl)) cont'
       where cont' (l' , isl') = f (l , l') (NonRec-* R Q l l' isl isl')
 \end{code}
 
-%% WOUTER: Read up to this point
+\subsection*{Unload}
 
 Armed with |load| we turn our attention to |unload|. First of all, it is necessary
 to define an auxiliary function, |right|, that given dissection and an element
@@ -1078,7 +1080,7 @@ We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
 t|, for some concrete tree |t : mu R|, by explicity separating the functorial layer
 from the recursive layer induced by the fixed point. At the functor level, we
 impose the order over \emph{dissection}s of |R|, while at the fixed point level
-we define an order inductively over the \emph{stack}s.
+we define the order by induction over the \emph{stack}s.
 
 Towards reducing the clutter of the definition, we give a non type-indexed
 relation over terms of type |Zipper|. We can later use the same technique as in
