@@ -1,4 +1,4 @@
-\documentclass[sigplan,10pt,review]{acmart}
+\documentclass[sigplan,10pt]{acmart}
 
 %include preamble.tex
 %include paper.fmt
@@ -31,17 +31,18 @@
 
 
 \begin{abstract}
-  Lorem ipsum sic dolor amet.  Lorem ipsum sic dolor amet.  Lorem
-  ipsum sic dolor amet.  Lorem ipsum sic dolor amet.  Lorem ipsum sic
-  dolor amet.  Lorem ipsum sic dolor amet.  Lorem ipsum sic dolor
-  amet.
-  \todo{Write abstract}
+  Folds are a useful abstraction. Yet they are not tail recursive. Writing tail
+  recursive functions by hand is boring/hard. This paper attempts to nail down
+  the generic construction that produces the tail recursive counterpart of any
+  recursive function defined as a fold. This allows programmers to work at a
+  high-level of abstraction (folds) without sacrificing performance (tail
+  recursion). \fixme{Polish abstract}
 \end{abstract}
 
 \include{ccs}
 
 \keywords{datatype generic programming, catamorphisms, dissection,
-  dependent types, Agda, well-founded recursion \todo{Keywords?}}
+  dependent types, Agda, well-founded recursion \fixme{Check keywords}}
 
 \maketitle
 
@@ -133,7 +134,7 @@ tail recursive evaluator produces the same result as our original
 one. Writing such tail recursive functions by hand is both tedious and
 error-prone. It is precisely these issues that this paper tackles
 by making the following novel contributions:
-\todo{be consistent naming tail recursive}
+\fixme{be consistent naming tail recursive}
 \begin{itemize}
 \item We give a verified proof of termination of |tail-rec-eval| using
   a carefully chosen \emph{well-founded relation}
@@ -240,9 +241,9 @@ repeatedly calling |unload| until it returns a value.  This version of
 our evaluator, however, does not pass the termination checker. The new
 state, |(n' , stk')|, is not structurally smaller than the initial
 state |(n , stk)|. If we work under the assumption that we have a
-relation between the states |Nat * Stack| that decreases after every call to
-|unload|, and a proof that the relation is well founded, we can define the
-following version of the tail recursive evaluator:
+relation between the states |Nat * Stack| that decreases after every
+call to |unload|, and a proof that the relation is well-founded, we
+can define the following version of the tail recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e = rec (load e Top) ??1
@@ -576,11 +577,26 @@ input expression of the |ZipperType| it takes as an argument.
   unload-preserves-plugup = ...
 \end{code}
 
-We can write a new type-indexed function that performs one step of the fold. It
-unwraps a element of type |Zipperup e| calls |unload| (whose type has suffered
-some changes to account for the new type of |Stack2| ,Section~\ref{subsec:stack}) and
-returns either a new value of the same type |Zipperup e| or a natural number
-if the fold terminates.
+In the remainder of this section, we will sketch the proofs of
+well-foundedness of our relation and correctness of the tail-recursive
+evaluator. Both these proofs have been formalized in Agda and we refer
+to our development for the full details.
+
+\paragraph{Proof of well-foundedness}
+The new version of the relation is suitable for proving well
+foundedness because we can pattern match on the equality included in
+the |Zipperdown| type to show how the overall structure
+decreases. This allows us to use the recursion we need to complete the
+proof.  In particular, the case we were not able to prove before, now
+can be proven by learning that |(t2 , s2)| is a position on the left
+subtree while |(t1 , s1)| is on the right subtree of a common |Add|
+node.
+
+Using such definition we can write a new type-indexed function that performs one
+step of the fold. It unwraps a element of type |Zipperup| calls |unload| (whose
+type has suffered some changes to account for the new type of |Stack|
+(Section~\ref{todo}) and returns either a value of the same type or a natural
+number if the computation is done.
 
 \begin{code}
   step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
@@ -644,7 +660,7 @@ The function |tail-rec-eval| is completed as follows.
   tail-rec-eval e = rec e (load e stk) (<-WF e)
 \end{code}
 
-\subsection{Correctness}
+\paragraph*{Correctness}
 \label{sec:basic-correctness}
 
 Indexing the data type \emph{zipper} with the input expression allow us to prove
@@ -694,36 +710,30 @@ the \emph{well-foundedness} proof.
 \carlos{maybe add some phrase here saying how cool this is!}
 %} end of intro.fmt
 
-\section{Generic tail recursive fold}
+\section{A generic tail recursive traversal}
 %{ begining of generic.fmt
 %include generic.fmt
-Our solution extends naturally to a more general case than only |Expr| and
-|eval|.  In this section, we will show how we can reuse the ideas presented so
-far, to generically construct a correct tail recursive fold once and for all
-for a wide range of algebraic datatypes.
+The previous section showed how to prove how our hand-written tail
+recursive evaluation function was both terminating and equal to our
+original evaluator.  In this section, we will show how we can
+generalize this construction to compute a tail-recursive equivalent of
+\emph{any} function that can be written as a fold over a simple
+algebraic datatype.
 
-The common feature of the types that we can encode using the \emph{regular}
-universe have, as the name suggests, a tree-like structure of finite depth and
-finite branching. We shall exploit this commonality to generalize our solution
-by defining: the type of `zipper' used to locate leaves of the tree; the
-pair of |load| and |unload| functions that perform one step of the fold; and a
-well founded relation to prove termination and correcness of the construction.
+Before we can define any such data type generic constructions, however, we need
+to fix our universe of discourse.
 
-\subsection{The \emph{regular} universe}
+\subsection*{The regular universe}
 \label{sec:universe}
 
-In a dependently typed programming language such as Agda, it is a common approach to
-devise a generic solution by defining a type of codes, the universe,
-and an interpretation function mapping a codes into types. An element of the
-universe serves as the generic representation of a concrete datatype while its
-interpretation let us define functions generically.
 
-The expressiveness of a generic approach is highly tied to the choice of the universe.
-The richer is its structure, the more variety of datatypes it allows to
-encode. In this paper, we present a generic tail recursive catamorphism for the universe
-of \emph{regular} tree types\todo{cite}. The universe and its interpretation functions are
-as follows:
-
+In a dependently typed programming language such as Agda, we can
+represent a collection of types closed under certain operations as a
+\emph{universe}~\cite{altenkirch-mcbride,martin-loef}, that is, a data
+type |U : Set| describing the inhabitants of our universe together
+with its semantics, |el : U -> Set|, mapping each element of |U| to
+its corresponding type. We have chosen the following universe of
+\emph{regular} types\cite{morris-regular, noort-regular}:
 \begin{code}
   data Reg : Set1 where
     Zero  : Reg
@@ -732,81 +742,100 @@ as follows:
     K     : (A : Set) -> Reg
     O+Op  : (R Q : Reg)  -> Reg
     O*Op  : (R Q : Reg) -> Reg
-
-  interp : Reg -> Set -> Set
-  interpl Zero interpr X   = Bot
-  interpl One interpr X    = Top
-  interpl I interpr X      = X
-  interpl (K A) interpr X  = A
-  interpl (R O+ Q) interpr X = interpl R interpr X U+ interpl Q interpr X
-  interpl (R O* Q) interpr X = interpl R interpr X * interpl Q interpr X
 \end{code}
-
-So far, the type codes in the universe we defined, |Reg|, are only capable of representing
-non-recursive functorial datatypes such as \emph{Maybe} or \emph{Either}.
-This claim is sustained by the fact that codes are interpreted as
-functors over Agda small types, i.e. |Set -> Set|, and that we can write a law abiding
-\emph{fmap}\footnote{Proofs are left for the reader.}.
-
+Types in this universe are formed from the empty type (|Zero|), unit type
+(|One|), and constant types (|K A|); the |I| constructor is used to refer to
+recursive subtrees. Finally, the universe is closed under both coproducts
+(|O+Op|) and products (|O*Op|). We could represent our expression data type from
+the introduction in this universe as follows:
+\begin{code}
+  expr : Reg
+  expr = K Nat O+ (I O* I)
+\end{code}
+Note that as the constant functor |K| takes an arbitrary type |A| as its
+argument, the entire data type lives in |Set1|. This could easily be remedied by
+stratifying this universe explicitly and parametrising our development by a base
+universe.
+  
+We can interpret the inhabitants of |Reg| as a functor of type |Set -> Set|:
+\begin{code}
+  interp : Reg -> Set -> Set
+  interpl Zero interpr X       = Bot
+  interpl One interpr X        = Top
+  interpl I interpr X          = X
+  interpl (K A) interpr X      = A
+  interpl (R O+ Q) interpr X   = interpl R interpr X U+ interpl Q interpr X
+  interpl (R O* Q) interpr X   = interpl R interpr X * interpl Q interpr X
+\end{code}
+To show that this interpretation is indeed functorial, we can define the
+following |fmap| operation:
 \begin{code}
   fmap : (R : Reg) -> (X -> Y) -> interpl R interpr X -> interpl R interpr Y
   fmap Zero f ()
-  fmap One  f tt  = tt
-  fmap I f x      = f x
-  fmap (K A) f x  = x
+  fmap One  f tt            = tt
+  fmap I f x                = f x
+  fmap (K A) f x            = x
   fmap (R O+ Q) f (inj1 x)  = inj1 (fmap R f x)
   fmap (R O+ Q) f (inj2 y)  = inj2 (fmap Q f y)
   fmap (R O* Q) f (x , y)   = fmap R f x , fmap Q f y
 \end{code}
-
-We can represent recursive datatypes in the \emph{regular} universe by introducing
-the least fixed point of a code interpreted over itself. A generic code |R| serves as the
-pattern functor where recursive positions are marked using the |I| constructor.
-The fixed point ties the knot explicitly. For example, commonly recursive
-datatypes such as \emph{List}s or \emph{Binary trees} are expressible in the
-universe.
-
+Finally, we can tie the recursive knot, taking the least fixpoint of the functor
+associated with the elements of our universe:
 \begin{code}
   data mu (R : Reg) : Set where
     In : interpl R interpr (mu R) -> mu R
 \end{code}
+Next, we can define a \emph{generic} fold, or \emph{catamorphism}, to
+work on the inhabitants of the regular universe. For each code |R :
+Reg|, the |cata R| function takes an \emph{algebra} of type |interpl R
+interpr X -> X| as argument. This algebra assigns semantics to the
+`constructors' of |R|. Folding over a tree of type |mu R| corresponds
+to recursively folding over each subtree and assembling the results
+using the argument algebra:
+\begin{spec}
+  cataN : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
+  cata R alg (In r) = alg (fmap R (cataN R alg) r)
+\end{spec}
+Unfortunately, Agda's termination checker does not accept this definition. The
+problem, once again, is that the recursive calls to |cata| are not made to
+structurally smaller trees, but rather |cata| is passed as an argument to the
+higher-order function |fmap|.
 
-The definition of a recursive datatype is always accompanied by a recursor or
-eliminator, the fold, capable of consuming terms of such type into a single
-value of possibly a different type. Because we can represent a recursive
-datatype as a term of type |mu R| for some |R|, it is customary to define the
-fold generically\footnote{Historically the generic fold is named
-\emph{catamorphism}}.
-
-\begin{code}
-  catamorphism : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
-  catamorphism R alg (In r) = alg (fmap R (catamorphism R alg) r)
-\end{code}
-
-Agda's termination checker cannot cope with such definition. The use of a higher-order
-argument to |fmap| is the culprit. To avoid the problem, we rewrite |catamorphism| to
-fuse together \emph{fmap} with the \emph{fold} so termination checker warnings are avoided
-all along.
-
+To address this, we can fuse the |fmap| and |cata| functions into a single
+|mapFold| function~\cite{norell-notes}:
 \begin{code}
   mapFold : (R Q : Reg) -> (interpl Q interpr X -> X) -> interpl R interpr (mu Q) -> interpl R interpr A
-  mapFold Zero Q alg ()
-  mapFold One Q alg tt    = tt
-  mapFold I Q alg (In x)  = alg (mapFold Q Q alg x)
-  mapFold (K A) Q alg x   = x
+  mapFold Zero     Q alg ()
+  mapFold One      Q alg tt        = tt
+  mapFold I        Q alg (In x)    = alg (mapFold Q Q alg x)
+  mapFold (K A)    Q alg x         = x
   mapFold (R O+ Q) P alg (inj1 x)  = inj2 (mapFold R P alg x)
   mapFold (R O+ Q) P alg (inj2 y)  = inj2 (mapFold Q P alg y)
   mapFold (R O* Q) P alg (x , y)   = mapFold R P alg x , mapFold Q P alg y
+\end{code}
+We can now define |cata| in terms of |mapFold| as follows:
+\begin{code}
+  cata : (R : Reg) (interpl R interpr X -> X) -> mu R -> X
+  cata R alg (In r) = mapFold R R alg r
+\end{code}
+This definition is indeed accepted by Agda's termination checker.
 
-  catamorphism : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
-  catamorphism R alg (In r) = mapFold R R alg r
+\paragraph{Example}
+We can now revisit our example evaluator from the introduction. To
+define the evaluator using the generic |cata| function, we instantiate
+the catamorphism to work on the expressions and pass the desired algebra:
+\fixme{what is the notation for cross?}
+\begin{code}
+  eval : mu expr -> Nat
+  eval = cata expr [ id , plusOp ]
 \end{code}
 
-Given an algebra |interpl R interpr X -> X| the \emph{tail-recursive} function
-that we develop in the rest of the section is extensionally equivalent to
-|catamorphism|.
+In the remainder of this paper, we will develop an alternative
+traversal that maps any algebra to a tail-recursive function that is
+guaranteed to terminate and produce the same result as
+the corresponding catamorphism.
 
-\subsection{Dissection}
+\subsection*{Dissection}
 \label{sec:dissection}
 
 Given a generic representation of a type, we can automatically calculate the
@@ -888,7 +917,7 @@ come and a proof of the fact.
  record Computed (R : Reg) (X : Set) (alg : interpl R interpr X → X) : Set where
     constructor _,_,_
     field
-      Tree  : μ R
+      Tree  : mu R
       Value : X
       Proof : catamorphism R alg Tree == Value
 \end{code}
@@ -933,7 +962,7 @@ interpl R interpr X| uses the variable |X|. In case the predicate is true, we
 are able to replace the type |X| for any other type |Y|.
 
 \begin{code}
-  data NonRec : (R : Reg) → interpl R interpl X → Set where
+  data NonRec : (R : Reg) → interpl R interpr X → Set where
     NonRec-One  : NonRec One tt
     NonRec-K    : (B : Set) → (b : B) → NonRec (K B) b
     NonRec-+1   : (R Q : Reg) → (r : interpl R interpr X)
@@ -975,7 +1004,7 @@ then just \emph{plug}\footnote{It works analogously for the bottom-up
 
 \todo{define Zipper up and down or just mention}
 
-\subsection{One step of a fold}
+\subsection*{One step of a fold}
 
 We need a means to perform one step of the computation at a time. We can rescue
 the ideas of the pair of functions, |load| and |unload| and adapt them to work
@@ -1050,6 +1079,8 @@ and return the leaf as is.
       where cont' (l' , isl') = f (l , l') (NonRec-* R Q l l' isl isl')
 \end{code}
 
+%% WOUTER: Read up to this point
+
 Armed with |load| we turn our attention to |unload|. First of all, it is necessary
 to define an auxiliary function, |right|, that given dissection and an element
 to fill the hole finds either a new one hole context and the value inhabiting it
@@ -1101,7 +1132,7 @@ value equals to applying a |catamorphism| over the subtree.  The function
 
 \todo{STOP HERE}
 
-\subsection{Relation over Generic \emph{Zipper}s}
+\subsection*{Relation over Generic \emph{Zipper}s}
 
 We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
 t|, for some concrete tree |t : mu R|, by explicity separating the functorial layer
@@ -1208,7 +1239,7 @@ therefore here we only spell its signature.
                            -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
-\subsection{Putting the pieces together}
+\subsection*{Putting the pieces together}
 
 + unload to a smaller position by the relation
 	+ right to smaller on the dissection layer
@@ -1223,11 +1254,21 @@ therefore here we only spell its signature.
 
 %} end of generic.fmt
 
-\section{Conclusion and future work}
+\section{Discussion}
+\label{sec:discussion}
 
 + Regular universe kind of limited
 + Generalize to other universes
 + Discuss why not to use other techniques
+
+\subsection*{Related work}
+Danvy and dissection
+
+Generics in Agda
+
+\subsection*{Future work}
+
+\subsection*{Conclusion}
 
 
 %% Acknowledgments
@@ -1248,16 +1289,15 @@ therefore here we only spell its signature.
 \end{acks}
 
 
+
+%% Acknowledgments
+% \begin{acks}
+% \end{acks}
+
+
 %% Bibliography
 \bibliography{main}
 
-
-
-%% Appendix
-\appendix
-\section{Appendix}
-
-Text of appendix \ldots
 
 \end{document}
 

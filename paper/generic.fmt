@@ -46,13 +46,19 @@
 %format NonRec-+2  = "\AI{NonRec-\ensuremath{\oplus_2}}"
 %format NonRec-*  = "\AI{NonRec-\ensuremath{\otimes}}"
 
-% Functions
+% Functions and definitions
+%format U            = "\AF{U}"
+%format el           = "\AF{el}"
+%format expr         = "\AF{expr}"
 %format interp  = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
 %format interpl = "\AF{\ensuremath{\llbracket}}"
 %format interpr = "\AF{\ensuremath{\rrbracket}}"
 %format fmap    = "\AF{fmap}"
-%format catamorphism = "\AF{cata}"
+%format cata         = "\AF{cata}"
+%format cataN        = "\nonterm{" cata "}"
 %format mapFold      = "\AF{map-fold}"
+%format eval         = "\AF{eval}"
+%format plusOp  = "\AI{\_\ensuremath{+}\_}"
 %format nabla        = "\AF{\ensuremath{\nabla}}"
 %format plug         = "\AF{plug}"
 %format plug-muup      = "\AF{plug-\ensuremath{\mu \Uparrow}}"
