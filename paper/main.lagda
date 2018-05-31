@@ -270,18 +270,14 @@ the generic tail recursive traversals in the later sections; for now,
 however, we will only rely on the intuition that the configurations of
 our abstract machine, given by the type |Nat * Stack|, are an instance
 of \emph{dissections}, corresponding to a partially evaluated
-expression. These configurations, are more restrictive than
-dissections in general. In particular, the configurations presented in
-the previous section \emph{only} ever denote a \emph{leaf} in the input
-  expression:
-%format ZipperType = Config
+expression:
 \begin{code}
   ZipperType : Set
   ZipperType = Nat * Stack
 \end{code}
-\todo{Zipper is a bad name -- it's not really a zipper. Configuration?
-  AbstractMachineState? I've introduced a formatting directive that we
-  can change.}
+These configurations, are more restrictive than dissections in
+general. In particular, the configurations presented in the previous
+section \emph{only} ever denote a \emph{leaf} in the input expression.
 
 The tail recursive evaluator, |tail-rec-eval| processes the leaves of the input
 expression in a left-to-right fashion. The leftmost leaf -- that is the first
@@ -323,7 +319,7 @@ the definition of the desired order relation (Section~\ref{subsec:topdown}).
 Finally we will define the relation over configurations,
 Section~\ref{subsec:relation}, and sketch the proof of that it is well-founded.
 
-\subsection{Invariant preserving |ZipperType|}
+\subsection{Invariant preserving configurations}
 \label{subsec:stack}
 
 The |ZipperType| denotes a leaf in our input expression. In the
@@ -331,7 +327,7 @@ previous example, the following |ZipperType| corresponds to third leaf:
 
 \begin{figure}[h]
   \includegraphics{figure3}
-  \caption{Example of \emph{zipper} for leaf number 3}
+  \caption{Example of \emph{configuration} for leaf number 3}
   \label{fig:example_zipper}
 \end{figure}
 
@@ -352,10 +348,11 @@ In order to record the necessary information, we redefine the |Stack| type as fo
     Top    : Stack
 \end{code}
 The |Right| constructor now not only stores the value |n|, but also
-records the subexpression |e| and the proof that |e| evaluates to |n|.
-\wouter{Couldn't we have the same definition of stacks, but introduce
-  a \emph{predicate} |Valid : Stack -> Expr -> Set| capturing the
-  invariant? And then show that our tail-recursive evaluator preserves validity?}
+records the subexpression |e| and the proof that |e| evaluates to
+|n|. Although it we are modifying the definition of the |Stack| data
+type, we claim that the expression |e| and equality are not necessary
+at run-time, but only required for the proof of well-foundedness -- a
+point we will return to in our discussion (Section~\ref{sec:discussion}).
 
 We can now recover the input expression from our |ZipperType|. This is
 analogous to the |plug| operation on zippers:
@@ -386,7 +383,7 @@ For a given expression |e : Expr|, any two terms of type |Zipperup e| are
 configurations of the same abstract machine during the tail recursive fold over
 the expression |e|.
 
-\subsection{Up-down |ZipperType|}
+\subsection{Configuring up and down}
 \label{subsec:topdown}
 
 Next, we would like to formalize the left-to-right order on the configurations
@@ -400,7 +397,7 @@ leaves with numbers 3 and 4 in our running example:
 
 \begin{figure}[h]
   \includegraphics{figure4}
-  \caption[angle=90]{Comparison of \emph{zipper} for leaves 4 and 3}
+  \caption[angle=90]{Comparison of \emph{configurations} for leaves 4 and 3}
   \label{fig:example_zipper}
 \end{figure}
 
@@ -459,7 +456,7 @@ pair of functions to switch between |Zipperup| and |Zipperdown|:
  Zipperup-to-Zipperdown : (e : Expr) -> Zipperup e -> Zipperdown e
 \end{code}
 
-\subsection{Relation over \emph{ZipperType}}
+\subsection{Ordering configurations}
 \label{subsec:relation}
 
 Finally, we can define the ordering relation over over values of type
@@ -517,16 +514,40 @@ fold, |tail-rec-eval|. However, we are missing one crucial ingredient: we still
 need to show that the configuration decreases after a call to the |unload|
 function.
 
-There are a couple of minor differences between the function |unload| and the
-relation that we have defined. The function uses the |Stack2| part of the
-|ZipperType| as a \emph{stack} pushing and popping elements from the
-top. Furthermore, the function |unload| as defined previously manipulates
-elements of the |ZipperType| directly, with no further constraints relating
-these to the original input expression.
+Unfortunately, the function |unload| and the relation that we have
+defined work on `different' versions of the |Stack|: the relation
+compares stacks top-down; the |unload| function manipulates stacks
+bottom-up. Furthermore, the function |unload| as defined previously
+manipulates elements of the |ZipperType| directly, with no further
+constraints relating these to the original input expression.
 
-We can resolve the first problem by proving that |unload| preserves the overall
-input expression of the |ZipperType| it takes as an argument.
+In the remainder of this section, we will reconcile these differences,
+complete the definition of our tail recursive evaluator, sketch the
+proofs of well-foundedness of our relation, and finally prove
+correctness of the tail-recursive evaluator. 
 
+\paragraph{Decreasing recursive calls}
+
+To define our tail-recursive evaluator, we will begin by defining an
+auxiliary |step| function that performs a single step of
+computation. We will define the desired evaluator by iterating the
+|step| function, proving that it decreases in each iteration.
+
+The |step| function calls |unload| to produce a new configuration, if
+it exists.  If the |unload| function returns a natural number, |inj2
+v|, the entire input tree has been processed and the function
+terminates:
+\begin{code}
+  step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
+  step e ((n , stk) , eq)
+    with unload (Val n) n refl 
+    ... | inj1 (n' , stk')  = ((n',stk') , ...)
+    ... | inj2 v            = inj2 v
+\end{code}
+We have omitted the second component of the result returned in the
+first branch, corresponding to a proof that |plugZup (n',stk') ==
+e|. The crucial lemma that we need to show to complete this proof,
+demonstrates that the |unload| function respects our invariant:
 \begin{code}
   unload-preserves-plugup  :
     forall (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack2) (z' : ZipperType)
@@ -534,48 +555,20 @@ input expression of the |ZipperType| it takes as an argument.
     -> forall (t : Expr) -> plugup e s == t -> plugZup z' == t
 \end{code}
 
-In the remainder of this section, we will sketch the proofs of
-well-foundedness of our relation and correctness of the tail-recursive
-evaluator. Both these proofs have been formalized in Agda and we refer
-to our development for the further details.
-
-\paragraph{Proof of well-foundedness}
-The new version of the relation is suitable for proving well
-foundedness because we can pattern match on the equality included in
-the |Zipperdown| type to show how the overall structure
-decreases. This allows us to use the recursion we need to complete the
-proof.  In particular, the case we were not able to prove before, now
-can be proven by learning that |(t2 , s2)| is a position on the left
-subtree while |(t1 , s1)| is on the right subtree of a common |Add|
-node.
-
-Using such definition we can write a new type-indexed function that performs one
-step of the fold. It unwraps a element of type |Zipperup| calls |unload| (whose
-type has suffered some changes to account for the new type of |Stack|
-(Section~\ref{todo}) and returns either a value of the same type or a natural
-number if the computation is done.
-
-\begin{code}
-  step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
-  step e ((n , s) , eq)
-    with unload (Val n) n refl | inspect (unload (Val n) n refl) s
-    ... | inj1 z' | [ Is ]  = (z' , unload-preserves-plugup (Val n) n refl s z' Is e eq)
-    ... | inj2 x            = inj2 x
-\end{code}
-
-Finally, we define the theorem that proves that applying |step| over a configuration
-delivers a smaller configuration.
+Finally, we can define the prove that the |step| function always returns
+a smaller configuration.
 
 \begin{code}
   step-< : (e : Expr) -> (z z' : Zipperup e) -> step e z == inj1 z'
          -> llcorner e lrcorner Zipperup-to-Zipperdown z' < Zipperup-to-Zipperdown z
 \end{code}
 
-The proof of such theorem is very tedious. Because the type index has to be
-preserved, it is difficult to articulate auxiliary lemmas that help with the
-distinct cases. Instead, a much easier approach is to define another relation
-over plain elements of type |ZipperType| and prove that with enough evidence there
-exists an injection between both.
+Proving this statement directly is tedious, as there are many cases to
+cover and the expression |e| occurring in the types makes it difficult
+to identify and prove lemmas covering the individual cases. Therefore,
+we instead define another relation over our configurations directly,
+and prove that there is an injection between both relations under
+suitable assumptions:
 
 \begin{code}
   data LtOp :  ZipperType -> ZipperType -> Set where
@@ -583,50 +576,49 @@ exists an injection between both.
 
   to  : forall (e : Expr) (z1 z2 : ZipperType)
       -> (eq1 : plugZdown z1 == e) (eq2 : plugZdown z2 == e)
-      -> z1 ltOp z2 -> llcorner e lrcorner (z1 , eq1) < (z2 , eq2)
+      -> z1 < z2 -> llcorner e lrcorner (z1 , eq1) < (z2 , eq2)
 \end{code}
 
-Thus to complete the previous theorem is sufficient to show that the function
-|unload| delivers a smaller |ZipperType| by the plain relation (because we have
-already proven that |unload| preserves the input expression).
+Thus to complete the previous theorem, it is sufficient to show that the function
+|unload| delivers a smaller |ZipperType|:
 
 \begin{code}
   unload-<  : forall (n : Nat) (s : Stack2) (e : Expr) (s' : Stack2)
             -> unload (Val n) n refl s ≡ inj1 (t' , s')
             -> (t' , reverse s') ltOp (n , reverse s)
 \end{code}
-
-The proof is done by induction over the stack supported by an ancillary
-definition that captures how the function affects the shape of the stack; the complete proof
-is non-trivial, covering around 200 lines of code, but conceptually not complicated.
+The proof is done by induction over the stack supported; the complete
+proof is requires some bookkeeping, covering around 200 lines of code,
+but is conceptually not complicated.
 
 The function |tail-rec-eval| is now completed as follows.
-
 \begin{code}
   rec : (e : Expr) -> (z : Zipperup e)
       -> Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z) -> Zipperup e U+ Nat
   rec e z (acc rs) = with step e z | inspect (step e) z
-  ... | inj2 n  | _       = inj2 n
-  ... | inj1 z' | [ Is ]  = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
+  ...  | inj2 n  | _       = inj2 n
+  ...  | inj1 z' | [ Is ]
+       = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
 
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e = rec e (load e stk) (<-WF e)
 \end{code}
+Agda's termination checker now accepts that the repeated calls to
+|rec| are on strictly smaller configurations.
 
 \paragraph*{Correctness}
 \label{sec:basic-correctness}
 
-Indexing the data type \emph{zipper} with the input expression allow us to prove
-correctness of the transformation easily. The type of the function |step|
-enforces at the type level that the tail recursive fold is constantly executed
-over the same input expression.
+As we have indexed our configuration data types with the input
+expression, proving correctness of is relatively straightforward. The
+type of the function |step| guarantees the new configuration points to
+a leaf in the input expression.
 
-Proving the function |tail-rec-eval| to be correct amounts to show that the
-recursor, |rec|, is correct w.r.t. the evaluation function |eval|. We can prove
-the lemma by exploiting induction over the accessibility predicate. Thus we only
-remain to fulfill the base case, when the function |step| returns a natural
-number.
-
+Proving the function |tail-rec-eval| to correct amounts to showing
+that the auxiliary function, |rec|, that is iterated until a value is
+produced, will behave the same as the original evaluator, |eval|. This
+is expressed by the following lemma, proven by induction over the
+accessibility predicate:
 \begin{code}
   rec-correct  : (e : Expr) → (z : Zipperup e)
                -> (ac : Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z))
@@ -637,30 +629,24 @@ number.
        = rec-correct e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is))
   ...  | inj2 n   | [ Is ] = step-correct n e eq z
 \end{code}
-
-Because |step| is defined as a wrapper over |unload| to prove |step-correct|
-suffices to show that such property holds for the function |unload|. The proof
-stored in the |Stack2| along with induction is enough to prove it.
-
+At this point, we still need to prove the |step-correct| lemma that it
+repeatedly applied.  As the |step| function is defined as a wrapper
+around the |unload| function, it suffices to prove the following
+property of |unload|:
 \begin{code}
   unload-correct  : forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack2)
                   -> unload t n eq s ≡ inj2 n -> eval (plugup t s) == n
-  unload-correct t n eq [] .n refl  = eq
-  unload-correct t n eq (Left x :: s) ()
-  unload-correct t n eq (Right n' t' eq' :: s) pr
-    = unload-correct (Add t' t) (n' + n) (cong2 plusOp eq' eq) s a p
 \end{code}
+This proof follows immediately by induction over |s : Stack|.
 
-The main theorem is proven by making a direct use of the ancillary lemma
-|rec-correct|.  The accessibility predicate for the input expression is given by
-the \emph{well-foundedness} proof.
-
+The main correctness theorem now states that |eval| and
+|tail-rec-eval| are equal for all inputs:
 \begin{code}
   correctness : forall (e : Expr) -> eval e == tail-rec-eval e
   correctness e = rec-correct e (load e [] , _) (<-WF e (load e []))
 \end{code}
-
-\carlos{maybe add some phrase here saying how cool this is!}
+This finally completes the definition and verification of a
+tail-recursive evaluator. 
 %} end of intro.fmt
 
 \section{A generic tail recursive traversal}
@@ -1316,6 +1302,8 @@ Danvy and dissection
 Generics in Agda
 
 \subsection*{Future work}
+
+Porting to Coq/erasure
 
 \subsection*{Conclusion}
 
