@@ -259,13 +259,13 @@ well-foundedness is the topic of the next section.
 
 \section{Well-founded tree traversals }
 
-Configurations of the abstract machine are a twisted version of Huet's idea of
-\emph{zippers}. The zipper of a datatype such as |Expr| is a subexpression
-paired with a list of one-hole contexts, or path, that when plug together
-reconstruct to an expression. A value of the zipper locates the subexpression
-within the bigger expression. As demonstrated by McBride, the type |Stack| is a
-generalization of the zipper as it allows the one-hole contexts to have distinct
-type of "subtrees" on either sides.
+Configurations of the abstract machine are a variation of Huet's
+\emph{zippers}. The zipper of a datatype such as |Expr| is pair of a (sub)expression
+and its \emph{context}. We can reassemble the original expression, by \emph{plugging} together
+the subexpression into its context. A value of the zipper locates the subexpression
+within the bigger expression. As demonstrated by~\citet{dissection}, the type |Stack| is a
+generalization of the zipper, allowing the values to the left and right of the current subtree
+to have different types.
 
 The type of configurations goes a step beyond and constrains the zipper to
 represent only paths from leaves of the input expression (with possibly
