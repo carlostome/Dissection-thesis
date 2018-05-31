@@ -55,8 +55,8 @@ Folds, or \emph{catamorphisms}, are a pervasive programming
 pattern. Folds generalize many simple traversals over algebraic data
 types. Functions implemented by means of a fold are both compositional
 and structurally recursive. Consider, for instance, the following
-expression data type, written in the dependently typed programming
-language Agda\cite{norell}:
+expression data type, written in the programming
+language Agda~\cite{norell}:
 
 \begin{code}
   data Expr : Set where
@@ -131,15 +131,14 @@ potentially non-terminating by highlighting them
 function a recursive call is made to arguments that are not
 syntactically smaller. Furthermore, it is not clear at all that the
 tail recursive evaluator produces the same result as our original
-one. Writing such tail recursive functions by hand is both tedious and
-error-prone. It is precisely these issues that this paper tackles
+one. It is precisely these issues that this paper tackles
 by making the following novel contributions:
 \fixme{be consistent naming tail recursive}
 \begin{itemize}
 \item We give a verified proof of termination of |tail-rec-eval| using
   a carefully chosen \emph{well-founded relation}
-  (Section~\ref{sec:basics}). After redefining |tail-rec-eval| using
-  this relation, we can prove the evaluators equal in Agda.
+  (Section~\ref{sec:basics}--\ref{sec:wf-example}). After redefining |tail-rec-eval| using
+  this relation, we can prove the two evaluators equal in Agda.
 \item We generalize this relation and its corresponding proof of
   well-foundedness, inspired by
   \citeauthor{dissection}'s~ work on
@@ -148,10 +147,9 @@ by making the following novel contributions:
   types and a generic fold operation
   (Section~\ref{sec:universe}). Subsequently we show how to turn any
   structurally recursive function defined using a fold into its tail
-  recursive counterpart (Section~\ref{sec:dissection}).
-\item Finally, we sketch how the proofs of termination and semantics
+  recursive counterpart.
+\item Finally, we present how our proofs of termination and semantics
   preservation from our example are generalized to the generic fold
-  over arbitrary types in our universe
   (Section~\ref{sec:correctness}).
 \end{itemize}
 Together these results give a verified function that computes a tail
@@ -260,30 +258,30 @@ states. Finding an appropriate relation and proving its
 well-foundedness is the topic of the next section.
 
 \section{Well-founded tree traversals }
-
+\label{sec:wf-example}
 The configurations of our abstract machine can be seen as a variation
-of Huet's \emph{zippers}~\cite{huet}. The zipper associated with an
-expression |e : Expr| is pair of a (sub)expression of |e| and its
-\emph{context}. We can reassemble the original expression, by
-\emph{plugging} together the subexpression into its context. As
-demonstrated by~\citet{dissection}, the zippers can be generalized
-further to \emph{dissections}, where the values to the left and right
-of the current subtree may have different types.
-
-In the example evaluator from the previous section, the configurations
-of the abstract machine are given by the type |Nat * Stack|. In this
-way, we \emph{only ever navigate to the leaves of our input
-  expression}. We will therefore consider a special case of
-dissections, where we the current subexpression in focus is always a
-leaf. We can represent as a pair of the value stored in the current
-leaf (|Nat|) and the current context (|Stack|):
-
+of Huet's \emph{zippers}~\citeyearpar{huet}. The zipper associated
+with an expression |e : Expr| is pair of a (sub)expression of |e| and
+its \emph{context}. As demonstrated by~\citet{dissection}, the zippers
+can be generalized further to \emph{dissections}, where the values to
+the left and right of the current subtree may have different types. It
+is precisely this observation that we will exploit when considering
+the generic tail recursive traversals in the later sections; for now,
+however, we will only rely on the intuition that the configurations of
+our abstract machine, given by the type |Nat * Stack|, are an instance
+of \emph{dissections}, corresponding to a partially evaluated
+expression. These configurations, are more restrictive than
+dissections in general. In particular, the configurations presented in
+the previous section \emph{only} ever denote a \emph{leaf} in the input
+  expression:
+%format ZipperType = Config
 \begin{code}
   ZipperType : Set
   ZipperType = Nat * Stack
 \end{code}
 \todo{Zipper is a bad name -- it's not really a zipper. Configuration?
-  AbstractMachineState?}
+  AbstractMachineState? I've introduced a formatting directive that we
+  can change.}
 
 The tail recursive evaluator, |tail-rec-eval| processes the leaves of the input
 expression in a left-to-right fashion. The leftmost leaf -- that is the first
@@ -299,7 +297,7 @@ Section~\ref{sec:intro}, we would number the leaves as follows:
 
 
 This section aims to formalize the relation that orders elements of
-the |ZipperType| type (or configurations of the abstract maching) and
+the |ZipperType| type (that is, the configurations of the abstract machine) and
 prove it is \emph{well-founded}. However, before doing so there are
 two central problems with our choice of |ZipperType| data type:
 
@@ -307,31 +305,29 @@ two central problems with our choice of |ZipperType| data type:
 \item The |ZipperType| data type is too liberal. As we evaluate our input expression
   the configuration of our abstract machine changes constantly, but satisfies
   one important \emph{invariant}: each configuration is a decomposition of the
-  original input. Unless this invariant is captured, it will be hard pressed
+  original input. Unless this invariant is captured, we will be hard pressed
   to prove the well-foundedness of any relation defined on configurations.
 
-\item The interpretation of the |Stack| data type as a path from the leaf to the
-  root is convenient to define the tail recursive machine but inadequate to
-    encode an order relation. The top of a stack stores information about
-    neighbouring nodes, but to compare two leaves we need global information
-    regarding their relative positions to the root.
+\item The choice of the |Stack| data type, as a path from the leaf to the
+  root is convenient to define the tail recursive machine, but inpractical
+  when defining the desired order relation. The top of a stack stores information about
+    neighbouring nodes, but to compare two leaves we need \emph{global} information
+    about their positions relative to the root.
 \end{enumerate}
 
-To address these specific problems we: First, refine the type of |ZipperType| so the
-invariant can be captured, Section~\ref{subsec:stack}; Second, we explore a
-different view of stacks, as reversed paths, so we can easily write the order
-relation, Section~\ref{subsec:topdown}.
-
-Finally we define the relation over configurations,
-Section~\ref{subsec:relation}, and sketch the proof of it is well-foundedness.
+We will now address these limitations one by one. Firstly, by refining
+the type of |ZipperType|, we will show how to capture the desired
+invariant (Section~\ref{subsec:stack}). Secondly, we
+explore a different representation of stacks, as paths from the root, that facilitates
+the definition of the desired order relation (Section~\ref{subsec:topdown}).
+Finally we will define the relation over configurations,
+Section~\ref{subsec:relation}, and sketch the proof of that it is well-founded.
 
 \subsection{Invariant preserving |ZipperType|}
 \label{subsec:stack}
 
-A |ZipperType| positions a concrete leaf with respect to an expression. The |Stack|
-part of the zipper denotes the path from that leaf up to the root. Continuing
-with the previous example, the |ZipperType| that corresponds with the leaf numbered
-3 is:
+The |ZipperType| denotes a leaf in our input expression. In the
+previous example, the following |ZipperType| corresponds to third leaf:
 
 \begin{figure}[h]
   \includegraphics{figure3}
@@ -339,29 +335,30 @@ with the previous example, the |ZipperType| that corresponds with the leaf numbe
   \label{fig:example_zipper}
 \end{figure}
 
-We would like to enforce at the type level that a value of |ZipperType| represents
-the location of a leaf within a concrete expression. For this, we need that
-expression to be explicitly available. However, the subexpressions originally
-located to the left of the path are not present anymore. In the example, the
-fold at the point of reaching the leaf numbered 3 has consumed all the
-subexpressions to its left.
+As we observed previously, we would like to refine the type |ZipperType| to capture
+the invariant that execution preserves: every |ZipperType| denotes a unique leaf
+in our input expression.
+There is one problem: the |Stack| data type stores the values of the subtrees that have
+been evaluated, but does not store the subtrees themselves.
+In the example in Figure~\ref{fig:example_zipper}, 
+when the traversal has reached the third leaf, all the
+subexpressions to its left have been evaluated.
 
-In order to have the necessary information, we rewrite the type of |Stack| so
-expressions that have already been evaluated are kept along with the result
-of their evaluation. Moreover, we store a proof witnessing the fact. This, will
-be useful later to show correctness.
-
+In order to record the necessary information, we redefine the |Stack| type as follows:
 \begin{code}
   data Stack2 : Set where
     Left   : Expr -> Stack2 -> Stack2
     Right  : (n : Nat) -> (e : Expr) -> eval e == n -> Stack2 -> Stack2
     Top    : Stack
 \end{code}
+The |Right| constructor now not only stores the value |n|, but also
+records the subexpression |e| and the proof that |e| evaluates to |n|.
+\wouter{Couldn't we have the same definition of stacks, but introduce
+  a \emph{predicate} |Valid : Stack -> Expr -> Set| capturing the
+  invariant? And then show that our tail-recursive evaluator preserves validity?}
 
-We can now recover the input expression, for which a value of zipper represents
-a concrete state of the machine during the fold, by means of a \emph{plugging}
-function.
-
+We can now recover the input expression from our |ZipperType|. This is
+analogous to the |plug| operation on zippers:
 \begin{code}
   plugup : Expr -> Stack2 -> Expr
   plugup e []                      = e
@@ -372,23 +369,24 @@ function.
   plugZup (n , stk) = plugup (Val n) stk
 \end{code}
 
-Any two distinct terms of type |ZipperType| may very well represent states of a fold
-over two entirely different expressions. If we are to compare positions within a
-expression we better make sure both values locate leaves of the same tree. By
-leveraging dependent types we can \emph{statically} enforce such requirement by
-defining a new wrapper data type over |ZipperType| such that it is type indexed by
-the expression to which it \emph{plug}s.
+Any two terms of type |ZipperType| may still represent states of a fold
+over two entirely different expressions. As we aim to define an order relation,
+comparing positions during the traversal of the input expression, we need to ensure
+that we only ever compare two positions in the same tree. We can \emph{statically} enforce
+such requirement by
+defining a new wrapper data type over |ZipperType| that records the 
+original input expression:
 
 \begin{code}
   data Zipperup (e : Expr) : Set where
     prodOp : (z : ZipperType) -> plugZup z == e -> Zipperup e
 \end{code}
 
-For a given expression |e : Expr|, any two terms of type |Zipperup t| are
+For a given expression |e : Expr|, any two terms of type |Zipperup e| are
 configurations of the same abstract machine during the tail recursive fold over
 the expression |e|.
 
-\subsection{Up-down \emph{ZipperType}}
+\subsection{Up-down |ZipperType|}
 \label{subsec:topdown}
 
 The interpretation of the |Stack| in the |ZipperType| as a path from the leaf of the

@@ -39,7 +39,7 @@
 
 % Bound variables
 %format n     = "\AB{n}"
-%format n'     = "\AB{n''}"
+%format n'    = "\AB{n''}"
 %format r     = "\AB{r}"
 %format z     = "\AB{z}"
 %format z'     = "\AB{z''}"
@@ -47,7 +47,7 @@
 %format v     = "\AB{v}"
 %format v'     = "\AB{v''}"
 %format stk   = "\AB{stk}"
-%format stk'   = "\AB{stk''}"
+%format stk'  = "\AB{stk''}"
 %format e1    = "\AB{\ensuremath{e_1}}"
 %format e2    = "\AB{\ensuremath{e_2}}"
 %format t    = "\AB{\ensuremath{t}}"
