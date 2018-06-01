@@ -3,16 +3,17 @@
   \tikzstyle{level 1}=[level distance=10mm, sibling distance=24mm]
   \tikzstyle{level 2}=[level distance=10mm, sibling distance=14mm]
   \tikzstyle{level 3}=[level distance=10mm, sibling distance=14mm]
+  \tikzstyle{level 3}=[level distance=10mm, sibling distance=14mm]
   \tikzstyle{load}=[->,thick,color=blue]
   \tikzstyle{unload}=[->,shorten <=1pt,thick,color=red]
 
   \node (root) {\AI{Add}}
-  child {node (node1) {\AI{Add}} child {node (node2) {\AI{Val}\AS{}\AN{3}}} 
+  child {node (node1) {\AI{Add}} child {node [label=below:\pgftextcircled{5}] (node2) {\AI{Val}\AS{}\AN{3}}} 
                                  child {node (node3) {\AI{Add}} 
-                                   child {node (node4) {\AI{Val}\AS{}\AN{7}}}
-                                   child {node (node5) {\AI{Val}\AS{}\AN{1}}}}} 
-  child {node (node6) {\AI{Add}} child {node (node7) {\AI{Val}\AS{}\AN{2}}}
-                                 child {node (node8) {\AI{Val}\AS{}\AN{0}}}};
+                                   child {node [label=below:\pgftextcircled{4}] (node4) {\AI{Val}\AS{}\AN{7}}}
+                                   child {node [label=below right:\pgftextcircled{3}] (node5) {\AI{Val}\AS{}\AN{1}}}}} 
+  child {node (node6) {\AI{Add}} child {node [label=below:\pgftextcircled{2}] (node7) {\AI{Val}\AS{}\AN{2}}}
+                                 child {node [label=below right:\pgftextcircled{1}] (node8) {\AI{Val}\AS{}\AN{0}}}};
 
   \draw[load] (root) to [ bend right=45] (node1);
   \draw[load] (node1) to [ bend right=45] (node2);
@@ -29,3 +30,5 @@
   \draw[unload] (node8) to [ bend right=45] (node6);
   \draw[unload] (node6) to [ bend right=45] (root);
 \end{tikzpicture}
+
+

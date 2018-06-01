@@ -70,7 +70,7 @@
 %format coerce = "\AF{coerce}"
 %format Leaf   = "\AF{Leaf}"
 %format Stack  = "\AF{Stack\ensuremath{^{\scaleto{G}{4pt}}}}"
-%format Zipper = "\AF{Config}"
+%format Zipper = "\AF{Config\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format first-cps = "\AF{first-cps}"
 %format load = "\AF{load\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format unload = "\AF{unload\ensuremath{^{\scaleto{G}{4pt}}}}"
@@ -93,6 +93,7 @@
 %format unload-<  = "\AF{unload\ensuremath{^{\scaleto{G}{4pt}}}\text{-}<}"
 %format right-<  = "\AF{right-<}"
 %format Zipperup-to-Zipperdown = "\AF{Config\ensuremath{_{\Uparrow}^{\scaleto{G}{4pt}}}-to-Config\ensuremath{_{\Downarrow}^{\scaleto{G}{4pt}}}}"
+%format bot-elim = "\AF{\ensuremath{\bot}-elim}"
 
 
 % Bound variables
@@ -116,6 +117,7 @@
 %format r'   = "\AB{r''}"
 %format q'   = "\AB{q''}"
 %format dq'   = "\AB{dq''}"
+%format d   = "\AB{d}"
 %format dr'   = "\AB{dr''}"
 %format alg = "\AB{\ensuremath{\psi}}"
 %format eta = "\AB{\ensuremath{\eta}}"
