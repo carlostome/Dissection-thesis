@@ -37,6 +37,19 @@
 \newcommand{\APT}{\AgdaPrimitiveType}
 
 
+%% TikZ
+\usepackage{tikz}
+\usetikzlibrary{arrows,snakes,backgrounds,calc}
+\newcommand{\pgftextcircled}[1]{
+    \setbox0=\hbox{#1}%
+    \dimen0\wd0%
+    \divide\dimen0 by 2%
+    \begin{tikzpicture}[baseline=(a.base)]%
+        \useasboundingbox (-\the\dimen0,0pt) rectangle (\the\dimen0,1pt);
+        \node[circle,draw,outer sep=0pt,inner sep=0.1ex] (a) {\textbf{#1}};
+    \end{tikzpicture}
+}
+
 \newcommand{\nonterm}[1]{\hspace*{-0.1cm}\colorbox{orange!25}{#1}}
 \newcommand{\hole}[1]{\colorbox{yellow!50}{\ensuremath{\bigbox_{#1}}}}
 %% Conference information
@@ -86,5 +99,4 @@ Development (TyDe)}{January 01--03, 2017}{St. Louis, MO, USA}
                         %% http://ctan.org/pkg/subcaption
 \usepackage{bbold} %% Font for fancy math letters
 \usepackage{dsfont} %% Font for fancy math letters
-\usepackage{tikz}
 \usepackage{scalerel}

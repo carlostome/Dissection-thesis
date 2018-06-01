@@ -9,6 +9,8 @@
    \footnotesize
 }
 
+
+
 \begin{document}
 
 \title{Dissection: terminating and correct}
@@ -28,7 +30,6 @@
   \country{The Netherlands}
 }
 \email{w.s.swierstra@@uu.nl}
-
 
 \begin{abstract}
   Folds are a useful abstraction in every functional programmer's toolbox. Yet they
@@ -89,7 +90,7 @@ To address this problem, we can manually rewrite the evaluator to be
 \emph{tail recursive}. Modern compilers typically map tail recursive
 functions to machine code that runs in constant memory. To write such
 a tail recursive function, we need to introduce an explicit stack
-storing both intemediate results and the subtrees that have not yet
+storing both intermediate results and the subtrees that have not yet
 been evaluated.
 
 \begin{code}
@@ -151,14 +152,13 @@ by making the following novel contributions:
   recursive counterpart.
 \item Finally, we present how our proofs of termination and semantics
   preservation from our example are generalized to the generic fold
-  (Section~\ref{sec:correctness}).
+  (Section~\ref{sec:generic}).
 \end{itemize}
 Together these results give a verified function that computes a tail
 recursive traversal from any algebra for any algebraic data type.
 All the constructions and proofs presented in this paper have been
 implemented in and checked by Agda. The corresponding code is freely
 available online.\footnote{\url{https://github.com/carlostome/Dissection-thesis}}
-
 
 \section{Termination and tail-recursion}
 \label{sec:basics}
@@ -186,8 +186,9 @@ unevaluated subtree. This process is depicted in
 Figure~\ref{fig:load-unload}.
 
 \begin{figure}
-  \includegraphics{figure4}
-  \caption{Traversing a tree with |load| and |unload|}
+  % \includegraphics[angle=90]{figure2}
+  \input{figures/figure1}
+  \caption{Traversing a tree with {\color{blue}load} and {\color{red}unload}}
   \label{fig:load-unload}
 \end{figure}
 
@@ -287,7 +288,7 @@ rightmost leaf is the smallest. In our example expression from
 Section~\ref{sec:intro}, we would number the leaves as follows:
 
 \begin{figure}[h]
-  \includegraphics[angle=90]{figure2}
+  \input{figures/figure2}
   \caption{Numbered leaves of the tree}
   \label{fig:numbered}
 \end{figure}
@@ -327,7 +328,7 @@ The |ZipperType| denotes a leaf in our input expression. In the
 previous example, the following |ZipperType| corresponds to the third leaf:
 
 \begin{figure}[h]
-  \includegraphics{figure3}
+  \input{figures/figure3}
   \caption{Example of \emph{configuration} for leaf number 3}
   \label{fig:example_zipper}
 \end{figure}
@@ -346,7 +347,7 @@ In order to record the necessary information, we redefine the |Stack| type as fo
   data Stack2 : Set where
     Left   : Expr -> Stack2 -> Stack2
     Right  : (n : Nat) -> (e : Expr) -> eval e == n -> Stack2 -> Stack2
-    Top    : Stack
+    Top    : Stack2
 \end{code}
 The |Right| constructor now not only stores the value |n|, but also
 records the subexpression |e| and the proof that |e| evaluates to
@@ -354,6 +355,8 @@ records the subexpression |e| and the proof that |e| evaluates to
 type, we claim that the expression |e| and equality are not necessary
 at run-time, but only required for the proof of well-foundedness -- a
 point we will return to in our discussion (Section~\ref{sec:discussion}).
+
+
 
 We can now recover the input expression from our |ZipperType|. This is
 analogous to the |plug| operation on zippers:
@@ -397,7 +400,7 @@ We now consider the value of |ZipperType| corresponding to
 leaves with numbers 3 and 4 in our running example:
 
 \begin{figure}[h]
-  \includegraphics{figure4}
+  \includegraphics[angle=-90]{figure4}
   \caption{Comparison of \emph{configurations} for leaves 4 and 3}
   \label{fig:example_zipper}
 \end{figure}
@@ -654,6 +657,7 @@ tail-recursive evaluator.
 %} end of intro.fmt
 
 \section{A generic tail recursive traversal}
+\label{sec:generic}
 %{ begining of generic.fmt
 %include generic.fmt
 The previous section showed how to prove that our hand-written tail
@@ -830,6 +834,14 @@ produce a value of type |interpl R interpr X|:
   plug (R O* Q)  eta  (inj2 (r , dq) , x)  = (fmap R eta r , plug Q eta (dq , x))
 \end{code}
 
+In order to ease things later, we bundle a \emph{dissection} together with the
+functor to which it \emph{plug}s as a type-indexed type.
+
+\begin{code}
+  data IxDissection (R : Reg) (X Y : Set) (eta : Y → X) (tx : interpl R interpr X) : Set where
+    prodOp : (d : Dissection R X Y) → plug R X Y d eta == tx → IxDissection R X Y eta tx 
+\end{code}
+
 \subsection*{Generic configurations}
 
 While the \emph{dissection} computes the bifunctor \emph{underlying}
@@ -840,6 +852,8 @@ the current subtree in focus, we store the partial results arising
 from the subtrees that we have already processed; on the right, we
 store the subtrees that still need to be visited.
 
+%{
+%format Stack2 = "\AD{Stack\ensuremath{^{+}}}"
 As we did for the |Stack2| data type from the introduction, we also
 choose to store the original subtrees that have been visited and their
 corresponding correctness proofs:
@@ -854,13 +868,14 @@ corresponding correctness proofs:
   Stack : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
   Stack R X alg = List (nabla R (Computed R X alg) (mu R))
 \end{code}
-A \emph{stack} in a list of \emph{dissections}. To the left we have
+A \emph{stack} is a list of \emph{dissections}. To the left we have
 the |Computed| results; to the right, we have the subtrees of type |mu
 R|. Note that the |Stack| data type is parametrised by the algebra
 |alg|, as the |Proof| field of the |Computed| record refers to it.
+%}
 
 As we saw in Section~\ref{sec:basic-correctness}, we can define two
-different plug operations on these stacks:
+different \emph{plug} operations on these stacks:
 \begin{code}
   plug-mudown  : (R : Reg) -> {alg : interpl R interpr X -> X}
                -> mu R -> Stack R X alg → mu R
@@ -909,15 +924,14 @@ without recursive subtrees:
 Just as we saw previously, a configuration is now given by the current
 leaf in focus and the stack, given by a dissection, storing partial
 results and unprocessed subtrees:
-%format ZipperType = Config
 \begin{code}
-  ZipperType : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
-  ZipperType R X alg = Leaf R X * Stack R X alg
+  Zipper : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
+  Zipper R X alg = Leaf R X * Stack R X alg
 \end{code}
 
 Finally, we can recompute the original tree using a |plug| function as before:
 \begin{code}
-  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → ZipperType R X alg → μ R →  Set
+  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → μ R →  Set
   plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
 \end{code}
 Note that the |coerce| function is used to embed a leaf into a larger
@@ -977,12 +991,17 @@ Q X alg| is the current stack. The entire function will compute the
 initial configuration of our machine of type |Zipper Q X alg| or
 terminate immediately and return a value of type |X|.
 
-
 \begin{code}
 load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R
       -> Stack R X alg -> Zipper R X alg U+ X
 load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
+
+The function |first-cps| has two continuations as arguments: The first,|-- 1|, is used
+to gradually build the \emph{dissection} corresponding to the functorial layer
+we are traversing. The second,|-- 2|, serves to continue on another branch in case
+one of the non-recursive base cases is reached.
+
 We shall fill the definition of |first-cps| by cases.  The clauses for the base
 cases are as expected. In |Zero| there is nothing to be done. The |One| and
 |K A| codes consist of applying the second continuation to the tree and the \emph{stack}.
@@ -991,10 +1010,11 @@ cases are as expected. In |Zero| there is nothing to be done. The |One| and
   first-cps One  Q x k f s    = f (tt , NonRec-One) s
   first-cps (K A) Q x k f s   = f (x , NonRec-K A x) s
 \end{code}
-In case we find an occurrence of a recursive subtree, we discard the current
-continuation for when we do not find subtrees, and use plain recursion. The
-\emph{stack} passed in the recursive call is incremented with a new element that
-corresponds to the \emph{dissection} of the functor layer up to that point.
+The recursive case, constructor |I|, corresponds to the ocurrence of a subtree.
+The function |first-cps| is recursively called over that subtree with the stack
+incremented by a new element that corresponds to the \emph{dissection} of the
+functor layer up to that point. The second continuation is replaced with the
+initial one.
 \begin{code}
   first-cps I Q (In x) k f s  = first-cps Q Q x id (lambda z  → inj1 . prodOp z) (k tt :: s)
 \end{code}
@@ -1005,12 +1025,12 @@ use of different constructors in the continuations.
     where cont (l , isl) = f ((inj1 l) , NonRec-+1 R Q l isl)
   first-cps (R O+ Q) P (inj2 y) k f s = first-cps Q P y  (k . inj2) (lambda -> ...) s
 \end{code}
-The interesting clause is the one that deals with the product. First we recurse
-on the left part of it trying to find a subtree to recurse over. However, it may
-be the case that on the left component there are not subtrees at all, thus we
-pass as a continuation a call to |first-cps| over the right part of the product.
-This might fail as well to find a subtree in which case we have to give up and
-return the leaf as is.
+The interesting clause is the one that deals with the product. First the
+function |first-cps| is recursively called on the left component  of the pair
+trying to find a subtree to recurse over. However, it may be the case that there
+are no subtrees at all, thus it is passed as the first continuation a call to
+|first-cps| over the right component of the product.  In case the
+continuation fails to to find a subtree, it returns the leaf as it is.
 \begin{code}
   first-cps (R O* Q) P (r , q) k f s  = first-cps R P r  (k . inj1 . (_, q)) cont s
     where cont (l , isl) = first-cps Q P q (k . inj2 . prodOp (coerce l isl)) cont'
@@ -1019,27 +1039,27 @@ return the leaf as is.
 
 \subsection*{Unload}
 
-Armed with |load| we turn our attention to |unload|. First of all, it is necessary
-to define an auxiliary function, |right|, that given dissection and an element
-to fill the hole finds either a new one hole context and the value inhabiting it
-or it realizes there no occurrences of the variable left thus returning the full
-structure.
+Armed with |load| we turn our attention to |unload|. First of all, it is
+necessary to define an auxiliary function, |right|, that given a
+\emph{dissection} and a value (of the type of the left variables), either finds
+a dissection |Dissection R X Y| or it shows that  there are no occurrences of
+the variable left. In the latter case, it returns the functor interpreted over
+|X|, | interpl R interpl X|.
 
 \begin{code}
-  right  : (R : Reg) -> nabla R X Y -> X -> (interpl R interpr X) U+ (nabla R X Y * Y)
+  right  : (R : Reg) -> nabla R X Y -> X -> interpl R interpr X U+ Dissection R X Y
 \end{code}
-\todo{Should we give the definition?}
 
 Its definition is simply by induction over the code |R|, with the special case
 of the product that needs to use another ancillary definition to look for the
-leftmost occurence of the variable position within |interpl R interpr X|.
+leftmost occurrence of the variable position within |interpl R interpr X|.
 
 The function |unload| is defined by induction over the \emph{stack}. If the
 \emph{stack} is empty the job is done and a final value is returned. In case the
 \emph{stack} has at least one \emph{dissection} in its head, the function
 |right| is called to check whether there are any more holes left. If there are
-none, a recursive call to |unload|, otherwise, if there is still a subtree to be
-processed, it a call to the function |load| is made to traverse it to its leftmost leaf.
+none, a recursive call to |unload| is dispathed, otherwise, if there is still a subtree to be
+processed the function |load| is called.
 
 \begin{code}
   unload : (R : Reg)
@@ -1060,15 +1080,11 @@ the |r| in |inj1 r| is | interpl R interpr (Computed R X alg) |. The functor
 |interpl R interpr| is storing at its leaves both values, subtrees and proofs.
 
 However, what is needed for the recursive call is: First, the functor
-intrepreted over values, | interpl R interpr X|, in order to apply the algebra;
+interpreted over values, | interpl R interpr X|, in order to apply the algebra;
 Second, the functor interpreted over subtrees, | interpl R interpr (mu R)|, to
 keep the original subtree where the value came from; Third, the proof that the
 value equals to applying a |catamorphism| over the subtree.  The function
 |compute| massages |r| to adapt the arguments for the recursive call to |unload|.
-
-\todo{unload preserves}
-
-\todo{STOP HERE}
 
 \subsection*{Relation over generic configurations}
 
@@ -1255,11 +1271,16 @@ function that initiates the computation.
   ... | inj2 y |  [ _   ] = y
 
   tail-rec-cata : (R : Reg) → (alg : interpl R interpr X → X) → mu R → X
-  tail-rec-cata R alg x 
-    = rec R alg (load R alg x []) (IxLtdown-WF R (load R alg x []))
+  tail-rec-cata R alg x  with load R alg x []
+  ... | inj1 z = rec R alg (c , ...) (IxLtdown-WF R c)
+  ... | inj2 _ = bot-elim ...
 \end{code}
 
+
+
+
 \subsection{Correctness, generically}
+\label{sec:correct-gen}
 
 As before, the correctness of |tail-rec-cata| with regard to the function
 |catamorphism| is guaranteed by the parametrization of the construction by the
@@ -1269,8 +1290,7 @@ The proof is straight-forward by exploiting induction over the accessibility
 predicate in the auxiliary recursor. In the base case, when the function |step|
 returns a ground value of type |X|, we have to show that such value is is the
 result of applying the \emph{catamorphism} to the input. Because |step| is a
-wrapper around |unload| we prove the following lemma.
-
+wrapper around |unload| we it is enough to show the following lemma to be true.
 \begin{code}
   unload-correct  : forall  (R : Reg) (alg : interpl R interpr X → X)
                             (t : mu R) (x : X) (eq : catamorphism R alg t == x)
@@ -1278,9 +1298,7 @@ wrapper around |unload| we prove the following lemma.
                   → unload R alg t x eq s == inj2 y
                   → ∀ (e : mu R) → plug-muup R t s == e → catamorphism R alg e == y
 \end{code}
-
 Correctness is then given by the following theorem.
-
 \begin{code}
   correctness  : forall (R : Reg) (alg : interpl R interpr X → X) (t : mu R)
                → catamorphism R alg t == tail-rec-cata R alg t
