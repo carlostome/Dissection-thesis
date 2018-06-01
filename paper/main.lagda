@@ -931,41 +931,58 @@ that work on a reversed stack.
 %{
 %format load = "\AF{load}"
 %format unload = "\AF{unload}"
-In order to write a tail recursive catamorphism, we start by defining the
+To write our tail recursive traversal, we start by defining the
 generic operations that correspond to the functions |load| and |unload| given in
 the introduction (Section~\ref{sec:basics}).
 %}
 \subsection*{Load}
-The function |load| traverses the input term to find the occurrence of the
-leftmost leaf. If at the functor layer there exists a subtree, it stores its
-\emph{dissection}  on the stack and recursively continues on the subtree. On the
-other hand, if there are no subtrees left, the input tree is already a leaf and
-thus is returned.
+The function |load| traverses the input term to find its
+leftmost leaf. Any other subtrees the |load| function encounters are stored
+on the stack. Once the |load| function encounters a constructor without subtrees,
+it is has found the desired leaf.
 
 We write |load| by appealing to an ancillary definition |first-cps|, that uses
-continuation-passing style both to convince Agda's termination checker\footnote{We
-cannot just write a function that searches for the leftmost subtree and then
-call |load| on it because for Agda that subtree is not syntactically smaller}
-and to keep the definition tail recursive. This is a direct consequence of the
-implicit recursive structure at the functorial level.
+continuation-passing style
+to keep the definition tail recursive and obviously structurally recursive.
+If we were to try to define |load| by recursion directly, 
+we would need to find the leftmost subtree and recurse on it --
+but this subtree may not be obviously syntactically smaller.
+
+The type of our |first-cps| function is daunting at first:
 \begin{code}
 first-cps : (R Q : Reg) {alg : interpl Q interpr X -> X}
-          -> interpl R interpr (mu Q)
-          -> (nabla R (Computed Q X alg) (mu Q) -> (nabla Q (Computed Q X alg) (mu Q))) -- 1
-          -> (Leaf R X -> Stack Q X alg -> Zipper Q X alg U+ X) -- 2
-          -> Stack Q X alg
-          -> Zipper Q X alg U+ X
-first-cps = ...
+          ->  interpl R interpr (mu Q)
+          ->  (nabla R (Computed Q X alg) (mu Q)
+               -> (nabla Q (Computed Q X alg) (mu Q)))
+          ->  (Leaf R X -> Stack Q X alg 
+              -> Zipper Q X alg U+ X)
+          ->  Stack Q X alg
+          ->  Zipper Q X alg U+ X
+\end{code}
+The first two arguments are codes of type |Reg|. The code |Q|
+represents the data type for which we are defining a traversal; the
+code |R| is the code on which we pattern match. In the initial call to
+|first-cps| these two codes will be equal. As we define our function,
+we pattern match on |R|, recursing over the codes in (nested) pairs or
+sums -- yet we still want to remember the original code for our data
+type, |Q|.
 
+The next argument of type |interpl R interpr (mu Q)| is the data we
+aim to traverse. Note that the `outermost' layer is of type |R|, but
+the recursive subtrees are of type |mu Q|. The next two arguments are
+two continuations: the first is used to gradually build the
+\emph{dissection} of |R|; the second continues on another branch once
+one of the leaves have been reached. The last argument of type |Stack
+Q X alg| is the current stack. The entire function will compute the
+initial configuration of our machine of type |Zipper Q X alg| or
+terminate immediately and return a value of type |X|.
+
+
+\begin{code}
 load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R
       -> Stack R X alg -> Zipper R X alg U+ X
 load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
-The function |first-cps| has two continuations as arguments. The first,|-- 1|, is used
-to gradually build the \emph{dissection} corresponding to the functorial layer
-we are traversing. The second,|-- 2|, serves to continue on another branch in case
-one of the non-recursive base cases is reached.
-
 We shall fill the definition of |first-cps| by cases.  The clauses for the base
 cases are as expected. In |Zero| there is nothing to be done. The |One| and
 |K A| codes consist of applying the second continuation to the tree and the \emph{stack}.
