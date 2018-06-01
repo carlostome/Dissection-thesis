@@ -79,6 +79,15 @@ In the case for |Add e1 e2|, the |eval| function makes two recursive
 calls and sums their results. Such a function can be implemented using a
 fold, passing the addition and identity functions as the argument
 algebra.
+%
+\begin{code}
+  foldExpr : forall {X : Set} (Nat -> X) -> (X -> X -> X) -> Expr -> X
+  foldExpr alg1 alg2 (Val n)      = alg1 n
+  foldExpr alg1 alg2 (Add e1 e2)  = alg2 (foldExpr alg1 alg2 e1) (foldExpr alg1alg2 e2)
+
+  eval : Expr -> Nat
+  eval = foldExpr id plusOp
+\end{code}
 
 Unfortunately, not all in the garden is rosy. The operator |plusOp|
 needs both of its parameters to be fully evaluated before it can
@@ -888,9 +897,9 @@ different \emph{plug} operations on these stacks:
   plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
 \end{code}
 
-To define the configurations of our abstract machine, we are not
-interested in \emph{any} position in our initial input, but want to
-restrict ourselves to those stacks denote a \emph{leaf}. But what
+To define the configurations of our abstract machine, we are
+interested in \emph{any} through our initial input, but want to
+restrict ourselves to those paths that lead to a leaf. But what
 constitutes a leaf in this generic setting?
 
 To describe leaves, we introduce the following predicate |NonRec|,
