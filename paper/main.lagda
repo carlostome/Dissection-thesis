@@ -81,9 +81,9 @@ fold, passing the addition and identity functions as the argument
 algebra.
 %
 \begin{code}
-  foldExpr : forall {X : Set} (Nat -> X) -> (X -> X -> X) -> Expr -> X
+  foldExpr : (Nat -> X) -> (X -> X -> X) -> Expr -> X
   foldExpr alg1 alg2 (Val n)      = alg1 n
-  foldExpr alg1 alg2 (Add e1 e2)  = alg2 (foldExpr alg1 alg2 e1) (foldExpr alg1alg2 e2)
+  foldExpr alg1 alg2 (Add e1 e2)  = alg2 (foldExpr alg1 alg2 e1) (foldExpr alg1 alg2 e2)
 
   eval : Expr -> Nat
   eval = foldExpr id plusOp
@@ -135,7 +135,7 @@ calling |load| with an initially empty stack:
   tail-rec-eval e = load e Top
 \end{code}
 
-Implementing this tail recursive evaluator has come at a price: Agda's
+Implementing this tail recursive evaluator comes at a price: Agda's
 termination checker flags the |load| and |unload| functions as
 potentially non-terminating by highlighting them
 \nonterm{orange}. Indeed, in the very last clause of the |unload|
@@ -148,7 +148,7 @@ by making the following novel contributions:
 \begin{itemize}
 \item We give a verified proof of termination of |tail-rec-eval| using
   a carefully chosen \emph{well-founded relation}
-  (Section~\ref{sec:basics}--\ref{sec:wf-example}). After redefining |tail-rec-eval| using
+  (\Cref{sec:basics,sec:wf-example}). After redefining |tail-rec-eval| using
   this relation, we can prove the two evaluators equal in Agda.
 \item We generalize this relation and its corresponding proof of
   well-foundedness, inspired by
@@ -156,12 +156,12 @@ by making the following novel contributions:
   \emph{dissections}~\cite{dissection}, to show how to calculate an abstract machine
   from an algebra. To do so, we define a universe of algebraic data
   types and a generic fold operation
-  (Section~\ref{sec:universe}). Subsequently we show how to turn any
+  (\Cref{sec:universe}). Subsequently we show how to turn any
   structurally recursive function defined using a fold into its tail
   recursive counterpart.
 \item Finally, we present how our proofs of termination and semantics
   preservation from our example are generalized to the generic fold
-  (Section~\ref{sec:generic}).
+  (\Cref{sec:generic}).
 \end{itemize}
 Together these results give a verified function that computes a tail
 recursive traversal from any algebra for any algebraic data type.
