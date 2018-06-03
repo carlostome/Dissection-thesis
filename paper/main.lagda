@@ -275,9 +275,9 @@ Stack| and prove that the calls to |unload| produce `smaller'
 states. Finding an appropriate relation and proving its
 well-foundedness is the topic of the next section.
 
-\section{Well-founded tree traversals }
+\section{Well-founded tree traversals}
 \label{sec:wf-example}
-The configurations of our abstract machine can be seen as a variation
+The type of configurations of our abstract machine can be seen as a variation
 of Huet's \emph{zippers}~\citeyearpar{huet}. The zipper associated
 with an expression |e : Expr| is pair of a (sub)expression of |e| and
 its \emph{context}. As demonstrated by~\citet{dissection}, the zippers
@@ -301,7 +301,7 @@ The tail recursive evaluator, |tail-rec-eval| processes the leaves of the input
 expression in a left-to-right fashion. The leftmost leaf -- that is the first
 leaf found after the initial call to |load| -- is the greatest element; the
 rightmost leaf is the smallest. In our example expression from
-Section~\ref{sec:intro}, we would number the leaves as follows:
+\Cref{sec:intro}, we would number the leaves as follows:
 
 \begin{figure}[h]
   \input{figures/figure2}
@@ -323,24 +323,24 @@ two central problems with our choice of |ZipperType| data type:
   to prove the well-foundedness of any relation defined on configurations.
 
 \item The choice of the |Stack| data type, as a path from the leaf to the
-  root is convenient to define the tail recursive machine, but inpractical
-  when defining the desired order relation. The top of a stack stores information about
+  root is convenient to define the tail recursive machine, but impractical
+  when defining the coveted order relation. The top of a stack stores information about
     neighbouring nodes, but to compare two leaves we need \emph{global} information
     about their positions relative to the root.
 \end{enumerate}
 
 We will now address these limitations one by one. Firstly, by refining
 the type of |ZipperType|, we will show how to capture the desired
-invariant (Section~\ref{subsec:stack}). Secondly, we
+invariant (\Cref{subsec:stack}). Secondly, we
 explore a different representation of stacks, as paths from the root, that facilitates
-the definition of the desired order relation (Section~\ref{subsec:topdown}).
+the definition of the desired order relation (\Cref{subsec:topdown}).
 Finally we will define the relation over configurations,
-Section~\ref{subsec:relation}, and sketch the proof of that it is well-founded.
+\Cref{subsec:relation}, and sketch the proof that it is well-founded.
 
 \subsection{Invariant preserving configurations}
 \label{subsec:stack}
 
-The |ZipperType| denotes a leaf in our input expression. In the
+A value of type |ZipperType| denotes a leaf in our input expression. In the
 previous example, the following |ZipperType| corresponds to the third leaf:
 
 \begin{figure}[h]
@@ -349,10 +349,11 @@ previous example, the following |ZipperType| corresponds to the third leaf:
   \label{fig:example_zipper}
 \end{figure}
 
-As we observed previously, we would like to refine the type |ZipperType| to capture
-the invariant that execution preserves: every |ZipperType| denotes a unique leaf
-in our input expression.
-There is one problem: the |Stack| data type stores the values of the subtrees that have
+As we observed previously, we would like to refine the type |ZipperType| to
+capture the invariant that execution preserves: every |ZipperType| denotes a
+unique leaf in our input expression, or equivalently, a state of the abstract
+machine that computes the fold.
+There is one problem yet: the |Stack| data type stores the values of the subtrees that have
 been evaluated, but does not store the subtrees themselves.
 In the example in Figure~\ref{fig:example_zipper}, 
 when the traversal has reached the third leaf, all the
@@ -371,28 +372,29 @@ records the subexpression |e| and the proof that |e| evaluates to
 type, we claim that the expression |e| and equality are not necessary
 at run-time, but only required for the proof of well-foundedness -- a
 point we will return to in our discussion (Section~\ref{sec:discussion}).
-
-
-
-We can now recover the input expression from our |ZipperType|. This is
-analogous to the |plug| operation on zippers:
+From now onwards, the type |ZipperType| uses |Stack2| as its right 
+component:
+\begin{code}
+ZipperType = (Nat * Stack2)
+\end{code}
+A value of type |ZipperType| now contains enough information to recover the input
+expression. This is analogous to the |plug| operation on zippers:
 \begin{code}
   plugup : Expr -> Stack2 -> Expr
-  plugup e []                      = e
-  plugup e (Left t        :: stk)  = plugup (Add e t) stk
-  plugup e (Right n t eq  :: stk)  = plugup (Add t e) stk
+  plugup e []                     = e
+  plugup e (Left t       :: stk)  = plugup (Add e t) stk
+  plugup e (Right _ t _  :: stk)  = plugup (Add t e) stk
 
   plugZup : ZipperType -> Expr
   plugZup (n , stk) = plugup (Val n) stk
 \end{code}
 
-Any two terms of type |ZipperType| may still represent states of a fold
-over two entirely different expressions. As we aim to define an order relation,
-comparing positions during the traversal of the input expression, we need to ensure
-that we only ever compare two positions in the same tree. We can \emph{statically} enforce
-such requirement by
-defining a new wrapper data type over |ZipperType| that records the 
-original input expression:
+Any two terms of type |ZipperType| may still represent states of a fold over two
+entirely different expressions. As we aim to define an order relation comparing
+configurations during the fold of the input expression, we need to ensure that
+we only ever compare configurations within the same expression. We
+can \emph{statically} enforce such requirement by defining a new wrapper data
+type over |ZipperType| that records the original input expression:
 
 \begin{code}
   data Zipperup (e : Expr) : Set where
