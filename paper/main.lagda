@@ -207,40 +207,45 @@ Agda's termination checker of this?
 
 As a first approximation, we revise the definitions of |load| and
 |unload|. Rather than consuming the entire input in one go with a pair
-of mutually recursive functions, we begin by defining |load| as follows:
-\begin{code}
-  load : Expr -> Stack -> (Nat * Stack) U+ Nat
-  load (Val n)      stk = inj1 (n , stk)
-  load (Add e1 e2)  stk = load e1 (Left e2 stk)
-\end{code}
-Rather than call |unload| upon reaching a value, we return\footnote{Even though
-the function always returns a |Nat * Stack|, we enclose it in a sum type to keep
-|unload| tail-recursive.} the current stack and the value of the leftmost leaf.
+of mutually recursive functions, we rewrite them to compute one "step" of the
+fold.
 
-The function |unload| is defined by recursion over the stack as
-before, but with one crucial difference. Instead of always returning the
-final result, it may also return a new configuration of our abstract
-machine, that is, a pair |Nat * Stack|:
+The function |unload| is defined by recursion over the stack as before, but with
+one crucial difference. Instead of always returning the final result, it may
+also\footnote{|U+| is Agda's type of disjoin union.} return a new configuration
+of our abstract machine, that is, a pair |Nat * Stack|:
 \begin{code}
   unload : Nat -> Stack -> (Nat * Stack) U+ Nat
   unload v   Top             = inj2 v
   unload v   (Right v' stk)  = unload (v' + v) stk
   unload v   (Left r stk)    = load r (Right v stk)
 \end{code}
-Both these functions are now accepted by Agda's termination checker as
-they are clearly structurally recursive.
+The other crucial difference arises from the definition of |load|:
+\begin{code}
+  load : Expr -> Stack -> (Nat * Stack) U+ Nat
+  load (Val n)      stk = inj1 (n , stk)
+  load (Add e1 e2)  stk = load e1 (Left e2 stk)
+\end{code}
+Rather than calling |unload| upon reaching a value, it returns the current stack
+and the value of the leftmost leaf\footnote{Even though |load| never returns a
+|inj2|, we choose to have |U+| in the type to transfer the control flow from
+|unload|.}.
 
-We can use both these functions to define the following evaluator:
+Both these functions are now accepted by Agda's termination checker as
+they are clearly structurally recursive. We can use both these functions 
+to define the following evaluator:
 %{
 %format nrec   = "\nonterm{" rec "}"
 \begin{code}
   tail-rec-eval : Expr -> Nat
-  tail-rec-eval e = rec (load e Top)
+  tail-rec-eval e with load e Top
+  ... | inj2 n          = n
+  ... | inj1 (n , stk)  = rec (n , stk)
     where
       nrec : (Nat * Stack) -> Nat
       rec (n , stk) with unload n stk
-      ... | inj1 (n' , stk' ) = nrec (n' , stk')
-      ... | inj2 r = r
+      ... | inj1 (n' , stk' )  = nrec (n' , stk')
+      ... | inj2 r             = r
 \end{code}
 %}
 Here we use |load| to compute the initial configuration of our machine
@@ -255,12 +260,14 @@ call to |unload|, and a proof that the relation is well-founded, we
 can define the following version of the tail recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
-  tail-rec-eval e = rec (load e Top) ??1
+  tail-rec-eval e with load e Top
+  ... | inj2 n          = n
+  ... | inj1 (n , stk)  = rec (n , stk) ??1
     where
       rec : (c : Nat * Stack) -> Acc ltOp c -> Nat
       rec (n , stk) (acc rs) with unload n stk
-      ... | inj1 (n' , stk') = rec (n' , stk') (rs ??2)
-      ... | inj2 v = v
+      ... | inj1 (n' , stk')  = rec (n' , stk') (rs ??2)
+      ... | inj2 r            = r
 \end{code}
 To complete this definition, we still need to define a suitable
 well-founded relation |ltOp| between configurations of type |Nat *
