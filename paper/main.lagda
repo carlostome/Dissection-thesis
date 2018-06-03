@@ -109,7 +109,7 @@ been evaluated.
     Right  : Nat   -> Stack -> Stack
 \end{code}
 
-We can define a tail-recursive evaluation function by means of a
+We can define a tail recursive evaluation function by means of a
 pair of mutually recursive functions, |load| and |unload|. The |load|
 function traverses the expressions, pushing subtrees on the
 stack; the |unload| function unloads the stack, while accumulating a
@@ -175,24 +175,24 @@ Before tackling the generic case, we will present the termination
 and correctness proof for the tail recursive evaluator presented in
 the introduction in some detail.
 
-The problematic call for Agda's termination checker is the last clause
-of the |unload| function, that calls |load| on the expression stored
-on the top of the stack. At this point, there is no reason to believe
-that the expression on the top of the stack is structurally smaller in
-any way. Indeed, if we were to redefine |load| as follows:
+The problematic call for Agda's termination checker is the last clause of the
+|unload| function, that calls |load| on the expression stored on the top of the
+stack. From the definition of |load|, it is clear that we only ever push
+subtrees of the input on the stack. However, the termination checker has no
+reason to believe that the expression on the top of the stack is structurally
+smaller in any way. Indeed, if we were to redefine |load| as follows:
 \begin{code}
     load (Add e1 e2)  stk = load e1 (Left (f e2) stk)
 \end{code}
 we might use some function |f : Expr -> Expr| to push \emph{arbitrary}
 expressions on the stack, potentially leading to non-termination.
 
-From the definition of |load|, however, it is clear that we only ever
-push subtrees of the input on the stack. As a result, every node in
-the original tree is visited at twice during the execution: first when
-the function |load| traverses the tree, until it finds the leftmost
-leaf; second when |unload| inspects the stack in searching of an
-unevaluated subtree. This process is depicted in
-Figure~\ref{fig:load-unload}.
+The functions |load| and |unload| use the stack to store subtrees and partial
+results while folding the input expression. Thus, every node in the original
+tree is visited twice during the execution: first when the function |load|
+traverses the tree, until it finds the leftmost leaf; second when |unload|
+inspects the stack in searching of an unevaluated subtree. This process is
+depicted in Figure~\ref{fig:load-unload}.
 
 \begin{figure}
   % \includegraphics[angle=90]{figure2}
@@ -205,7 +205,7 @@ As there are finitely many nodes on a tree, the depicted traversal
 using |load| and |unload| must terminate -- but how can we convince
 Agda's termination checker of this?
 
-As a first approximation, we will revise the definitions of |load| and
+As a first approximation, we revise the definitions of |load| and
 |unload|. Rather than consuming the entire input in one go with a pair
 of mutually recursive functions, we begin by defining |load| as follows:
 \begin{code}
