@@ -33,9 +33,9 @@
 
 \begin{abstract}
   Folds are a useful abstraction in every functional programmer's toolbox. Yet they
-  are not tail recursive functions. Writing tail
+  are not tail-recursive functions. Writing tail
   recursive functions by hand is boring/hard. This paper attempts to nail down
-  the generic construction that produces the tail recursive counterpart of any
+  the generic construction that produces the tail-recursive counterpart of any
   recursive function defined as a fold. This allows programmers to work at a
   high-level of abstraction (folds) without sacrificing performance (tail
   recursion). \fixme{Polish abstract}
@@ -96,9 +96,9 @@ stack used during execution grows linearly with the size of the input,
 potentially leading to a stack overflow on large inputs.
 
 To address this problem, we can manually rewrite the evaluator to be
-\emph{tail recursive}. Modern compilers typically map tail recursive
+\emph{tail-recursive}. Modern compilers typically map tail-recursive
 functions to machine code that runs in constant memory. To write such
-a tail recursive function, we need to introduce an explicit stack
+a tail-recursive function, we need to introduce an explicit stack
 storing both intermediate results and the subtrees that have not yet
 been evaluated.
 
@@ -109,7 +109,7 @@ been evaluated.
     Right  : Nat   -> Stack -> Stack
 \end{code}
 
-We can define a tail recursive evaluation function by means of a
+We can define a tail-recursive evaluation function by means of a
 pair of mutually recursive functions, |load| and |unload|. The |load|
 function traverses the expressions, pushing subtrees on the
 stack; the |unload| function unloads the stack, while accumulating a
@@ -127,7 +127,7 @@ stack; the |unload| function unloads the stack, while accumulating a
     unload v   (Left r stk)    = loadN r (Right v stk)
 \end{code}
 
-We can now define a tail recursive version of |eval| by
+We can now define a tail-recursive version of |eval| by
 calling |load| with an initially empty stack:
 
 \begin{code}
@@ -135,16 +135,15 @@ calling |load| with an initially empty stack:
   tail-rec-eval e = load e Top
 \end{code}
 
-Implementing this tail recursive evaluator comes at a price: Agda's
+Implementing this tail-recursive evaluator comes at a price: Agda's
 termination checker flags the |load| and |unload| functions as
 potentially non-terminating by highlighting them
 \nonterm{orange}. Indeed, in the very last clause of the |unload|
 function a recursive call is made to arguments that are not
 syntactically smaller. Furthermore, it is not clear at all that the
-tail recursive evaluator produces the same result as our original
+tail-recursive evaluator produces the same result as our original
 one. It is precisely these issues that this paper tackles
 by making the following novel contributions:
-\fixme{be consistent naming tail recursive}
 \begin{itemize}
 \item We give a verified proof of termination of |tail-rec-eval| using
   a carefully chosen \emph{well-founded relation}
@@ -172,7 +171,7 @@ available online.\footnote{\url{https://github.com/carlostome/Dissection-thesis}
 \section{Termination and tail-recursion}
 \label{sec:basics}
 Before tackling the generic case, we will present the termination
-and correctness proof for the tail recursive evaluator presented in
+and correctness proof for the tail-recursive evaluator presented in
 the introduction in some detail.
 
 The problematic call for Agda's termination checker is the last clause of the
@@ -257,7 +256,7 @@ state, |(n' , stk')|, is not structurally smaller than the initial
 state |(n , stk)|. If we work under the assumption that we have a
 relation between the states |Nat * Stack| that decreases after every
 call to |unload|, and a proof that the relation is well-founded, we
-can define the following version of the tail recursive evaluator:
+can define the following version of the tail-recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e with load e Top
@@ -284,7 +283,7 @@ its \emph{context}. As demonstrated by~\citet{dissection}, the zippers
 can be generalized further to \emph{dissections}, where the values to
 the left and right of the current subtree may have different types. It
 is precisely this observation that we will exploit when considering
-the generic tail recursive traversals in the later sections; for now,
+the generic tail-recursive traversals in the later sections; for now,
 however, we will only rely on the intuition that the configurations of
 our abstract machine, given by the type |Nat * Stack|, are an instance
 of \emph{dissections}, corresponding to a partially evaluated
@@ -297,7 +296,7 @@ These configurations, are more restrictive than dissections in
 general. In particular, the configurations presented in the previous
 section \emph{only} ever denote a \emph{leaf} in the input expression.
 
-The tail recursive evaluator, |tail-rec-eval| processes the leaves of the input
+The tail-recursive evaluator, |tail-rec-eval| processes the leaves of the input
 expression in a left-to-right fashion. The leftmost leaf -- that is the first
 leaf found after the initial call to |load| -- is the greatest element; the
 rightmost leaf is the smallest. In our example expression from
@@ -323,7 +322,7 @@ two central problems with our choice of |ZipperType| data type:
   to prove the well-foundedness of any relation defined on configurations.
 
 \item The choice of the |Stack| data type, as a path from the leaf to the
-  root is convenient to define the tail recursive machine, but impractical
+  root is convenient to define the tail-recursive machine, but impractical
   when defining the coveted order relation. The top of a stack stores information about
     neighbouring nodes, but to compare two leaves we need \emph{global} information
     about their positions relative to the root.
@@ -402,7 +401,7 @@ type over |ZipperType| that records the original input expression:
 \end{code}
 
 For a given expression |e : Expr|, any two terms of type |Zipperup e| are
-configurations of the same abstract machine during the tail recursive fold over
+configurations of the same abstract machine during the tail-recursive fold over
 the expression |e|.
 
 \subsection{Up and down configurations}
@@ -543,7 +542,7 @@ manipulates elements of the |ZipperType| directly, with no further
 constraints relating these to the original input expression.
 
 In the remainder of this section, we will reconcile these differences, complete
-the definition of our tail recursive evaluator and finally prove its
+the definition of our tail-recursive evaluator and finally prove its
 correctness.
 
 \paragraph{Decreasing recursive calls}
@@ -620,7 +619,6 @@ The function |tail-rec-eval| is now completed as follows.
   ...  | inj1 z' | [ Is ]
        = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
 \end{code}
-\newpage
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e with load e []
@@ -674,7 +672,7 @@ This finally completes the definition and verification of a
 tail-recursive evaluator. 
 %} end of intro.fmt
 
-\section{A generic tail recursive traversal}
+\section{A generic tail-recursive traversal}
 \label{sec:generic}
 %{ begining of generic.fmt
 %include generic.fmt
@@ -963,7 +961,7 @@ that work on a reversed stack.
 %{
 %format load = "\AF{load}"
 %format unload = "\AF{unload}"
-In order to write a tail recursive catamorphism, we start by defining the
+In order to write a tail-recursive catamorphism, we start by defining the
 generic operations that correspond to the functions |load| and |unload| given in
 the introduction (Section~\ref{sec:basics}).
 %}
@@ -978,7 +976,7 @@ We write |load| by appealing to an ancillary definition |first-cps|, that uses
 continuation-passing style both to convince Agda's termination checker\footnote{We
 cannot just write a function that searches for the leftmost subtree and then
 calls |load| because that subtree would not be syntactically smaller.}
-and to keep the definition tail recursive. This is a direct consequence of the
+and to keep the definition tail-recursive. This is a direct consequence of the
 implicit recursive structure at the functorial level.
 \begin{code}
 first-cps : (R Q : Reg) {alg : interpl Q interpr X -> X}
@@ -1189,9 +1187,9 @@ therefore here we only spell its signature.
                            -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
-\subsection{A Generic tail recursive machine}
+\subsection{A generic tail-recursive machine}
 
-We are ready to construct a generic tail recursive machine. In order to so we
+We are ready to construct a generic tail-recursive machine. In order to so we
 have to develop the necessary glue to put the pieces together. We follow the 
 same outline as in Section~\ref{sec:basic-assembling}.
 
