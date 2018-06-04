@@ -32,13 +32,15 @@
 \email{w.s.swierstra@@uu.nl}
 
 \begin{abstract}
-  Folds are a useful abstraction in every functional programmer's toolbox. Yet they
-  are not tail recursive functions. Writing tail
-  recursive functions by hand is boring/hard. This paper attempts to nail down
-  the generic construction that produces the tail recursive counterpart of any
-  recursive function defined as a fold. This allows programmers to work at a
-  high-level of abstraction (folds) without sacrificing performance (tail
-  recursion). \fixme{Polish abstract}
+  Many functions over algebraic datatypes can be expressed in terms of
+  a fold. Doing so, however, has one notable drawback: folds are not
+  tail-recursive. As a result, a function defined in terms of a fold
+  may raise a stack overflow when executed. This paper defines a
+  datatype generic, tail-recursive evaluator\wouter{evaluator?
+    abstract machine? traversal? recursion principle?} and proves it
+  produces the same result as the fold. Doing so combines the
+  compositional nature of folds and the performance benefits of
+  a hand-written tail-recursive function in a single setting.
 \end{abstract}
 
 \include{ccs}
