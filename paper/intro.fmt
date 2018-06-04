@@ -68,6 +68,7 @@
 %format dotted = "\AS{.}\hspace*{-0.1cm}"
 %format prodOp = "\AI{\_\text{,}\_}"
 %format convert   = "\AF{convert}"
+%format foldExpr   = "\AF{fold}"
 
 
 %format <-Well-founded = "\AF{<\text{-}Well-founded}"
@@ -76,6 +77,7 @@
 %format Zipperup-to-Zipperdown = "\AF{Zipper\ensuremath{\Uparrow}-to-Zipper\ensuremath{\Downarrow}}"
 
 % Bound variables
+%format X    = "\AB{X}"
 %format ac    = "\AB{ac}"
 %format n     = "\AB{n}"
 %format n'     = "\AB{n''}"
@@ -111,6 +113,8 @@
 %format t1'    = "\AB{\ensuremath{t_1}''}"
 %format t2' = "\AB{\ensuremath{t_2}''}"
 %format pr = "\AB{pr}"
+%format alg1 = "\AB{\ensuremath{\phi_1}}"
+%format alg2 = "\AB{\ensuremath{\phi_2}}"
 
 %format loadN   = "\nonterm{" load "}"
 %format unloadN = "\nonterm{" unload "}"

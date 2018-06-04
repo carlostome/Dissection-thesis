@@ -79,6 +79,15 @@ In the case for |Add e1 e2|, the |eval| function makes two recursive
 calls and sums their results. Such a function can be implemented using a
 fold, passing the addition and identity functions as the argument
 algebra.
+%
+\begin{code}
+  foldExpr : (Nat -> X) -> (X -> X -> X) -> Expr -> X
+  foldExpr alg1 alg2 (Val n)      = alg1 n
+  foldExpr alg1 alg2 (Add e1 e2)  = alg2 (foldExpr alg1 alg2 e1) (foldExpr alg1 alg2 e2)
+
+  eval : Expr -> Nat
+  eval = foldExpr id plusOp
+\end{code}
 
 Unfortunately, not all in the garden is rosy. The operator |plusOp|
 needs both of its parameters to be fully evaluated before it can
@@ -100,7 +109,7 @@ been evaluated.
     Right  : Nat   -> Stack -> Stack
 \end{code}
 
-We can define a tail-recursive evaluation function by means of a
+We can define a tail recursive evaluation function by means of a
 pair of mutually recursive functions, |load| and |unload|. The |load|
 function traverses the expressions, pushing subtrees on the
 stack; the |unload| function unloads the stack, while accumulating a
@@ -126,7 +135,7 @@ calling |load| with an initially empty stack:
   tail-rec-eval e = load e Top
 \end{code}
 
-Implementing this tail recursive evaluator has come at a price: Agda's
+Implementing this tail recursive evaluator comes at a price: Agda's
 termination checker flags the |load| and |unload| functions as
 potentially non-terminating by highlighting them
 \nonterm{orange}. Indeed, in the very last clause of the |unload|
@@ -139,7 +148,7 @@ by making the following novel contributions:
 \begin{itemize}
 \item We give a verified proof of termination of |tail-rec-eval| using
   a carefully chosen \emph{well-founded relation}
-  (Section~\ref{sec:basics}--\ref{sec:wf-example}). After redefining |tail-rec-eval| using
+  (\Cref{sec:basics,sec:wf-example}). After redefining |tail-rec-eval| using
   this relation, we can prove the two evaluators equal in Agda.
 \item We generalize this relation and its corresponding proof of
   well-foundedness, inspired by
@@ -147,12 +156,12 @@ by making the following novel contributions:
   \emph{dissections}~\cite{dissection}, to show how to calculate an abstract machine
   from an algebra. To do so, we define a universe of algebraic data
   types and a generic fold operation
-  (Section~\ref{sec:universe}). Subsequently we show how to turn any
+  (\Cref{sec:universe}). Subsequently we show how to turn any
   structurally recursive function defined using a fold into its tail
   recursive counterpart.
 \item Finally, we present how our proofs of termination and semantics
   preservation from our example are generalized to the generic fold
-  (Section~\ref{sec:generic}).
+  (\Cref{sec:generic}).
 \end{itemize}
 Together these results give a verified function that computes a tail
 recursive traversal from any algebra for any algebraic data type.
@@ -166,24 +175,24 @@ Before tackling the generic case, we will present the termination
 and correctness proof for the tail recursive evaluator presented in
 the introduction in some detail.
 
-The problematic call for Agda's termination checker is the last clause
-of the |unload| function, that calls |load| on the expression stored
-on the top of the stack. At this point, there is no reason to believe
-that the expression on the top of the stack is structurally smaller in
-any way. Indeed, if we were to redefine |load| as follows:
+The problematic call for Agda's termination checker is the last clause of the
+|unload| function, that calls |load| on the expression stored on the top of the
+stack. From the definition of |load|, it is clear that we only ever push
+subtrees of the input on the stack. However, the termination checker has no
+reason to believe that the expression on the top of the stack is structurally
+smaller in any way. Indeed, if we were to redefine |load| as follows:
 \begin{code}
     load (Add e1 e2)  stk = load e1 (Left (f e2) stk)
 \end{code}
 we might use some function |f : Expr -> Expr| to push \emph{arbitrary}
 expressions on the stack, potentially leading to non-termination.
 
-From the definition of |load|, however, it is clear that we only ever
-push subtrees of the input on the stack. As a result, every node in
-the original tree is visited at twice during the execution: first when
-the function |load| traverses the tree, until it finds the leftmost
-leaf; second when |unload| inspects the stack in searching of an
-unevaluated subtree. This process is depicted in
-Figure~\ref{fig:load-unload}.
+The functions |load| and |unload| use the stack to store subtrees and partial
+results while folding the input expression. Thus, every node in the original
+tree is visited twice during the execution: first when the function |load|
+traverses the tree, until it finds the leftmost leaf; second when |unload|
+inspects the stack in searching of an unevaluated subtree. This process is
+depicted in Figure~\ref{fig:load-unload}.
 
 \begin{figure}
   % \includegraphics[angle=90]{figure2}
@@ -196,42 +205,47 @@ As there are finitely many nodes on a tree, the depicted traversal
 using |load| and |unload| must terminate -- but how can we convince
 Agda's termination checker of this?
 
-As a first approximation, we will revise the definitions of |load| and
+As a first approximation, we revise the definitions of |load| and
 |unload|. Rather than consuming the entire input in one go with a pair
-of mutually recursive functions, we begin by defining |load| as follows:
-\begin{code}
-  load : Expr -> Stack -> (Nat * Stack) U+ Nat
-  load (Val n)      stk = inj1 (n , stk)
-  load (Add e1 e2)  stk = load e1 (Left e2 stk)
-\end{code}
-Rather than call |unload| upon reaching a value, we return\footnote{Even though
-the function always returns a |Nat * Stack|, we enclose it in a sum type to keep
-|unload| tail-recursive.} the current stack and the value of the leftmost leaf.
+of mutually recursive functions, we rewrite them to compute one "step" of the
+fold.
 
-The function |unload| is defined by recursion over the stack as
-before, but with one crucial difference. Instead of always returning the
-final result, it may also return a new configuration of our abstract
-machine, that is, a pair |Nat * Stack|:
+The function |unload| is defined by recursion over the stack as before, but with
+one crucial difference. Instead of always returning the final result, it may
+also\footnote{|U+| is Agda's type of disjoin union.} return a new configuration
+of our abstract machine, that is, a pair |Nat * Stack|:
 \begin{code}
   unload : Nat -> Stack -> (Nat * Stack) U+ Nat
   unload v   Top             = inj2 v
   unload v   (Right v' stk)  = unload (v' + v) stk
   unload v   (Left r stk)    = load r (Right v stk)
 \end{code}
-Both these functions are now accepted by Agda's termination checker as
-they are clearly structurally recursive.
+The other crucial difference arises from the definition of |load|:
+\begin{code}
+  load : Expr -> Stack -> (Nat * Stack) U+ Nat
+  load (Val n)      stk = inj1 (n , stk)
+  load (Add e1 e2)  stk = load e1 (Left e2 stk)
+\end{code}
+Rather than calling |unload| upon reaching a value, it returns the current stack
+and the value of the leftmost leaf\footnote{Even though |load| never returns a
+|inj2|, we choose to have |U+| in the type to transfer the control flow from
+|unload|.}.
 
-We can use both these functions to define the following evaluator:
+Both these functions are now accepted by Agda's termination checker as
+they are clearly structurally recursive. We can use both these functions 
+to define the following evaluator:
 %{
 %format nrec   = "\nonterm{" rec "}"
 \begin{code}
   tail-rec-eval : Expr -> Nat
-  tail-rec-eval e = rec (load e Top)
+  tail-rec-eval e with load e Top
+  ... | inj2 n          = n
+  ... | inj1 (n , stk)  = rec (n , stk)
     where
       nrec : (Nat * Stack) -> Nat
       rec (n , stk) with unload n stk
-      ... | inj1 (n' , stk' ) = nrec (n' , stk')
-      ... | inj2 r = r
+      ... | inj1 (n' , stk' )  = nrec (n' , stk')
+      ... | inj2 r             = r
 \end{code}
 %}
 Here we use |load| to compute the initial configuration of our machine
@@ -246,12 +260,14 @@ call to |unload|, and a proof that the relation is well-founded, we
 can define the following version of the tail recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
-  tail-rec-eval e = rec (load e Top) ??1
+  tail-rec-eval e with load e Top
+  ... | inj2 n          = n
+  ... | inj1 (n , stk)  = rec (n , stk) ??1
     where
       rec : (c : Nat * Stack) -> Acc ltOp c -> Nat
       rec (n , stk) (acc rs) with unload n stk
-      ... | inj1 (n' , stk') = rec (n' , stk') (rs ??2)
-      ... | inj2 v = v
+      ... | inj1 (n' , stk')  = rec (n' , stk') (rs ??2)
+      ... | inj2 r            = r
 \end{code}
 To complete this definition, we still need to define a suitable
 well-founded relation |ltOp| between configurations of type |Nat *
@@ -259,9 +275,9 @@ Stack| and prove that the calls to |unload| produce `smaller'
 states. Finding an appropriate relation and proving its
 well-foundedness is the topic of the next section.
 
-\section{Well-founded tree traversals }
+\section{Well-founded tree traversals}
 \label{sec:wf-example}
-The configurations of our abstract machine can be seen as a variation
+The type of configurations of our abstract machine can be seen as a variation
 of Huet's \emph{zippers}~\citeyearpar{huet}. The zipper associated
 with an expression |e : Expr| is pair of a (sub)expression of |e| and
 its \emph{context}. As demonstrated by~\citet{dissection}, the zippers
@@ -285,7 +301,7 @@ The tail recursive evaluator, |tail-rec-eval| processes the leaves of the input
 expression in a left-to-right fashion. The leftmost leaf -- that is the first
 leaf found after the initial call to |load| -- is the greatest element; the
 rightmost leaf is the smallest. In our example expression from
-Section~\ref{sec:intro}, we would number the leaves as follows:
+\Cref{sec:intro}, we would number the leaves as follows:
 
 \begin{figure}[h]
   \input{figures/figure2}
@@ -307,24 +323,24 @@ two central problems with our choice of |ZipperType| data type:
   to prove the well-foundedness of any relation defined on configurations.
 
 \item The choice of the |Stack| data type, as a path from the leaf to the
-  root is convenient to define the tail recursive machine, but inpractical
-  when defining the desired order relation. The top of a stack stores information about
+  root is convenient to define the tail recursive machine, but impractical
+  when defining the coveted order relation. The top of a stack stores information about
     neighbouring nodes, but to compare two leaves we need \emph{global} information
     about their positions relative to the root.
 \end{enumerate}
 
 We will now address these limitations one by one. Firstly, by refining
 the type of |ZipperType|, we will show how to capture the desired
-invariant (Section~\ref{subsec:stack}). Secondly, we
+invariant (\Cref{subsec:stack}). Secondly, we
 explore a different representation of stacks, as paths from the root, that facilitates
-the definition of the desired order relation (Section~\ref{subsec:topdown}).
+the definition of the desired order relation (\Cref{subsec:topdown}).
 Finally we will define the relation over configurations,
-Section~\ref{subsec:relation}, and sketch the proof of that it is well-founded.
+\Cref{subsec:relation}, and sketch the proof that it is well-founded.
 
 \subsection{Invariant preserving configurations}
 \label{subsec:stack}
 
-The |ZipperType| denotes a leaf in our input expression. In the
+A value of type |ZipperType| denotes a leaf in our input expression. In the
 previous example, the following |ZipperType| corresponds to the third leaf:
 
 \begin{figure}[h]
@@ -333,10 +349,11 @@ previous example, the following |ZipperType| corresponds to the third leaf:
   \label{fig:example_zipper}
 \end{figure}
 
-As we observed previously, we would like to refine the type |ZipperType| to capture
-the invariant that execution preserves: every |ZipperType| denotes a unique leaf
-in our input expression.
-There is one problem: the |Stack| data type stores the values of the subtrees that have
+As we observed previously, we would like to refine the type |ZipperType| to
+capture the invariant that execution preserves: every |ZipperType| denotes a
+unique leaf in our input expression, or equivalently, a state of the abstract
+machine that computes the fold.
+There is one problem yet: the |Stack| data type stores the values of the subtrees that have
 been evaluated, but does not store the subtrees themselves.
 In the example in Figure~\ref{fig:example_zipper}, 
 when the traversal has reached the third leaf, all the
@@ -355,28 +372,29 @@ records the subexpression |e| and the proof that |e| evaluates to
 type, we claim that the expression |e| and equality are not necessary
 at run-time, but only required for the proof of well-foundedness -- a
 point we will return to in our discussion (Section~\ref{sec:discussion}).
-
-
-
-We can now recover the input expression from our |ZipperType|. This is
-analogous to the |plug| operation on zippers:
+From now onwards, the type |ZipperType| uses |Stack2| as its right 
+component:
+\begin{code}
+ZipperType = (Nat * Stack2)
+\end{code}
+A value of type |ZipperType| now contains enough information to recover the input
+expression. This is analogous to the |plug| operation on zippers:
 \begin{code}
   plugup : Expr -> Stack2 -> Expr
-  plugup e []                      = e
-  plugup e (Left t        :: stk)  = plugup (Add e t) stk
-  plugup e (Right n t eq  :: stk)  = plugup (Add t e) stk
+  plugup e []                     = e
+  plugup e (Left t       :: stk)  = plugup (Add e t) stk
+  plugup e (Right _ t _  :: stk)  = plugup (Add t e) stk
 
   plugZup : ZipperType -> Expr
   plugZup (n , stk) = plugup (Val n) stk
 \end{code}
 
-Any two terms of type |ZipperType| may still represent states of a fold
-over two entirely different expressions. As we aim to define an order relation,
-comparing positions during the traversal of the input expression, we need to ensure
-that we only ever compare two positions in the same tree. We can \emph{statically} enforce
-such requirement by
-defining a new wrapper data type over |ZipperType| that records the 
-original input expression:
+Any two terms of type |ZipperType| may still represent states of a fold over two
+entirely different expressions. As we aim to define an order relation comparing
+configurations during the fold of the input expression, we need to ensure that
+we only ever compare configurations within the same expression. We
+can \emph{statically} enforce such requirement by defining a new wrapper data
+type over |ZipperType| that records the original input expression:
 
 \begin{code}
   data Zipperup (e : Expr) : Set where
@@ -888,9 +906,9 @@ different \emph{plug} operations on these stacks:
   plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
 \end{code}
 
-To define the configurations of our abstract machine, we are not
-interested in \emph{any} position in our initial input, but want to
-restrict ourselves to those stacks denote a \emph{leaf}. But what
+To define the configurations of our abstract machine, we are
+interested in \emph{any} through our initial input, but want to
+restrict ourselves to those paths that lead to a leaf. But what
 constitutes a leaf in this generic setting?
 
 To describe leaves, we introduce the following predicate |NonRec|,
