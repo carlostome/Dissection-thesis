@@ -89,7 +89,7 @@ algebra.
   eval = foldExpr id plusOp
 \end{code}
 
-Unfortunately, not all in the garden is rosy. The operator |plusOp|
+Unfortunately, not everything in the garden is rosy. The operator |plusOp|
 needs both of its parameters to be fully evaluated before it can
 reduce further. As a result, the size of the
 stack used during execution grows linearly with the size of the input,
@@ -178,7 +178,7 @@ The problematic call for Agda's termination checker is the last clause of the
 |unload| function, that calls |load| on the expression stored on the top of the
 stack. From the definition of |load|, it is clear that we only ever push
 subtrees of the input on the stack. However, the termination checker has no
-reason to believe that the expression on the top of the stack is structurally
+reason to believe that the expression at the top of the stack is structurally
 smaller in any way. Indeed, if we were to redefine |load| as follows:
 \begin{code}
     load (Add e1 e2)  stk = load e1 (Left (f e2) stk)
@@ -227,18 +227,18 @@ The other crucial difference arises from the definition of |load|:
 \end{code}
 Rather than calling |unload| upon reaching a value, it returns the current stack
 and the value of the leftmost leaf\footnote{Even though |load| never returns a
-|inj2|, we choose to have |U+| in the type to transfer the control flow from
+|inj2|, we choose to use |U+| in its type to transfer the control flow from
 |unload|.}.
 
 Both these functions are now accepted by Agda's termination checker as
 they are clearly structurally recursive. We can use both these functions 
-to define the following evaluator:
+to define the following evaluator\footnote{We ignore |load| impossible case, it
+can always be discharged with |bot-elim|}:
 %{
 %format nrec   = "\nonterm{" rec "}"
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e with load e Top
-  ... | inj2 n          = n
   ... | inj1 (n , stk)  = rec (n , stk)
     where
       nrec : (Nat * Stack) -> Nat
@@ -260,7 +260,6 @@ can define the following version of the tail-recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e with load e Top
-  ... | inj2 n          = n
   ... | inj1 (n , stk)  = rec (n , stk) ??1
     where
       rec : (c : Nat * Stack) -> Acc ltOp c -> Nat
@@ -376,7 +375,8 @@ component:
 \begin{code}
 ZipperType = (Nat * Stack2)
 \end{code}
-A value of type |ZipperType| now contains enough information to recover the input
+
+A value of type |ZipperType| contains enough information to recover the input
 expression. This is analogous to the |plug| operation on zippers:
 \begin{code}
   plugup : Expr -> Stack2 -> Expr
