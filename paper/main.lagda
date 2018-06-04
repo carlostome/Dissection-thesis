@@ -1280,15 +1280,12 @@ function that initiates the computation with suitable arguments:
 \subsection{Correctness, generically}
 \label{sec:correct-gen}
 
-As before, the correctness of |tail-rec-cata| with regard to the function
-|catamorphism| is guaranteed by the parametrization of the construction by the
-input tree. 
-
-The proof is straight-forward by exploiting induction over the accessibility
+To prove our tail-recursive evaluator produces the same output as the catamorphism
+is straight-forward. As we did in our example, we perform induction over the accessibility
 predicate in the auxiliary recursor. In the base case, when the function |step|
 returns a ground value of type |X|, we have to show that such value is is the
-result of applying the \emph{catamorphism} to the input. Because |step| is a
-wrapper around |unload| we it is enough to show the following lemma to be true.
+result of applying the \emph{catamorphism} to the input. Recall that |step| is a
+wrapper around |unload|, hence it suffices to prove the following lemma:
 \begin{code}
   unload-correct  : forall  (R : Reg) (alg : interpl R interpr X → X)
                             (t : mu R) (x : X) (eq : catamorphism R alg t == x)
@@ -1296,12 +1293,11 @@ wrapper around |unload| we it is enough to show the following lemma to be true.
                   → unload R alg t x eq s == inj2 y
                   → ∀ (e : mu R) → plug-muup R t s == e → catamorphism R alg e == y
 \end{code}
-Correctness is then given by the following theorem.
+Our generic correctness result is an immediate consequence:
 \begin{code}
   correctness  : forall (R : Reg) (alg : interpl R interpr X → X) (t : mu R)
                → catamorphism R alg t == tail-rec-cata R alg t
 \end{code}
-
 
 %} end of generic.fmt
 
