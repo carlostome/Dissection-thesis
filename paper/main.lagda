@@ -16,7 +16,7 @@
 \author{Carlos Tom\'e Corti\~nas}
 \affiliation{
   \department{Department of Information and Computing Sciences}
-  \institution{University of Utrecht}
+  \institution{Utrecht University}
   \country{The Netherlands}
 }
 \email{c.tomecortinas@@students.uu.nl}
@@ -24,7 +24,7 @@
 \author{Wouter Swierstra}
 \affiliation{
   \department{Department of Information and Computing Sciences}
-  \institution{University of Utrecht}
+  \institution{Utrecht University}
   \country{The Netherlands}
 }
 \email{w.s.swierstra@@uu.nl}
@@ -225,9 +225,9 @@ The other decisive difference arises from the definition of |load|:
   load (Add e1 e2)  stk = load e1 (Left e2 stk)
 \end{code}
 Rather than calling |unload| upon reaching a value, it returns the current stack
-and the value of the leftmost leaf\footnote{Even though |load| never returns a
-|inj2|, we choose to use |U+| in its type to transfer the control flow from
-|unload|.}.
+and the value of the leftmost leaf. Even though the function never returns an
+|inj2|, its type is aligned with the type of |unload| so the definition of both
+functions resembles more closely an abstract machine.
 
 Both these functions are now accepted by Agda's termination checker as
 they are clearly structurally recursive. We can use both these functions 
@@ -511,8 +511,8 @@ proof below:
                 → llcorner e lrcorner y < x → Acc (llcorner e lrcornerLtOp) y
             aux = ...
 \end{code}
-The proof follows the standard\footnote{Most well-founded proofs in Agda standard
-library follow this pattern.} schema of most proofs of well-foundedness. It
+The proof follows the standard schema\footnote{Most well-founded proofs in Agda standard
+library follow this pattern.} of most proofs of well-foundedness. It
 uses an auxiliary function, |aux|, that proves every configuration smaller than
 |x| is accessible.
 
@@ -668,24 +668,35 @@ The main correctness theorem now states that |eval| and
 \end{code}
 This finally completes the definition and verification of a
 tail-recursive evaluator. 
-%} end of intro.fmt
 
 \section{A generic tail-recursive traversal}
 \label{sec:generic}
 %{ begining of generic.fmt
-%include generic.fmt
 The previous section showed how to prove that our hand-written tail-recursive
 evaluation function was both terminating and equal to our original evaluator.
 In this section, we will show how we can generalize this construction to compute
 a tail-recursive equivalent of \emph{any} function that can be written as a fold
 over a simple algebraic datatype.
-
+In particular, we generalize the following:
+\begin{itemize}
+  \item The kind of data types, and their associated fold, that our tail-recursive
+    evaluator supports, \Cref{sec:universe}.
+  \item The type of configurations of the abstract machine that computes the
+    generic fold, \Cref{sec:dissection,sec:genconf}.
+  \item The functions |load| and |unload| such that they work over our choice of generic
+    representation, \Cref{subsec:onestep}.
+  \item The `smaller than' relation to handle generic configurations, and
+    its well-foundedness proof, \Cref{subsec:rel-gen}.
+  \item The tail-recursive evaluator, \Cref{sec:genmachine}.
+  \item The proof that the generic tail-recursive function is correct, \Cref{sec:correct-gen}.
+\end{itemize}
+%} end of intro.fmt
+%include generic.fmt
 Before we can define any such data type generic constructions, however, we need
 to fix our universe of discourse.
 
 \subsection{The \emph{regular} universe}
 \label{sec:universe}
-
 
 In a dependently typed programming language such as Agda, we can
 represent a collection of types closed under certain operations as a
@@ -706,8 +717,8 @@ its corresponding type. We have chosen the following universe of
 Types in this universe are formed from the empty type (|Zero|), unit type
 (|One|), and constant types (|K A|); the |I| constructor is used to refer to
 recursive subtrees. Finally, the universe is closed under both coproducts
-(|O+Op|) and products (|O*Op|). We could represent the \emph{pattern} functor of
-our expression data type from the introduction in this universe as follows:
+(|O+Op|) and products (|O*Op|). We could represent the \emph{pattern} functor
+corresponding to the type \AD{Expr} in this universe as follows:
 \begin{code}
   expr : Reg
   expr = K Nat O+ (I O* I)
@@ -754,7 +765,7 @@ to recursively folding over each subtree and assembling the results
 using the argument algebra:
 \begin{spec}
   cataN : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
-  cata R alg (In r) = alg (fmap R (cataN R alg) r)
+  cata R alg (In r) = alg (fmap R ( cataN R alg) r)
 \end{spec}
 Unfortunately, Agda's termination checker does not accept this definition. The
 problem, once again, is that the recursive calls to |cata| are not made to
@@ -826,16 +837,16 @@ A \emph{dissection} is formally defined as the pair of the one-hole context and
 the missing value that can fill the context.
 \begin{code}
   Dissection : (R : Reg) -> (X Y : Set) -> Set
-  Dissection R X Y = nabla R Y X * X
+  Dissection R X Y = nabla R X X * Y
 \end{code}
 We can reconstruct Huet's zippers by instantiating both |X| and |Y| to
 |mu R|.
 
 Given a \emph{dissection}, we can define a |plug| operation that
 `reconstructs' assembles the the context and current value in focus to
-produce a value of type |interpl R interpr X|:
+produce a value of type |interpl R interpr Y|:
 \begin{code}
-  plug : (R : Reg) -> (Y -> X) -> Dissection R Y X -> interpl R interpr X
+  plug : (R : Reg) -> (X -> Y) -> Dissection R X Y -> interpl R interpr Y
   plug Zero      eta  (() , x)
   plug One       eta  (() , x)
   plug I         eta  (tt , x)             = x
@@ -850,12 +861,12 @@ In order to ease things later, we bundle a \emph{dissection} together with the
 functor to which it \emph{plug}s as a type-indexed type.
 
 \begin{code}
-  data IxDissection (R : Reg) (X Y : Set) (eta : Y → X) (tx : interpl R interpr X) : Set where
+  data IxDissection (R : Reg) (X Y : Set) (eta : X → Y) (tx : interpl R interpr Y) : Set where
     prodOp : (d : Dissection R X Y) → plug R X Y d eta == tx → IxDissection R X Y eta tx 
 \end{code}
 
 \subsection{Generic configurations}
-\label{subsec:genconf}
+\label{sec:genconf}
 
 While the \emph{dissection} computes the bifunctor \emph{underlying}
 our configurations, we still need to take a fixpoint of this
@@ -1100,6 +1111,7 @@ value equals to applying a |catamorphism| over the subtree.  The function
 |compute| massages |r| to adapt the arguments for the recursive call to |unload|.
 
 \subsection{Relation over generic configurations}
+\label{subsec:rel-gen}
 
 We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
 t|, for some concrete tree |t : mu R|, by explicity separating the functorial layer
@@ -1194,6 +1206,7 @@ The full proof of the following statement can found in the accompanying code:
 \end{code}
 
 \subsection{A generic tail-recursive machine}
+\label{sec:genmachine}
 
 We are now ready to define a generic tail-recursive machine. To do so we
 now assemble the generic machinery we have defined so far. We follow the 
