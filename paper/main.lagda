@@ -418,8 +418,8 @@ We now consider the value of |ZipperType| corresponding to
 leaves with numbers 3 and 4 in our running example:
 
 \begin{figure}[h]
-  \includegraphics[angle=-90]{figure4}
-  \caption{Comparison of \emph{configurations} for leaves 4 and 3}
+  \input{figures/figure4}
+  \caption{Comparison of \emph{configurations} for leaves 3 and 4}
   \label{fig:example_zipper}
 \end{figure}
 
