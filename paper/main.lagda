@@ -1336,22 +1336,22 @@ The termination proof we have given defines a well-founded relation
 and shows that this decreases during execution. There are other
 techniques for writing functions that are not obviously structurally
 recursive, such as the Bove-Capretta method~\cite{bove}, partiality
-monad~\cite{partiality}, or coinductive traces~\cite{nakata}. In contrast to the
-well-founded recursion used in this paper, however, these methods do
-not yield an evaluator that is directly executable, but instead defer
-the termination proof. Given that we can -- and indeed have -- shown
-termination of our tail-recursive abstract machines, using
-well-founded recursion gives us an abstract machine that is executable
-directly.
+monad~\cite{partiality}, or coinductive traces~\cite{nakata}. In
+contrast to the well-founded recursion used in this paper, however,
+these methods do not yield an evaluator that is directly executable,
+but instead defer the termination proof. Given that we can -- and
+indeed have -- shown termination of our tail-recursive abstract
+machines, the abstract machines are executable directly in Agda.
 
-One drawback of our construction is that the |Stack| data type now not
-only contains the value of evaluating previously visited subtrees, but
-also stores the subtrees themselves. Clearly this is undesirable for
-an efficient implementation. It would be worth exploring if these
-arguments may be made irrelevant -- as they are not needed during
-execution. One viable approach might be porting the development to
-Coq, where it is possible to make a clearer distinction between
-propositions that may be erased.
+One drawback of our construction is that the stacks now not only store
+the value of evaluating previously visited subtrees, but also records
+the subtrees themselves. Clearly this is undesirable for an efficient
+implementation. It would be worth exploring if these subtrees may be
+made computationally irrelevant -- as they are not needed during
+execution, but only used to show termination and correctness. One
+viable approach might be porting the development to Coq, where it is
+possible to make a clearer distinction between values used during
+execution and the propositions that may be erased.
 
 
 %% Acknowledgments
