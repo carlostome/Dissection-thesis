@@ -1304,50 +1304,60 @@ Our generic correctness result is an immediate consequence:
 \section{Discussion}
 \label{sec:discussion}
 
-+ Regular universe kind of limited
-  + Other universe such as multirec, generics-sop, indexed functors
-+ Discuss why not to use other techniques
-  + Bove cappreta, partiality monad, coinduction
 
-\subsection{Related work}
+There is a long tradition of calculating abstract machines from an
+evaluator, dating back as far as early work on the abstract machines
+for the evaluation of lambda calculus terms~\cite{landin}. In
+particular, Danvy\cite{danvy-II, danvy-I} has published many examples showing how
+abstract machines arise from defunctionalizing an interpreter written
+in continuation-passing style. This work in turn, inspired McBride's
+work on dissections~\citeyearpar{dissection}, that defines the key
+constructions on which this paper builds. McBride's work, however,
+does not give a proof of termination or correctness.
 
-+ Constructing abstract machines from a given reduction function
-  + Danvy
-Danvy and dissection
+The universe of regular types used in this paper is somewhat
+restricted: we cannot represent mutually recursive
+types~\cite{mutual}, nested data types~\cite{nested}, indexed
+families~\cite{dybjer-inductive}, or inductive-recursive
+types~\cite{induction-recursion}. Fortunately, there is a long
+tradition of generic programming with universes in Agda, arguably
+dating back to~\citet{martin-loef}. It would be worthwhile exploring
+how to extend our construction to more general universes, such as the
+context-free types~\cite{morris},
+containers~\cite{containers,indexed-containers}, or the
+`sigma-of-sigma' universe~\cite{power-of-pi,levitation}. Doing so
+would allow us to exploit dependent types further in the definition of our
+evaluators. For example, we might then
+define an interpreter for the well-typed lambda terms and
+derive a tail recursive evaluator automatically, rather than
+verifying the construction by hand~\cite{krivine}.
 
-Generics in Agda
+The termination proof we have given defines a well-founded relation
+and shows that this decreases during execution. There are other
+techniques for writing functions that are not obviously structurally
+recursive, such as the Bove-Capretta method~\cite{bove}, partiality
+monad~\cite{partiality}, or coinductive traces~\cite{nakata}. In contrast to the
+well-founded recursion used in this paper, however, these methods do
+not yield an evaluator that is directly executable, but instead defer
+the termination proof. Given that we can -- and indeed have -- shown
+termination of our tail-recursive abstract machines, using
+well-founded recursion gives us an abstract machine that is executable
+directly.
 
-\subsection{Future work}
-
-Porting to Coq/erasure
-Generalize to other universes
-
-\subsection{Conclusion}
+One drawback of our construction is that the |Stack| data type now not
+only contains the value of evaluating previously visited subtrees, but
+also stores the subtrees themselves. Clearly this is undesirable for
+an efficient implementation. It would be worth exploring if these
+arguments may be made irrelevant -- as they are not needed during
+execution. One viable approach might be porting the development to
+Coq, where it is possible to make a clearer distinction between
+propositions that may be erased.
 
 
 %% Acknowledgments
-\begin{acks}                            %% acks environment is optional
-                                        %% contents suppressed with 'anonymous'
-  %% Commands \grantsponsor{<sponsorID>}{<name>}{<url>} and
-  %% \grantnum[<url>]{<sponsorID>}{<number>} should be used to
-  %% acknowledge financial support and will be used by metadata
-  %% extraction tools.
-  This material is based upon work supported by the
-  \grantsponsor{GS100000001}{National Science
-    Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
-  No.~\grantnum{GS100000001}{nnnnnnn} and Grant
-  No.~\grantnum{GS100000001}{mmmmmmm}.  Any opinions, findings, and
-  conclusions or recommendations expressed in this material are those
-  of the author and do not necessarily reflect the views of the
-  National Science Foundation.
-\end{acks}
-
-
-
-%% Acknowledgments
-% \begin{acks}
-% \end{acks}
-
+%\begin{acks}                            %% acks environment is optional
+\fixme{Thank reviewers in acks in final version}
+%\end{acks}
 
 %% Bibliography
 \bibliography{main}
