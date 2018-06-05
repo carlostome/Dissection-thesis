@@ -34,9 +34,9 @@
   a fold. Doing so, however, has one notable drawback: folds are not
   tail-recursive. As a result, a function defined in terms of a fold
   may raise a stack overflow when executed. This paper defines a
-  datatype generic, tail-recursive evaluator\wouter{evaluator?
-    abstract machine? traversal? recursion principle?} and proves it
-  produces the same result as the fold. Doing so combines the
+  datatype generic, tail-recursive higher-order function
+  that is guaranteed to
+  produce the same result as the fold. Doing so combines the
   compositional nature of folds and the performance benefits of
   a hand-written tail-recursive function in a single setting.
 \end{abstract}
