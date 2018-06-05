@@ -60,6 +60,7 @@
 %format cata         = "\AF{cata}"
 %format catamorphism         = "\AF{cata}"
 %format cataN        = "\nonterm{" (cata "}"
+%format cataNT       = "\nonterm{" cata "}"
 %format mapFold      = "\AF{map-fold}"
 %format eval         = "\AF{eval}"
 %format plusOp  = "\AI{\_\ensuremath{+}\_}"
@@ -67,7 +68,7 @@
 %format plug         = "\AF{plug}"
 %format plug-muup      = "\AF{plug-\ensuremath{\mu_{\Uparrow}}}"
 %format plug-mudown    = "\AF{plug-\ensuremath{\mu_{\Downarrow}}}"
-%format plugC-mudown    = "\AF{plugZ-\ensuremath{\mu_{\Downarrow}}}"
+%format plugZ-mudown    = "\AF{plugC-\ensuremath{\mu_{\Downarrow}}}"
 %format coerce = "\AF{coerce}"
 %format Leaf   = "\AF{Leaf}"
 %format Stack  = "\AF{Stack\ensuremath{^{\scaleto{G}{4pt}}}}"
@@ -88,6 +89,7 @@
 %format plugD         = "\AF{plug\DJ}"
 %format Well-founded  = "\AF{Well-founded}"
 %format IxLtdown-WF ="\AF{\ensuremath{\llcorner\_\lrcorner\llcorner\_\lrcorner\_<_{\mathds{Z}_{\scaleto{\Downarrow}{2pt}}}\_}-WF}"
+%format <Z-WF = "\AF{\ensuremath{<_{\mathds{Z}}}-WF}"
 %format tail-rec-cata  = "\AF{tail\text{-}rec\text{-}cata}"
 %format rec  = "\AF{rec}"
 %format step-<  = "\AF{step\ensuremath{^{\scaleto{G}{4pt}}}\text{-}<}"
@@ -99,6 +101,8 @@
 
 % Bound variables
 %format A   = "\AB{A}"
+%format B   = "\AB{B}"
+%format b   = "\AB{b}"
 %format P   = "\AB{P}"
 %format Is   = "\AB{Is}"
 %format X   = "\AB{X}"
@@ -107,8 +111,10 @@
 %format Q   = "\AB{Q}"
 %format x   = "\AB{x}"
 %format y   = "\AB{y}"
+%format k   = "\AB{k}"
 %format f   = "\AB{f}"
 %format rr   = "\AB{rr}"
+%format rp   = "\AB{rp}"
 %format rs   = "\AB{rs}"
 %format rx   = "\AB{rx}"
 %format eq'  = "\AB{eq''}"
@@ -144,7 +150,7 @@
 %format tx   = "\AB{t\ensuremath{_{x}}}"
 %format t   = "\AB{t}"
 %format t'   = "\AB{t''}"
-%format z   = "\AB{z}"
+%format z   = "\AB{c}"
 
 % Record fields
 %format Tree  = "\AL{Tree}"

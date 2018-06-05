@@ -766,7 +766,7 @@ interpr X -> X| as argument. This algebra assigns semantics to the
 to recursively folding over each subtree and assembling the results
 using the argument algebra:
 \begin{spec}
-  cataN : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
+  cataNT : (R : Reg) -> (interpl R interpr X -> X) -> mu R -> X
   cata R alg (In r) = alg (fmap R cataN R alg) r)
 \end{spec}
 Unfortunately, Agda's termination checker does not accept this definition. The
@@ -919,6 +919,8 @@ different \emph{plug} operations on these stacks:
   plug-muup R t []         = t
   plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
 \end{code}
+Both functions use the projection, |Computed.Tree|, as an argument to
+|plug| to extract the subtrees that have already been processed.
 
 To define the configurations of our abstract machine, we are
 interested in \emph{any} through our initial input, but want to
@@ -998,10 +1000,8 @@ The type of our |first-cps| function is daunting at first:
 \begin{code}
 first-cps : (R Q : Reg) {alg : interpl Q interpr X -> X}
           ->  interpl R interpr (mu Q)
-          ->  (nabla R (Computed Q X alg) (mu Q)
-               -> (nabla Q (Computed Q X alg) (mu Q)))
-          ->  (Leaf R X -> Stack Q X alg 
-              -> Zipper Q X alg U+ X)
+          ->  (nabla R (Computed Q X alg) (mu Q) -> (nabla Q (Computed Q X alg) (mu Q)))
+          ->  (Leaf R X -> Stack Q X alg -> Zipper Q X alg U+ X)
           ->  Stack Q X alg
           ->  Zipper Q X alg U+ X
 \end{code}
@@ -1020,8 +1020,7 @@ two continuations: the first is used to gradually build the
 \emph{dissection} of |R|; the second continues on another branch once
 one of the leaves have been reached. The last argument of type |Stack
 Q X alg| is the current stack. The entire function will compute the
-initial configuration of our machine of type |Zipper Q X alg| or
-terminate immediately and return a value of type |X|.
+initial configuration of our machine of type |Zipper Q X alg| \footnote{As in the introduction, we use a sum type |U+| to align its type with that of |unload|.}:
 
 \begin{code}
 load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R
@@ -1029,16 +1028,11 @@ load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R
 load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
 
-The function |first-cps| has two continuations as arguments: The first,|-- 1|, is used
-to gradually build the \emph{dissection} corresponding to the functorial layer
-we are traversing. The second,|-- 2|, serves to continue on another branch in case
-one of the non-recursive base cases is reached.
-
 We shall fill the definition of |first-cps| by cases.  The clauses for the base
 cases are as expected. In |Zero| there is nothing to be done. The |One| and
 |K A| codes consist of applying the second continuation to the tree and the \emph{stack}.
 \begin{code}
-  first-cps Zero Q () _
+  first-cps Zero Q Empty _
   first-cps One  Q x k f s    = f (tt , NonRec-One) s
   first-cps (K A) Q x k f s   = f (x , NonRec-K A x) s
 \end{code}
@@ -1055,7 +1049,8 @@ use of different constructors in the continuations.
 \begin{code}
   first-cps (R O+ Q) P (inj1 x) k f s = first-cps R P x  (k . inj1) cont s
     where cont (l , isl) = f ((inj1 l) , NonRec-+1 R Q l isl)
-  first-cps (R O+ Q) P (inj2 y) k f s = first-cps Q P y  (k . inj2) (lambda -> ...) s
+  first-cps (R O+ Q) P (inj2 y) k f s = first-cps Q P y  (k . inj2) cont s
+    where cont (l , isl) = f ((inj1 l) , NonRec-+2 R Q l isl)
 \end{code}
 The interesting clause is the one that deals with the product. First the
 function |first-cps| is recursively called on the left component  of the pair
@@ -1076,7 +1071,7 @@ necessary to define an auxiliary function, |right|, that given a
 \emph{dissection} and a value (of the type of the left variables), either finds
 a dissection |Dissection R X Y| or it shows that  there are no occurrences of
 the variable left. In the latter case, it returns the functor interpreted over
-|X|, | interpl R interpl X|.
+|Y|, | interpl R interpr Y|.
 
 \begin{code}
   right  : (R : Reg) -> nabla R X Y -> X -> interpl R interpr X U+ Dissection R X Y
@@ -1111,9 +1106,9 @@ subtrees left in the \emph{dissection}. If we take a closer look, the type of
 the |r| in |inj1 r| is | interpl R interpr (Computed R X alg) |. The functor
 |interpl R interpr| is storing at its leaves both values, subtrees and proofs.
 
-However, what is needed for the recursive call is: First, the functor
+However, what is needed for the recursive call is: first, the functor
 interpreted over values, | interpl R interpr X|, in order to apply the algebra;
-Second, the functor interpreted over subtrees, | interpl R interpr (mu R)|, to
+second, the functor interpreted over subtrees, | interpl R interpr (mu R)|, to
 keep the original subtree where the value came from; Third, the proof that the
 value equals to applying a |catamorphism| over the subtree.  The function
 |compute| massages |r| to adapt the arguments for the recursive call to |unload|.
@@ -1197,11 +1192,11 @@ the functor of type | interpl R interpr X | to which both \emph{dissections}
 |plug|:
 
 \begin{code}
-  data IxLt  :  (R : Reg) -> (tx : interpl R interpr X) 
+  data IxLt {X Y : Set} {eta : X -> Y} :  (R : Reg) -> (tx : interpl R interpr Y) 
              -> IxDissection R X Y eta tx -> IxDissection R X Y eta tx → Set where
 
 
-  data IxLtdown  (R : Reg)  : (t : μ R) 
+  data IxLtdown {X : Set} (R : Reg) {alg : interpl R interpr X -> X}  : (t : μ R) 
              -> Zipperdown R X alg t -> Zipperdown R X alg t -> Set where
 \end{code}
 
@@ -1209,8 +1204,7 @@ The proof of \emph{well-foundedness} of |IxLtdown| is a straightforward generali
 of proof given for the example in \Cref{subsec:relation}. 
 The full proof of the following statement can found in the accompanying code:
 \begin{code}
-  IxLtdown-WF : (R : Reg)  -> (t : μ R) 
-                           -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
+  <Z-WF : (R : Reg)  -> (t : μ R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
 \subsection{A generic tail-recursive machine}
@@ -1228,9 +1222,10 @@ that the input tree remains the same both in its argument and in its result.
   step  : (R : Reg) → (alg : interpl R interpr X → X) -> (t : mu R)
         -> Zipperup R X alg t -> Zipperup R X alg t U+ X
 \end{code}
-We omit the full definition. The function |step| performs a call
-to |unload|, coercing the leaf in the |Zipperdown| argument to a generic tree.
-\wouter{What is a generic tree?}
+We omit the full definition. The function |step| performs a call to |unload|,
+coercing the leaf of type |interpl R interpr X| in the |Zipperdown| argument to
+a generic tree of type |interpl R interpr (mu R)|.
+
 We show that |unload| preserves the invariant, by proving the following lemma:
 \begin{code}
   unload-preserves  : forall (R : Reg) {alg : interpl R interpr X → X}
@@ -1246,14 +1241,13 @@ As the function |step| is a wrapper over the |unload| function, we only have
 to prove that the property holds for |unload|.
 
 The |unload| function does two things. First, it calls the function
-|right| to check whether there are any more holes to the right.
-\wouter{What do you mean by hole here? Can you think of a better term?}
-It then
-dispatches to either |load|, if there is, or recurses
-if case there is not.  When there is a hole left, a new \emph{dissection} is
-returned by |right|. Thus showing that the new configuration is smaller amounts
-to show that the \emph{dissection} returned by |right| is smaller by |<NablaOp|.
-This amounts to proving the following lemma:
+|right| to check whether the \emph{dissection} has any more recursive subtrees
+to the right that still have to be processed.
+It then dispatches to either |load|, if there is, or recurses if case there is
+not.  When there is a hole left, a new \emph{dissection} is returned by |right|.
+Thus showing that the new configuration is smaller amounts to show that the
+\emph{dissection} returned by |right| is smaller by |<NablaOp|.  This amounts to
+proving the following lemma:
 \begin{code}
   right-<  : right R dr (t , y , eq) == inj2 (dr' , t')
            → llcorner R lrcorner ((dr' , t')) <Nabla ((dr , t)) 
@@ -1291,16 +1285,16 @@ function that initiates the computation with suitable arguments:
 
   tail-rec-cata : (R : Reg) → (alg : interpl R interpr X → X) → mu R → X
   tail-rec-cata R alg x  with load R alg x []
-  ... | inj1 z = rec R alg (c , ...) (IxLtdown-WF R c)
-  ... | inj2 _ = bot-elim ...
+  ... | inj1 z = rec R alg (z , ...) (IxLtdown-WF R z)
 \end{code}
-\wouter{Perhaps omit the inj2 case?}
 
 \subsection{Correctness, generically}
 \label{sec:correct-gen}
-
+%{
+%format tail-rec-eval = "\AF{tail-rec-eval}"
 To prove our tail-recursive evaluator produces the same output as the catamorphism
-is straight-forward. As we did in our example, we perform induction over the accessibility
+is straight-forward. As we did in the |tail-rec-eval| example
+(\Cref{sec:basic-correctness}), we perform induction over the accessibility
 predicate in the auxiliary recursor. In the base case, when the function |step|
 returns a ground value of type |X|, we have to show that such value is is the
 result of applying the \emph{catamorphism} to the input. Recall that |step| is a
@@ -1324,53 +1318,47 @@ Our generic correctness result is an immediate consequence:
 \label{sec:discussion}
 
 
-There is a long tradition of calculating abstract machines from an
-evaluator, dating back as far as early work on the abstract machines
-for the evaluation of lambda calculus terms~\cite{landin}. In
-particular, Danvy\cite{danvy-II, danvy-I} has published many examples showing how
-abstract machines arise from defunctionalizing an interpreter written
-in continuation-passing style. This work in turn, inspired McBride's
-work on dissections~\citeyearpar{dissection}, that defines the key
-constructions on which this paper builds. McBride's work, however,
-does not give a proof of termination or correctness.
+There is a long tradition of calculating abstract machines from an evaluator,
+dating back as far as early work on the abstract machines for the evaluation of
+lambda calculus terms~\cite{landin}. In particular, Danvy\cite{danvy-II,
+danvy-I} has published many examples showing how abstract machines arise from
+defunctionalizing an interpreter written in continuation-passing style. This
+work in turn, inspired McBride's work on dissections~\citeyearpar{dissection},
+that defines the key constructions on which this paper builds. McBride's work,
+however, does not give a proof of termination or correctness.
 
-The universe of regular types used in this paper is somewhat
-restricted: we cannot represent mutually recursive
-types~\cite{mutual}, nested data types~\cite{nested}, indexed
-families~\cite{dybjer-inductive}, or inductive-recursive
-types~\cite{induction-recursion}. Fortunately, there is a long
-tradition of generic programming with universes in Agda, arguably
-dating back to~\citet{martin-loef}. It would be worthwhile exploring
-how to extend our construction to more general universes, such as the
-context-free types~\cite{morris},
-containers~\cite{containers,indexed-containers}, or the
-`sigma-of-sigma' universe~\cite{power-of-pi,levitation}. Doing so
-would allow us to exploit dependent types further in the definition of our
-evaluators. For example, we might then
-define an interpreter for the well-typed lambda terms and
-derive a tail recursive evaluator automatically, rather than
-verifying the construction by hand~\cite{krivine}.
+The universe of regular types used in this paper is somewhat restricted: we
+cannot represent mutually recursive types~\cite{mutual}, nested data
+types~\cite{nested}, indexed families~\cite{dybjer-inductive}, or
+inductive-recursive types~\cite{induction-recursion}. Fortunately, there is a
+long tradition of generic programming with universes in Agda, arguably dating
+back to~\citet{martin-loef}. It would be worthwhile exploring how to extend our
+construction to more general universes, such as the context-free
+types~\cite{morris}, containers~\cite{containers,indexed-containers}, or the
+`sigma-of-sigma' universe~\cite{power-of-pi,levitation}. Doing so would allow us
+to exploit dependent types further in the definition of our evaluators. For
+example, we might then define an interpreter for the well-typed lambda terms and
+derive a tail recursive evaluator automatically, rather than verifying the
+construction by hand~\cite{krivine}.
 
-The termination proof we have given defines a well-founded relation
-and shows that this decreases during execution. There are other
-techniques for writing functions that are not obviously structurally
-recursive, such as the Bove-Capretta method~\cite{bove}, partiality
-monad~\cite{partiality}, or coinductive traces~\cite{nakata}. In
-contrast to the well-founded recursion used in this paper, however,
-these methods do not yield an evaluator that is directly executable,
-but instead defer the termination proof. Given that we can -- and
-indeed have -- shown termination of our tail-recursive abstract
-machines, the abstract machines are executable directly in Agda.
+The termination proof we have given defines a well-founded relation and shows
+that this decreases during execution. There are other techniques for writing
+functions that are not obviously structurally recursive, such as the
+Bove-Capretta method~\cite{bove}, partiality monad~\cite{partiality}, or
+coinductive traces~\cite{nakata}. In contrast to the well-founded recursion used
+in this paper, however, these methods do not yield an evaluator that is directly
+executable, but instead defer the termination proof. Given that we can -- and
+indeed have -- shown termination of our tail-recursive abstract machines, the
+abstract machines are executable directly in Agda.
 
-One drawback of our construction is that the stacks now not only store
-the value of evaluating previously visited subtrees, but also records
-the subtrees themselves. Clearly this is undesirable for an efficient
-implementation. It would be worth exploring if these subtrees may be
-made computationally irrelevant -- as they are not needed during
-execution, but only used to show termination and correctness. One
-viable approach might be porting the development to Coq, where it is
-possible to make a clearer distinction between values used during
-execution and the propositions that may be erased.
+One drawback of our construction is that the stacks now not only store the value
+of evaluating previously visited subtrees, but also records the subtrees
+themselves. Clearly this is undesirable for an efficient implementation. It
+would be worth exploring if these subtrees may be made computationally
+irrelevant -- as they are not needed during execution, but only used to show
+termination and correctness. One viable approach might be porting the
+development to Coq, where it is possible to make a clearer distinction between
+values used during execution and the propositions that may be erased.
 
 
 %% Acknowledgments
