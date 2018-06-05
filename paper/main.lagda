@@ -720,7 +720,7 @@ Types in this universe are formed from the empty type (|Zero|), unit type
 (|One|), and constant types (|K A|); the |I| constructor is used to refer to
 recursive subtrees. Finally, the universe is closed under both coproducts
 (|O+Op|) and products (|O*Op|). We could represent the \emph{pattern} functor
-corresponding to the type \AD{Expr} in this universe as follows:
+corresponding to the \AD{Expr} type in this universe as follows:
 \begin{code}
   expr : Reg
   expr = K Nat O+ (I O* I)
@@ -744,7 +744,7 @@ To show that this interpretation is indeed functorial, we define the
 following |fmap| operation:
 \begin{code}
   fmap : (R : Reg) -> (X -> Y) -> interpl R interpr X -> interpl R interpr Y
-  fmap Zero f ()
+  fmap Zero f Empty
   fmap One  f tt            = tt
   fmap I f x                = f x
   fmap (K A) f x            = x
@@ -767,18 +767,18 @@ to recursively folding over each subtree and assembling the results
 using the argument algebra:
 \begin{spec}
   cataN : forall {X : Set} (R : Reg) (interpl R interpr X -> X) -> mu R -> X
-  cata R alg (In r) = alg (fmap R ( cataN R alg) r)
+  cata R alg (In r) = alg (fmap R cataN R alg) r)
 \end{spec}
 Unfortunately, Agda's termination checker does not accept this definition. The
 problem, once again, is that the recursive calls to |cata| are not made to
 structurally smaller trees, but rather |cata| is passed as an argument to the
 higher-order function |fmap|.
 
-To address this, we can fuse the |fmap| and |cata| functions into a single
+To address this, we fuse the |fmap| and |cata| functions into a single
 |mapFold| function~\cite{norell-notes}:
 \begin{code}
   mapFold : (R Q : Reg) -> (interpl Q interpr X -> X) -> interpl R interpr (mu Q) -> interpl R interpr A
-  mapFold Zero     Q alg ()
+  mapFold Zero     Q alg Empty
   mapFold One      Q alg tt        = tt
   mapFold I        Q alg (In x)    = alg (mapFold Q Q alg x)
   mapFold (K A)    Q alg x         = x
@@ -839,32 +839,36 @@ A \emph{dissection} is formally defined as the pair of the one-hole context and
 the missing value that can fill the context.
 \begin{code}
   Dissection : (R : Reg) -> (X Y : Set) -> Set
-  Dissection R X Y = nabla R X X * Y
+  Dissection R X Y = nabla R X Y * Y
 \end{code}
-We can reconstruct Huet's zippers by instantiating both |X| and |Y| to
-|mu R|.
+We can reconstruct Huet's zipper for generic trees of type |mu R| by
+instantiating both |X| and |Y| to |mu R|.
 
 Given a \emph{dissection}, we can define a |plug| operation that
 `reconstructs' assembles the the context and current value in focus to
 produce a value of type |interpl R interpr Y|:
 \begin{code}
   plug : (R : Reg) -> (X -> Y) -> Dissection R X Y -> interpl R interpr Y
-  plug Zero      eta  (() , x)
-  plug One       eta  (() , x)
+  plug Zero      eta  (Empty , x)
+  plug One       eta  (Empty , x)
   plug I         eta  (tt , x)             = x
-  plug (K A)     eta  (() , x)
+  plug (K A)     eta  (Empty , x)
   plug (R O+ Q)  eta  (inj1 r , x)         = inj1 (plug R eta (r , x))
   plug (R O+ Q)  eta  (inj2 q , x)         = inj2 (plug Q eta (q , x))
   plug (R O* Q)  eta  (inj1 (dr , q) , x)  = (plug R eta (dr , x) , q)
   plug (R O* Q)  eta  (inj2 (r , dq) , x)  = (fmap R eta r , plug Q eta (dq , x))
 \end{code}
+In the last clause of the definition, the \emph{dissection} is over the right
+component of the pair leaving a value |r : interpl R interpr X| to the left. In
+such case, it is only possible to reconstruct a value of type |interpl R interpr Y|, 
+if we have a function |eta| to recover |Y|s from |X|s.
 
 In order to ease things later, we bundle a \emph{dissection} together with the
 functor to which it \emph{plug}s as a type-indexed type.
 
 \begin{code}
   data IxDissection (R : Reg) (X Y : Set) (eta : X → Y) (tx : interpl R interpr Y) : Set where
-    prodOp : (d : Dissection R X Y) → plug R X Y d eta == tx → IxDissection R X Y eta tx 
+    prodOp : (d : Dissection R X Y) → plug R d eta == tx → IxDissection R X Y eta tx 
 \end{code}
 
 \subsection{Generic configurations}
@@ -887,10 +891,12 @@ corresponding correctness proofs:
  record Computed (R : Reg) (X : Set) (alg : interpl R interpr X → X) : Set where
     constructor _,_,_
     field
-      Tree  : mu R
-      Value : X
-      Proof : catamorphism R alg Tree == Value
+      Tree   : mu R
+      Value  : X
+      Proof  : catamorphism R alg Tree == Value
 
+\end{code}
+\begin{code}
   Stack : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
   Stack R X alg = List (nabla R (Computed R X alg) (mu R))
 \end{code}
