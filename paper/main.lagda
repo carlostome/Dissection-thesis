@@ -942,6 +942,23 @@ the variable |X|, that will be used to represent recursive subtrees:
                 → NonRec R r → NonRec Q q → NonRec (R O* Q) (r , q)
 
 \end{code}
+As an example, in the pattern functor for the \AD{Expr} type, |K Nat O+ (I O* I)|,
+terms built using the left injection are non-recursive: 
+\begin{code}
+Val-NonRec : forall (n : Nat) -> NonRec (K Nat O+ (I O* I)) (inj1 n)
+Val-NonRec : n = NonRec-+1 (K Nat) (I O* I) n (NonRec-K Nat n)
+\end{code}
+This corresponds to the idea that the constructor |Val| is a leaf in a tree of
+type |Expr|. 
+
+On the other hand, we cannot prove the predicate |NonRec| for terms using the
+right injection. The occurences of recursive positions disallow us from framing 
+the proof (The type |NonRec| does not have a constructor such as |NonRec-I : (x : X) -> NonRec I x|).
+
+This example also shows how `generic` leaves can be recursive. As long as the
+recursion only happens in the functor layer (code |O+|) and not in the fixpoint
+level induced by |mu R| (code |I|).
+
 Crucially, any non-recursive subtree is independent of |X| -- as is
 exhibited by the following coercion function:
 \begin{code}

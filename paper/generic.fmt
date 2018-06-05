@@ -48,8 +48,10 @@
 
 %format NonRec-+2  = "\AI{NonRec-\ensuremath{\oplus_2}}"
 %format NonRec-*  = "\AI{NonRec-\ensuremath{\otimes}}"
+%format NonRec-I  = "\AI{NonRec-I}"
 
 % Functions and definitions
+%format Val-NonRec  = "\AF{Val-NonRec}"
 %format U            = "\AF{U}"
 %format el           = "\AF{el}"
 %format expr         = "\AF{exprF}"
