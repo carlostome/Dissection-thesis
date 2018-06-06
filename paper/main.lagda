@@ -1,4 +1,4 @@
-\documentclass[sigplan,10pt]{acmart}
+\documentclass[sigplan,review,10pt]{acmart}
 
 %include preamble.tex
 %include paper.fmt
@@ -1301,7 +1301,7 @@ function that initiates the computation with suitable arguments:
 
   tail-rec-cata : (R : Reg) → (alg : interpl R interpr X → X) → mu R → X
   tail-rec-cata R alg x  with load R alg x []
-  ... | inj1 z = rec R alg (z , ...) (IxLtdown-WF R z)
+  ... | inj1 z = rec R alg (z , ...) (<Z-WF R z)
 \end{code}
 
 \subsection{Correctness, generically}
