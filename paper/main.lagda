@@ -1339,21 +1339,17 @@ functor underlying the type |Expr|:
   expr : Reg
   expr = K Nat O+ (I O* I)
 \end{code}
-The |Expr| type is then isomorphic to tying the knot over |expr|. As a handy shortcut, 
-we define some pattern synonyms for the different constructors of the representation:
+The |Expr| type is then isomorphic to tying the knot over |expr|:the representation:
 \begin{code}
   ExprG : Set
   ExprG = mu expr
-
-  pattern Val n      = In (inj1 n)
-  pattern Add e1 e2  = In (inj2 (e1 , e2))
 \end{code}
 The function |eval| is equivalent to instantiating the
 \emph{catamorphism} with an appropriate algebra:
 \begin{code}
   alg : expr Nat -> Nat
-  alg (Val n)      = n
-  alg (Add e1 e2)  = e1 + e2
+  alg (inj1 n)          = n
+  alg (inj2 (e1 , e2))  = e1 + e2
 
   eval : ExprG -> Nat
   eval = cata expr alg
