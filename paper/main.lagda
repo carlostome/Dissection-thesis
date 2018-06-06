@@ -11,7 +11,7 @@
 
 \begin{document}
 
-\title{Dissection: terminating and correct}
+\title{From algebra to abstract machine: a verified generic construction}
 
 \author{Carlos Tom\'e Corti\~nas}
 \affiliation{
@@ -194,7 +194,6 @@ inspects the stack in searching of an unevaluated subtree. This process is
 depicted in \Cref{fig:load-unload}.
 
 \begin{figure}
-  % \includegraphics[angle=90]{figure2}
   \input{figures/figure1}
   \caption{Traversing a tree with {\color{blue}load} and {\color{red}unload}}
   \label{fig:load-unload}
@@ -1329,6 +1328,42 @@ Our generic correctness result is an immediate consequence:
                → catamorphism R alg t == tail-rec-cata R alg t
 \end{code}
 
+\subsection{Example}
+\label{subsec:example-gen}
+
+To conclude, we show how to generically implement the example from the
+introduction (\Cref{sec:intro}), and how the generic construction gives us a
+\emph{correct} tail-recursive machine for free. First, we recap the \emph{pattern} 
+functor underlying the type |Expr|:
+\begin{code}
+  expr : Reg
+  expr = K Nat O+ (I O* I)
+\end{code}
+The |Expr| type is then isomorphic to tying the knot over |expr|. As a handy shortcut, 
+we define some pattern synonyms for the different constructors of the representation:
+\begin{code}
+  ExprG : Set
+  ExprG = mu expr
+
+  pattern Val n      = In (inj1 n)
+  pattern Add e1 e2  = In (inj2 (e1 , e2))
+\end{code}
+The function |eval| is equivalent to instantiating the
+\emph{catamorphism} with an appropriate algebra:
+\begin{code}
+  alg : expr Nat -> Nat
+  alg (Val n)      = n
+  alg (Add e1 e2)  = e1 + e2
+
+  eval : ExprG -> Nat
+  eval = cata expr alg
+\end{code}
+Finally, a tail-recursive machine \emph{equivalent} to the one we derived in \Cref{sec:basic-assembling},
+|tail-rec-eval|, is given by:
+\begin{code}
+  tail-rec-evalG : ExprG -> Nat
+  tail-rec-evalG = tail-rec-cata expr alg
+\end{code}
 %} end of generic.fmt
 
 \section{Discussion}

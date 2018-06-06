@@ -23,21 +23,14 @@ fmt = "fmt"
 thesis_lagda_files :: [String]
 thesis_lagda_files = [ "main" , "tree" , "problem" , "background"]
 
--- lagda files used for the paper
-paper_lagda_files :: [String]
-paper_lagda_files = [ "main" ]
-
-paper_fmt_files :: [String]
-paper_fmt_files = [ "paper" , "intro" , "generic" ]
-
 main :: IO ()
 main = shakeArgs shakeOptions $ do
   want ["thesis"]
 
   phony "distclean" $ do
-    putNormal "Cleaning files in thesis"
-    cmd_ "latexmk -c -cd thesis/main.tex"
-    removeFilesAfter "thesis" ["*.tex", "*.bbl"]
+    -- putNormal "Cleaning files in thesis"
+    -- cmd_ "latexmk -c -cd thesis/main.tex"
+    -- removeFilesAfter "thesis" ["*.tex", "*.bbl"]
 
     putNormal "Cleaning files in paper"
     cmd_ "latexmk -c -cd paper/main.tex"
@@ -49,13 +42,6 @@ main = shakeArgs shakeOptions $ do
   phony "paper" $ do
     need ["paper/main" <.> pdf]
 
-  "//*.tex" %> \out -> do
-    let input = out -<.> lagda
-        dir   = takeDirectory out
-    putNormal $ "Building " ++ out ++ " from " ++ input ++ " in " ++ dir
-    need [input]
-    cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
-
   "thesis/main" <.> pdf %> \out -> do
     let files = [ "thesis" </> file <.> tex | file <- thesis_lagda_files]
         bib   = "thesis/main.bib"
@@ -64,11 +50,21 @@ main = shakeArgs shakeOptions $ do
     need (bib : fmt : sty : files)
     cmd_ "latexmk -f -pdf -cd -xelatex thesis/main.tex"
 
+  "paper/main" <.> tex %> \out -> do
+    let input      = out -<.> lagda
+        dir        = takeDirectory out
+        preamble   = "preamble" <.> tex
+        fmtFiles   = [ "paper" </> file <.> fmt | file <- paper_fmt_files]
+          where paper_fmt_files = [ "paper" , "intro" , "generic" ]
+        sty        = "paper/agda.sty"
+    need $ [input , sty , dir </> "preamble" <.> tex ] ++ fmtFiles
+    cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
+
   "paper/main" <.> pdf %> \out -> do
     putNormal "Building paper"
-    let files      = [ "paper" </> file <.> tex | file <- paper_lagda_files]
+    let main       = out -<.> tex
+        figures    = [ "paper" </> "figures" </> ("figure" ++ show n) <.> "tex" 
+                     | n <- [1..4]]
         bib        = "paper/main.bib"
-        fmtFiles   = [ "paper" </> file <.> fmt | file <- paper_fmt_files]
-        sty        = "paper/agda.sty"
-    need (bib : sty : (files ++ fmtFiles))
+    need $ [main , bib] ++ figures
     cmd_ "latexmk -f -pdf -cd paper/main.tex"
