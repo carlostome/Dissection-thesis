@@ -219,7 +219,7 @@ of our abstract machine, that is, a pair |Nat * Stack|:
   unload v   (Left r stk)    = load r (Right v stk)
 \end{code}
 
-The other decisive difference arises from the definition of |load|:
+The other key difference arises in the definition of |load|:
 \begin{code}
   load : Expr -> Stack -> (Nat * Stack) U+ Nat
   load (Val n)      stk = inj1 (n , stk)
@@ -228,7 +228,7 @@ The other decisive difference arises from the definition of |load|:
 Rather than calling |unload| upon reaching a value, it returns the current stack
 and the value of the leftmost leaf. Even though the function never returns an
 |inj2|, its type is aligned with the type of |unload| so the definition of both
-functions resembles more closely an abstract machine.
+functions resembles an an abstract machine more closely.
 
 Both these functions are now accepted by Agda's termination checker as
 they are clearly structurally recursive. We can use both these functions 
@@ -255,8 +255,9 @@ our evaluator, however, does not pass the termination checker. The new
 state, |(n' , stk')|, is not structurally smaller than the initial
 state |(n , stk)|. If we work under the assumption that we have a
 relation between the states |Nat * Stack| that decreases after every
-call to |unload|, and a proof that the relation is well-founded --we cannot
-infinitely recurse because we cannot get infinitely smaller, we can define the following version of the tail-recursive evaluator:
+call to |unload| and a proof that the relation is well-founded -- we know
+this function will terminate eventually.
+We now define the following version of the tail-recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e with load e Top
@@ -269,10 +270,11 @@ infinitely recurse because we cannot get infinitely smaller, we can define the f
 \end{code}
 To complete this definition, we still need to define a suitable
 relation |ltOp| between configurations of type |Nat *
-Stack|. Prove the relation to be well-founded, |??1 : Acc ltOp (n , stk)|,
+Stack|, prove the relation to be well-founded (|??1 : Acc ltOp (n , stk)|)
 and show that the calls to |unload| produce `smaller'
-states, |??2 : (n' , stk') < (n , stk)|. Finding an appropriate relation and proving its
-well-foundedness is the topic of the next section.
+states (|??2 : (n' , stk') < (n , stk)|).
+In the next section, we will define such a relation and prove it is
+well-founded.
 
 \section{Well-founded tree traversals}
 \label{sec:wf-example}
