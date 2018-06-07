@@ -57,7 +57,7 @@ Folds, or \emph{catamorphisms}, are a pervasive programming
 pattern. Folds generalize many simple traversals over algebraic data
 types. Functions implemented by means of a fold are both compositional
 and structurally recursive. Consider, for instance, the following
-expression data type, written in the programming
+expression datatype, written in the programming
 language Agda~\cite{norell}:
 
 \begin{code}
@@ -163,7 +163,7 @@ by making the following novel contributions:
   (\Cref{sec:generic}).
 \end{itemize}
 Together these results give a verified function that computes a tail-recursive 
-traversal from any algebra for any algebraic data type.
+traversal from any algebra for any algebraic datatype.
 All the constructions and proofs presented in this paper have been
 implemented in and checked by Agda. The corresponding code is freely
 available online.\footnote{\url{https://github.com/carlostome/Dissection-thesis}}
@@ -210,7 +210,7 @@ fold.
 
 The function |unload| is defined by recursion over the stack as before, but with
 one crucial difference. Instead of always returning the final result, it may
-also\footnote{|U+| is Agda's type of disjoin union.} return a new configuration
+also\footnote{|U+| is Agda's type of disjoint union.} return a new configuration
 of our abstract machine, that is, a pair |Nat * Stack|:
 \begin{code}
   unload : Nat -> Stack -> (Nat * Stack) U+ Nat
@@ -233,7 +233,7 @@ functions resembles more closely an abstract machine.
 Both these functions are now accepted by Agda's termination checker as
 they are clearly structurally recursive. We can use both these functions 
 to define the following evaluator\footnote{We ignore |load|'s impossible case, it
-can always be discharged with |bot-elim|.}:
+can always be discharged with |bot-elim : Bot -> A|.}:
 %{
 %format nrec   = "\nonterm{" rec "}"
 \begin{code}
@@ -310,16 +310,16 @@ rightmost leaf is the smallest. In our example expression from
 This section aims to formalize the relation that orders elements of
 the |ZipperType| type (that is, the configurations of the abstract machine) and
 prove it is \emph{well-founded}. However, before doing so there are
-two central problems with our choice of |ZipperType| data type:
+two central problems with our choice of |ZipperType| datatype:
 
 \begin{enumerate}
-\item The |ZipperType| data type is too liberal. As we evaluate our input expression
+\item The |ZipperType| datatype is too liberal. As we evaluate our input expression
   the configuration of our abstract machine changes constantly, but satisfies
   one important \emph{invariant}: each configuration is a decomposition of the
   original input. Unless this invariant is captured, we will be hard pressed
   to prove the well-foundedness of any relation defined on configurations.
 
-\item The choice of the |Stack| data type, as a path from the leaf to the
+\item The choice of the |Stack| datatype, as a path from the leaf to the
   root is convenient to define the tail-recursive machine, but impractical
   when defining the coveted order relation. The top of a stack stores information about
     neighbouring nodes, but to compare two leaves we need \emph{global} information
@@ -350,7 +350,7 @@ As we observed previously, we would like to refine the type |ZipperType| to
 capture the invariant that execution preserves: every |ZipperType| denotes a
 unique leaf in our input expression, or equivalently, a state of the abstract
 machine that computes the fold.
-There is one problem yet: the |Stack| data type stores the values of the subtrees that have
+There is one problem yet: the |Stack| datatype stores the values of the subtrees that have
 been evaluated, but does not store the subtrees themselves.
 In the example in \Cref{fig:examplezipper}, 
 when the traversal has reached the third leaf, all the
@@ -630,7 +630,7 @@ Agda's termination checker now accepts that the repeated calls to
 \subsection{Correctness}
 \label{sec:basic-correctness}
 
-As we have indexed our configuration data types with the input expression,
+As we have indexed our configuration datatypes with the input expression,
 proving correctness of it is relatively straightforward. The type of the
 function |step| guarantees that the configuration returned points to a leaf in
 the input expression.
@@ -680,7 +680,7 @@ a tail-recursive equivalent of \emph{any} function that can be written as a fold
 over a simple algebraic datatype.
 In particular, we generalize the following:
 \begin{itemize}
-  \item The kind of data types, and their associated fold, that our tail-recursive
+  \item The kind of datatypes, and their associated fold, that our tail-recursive
     evaluator supports, \Cref{sec:universe}.
   \item The type of configurations of the abstract machine that computes the
     generic fold, \Cref{sec:dissection,sec:genconf}.
@@ -693,7 +693,7 @@ In particular, we generalize the following:
 \end{itemize}
 %} end of intro.fmt
 %include generic.fmt
-Before we can define any such data type generic constructions, however, we need
+Before we can define any such datatype generic constructions, however, we need
 to fix our universe of discourse.
 
 \subsection{The \emph{regular} universe}
@@ -725,7 +725,7 @@ corresponding to the \AD{Expr} type in this universe as follows:
   expr = K Nat O+ (I O* I)
 \end{code}
 Note that as the constant functor |K| takes an arbitrary type |A| as its
-argument, the entire data type lives in |Set1|. This could easily be remedied by
+argument, the entire datatype lives in |Set1|. This could easily be remedied by
 stratifying this universe explicitly and parametrising our development by a base
 universe.
   
@@ -776,7 +776,7 @@ higher-order function |fmap|.
 To address this, we fuse the |fmap| and |cata| functions into a single
 |mapFold| function~\cite{norell-notes}:
 \begin{code}
-  mapFold : (R Q : Reg) -> (interpl Q interpr X -> X) -> interpl R interpr (mu Q) -> interpl R interpr A
+  mapFold : (R Q : Reg) -> (interpl Q interpr X -> X) -> interpl R interpr (mu Q) -> interpl R interpr X
   mapFold Zero     Q alg Empty
   mapFold One      Q alg tt        = tt
   mapFold I        Q alg (In x)    = alg (mapFold Q Q alg x)
@@ -883,7 +883,7 @@ store the subtrees that still need to be visited.
 
 %{
 %format Stack2 = "\AD{Stack\ensuremath{^{+}}}"
-As we did for the |Stack2| data type from the introduction, we also
+As we did for the |Stack2| datatype from the introduction, we also
 choose to store the original subtrees that have been visited and their
 corresponding correctness proofs:
 \begin{code}
@@ -901,7 +901,7 @@ corresponding correctness proofs:
 \end{code}
 A \emph{stack} is a list of \emph{dissections}. To the left we have
 the |Computed| results; to the right, we have the subtrees of type |mu
-R|. Note that the |Stack| data type is parametrised by the algebra
+R|. Note that the |Stack| datatype is parametrised by the algebra
 |alg|, as the |Proof| field of the |Computed| record refers to it.
 %}
 
@@ -1022,7 +1022,7 @@ first-cps : (R Q : Reg) {alg : interpl Q interpr X -> X}
           ->  Zipper Q X alg U+ X
 \end{code}
 The first two arguments are codes of type |Reg|. The code |Q|
-represents the data type for which we are defining a traversal; the
+represents the datatype for which we are defining a traversal; the
 code |R| is the code on which we pattern match. In the initial call to
 |first-cps| these two codes will be equal. As we define our function,
 we pattern match on |R|, recursing over the codes in (nested) pairs or
@@ -1167,7 +1167,7 @@ relation we are defining relies on an auxiliary relation |<NablaOp| that orders
 \end{itemize}
 
 We can define this relation on dissections directly, without having to
-consider the recursive nature of our data types. We define the
+consider the recursive nature of our datatypes. We define the
 required relation over dissections interpreted on \emph{any} sets |X|
 and |Y| as follows:
 \begin{code}
