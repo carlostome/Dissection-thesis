@@ -155,12 +155,12 @@ by making the following novel contributions:
   \emph{dissections}~\cite{dissection}, to show how to calculate an abstract machine
   from an algebra. To do so, we define a universe of algebraic data
   types and a generic fold operation
-  (\Cref{sec:universe}). Subsequently we show how to turn any
+  (\Cref{sec:generic}). Subsequently we show how to turn any
   structurally recursive function defined using a fold into its tail-recursive
   counterpart.
 \item Finally, we present how our proofs of termination and semantics
   preservation from our example are generalized to the generic fold
-  (\Cref{sec:generic}).
+  (\Cref{sec:genmachine,sec:correct-gen}).
 \end{itemize}
 Together these results give a verified function that computes a tail-recursive 
 traversal from any algebra for any algebraic datatype.
@@ -233,7 +233,7 @@ functions resembles more closely an abstract machine.
 Both these functions are now accepted by Agda's termination checker as
 they are clearly structurally recursive. We can use both these functions 
 to define the following evaluator\footnote{We ignore |load|'s impossible case, it
-can always be discharged with |bot-elim : Bot -> A|.}:
+can always be discharged with \hbox{|bot-elim : forall {X : Set} -> Bot -> X|}.}:
 %{
 %format nrec   = "\nonterm{" rec "}"
 \begin{code}
@@ -255,8 +255,8 @@ our evaluator, however, does not pass the termination checker. The new
 state, |(n' , stk')|, is not structurally smaller than the initial
 state |(n , stk)|. If we work under the assumption that we have a
 relation between the states |Nat * Stack| that decreases after every
-call to |unload|, and a proof that the relation is well-founded, we
-can define the following version of the tail-recursive evaluator:
+call to |unload|, and a proof that the relation is well-founded --we cannot
+infinitely recurse because we cannot get infinitely smaller, we can define the following version of the tail-recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e with load e Top
@@ -268,9 +268,10 @@ can define the following version of the tail-recursive evaluator:
       ... | inj2 r            = r
 \end{code}
 To complete this definition, we still need to define a suitable
-well-founded relation |ltOp| between configurations of type |Nat *
-Stack| and prove that the calls to |unload| produce `smaller'
-states. Finding an appropriate relation and proving its
+relation |ltOp| between configurations of type |Nat *
+Stack|. Prove the relation to be well-founded, |??1 : Acc ltOp (n , stk)|,
+and show that the calls to |unload| produce `smaller'
+states, |??2 : (n' , stk') < (n , stk)|. Finding an appropriate relation and proving its
 well-foundedness is the topic of the next section.
 
 \section{Well-founded tree traversals}
@@ -342,7 +343,7 @@ previous example, the following |ZipperType| corresponds to the third leaf:
 
 \begin{figure}[ht]
   \input{figures/figure3}
-  \caption{Example of \emph{configuration} for leaf number 3}
+  \caption{Example: \emph{Configuration} of leaf number 3}
   \label{fig:examplezipper}
 \end{figure}
 
@@ -350,7 +351,7 @@ As we observed previously, we would like to refine the type |ZipperType| to
 capture the invariant that execution preserves: every |ZipperType| denotes a
 unique leaf in our input expression, or equivalently, a state of the abstract
 machine that computes the fold.
-There is one problem yet: the |Stack| datatype stores the values of the subtrees that have
+There is one problem still: the |Stack| datatype stores the values of the subtrees that have
 been evaluated, but does not store the subtrees themselves.
 In the example in \Cref{fig:examplezipper}, 
 when the traversal has reached the third leaf, all the
@@ -372,7 +373,7 @@ point we will return to in our discussion (\Cref{sec:discussion}).
 From now onwards, the type |ZipperType| uses |Stack2| as its right 
 component:
 \begin{code}
-ZipperType = (Nat * Stack2)
+ZipperType = Nat * Stack2
 \end{code}
 
 A value of type |ZipperType| contains enough information to recover the input
@@ -812,9 +813,9 @@ the corresponding call to |cata|.
 As we mentioned in the previous section, the configurations of our
 abstract machine from the introduction are instances of McBride's
 dissections~\citeyearpar{dissection}. We briefly recap this
-construction, showing how to calculate type of abstract machine
+construction, showing how to calculate the type of abstract machine
 configurations for any type in our universe. The key definition,
-|nabla|, computes a bifunctor for each element in of our universe:
+|nabla|, computes a bifunctor for each element of our universe:
 \begin{code}
   nabla : (R : Reg) → (Set → Set → Set)
   nabla Zero      X Y  = Bot
@@ -844,7 +845,7 @@ We can reconstruct Huet's zipper for generic trees of type |mu R| by
 instantiating both |X| and |Y| to |mu R|.
 
 Given a \emph{dissection}, we can define a |plug| operation that
-`reconstructs' assembles the the context and current value in focus to
+assembles the context and current value in focus to
 produce a value of type |interpl R interpr Y|:
 \begin{code}
   plug : (R : Reg) -> (X -> Y) -> Dissection R X Y -> interpl R interpr Y
@@ -859,7 +860,7 @@ produce a value of type |interpl R interpr Y|:
 \end{code}
 In the last clause of the definition, the \emph{dissection} is over the right
 component of the pair leaving a value |r : interpl R interpr X| to the left. In
-such case, it is only possible to reconstruct a value of type |interpl R interpr Y|, 
+that case, it is only possible to reconstruct a value of type |interpl R interpr Y|, 
 if we have a function |eta| to recover |Y|s from |X|s.
 
 In order to ease things later, we bundle a \emph{dissection} together with the
@@ -922,7 +923,7 @@ Both functions use the projection, |Computed.Tree|, as an argument to
 |plug| to extract the subtrees that have already been processed.
 
 To define the configurations of our abstract machine, we are
-interested in \emph{any} through our initial input, but want to
+interested in \emph{any} path through our initial input, but want to
 restrict ourselves to those paths that lead to a leaf. But what
 constitutes a leaf in this generic setting?
 
@@ -956,7 +957,7 @@ the proof (The type |NonRec| does not have a constructor such as |NonRec-I : (x 
 
 This example also shows how `generic` leaves can be recursive. As long as the
 recursion only happens in the functor layer (code |O+|) and not in the fixpoint
-level induced by |mu R| (code |I|).
+level (code |I|).
 
 Crucially, any non-recursive subtree is independent of |X| -- as is
 exhibited by the following coercion function:
@@ -1052,7 +1053,7 @@ cases are as expected. In |Zero| there is nothing to be done. The |One| and
   first-cps One  Q x k f s    = f (tt , NonRec-One) s
   first-cps (K A) Q x k f s   = f (x , NonRec-K A x) s
 \end{code}
-The recursive case, constructor |I|, corresponds to the ocurrence of a subtree.
+The recursive case, constructor |I|, corresponds to the occurrence of a subtree.
 The function |first-cps| is recursively called over that subtree with the stack
 incremented by a new element that corresponds to the \emph{dissection} of the
 functor layer up to that point. The second continuation is replaced with the
@@ -1339,7 +1340,7 @@ functor underlying the type |Expr|:
   expr : Reg
   expr = K Nat O+ (I O* I)
 \end{code}
-The |Expr| type is then isomorphic to tying the knot over |expr|:the representation:
+The |Expr| type is then isomorphic to tying the knot over |expr|:
 \begin{code}
   ExprG : Set
   ExprG = mu expr

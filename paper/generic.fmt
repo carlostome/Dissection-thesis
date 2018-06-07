@@ -61,7 +61,7 @@
 %format fmap    = "\AF{fmap}"
 %format cata         = "\AF{cata}"
 %format catamorphism         = "\AF{cata}"
-%format cataN        = "\nonterm{" (cata "}"
+%format cataN        = "\nonterm{"(cata "}"
 %format cataNT       = "\nonterm{" cata "}"
 %format mapFold      = "\AF{map-fold}"
 %format eval         = "\AF{eval}"
