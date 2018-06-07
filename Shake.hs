@@ -27,21 +27,16 @@ main :: IO ()
 main = shakeArgs shakeOptions $ do
   want ["thesis"]
 
-  phony "distclean" $ do
-    -- putNormal "Cleaning files in thesis"
-    -- cmd_ "latexmk -c -cd thesis/main.tex"
-    -- removeFilesAfter "thesis" ["*.tex", "*.bbl"]
-
-    putNormal "Cleaning files in paper"
-    cmd_ "latexmk -c -cd paper/main.tex"
-    removeFilesAfter "paper" ["*.tex", "*.bbl"]
-
   phony "thesis" $ do
     need ["thesis/main" <.> pdf]
 
   phony "paper" $ do
     need ["paper/main" <.> pdf]
 
+  phony "distclean" $ do
+    need ["clean-paper" , "clean-thesis"]
+
+  -- thesis rules
   "thesis/main" <.> pdf %> \out -> do
     let files = [ "thesis" </> file <.> tex | file <- thesis_lagda_files]
         bib   = "thesis/main.bib"
@@ -50,6 +45,7 @@ main = shakeArgs shakeOptions $ do
     need (bib : fmt : sty : files)
     cmd_ "latexmk -f -pdf -cd -xelatex thesis/main.tex"
 
+  -- paper rules
   "paper/main" <.> tex %> \out -> do
     let input      = out -<.> lagda
         dir        = takeDirectory out
@@ -68,3 +64,16 @@ main = shakeArgs shakeOptions $ do
         bib        = "paper/main.bib"
     need $ [main , bib] ++ figures
     cmd_ "latexmk -f -pdf -cd paper/main.tex"
+
+  -- cleaning
+  phony "clean-paper" $ do
+    putNormal "Cleaning files in paper"
+    cmd_ "latexmk -C -cd paper/main.tex"
+    removeFilesAfter "paper" ["main.tex", "*.bbl", "main.pdf", "main.ptb"]
+
+  phony "clean-thesis" $ do
+    return ()
+    -- putNormal "Cleaning files in thesis"
+    -- cmd_ "latexmk -c -cd thesis/main.tex"
+    -- removeFilesAfter "thesis" ["*.tex", "*.bbl"]
+

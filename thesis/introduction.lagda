@@ -24,13 +24,13 @@
 %format e2    = "\AB{\ensuremath{e_2}}"
 
 
-\section{Introduction}\label{sec:Introduction}
+\chapter{Introduction}\label{sec:Introduction}
 
 The functional programming paradigm advocates a style of programming based
 on higher-order functions over inductively defined datatypes. A fold, which
 captures their common pattern of recursion, is the prototypical example of such a
 function. However, its use for computation comes at a price. The definition of a
-fold is not tail recursive which means that the size of the stack during
+fold is not tail-recursive which means that the size of the stack during
 execution grows proportionally to the size of the input.  McBride has proposed a
 method called \emph{dissection}\cite{McBride:2008:CLM:1328438.1328474}, to transform a
 fold into its tail-recursive counterpart. Nevertheless, it is not clear why the
@@ -74,14 +74,14 @@ foldr (+) 0 [1..1000000] ~>
 %}
 
 At each step, the size of the expression matches the size of the underlying
-stack. Using a tail recursive function --where the result of the recursive
+stack. Using a tail-recursive function --where the result of the recursive
 calls are not used by another function to compute the result-- an optimizing
 compiler can directly pass the control to the recursive call without needing to
 allocate a stack frame. Avoiding post processing means there is no need to save
 intermediate results.  For the list type, the problem can be solved by using a
 left fold\footnote{Imposing further restrictions on the function |f : (a -> b ->
 b)| (see \cite{Hutton93atutorial}).} (|foldl|). However, for non-linear
-structures, is not as straightforward to recover a tail recursive function that
+structures, is not as straightforward to recover a tail-recursive function that
 evaluates to the same result.
 
 As an example let us consider the type of arithmetic expressions or binary trees
@@ -105,7 +105,7 @@ structural recursion on the input. The |Add| constructor represents addition
 
 The function |eval| is nothing more than a fold over |Expr| where the function
 that combines results from the subtrees is fixed. The |eval| function is not
-tail recursive because the |plusOp| operator needs the result of both subtrees
+tail-recursive because the |plusOp| operator needs the result of both subtrees
 before the evaluation can proceed.
 
 To transform |eval| into a tail-recursive version that computes the "same" final
@@ -126,7 +126,7 @@ defining a type for the stack as follows.
 A pair of mutually recursive functions, \AF{load} and \AF{unload}, perform the
 evaluation. The former searches for the leftmost subtree on the expression while
 the latter performs the evaluation once we are in a right subtree. Both
-functions are tail recursive.
+functions are tail-recursive.
 
 %{
 %format loadN   = "\nonterm{" load "}"
@@ -203,7 +203,7 @@ In order to do so, we need to address the following specific problems.
   exploited to define a tail-recursive fold through the notion of dissection.
   \Cref{sec:prototype} describes the preliminary work done during the proposal
   phase, showing that it is possible to prove termination through \emph{well
-  founded} recursion of a tail recursive traversal over binary
+  founded} recursion of a tail-recursive traversal over binary
   trees.
 %}
 
