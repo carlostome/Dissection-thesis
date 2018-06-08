@@ -1,4 +1,4 @@
-\documentclass[a4paper]{article}
+\documentclass[a4paper]{book}
 \usepackage[top=1in, bottom=1.25in, left=1.70in, right=1.70in]{geometry}
 
 \usepackage[english]{babel}
@@ -10,7 +10,7 @@
 \usepackage{hyperref}
 \usepackage[draft]{todonotes}
 % \usepackage[disable]{todonotes}
-\usepackage{color}
+\usepackage{xcolor}
 \usepackage[framemethod=TikZ]{mdframed}
 % \usepackage{showframe}
 % \usepackage{multirow}
@@ -35,11 +35,20 @@
 \pgfsetlayers{background,main,foreground}
 \usetikzlibrary{decorations.pathreplacing,calc}
 
-% \usepackage{tikz-qtree}
+%% TikZ
+\usepackage{tikz}
+\usetikzlibrary{arrows,snakes,backgrounds,calc}
+\newcommand{\pgftextcircled}[1]{
+    \setbox0=\hbox{#1}%
+    \dimen0\wd0%
+    \divide\dimen0 by 2%
+    \begin{tikzpicture}[baseline=(a.base)]%
+        \useasboundingbox (-\the\dimen0,0pt) rectangle (\the\dimen0,1pt);
+        \node[circle,draw,outer sep=0pt,inner sep=0.1ex] (a) {\textbf{#1}};
+    \end{tikzpicture}
+}
 
-%include lhs2TeX.fmt
-%include lhs2TeX.sty
-%include polycode.fmt
+%include main.fmt
 
 % Frame color
 \definecolor{shadecolor}{rgb}{1.0,0.9,0.7}
@@ -267,12 +276,10 @@
 \tableofcontents
 
 % \listoftodos
-\input{problem.tex}
-\input{background.tex}
-% \input{termination.tex}
-% \input{generic.tex}
-\input{tree.tex}
-% \input{plan.tex}
+\include{introduction}
+\include{background}
+% \include{expression}
+% \include{generic}
 
 \bibliographystyle{plain}
 % \bibliographystyle{alpha}

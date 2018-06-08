@@ -1,6 +1,5 @@
-
-%include polycode.fmt
-%include thesis.fmt
+%include lhs2TeX.fmt
+%include background.fmt
 
 \section{Background}
 

@@ -19,10 +19,6 @@ tex = "tex"
 fmt :: FilePath
 fmt = "fmt"
 
--- lagda files used to build the thesis
-thesis_lagda_files :: [String]
-thesis_lagda_files = [ "main" , "tree" , "problem" , "background"]
-
 main :: IO ()
 main = shakeArgs shakeOptions $ do
   want ["thesis"]
@@ -37,12 +33,21 @@ main = shakeArgs shakeOptions $ do
     need ["clean-paper" , "clean-thesis"]
 
   -- thesis rules
+  "thesis/*.tex" %> \out -> do
+    let input     = out -<.> lagda
+        dir       = takeDirectory out
+        fmtFile   = out -<.> fmt
+    need [input , fmtFile]
+    cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
+
   "thesis/main" <.> pdf %> \out -> do
-    let files = [ "thesis" </> file <.> tex | file <- thesis_lagda_files]
+    let files = [ "thesis" </> file <.> tex | file <-lagda_files]
+                  where lagda_files = [ "main"      , "introduction" 
+                                      , "background", "expression"
+                                      , "generic"]
         bib   = "thesis/main.bib"
-        fmt   = "thesis/thesis.fmt"
         sty   = "thesis/agda.sty"
-    need (bib : fmt : sty : files)
+    need (bib : sty : files)
     cmd_ "latexmk -f -pdf -cd -xelatex thesis/main.tex"
 
   -- paper rules
@@ -72,8 +77,6 @@ main = shakeArgs shakeOptions $ do
     removeFilesAfter "paper" ["main.tex", "*.bbl", "main.pdf", "main.ptb"]
 
   phony "clean-thesis" $ do
-    return ()
-    -- putNormal "Cleaning files in thesis"
-    -- cmd_ "latexmk -c -cd thesis/main.tex"
-    -- removeFilesAfter "thesis" ["*.tex", "*.bbl"]
-
+    putNormal "Cleaning files in paper"
+    cmd_ "latexmk -C -cd thesis/main.tex"
+    removeFilesAfter "thesis" ["*.tex", "*.bbl", "main.pdf", "main.ptb"]

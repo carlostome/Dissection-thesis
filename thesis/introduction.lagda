@@ -1,28 +1,5 @@
-
-%include polycode.fmt
-%include thesis.fmt
-
-%{
-%format Expr  = "\AD{Expr}"
-%format Val   = "\AD{Val}"
-%format Add   = "\AD{Add}"
-%format eval  = "\AF{eval}"
-%format +     = "\AF{+}"
-%format Stack = "\AD{Stack}"
-%format Top   = "\AD{Top}"
-%format Left  = "\AD{Left}"
-%format Right = "\AD{Right}"
-%format load  = "\AF{load}"
-%format unload  = "\AF{unload}"
-%format foldr = "\AF{foldr}"
-%format foldl = "\AF{foldl}"
-
-%format plusOp = "\AF{\_+\_}"
-
-%format n     = "\AB{n}"
-%format e1    = "\AB{\ensuremath{e_1}}"
-%format e2    = "\AB{\ensuremath{e_2}}"
-
+%include lhs2TeX.fmt
+%include introduction.fmt
 
 \chapter{Introduction}\label{sec:Introduction}
 

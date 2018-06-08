@@ -1,0 +1,48 @@
+\begin{tikzpicture}
+\tikzset{
+    ncbar angle/.initial=90,
+    ncbar/.style={
+        to path=(\tikztostart)
+        -- ($(\tikztostart)!#1!\pgfkeysvalueof{/tikz/ncbar angle}:(\tikztotarget)$)
+        -- ($(\tikztotarget)!($(\tikztostart)!#1!\pgfkeysvalueof{/tikz/ncbar angle}:(\tikztotarget)$)!\pgfkeysvalueof{/tikz/ncbar angle}:(\tikztostart)$)
+        -- (\tikztotarget)
+    },
+    ncbar/.default=0.5cm,
+}
+
+\tikzset{square left brace/.style={ncbar=0.15cm}}
+\tikzset{square right brace/.style={ncbar=-0.15cm}}
+  \tikzstyle{every node}=[font=\footnotesize]
+	% \draw[step=1cm, very thin, gray] (-6,-6) grid (6,6);
+  \draw [thick] (-1.5,0) to [square left brace ] (-1.5,1);
+  \draw [thick] (3.5,0) to [square right brace ] (3.5,1);
+	\node at (-0.75,0.5) (right1) {\AI{\color{red}Right}\AS{}\AN{7},};
+	\node at (0.6,0.5)    (right2) {\AI{\color{red}Right}\AS{}\AN{3},};
+  \node at  (1.75,0.5) {\AI{\color{blue}Left}};
+	\node at (-2.5, 0.5) {\AN{1}\quad,};
+  \tikzstyle{every node}=[font=\tiny]
+  \tikzstyle{level 1}=[level distance=5mm, sibling distance=7mm]
+  \node at (2.75,0.75) (left1) {\AI{Add}} 
+          child {node {\AI{Val}\AS{}\AN{2}}}
+          child {node {\AI{Val}\AS{}\AN{0}}};
+
+  \tikzstyle{every node}=[font=\footnotesize]
+  \draw [thick] (-1.5,-1.5) to [square left brace ] (-1.5,-0.5);
+  \draw [thick] (3.5,-1.5) to [square right brace ] (3.5,-0.5);
+	\node at (-1,-1) (left2) {{\AI{\color{blue}Left}}};
+  \node at (0.6,-1)    (right2) {\AI{\color{red}Right}\AS{}\AN{3},};
+  \node at  (1.75,-1) {\AI{\color{blue}Left}};
+	\node at (-2.5, -1) {\AN{7}\quad,};
+
+  \tikzstyle{every node}=[font=\tiny]
+  \tikzstyle{level 1}=[level distance=5mm, sibling distance=7mm]
+  \node at (2.75,-0.75) (left1) {\AI{Add}} 
+          child {node {\AI{Val}\AS{}\AN{2}}}
+          child {node {\AI{Val}\AS{}\AN{0}}};
+
+  \node at (-0.4,-1) (left1) {\AI{Val}\AS{}\AN{1}};
+  \tikzstyle{every node}=[font=\footnotesize]
+  \node at (-0.15,-1.1) (leftcomma) {,};
+    % \draw [red, thick] (1,0) to [square right brace] (1,4);
+\end{tikzpicture}
+
