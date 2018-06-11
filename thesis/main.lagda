@@ -1,5 +1,5 @@
 \documentclass[a4paper]{book}
-\usepackage[top=1in, bottom=1.25in, left=1.70in, right=1.70in]{geometry}
+% \usepackage[top=1in, bottom=1.25in, left=1.70in, right=1.70in]{geometry}
 
 \usepackage[english]{babel}
 % \usepackage{gfsdidot}
@@ -19,6 +19,8 @@
 \usepackage{amssymb}
 \usepackage{amsthm}
 
+\usepackage{scalerel}   %% Scale
+\usepackage{dsfont}     %% Font for fancy math letters
 \usepackage{cleveref}
 
 \usepackage{ucs}
@@ -86,6 +88,7 @@
 
 % find a solution for hspace -- crappy crappy--
 \newcommand{\nonterm}[1]{\hspace*{-0.1cm}\colorbox{orange!25}{#1}}
+\newcommand{\hole}[1]{\colorbox{yellow!50}{\ensuremath{\bigbox_{#1}}}}
 
 \newcommand{\definedin}[1]{\footnote{Module: #1}}
 \newcommand{\args}[1]{\overline{#1}}
@@ -276,10 +279,11 @@
 \tableofcontents
 
 % \listoftodos
-\include{introduction}
-\include{background}
-% \include{expression}
-% \include{generic}
+\input{introduction}
+\input{background}
+\input{expression}
+\input{generic}
+\input{conclusion}
 
 \bibliographystyle{plain}
 % \bibliographystyle{alpha}
@@ -287,3 +291,4 @@
 \bibliography{main}
 
 \end{document}
+

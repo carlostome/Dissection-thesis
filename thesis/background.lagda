@@ -1,7 +1,7 @@
 %include lhs2TeX.fmt
 %include background.fmt
 
-\section{Background}
+\chapter{Background}
 
 - Fold in a bigger context -> 
 

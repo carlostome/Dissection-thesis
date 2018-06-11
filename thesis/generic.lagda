@@ -1,7 +1,7 @@
 %include polycode.fmt
 %include generic.fmt
 
-\section{A verified generic tail-recursive catamorphism}
+\chapter{A verified generic tail-recursive catamorphism}
 \label{sec:generic}
 The previous section showed how to prove that our hand-written tail-recursive
 evaluation function was both terminating and equal to our original evaluator.
@@ -24,7 +24,7 @@ In particular, we generalize the following:
 Before we can define any such datatype generic constructions, however, we need
 to fix our universe of discourse.
 
-\subsection{The \emph{regular} universe}
+\section{The \emph{regular} universe}
 \label{sec:universe}
 
 In a dependently typed programming language such as Agda, we can
@@ -134,7 +134,7 @@ traversal that maps any algebra to a tail-recursive function that is
 guaranteed to terminate and produce the same result as
 the corresponding call to |cata|.
 
-\subsection{Dissection}
+\section{Dissection}
 \label{sec:dissection}
 
 As we mentioned in the previous section, the configurations of our
@@ -198,7 +198,7 @@ functor to which it \emph{plug}s as a type-indexed type.
     prodOp : (d : Dissection R X Y) → plug R d eta == tx → IxDissection R X Y eta tx 
 \end{code}
 
-\subsection{Generic configurations}
+\section{Generic configurations}
 \label{sec:genconf}
 
 While the \emph{dissection} computes the bifunctor \emph{underlying}
@@ -317,7 +317,7 @@ tree. A similar function can be defined for the `bottom-up' zippers,
 that work on a reversed stack.
 
 
-\subsection{One step of a catamorphism}
+\section{One step of a catamorphism}
 \label{subsec:onestep}
 
 %{
@@ -457,7 +457,7 @@ keep the original subtree where the value came from; Third, the proof that the
 value equals to applying a |catamorphism| over the subtree.  The function
 |compute| massages |r| to adapt the arguments for the recursive call to |unload|.
 
-\subsection{Relation over generic configurations}
+\section{Relation over generic configurations}
 \label{subsec:rel-gen}
 
 We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
@@ -551,7 +551,7 @@ The full proof of the following statement can found in the accompanying code:
   <Z-WF : (R : Reg)  -> (t : μ R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
-\subsection{A generic tail-recursive machine}
+\section{A generic tail-recursive machine}
 \label{sec:genmachine}
 
 We are now ready to define a generic tail-recursive machine. To do so we
@@ -632,7 +632,7 @@ function that initiates the computation with suitable arguments:
   ... | inj1 z = rec R alg (z , ...) (<Z-WF R z)
 \end{code}
 
-\subsection{Correctness, generically}
+\section{Correctness, generically}
 \label{sec:correct-gen}
 %{
 %format tail-rec-eval = "\AF{tail-rec-eval}"
@@ -656,7 +656,7 @@ Our generic correctness result is an immediate consequence:
                → catamorphism R alg t == tail-rec-cata R alg t
 \end{code}
 
-\subsection{Example}
+\section{Example}
 \label{subsec:example-gen}
 
 To conclude, we show how to generically implement the example from the

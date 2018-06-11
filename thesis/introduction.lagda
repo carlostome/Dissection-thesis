@@ -2,6 +2,7 @@
 %include introduction.fmt
 
 \chapter{Introduction}\label{sec:Introduction}
+\label{chap:intro}
 
 The functional programming paradigm advocates a style of programming based
 on higher-order functions over inductively defined datatypes. A fold, which
@@ -14,21 +15,24 @@ fold into its tail-recursive counterpart. Nevertheless, it is not clear why the
 resulting function terminates, nor it is clear that the transformation preserves
 the fold's semantics.
 
-
-\subsection{Description of the problem}\label{subsec:problem}
+\section{Description of the problem}\label{subsec:problem}
+\label{sec:intro:descr}
 
 The |foldr| function is one of the first higher-order functions that any
 functional programmer learns. Many simple functions over lists such as |map|,
 |reverse|, |take|, |sum|, |or| and many more can be expressed in terms of |foldr|.
 However, if not used carefully, |foldr| may cause a program to fail dynamically
-with a stack overflow. To understand the problem let us review its definition.
-From now on, all code snippets will use \Agda~notation.
+with a stack overflow. In order to understand the problem, let us review the
+definition of |foldr|\footnote{All code snippets within this thesis use
+\Agda~notation.}:
 
+\begin{figure}[h]
 \begin{code}
   foldr : (a -> b -> b) -> b -> List a -> b
-  foldr f z []         = z
-  foldr f z (x :: xs)  = f x (foldr f z xs)
+  foldr f e []         = e
+  foldr f e (x :: xs)  = f x (foldr f e xs)
 \end{code}
+\end{figure}
 
 In the second clause of the definition, the parameter function |f| needs to wait
 until a result has been computed for the recursive call before it can reduce
@@ -133,7 +137,7 @@ smaller than the input.  Moreover, without proof we have no evidence that the
 result computed by the function is the same as the original \AF{eval} for every
 input.
 
-\subsection{Research objective}
+\section{Research objective}
 
 The master thesis aims to investigate whether it would be possible to use
 McBride's notion of dissection to transform a fold into an extensionally
@@ -171,7 +175,7 @@ In order to do so, we need to address the following specific problems.
   be generalized to deal with types that can be expressed as \emph{Regular} tree
   types.
 
-\subsection{Proposal}
+\section{Proposal}
 
   The rest of the document is organized as follows. In \Cref{sec:termination} we
   explore common techniques used in type theory to prove that a function

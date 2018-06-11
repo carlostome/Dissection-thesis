@@ -1,37 +1,37 @@
-%include lhs2TeX.fmt
+%include polycode.fmt
 %include expression.fmt
 
-\section{Verified tail-recursive fold for |Expr|}
+\chapter{Verified tail-recursive fold for Expr}
 \label{sec:basics}
 
-Before tackling the generic case, we will present the termination
-and correctness proof for the tail-recursive evaluator presented in
-the introduction in some detail.
+ Before tackling the generic case, we will present the termination
+ and correctness proof for the tail-recursive evaluator presented in
+ the introduction in some detail.
 
-The problematic call for Agda's termination checker is the last clause of the
-|unload| function, that calls |load| on the expression stored on the top of the
-stack. From the definition of |load|, it is clear that we only ever push
-subtrees of the input on the stack. However, the termination checker has no
-reason to believe that the expression at the top of the stack is structurally
-smaller in any way. Indeed, if we were to redefine |load| as follows:
-\begin{code}
-    load (Add e1 e2)  stk = load e1 (Left (f e2) stk)
-\end{code}
-we might use some function |f : Expr -> Expr| to push \emph{arbitrary}
-expressions on the stack, potentially leading to non-termination.
+  The problematic call for Agda's termination checker is the last clause of the
+  |unload| function, that calls |load| on the expression stored on the top of the
+  stack. From the definition of |load|, it is clear that we only ever push
+  subtrees of the input on the stack. However, the termination checker has no
+  reason to believe that the expression at the top of the stack is structurally
+  smaller in any way. Indeed, if we were to redefine |load| as follows:
+  \begin{code}
+      load (Add e1 e2)  stk = load e1 (Left (f e2) stk)
+  \end{code}
+  we might use some function |f : Expr -> Expr| to push \emph{arbitrary}
+  expressions on the stack, potentially leading to non-termination.
 
-The functions |load| and |unload| use the stack to store subtrees and partial
-results while folding the input expression. Thus, every node in the original
-tree is visited twice during the execution: first when the function |load|
-traverses the tree, until it finds the leftmost leaf; second when |unload|
-inspects the stack in searching of an unevaluated subtree. This process is
-depicted in \Cref{fig:load-unload}.
+  The functions |load| and |unload| use the stack to store subtrees and partial
+  results while folding the input expression. Thus, every node in the original
+  tree is visited twice during the execution: first when the function |load|
+  traverses the tree, until it finds the leftmost leaf; second when |unload|
+  inspects the stack in searching of an unevaluated subtree. This process is
+  depicted in \Cref{fig:load-unload}.
 
-\begin{figure}
-  \input{figures/figure1}
-  \caption{Traversing a tree with {\color{blue}load} and {\color{red}unload}}
-  \label{fig:load-unload}
-\end{figure}
+ \begin{figure}
+   % \input{figures/figure1}
+   \caption{Traversing a tree with {\color{blue}load} and {\color{red}unload}}
+   \label{fig:load-unload}
+ \end{figure}
 
 As there are finitely many nodes on a tree, the depicted traversal
 using |load| and |unload| must terminate -- but how can we convince
@@ -66,8 +66,8 @@ functions resembles an an abstract machine more closely.
 
 Both these functions are now accepted by Agda's termination checker as
 they are clearly structurally recursive. We can use both these functions 
-to define the following evaluator\footnote{We ignore |load|'s impossible case, it
-can always be discharged with \hbox{|bot-elim : forall {X : Set} -> Bot -> X|}.}:
+to define the following evaluator %\footnote{We ignore |load|'s impossible case, it
+%can always be discharged with \hbox{|bot-elim : forall {X : Set} -> Bot -> X|}.}:
 %{
 %format nrec   = "\nonterm{" rec "}"
 \begin{code}
@@ -139,7 +139,7 @@ rightmost leaf is the smallest. In our example expression from
 \Cref{sec:intro}, we would number the leaves as follows:
 
 \begin{figure}[ht]
-  \input{figures/figure2}
+  % \input{figures/figure2}
   \caption{Numbered leaves of the tree}
   \label{fig:numbered}
 \end{figure}
@@ -178,7 +178,7 @@ A value of type |ZipperType| denotes a leaf in our input expression. In the
 previous example, the following |ZipperType| corresponds to the third leaf:
 
 \begin{figure}[ht]
-  \input{figures/figure3}
+  % \input{figures/figure3}
   \caption{Example: \emph{Configuration} of leaf number 3}
   \label{fig:examplezipper}
 \end{figure}
@@ -253,7 +253,7 @@ We now consider the value of |ZipperType| corresponding to
 leaves with numbers 3 and 4 in our running example:
 
 \begin{figure}[ht]
-  \input{figures/figure4}
+  % \input{figures/figure4}
   \caption{Comparison of \emph{configurations} for leaves 3 and 4}
   \label{fig:comparison}
 \end{figure}
