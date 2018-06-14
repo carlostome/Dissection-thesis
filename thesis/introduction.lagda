@@ -1,4 +1,3 @@
-%include polycode.fmt
 %include introduction.fmt
 
 \chapter{Introduction}\label{sec:Introduction}
@@ -168,7 +167,7 @@ thesis is set out to answer:
   \item \textbf{Termination} \Agda's termination checker cannot verify that the 
     functions |load| and |unload|, as previously defined, terminate for every
     possible input. What it is necessary to demonstrate that the functions
-    terminate, consequently the tail-recursive evaluator terminates?
+    terminate, so as a corollary the tail-recursive evaluator terminates?
 
   \item \textbf{Correctness} In the case the tail-recursive evaluator
     terminates, it is correct? By correct it is understood that both the
@@ -190,15 +189,15 @@ thesis is set out to answer:
   at the beginning and conclusions at the end. 
 
   We start in \Cref{chap:background} giving the reader a broader
-  perspective on folds in programming languages so justifying the why of this
-  thesis.
+  perspective on folds in programming languages to justify the importance of our
+  our work.
   Moreover, in this chapter, we revisit the available literature to explain
   different methods of assisting the termination checker to accept functions
   that are not defined by strictly structural recursion.
 
   In the first part of the thesis, \Cref{chap:expression}, we show how to
   construct a tail-recursive evaluation function for the type of |Expr|, and
-  prove that it terminates and is correct. With this we answer research
+  prove that it terminates and is correct. With this we answer both research
   questions one and two.
 
   In the second part, \Cref{chap:generic}, we show how to generalize our

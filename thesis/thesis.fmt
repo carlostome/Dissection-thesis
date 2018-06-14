@@ -56,6 +56,7 @@
 %format inj2     = "\AI{inj\ensuremath{_2}}"
 %format refl     = "\AI{refl}"
 
+%format ..       = "\ensuremath{_{.}\hspace*{-0.2em}}"
 %% Some standard functions
 %format lookup = "\AF{lookup}"
 %format length = "\AF{length}"
@@ -66,6 +67,7 @@
 %format <$$>   = "\AF{$<\hspace{-.1em}\$\hspace{-.1em}>$}"
 %format <**>   = "\AF{$<\hspace{-.1em}*\hspace{-.1em}>$}"
 %format ++     = "\AF{\ensuremath{++}}"
+%format ++Op     = "\AF{\_\ensuremath{++}\_}"
 %format >>=    = "\AF{$>>=$}"
 %format Delta  = "\AF{$\Delta$}"
 %format .      = "\AF{\ensuremath{\circ}}"

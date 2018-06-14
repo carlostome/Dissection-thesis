@@ -76,10 +76,14 @@
         skipbelow=\baselineskip plus 2pt minus 1pt,
         linewidth=0.5pt,
         frametitlerule=true,
-        frametitlebackgroundcolor=gray!30
-    ]%
+        frametitlebackgroundcolor=gray!20,
+        rightline=false,
+        leftline=false
+    ]\medskip
 }{%
+    \medskip
     \end{mdframed}
+    \medskip
 }
 
 
@@ -207,12 +211,17 @@
 
 \newcommand{\Agda}{\emph{Agda}}
 
+\renewcommand\hscodestyle{%
+   \setlength\leftskip{1.5em}%
+}
 %--------------------------------------------------
 
 \newcommand{\rewrite}[1]{\todo[color=blue!40,noline]{Rewrite}}
 \newcommand{\arewesure}[1]{\todo[color=red!40,noline]{#1}}
 \newcommand{\referenceneeded}[1]{\todo[color=green!40,noline]{#1}}
 \newcommand{\colored}{\todo[color=pink!40,noline]{Color the stuff}}
+
+\setcounter{tocdepth}{1} % Show only up to sections in ToC
 
 \title{Verified tail recursive folds through dissection}
 \date{\today}
@@ -222,16 +231,16 @@
 
 \maketitle
 
-\begin{flushright}
-\emph{Supervised by} Wouter Swierstra\\
-\emph{Second supervisor} Alejandro Serrano Mena
-\end{flushright}
+% \begin{flushright}
+% \emph{Supervised by} Wouter Swierstra\\
+% \emph{Second supervisor} Alejandro Serrano Mena
+% \end{flushright}
 
 \tableofcontents
 
 % \listoftodos
 \input{introduction}
-% \input{background}
+\input{background}
 \input{expression}
 \input{generic}
 \input{conclusion}

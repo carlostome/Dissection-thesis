@@ -1,0 +1,45 @@
+%include polycode.fmt
+%include thesis.fmt
+
+% Datatypes
+%format Size     = "\AD{Size}"
+%format qsPred     = "\AD{qsPred}"
+%format SList    = "\AD{SList}"
+%format P        = "\AD{P}"
+%format SizeUniv = "\AD{Size\ensuremath{_{\scaleto{U}{4pt}}}}"
+
+% Constructors
+%format up = "\AI{\ensuremath{\uparrow}}"
+%format upOp = "\AI{\ensuremath{\uparrow}\_}"
+%format omega = "\AI{\ensuremath{\omega}}"
+%format SNil = "\AI{SNil}"
+%format SCons = "\AI{SCons}"
+%format qsNil = "\AI{qsNil}"
+%format qsCons = "\AI{qsCons}"
+
+% Functions
+
+%format quickSortN  = "\nonterm{" quickSort "}"
+%format quickSort   = "\AF{quickSort}"
+%format qsPred-true   = "\AF{qsPred-true}"
+%format quickSortS     = "\AF{quickSort\ensuremath{_{\scaleto{S}{4pt}}}}"
+%format quickSortBC     = "\AF{quickSort\ensuremath{_{\scaleto{BC}{4pt}}}}"
+%format filter      = "\AF{filter}"
+%format filterS     = "\AF{filter\ensuremath{_{\scaleto{S}{4pt}}}}"
+%format filterBad   = "\AF{filter\ensuremath{_{\scaleto{bad}{4pt}}}}"
+%format not         = "\AF{not}"
+%format +           = "\AF{+}"
+%format f          = "\AF{f}"
+%format f'          = "\AF{f''}"
+
+% Bound variables
+%format x          = "\AB{x}"
+%format xs         = "\AB{xs}"
+%format p          = "\AB{p}"
+%format a          = "\AB{\ensuremath{\alpha}}"
+%format b          = "\AB{\ensuremath{\beta}}"
+%format i          = "\AB{\ensuremath{i}}"
+%format j          = "\AB{\ensuremath{j}}"
+%format smaller          = "\AB{smaller}"
+%format bigger          = "\AB{bigger}"
+
