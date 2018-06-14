@@ -2,7 +2,7 @@
 %include expression.fmt
 
 \chapter{Verified tail-recursive fold for Expr}
-\label{sec:basics}
+\label{chap:expression}
 
  Before tackling the generic case, we will present the termination
  and correctness proof for the tail-recursive evaluator presented in
@@ -28,7 +28,7 @@
   depicted in \Cref{fig:load-unload}.
 
  \begin{figure}
-   % \input{figures/figure1}
+   \input{figures/figure1}
    \caption{Traversing a tree with {\color{blue}load} and {\color{red}unload}}
    \label{fig:load-unload}
  \end{figure}
@@ -139,7 +139,7 @@ rightmost leaf is the smallest. In our example expression from
 \Cref{sec:intro}, we would number the leaves as follows:
 
 \begin{figure}[ht]
-  % \input{figures/figure2}
+  \input{figures/figure2}
   \caption{Numbered leaves of the tree}
   \label{fig:numbered}
 \end{figure}
@@ -178,7 +178,7 @@ A value of type |ZipperType| denotes a leaf in our input expression. In the
 previous example, the following |ZipperType| corresponds to the third leaf:
 
 \begin{figure}[ht]
-  % \input{figures/figure3}
+  \input{figures/figure3}
   \caption{Example: \emph{Configuration} of leaf number 3}
   \label{fig:examplezipper}
 \end{figure}
@@ -253,7 +253,7 @@ We now consider the value of |ZipperType| corresponding to
 leaves with numbers 3 and 4 in our running example:
 
 \begin{figure}[ht]
-  % \input{figures/figure4}
+  \input{figures/figure4}
   \caption{Comparison of \emph{configurations} for leaves 3 and 4}
   \label{fig:comparison}
 \end{figure}
@@ -363,7 +363,7 @@ related thus a recursive call is not possible. This step in the proof relies on
 only comparing configurations arising from traversing the same initial
 expression |e|.
 
-\subsection{A terminating and correct tail-recursive evaluator}
+\section{A terminating and correct tail-recursive evaluator}
 \label{sec:basic-assembling}
 
 We now have almost all the definitions in place to revise our tail-recursive
@@ -464,7 +464,7 @@ an Agda idiom needed to remember that |z'| is the result of the call |step e z|.
 Agda's termination checker now accepts that the repeated calls to
 |rec| are on strictly smaller configurations.
 
-\subsection{Correctness}
+\section{Correctness}
 \label{sec:basic-correctness}
 
 As we have indexed our configuration datatypes with the input expression,
@@ -507,20 +507,21 @@ The main correctness theorem now states that |eval| and
 This finally completes the definition and verification of a
 tail-recursive evaluator. 
 
+\section{Discussion}
+\label{sec:expr:discussion}
+% \section{Verified tail-recursive fold for binary trees}\label{sec:tree}
 
-\section{Verified tail-recursive fold for binary trees}\label{sec:tree}
+%   In this chapter, we present the transformation of a catamorphism for binary
+%   trees with natural numbers in the leaves onto a tail-recursive function.
+%   Moreover, we show how to prove that the resulting function terminates and that
+%   it is correct (for every possible input it computes the same result as the
+%   original fold).
 
-  In this chapter, we present the transformation of a catamorphism for binary
-  trees with natural numbers in the leaves onto a tail-recursive function.
-  Moreover, we show how to prove that the resulting function terminates and that
-  it is correct (for every possible input it computes the same result as the
-  original fold).
-
-  In order to do so, in \cref{subsec:bintree} we introduce the type of binary
-  trees along with several examples of evaluation functions and how their common
-  structure can be abstracted into a catamorphism. Then, in \cref{subsec:zipper},
-  we explain the concept of a Zipper with its many type indexed variants and in
-  \cref{subsec:onestep}.
+%   In order to do so, in \cref{subsec:bintree} we introduce the type of binary
+%   trees along with several examples of evaluation functions and how their common
+%   structure can be abstracted into a catamorphism. Then, in \cref{subsec:zipper},
+%   we explain the concept of a Zipper with its many type indexed variants and in
+%   \cref{subsec:onestep}.
 
   % In order to do, we first introduce the type of binary trees. In \subi We
   % provide both a proof of the termination of the transformation by defining a

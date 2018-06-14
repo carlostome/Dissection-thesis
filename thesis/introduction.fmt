@@ -1,3 +1,5 @@
+%include thesis.fmt
+
 % Datatypes
 %format Expr  = "\AD{Expr}"
 %format Val   = "\AD{Val}"
@@ -8,17 +10,36 @@
 %format Right = "\AD{Right}"
 
 % Functions
-%format load  = "\AF{load}"
+%format load    = "\AF{load}"
 %format unload  = "\AF{unload}"
+%format loadN   = "\nonterm{" load "}"
+%format unloadN = "\nonterm{" unload "}"
 %format foldr = "\AF{foldr}"
 %format foldl = "\AF{foldl}"
+%format foldExpr   = "\AF{fold\ensuremath{_{expr}}}"
 %format eval  = "\AF{eval}"
 %format +     = "\AF{+}"
 %format plusOp = "\AF{\_+\_}"
+%format tail-rec-eval  = "\AF{tail\text{-}rec\text{-}eval}"
 
 % Bound variables
 %format n     = "\AB{n}"
 %format e1    = "\AB{\ensuremath{e_1}}"
 %format e2    = "\AB{\ensuremath{e_2}}"
+%format e     = "\AB{e}"
+%format x     = "\AB{x}"
+%format xs    = "\AB{xs}"
+%format f     = "\AB{f}"
+%format a     = "\AB{\ensuremath{\alpha}}"
+%format b     = "\AB{\ensuremath{\beta}}"
+%format v     = "\AB{v}"
+%format v'     = "\AB{v''}"
+%format stk   = "\AB{stk}"
+%format stk'  = "\AB{stk''}"
+%format e1    = "\AB{\ensuremath{e_1}}"
+%format e2    = "\AB{\ensuremath{e_2}}"
+%format alg1 = "\AB{\ensuremath{\phi_1}}"
+%format alg2 = "\AB{\ensuremath{\phi_2}}"
 
-
+% Symbols
+%format ~> = "\leadsto"

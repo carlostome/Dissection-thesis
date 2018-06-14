@@ -2,18 +2,11 @@
 % \usepackage[top=1in, bottom=1.25in, left=1.70in, right=1.70in]{geometry}
 
 \usepackage[english]{babel}
-% \usepackage{gfsdidot}
 \usepackage{lmodern}
-% \usepackage[firstpage]{draftwatermark}
-
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage[draft]{todonotes}
-% \usepackage[disable]{todonotes}
-\usepackage{xcolor}
 \usepackage[framemethod=TikZ]{mdframed}
-% \usepackage{showframe}
-% \usepackage{multirow}
 \usepackage{alltt}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -24,7 +17,11 @@
 \usepackage{cleveref}
 
 \usepackage{ucs}
+\usepackage[T1]{fontenc}
 \usepackage[utf8x]{inputenc}
+\usepackage{textcomp}
+\usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}
 
 % \usepackage{apalike}
 \usepackage{natbib}
@@ -107,22 +104,12 @@
 \else\textbf{#2}%
 \fi\fi}
 
-\newcommand{\Bool}{\textrm{Bool}}
-\newcommand{\List}{\textrm{List}}
-\newcommand{\Nat}{\textrm{Nat}} % or \mathit{N\!at}
-\newcommand{\NatList}{\textrm{NatList}}
-\newcommand{\PairOfBools}{\textrm{PairOfBools}}
-\newcommand{\RoseTree}{\textrm{RoseTree}}
-% \newcommand{\Tree}{\textrm{Tree}}
 
 %--------------------------------------------------
 
 %  Agda mess
 
 \usepackage[conor]{agda}
-% \usepackage{agda}
-\usepackage{catchfilebetweentags}
-\usepackage{autofe}
 
 \newcommand{\AK}{\AgdaKeyword}
 \newcommand{\AY}{\AgdaSymbol}
@@ -154,7 +141,6 @@
 %\par\addvspace{1em}%
 }
 
-\setlength\parindent{0pt}
 %% Multiple columns of agda code.
 %% Optional argument represents percentage of
 %% \textwidth that the minipage will use.
@@ -186,62 +172,27 @@
 \newcounter{codeblock}
 \newcommand{\labelcodeblock}[2]{\refstepcounter{codeblock}\label{#1}\begin{center}Listing \thecodeblock\end{center}}
 
-%---
-
-\newcommand{\greyFG}[1]{\textcolor[rgb]{0.15,0.15,0.15}{#1}}
-\newcommand{\redFG}[1]{\textcolor[rgb]{0.6,0,0}{#1}}
-\newcommand{\greenFG}[1]{\textcolor[rgb]{0,0.4,0}{#1}}
-\newcommand{\blueFG}[1]{\textcolor[rgb]{0,0,0.8}{#1}}
-\newcommand{\orangeFG}[1]{\textcolor[rgb]{0.8,0.4,0}{#1}}
-\newcommand{\purpleFG}[1]{\textcolor[rgb]{0.4,0,0.4}{#1}}
-\newcommand{\yellowFG}[1]{\textcolor{yellow}{#1}}
-\newcommand{\brownFG}[1]{\textcolor[rgb]{0.5,0.2,0.2}{#1}}
-\newcommand{\blackFG}[1]{\textcolor[rgb]{0,0,0}{#1}}
-\newcommand{\whiteFG}[1]{\textcolor[rgb]{1,1,1}{#1}}
-\newcommand{\yellowBG}[1]{\colorbox[rgb]{1,1,0.2}{#1}}
-\newcommand{\brownBG}[1]{\colorbox[rgb]{1.0,0.7,0.4}{#1}}
-
-\newcommand{\ColourStuff}{
-  \newcommand{\D}[1]{\blueFG{\textsf{##1}}} % Types
-  % \newcommand{\V}[1]{\blackFG{\textsf{#1}}} % Variables
-  \newcommand{\V}[1]{\greyFG{\textsf{##1}}} % Variables
-  % \newcommand{\K}[1]{\mathbf{#1}}
-  % \newcommand{\K}[1]{\orange{\textsf{\textbf{#1}}}} % Keywords
-  \newcommand{\K}[1]{\orangeFG{\textsf{##1}}} % Keywords
-}
-\newcommand{\MonochromeStuff}{
-  \newcommand{\red}{\blackFG}
-  \newcommand{\green}{\blackFG}
-  \newcommand{\blue}{\blackFG}
-  \newcommand{\orange}{\blackFG}
-  \newcommand{\purple}{\blackFG}
-  \newcommand{\yellow}{\blackFG}
-  \newcommand{\brown}{\blackFG}
-  \newcommand{\black}{\blackFG}
-  \newcommand{\white}{\blackFG}
-}
-\ColourStuff
 
 %--------------------------------------------------
 
-\setmainfont[ItalicFont = xits-italic.otf
-, BoldFont = xits-bold.otf
-, BoldItalicFont = xits-bolditalic.otf]{xits-regular.otf}
-\setmathfont[BoldFont = xits-mathbold.otf]{xits-math.otf}
-\setsansfont[Scale=MatchLowercase
-, ItalicFont = DejaVuSans-Oblique.ttf
-, BoldFont = DejaVuSans-Bold.ttf
-, BoldItalicFont = DejaVuSans-BoldOblique.ttf]{DejaVuSans.ttf}
-\setmonofont[Scale=MatchLowercase
-, ItalicFont = DejaVuSansMono-Oblique.ttf
-, BoldFont = DejaVuSansMono-Bold.ttf
-, BoldItalicFont = DejaVuSansMono-BoldOblique.ttf]{DejaVuSansMono.ttf}
+% \setmainfont[ItalicFont = xits-italic.otf
+% , BoldFont = xits-bold.otf
+% , BoldItalicFont = xits-bolditalic.otf]{xits-regular.otf}
+% \setmathfont[BoldFont = xits-mathbold.otf]{xits-math.otf}
+% \setsansfont[Scale=MatchLowercase
+% , ItalicFont = DejaVuSans-Oblique.ttf
+% , BoldFont = DejaVuSans-Bold.ttf
+% , BoldItalicFont = DejaVuSans-BoldOblique.ttf]{DejaVuSans.ttf}
+% \setmonofont[Scale=MatchLowercase
+% , ItalicFont = DejaVuSansMono-Oblique.ttf
+% , BoldFont = DejaVuSansMono-Bold.ttf
+% , BoldItalicFont = DejaVuSansMono-BoldOblique.ttf]{DejaVuSansMono.ttf}
 
-\newfontfamily{\xitsfont}[Scale=MatchLowercase]{xits-regular.otf}
+% \newfontfamily{\xitsfont}[Scale=MatchLowercase]{xits-regular.otf}
 
-\DeclareTextFontCommand{\textxits}{\xitsfont}
+% \DeclareTextFontCommand{\textxits}{\xitsfont}
 
-\renewcommand{\familydefault}{\sfdefault}
+% \renewcommand{\familydefault}{\sfdefault}
 
 \usepackage{newunicodechar}
 
@@ -280,7 +231,7 @@
 
 % \listoftodos
 \input{introduction}
-\input{background}
+% \input{background}
 \input{expression}
 \input{generic}
 \input{conclusion}

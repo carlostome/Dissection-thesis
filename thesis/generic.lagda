@@ -2,7 +2,8 @@
 %include generic.fmt
 
 \chapter{A verified generic tail-recursive catamorphism}
-\label{sec:generic}
+\label{chap:generic}
+
 The previous section showed how to prove that our hand-written tail-recursive
 evaluation function was both terminating and equal to our original evaluator.
 In this section, we will show how we can generalize this construction to compute
@@ -689,3 +690,5 @@ Finally, a tail-recursive machine \emph{equivalent} to the one we derived in \Cr
   tail-rec-evalG = tail-rec-cata expr alg
 \end{code}
 
+\section{Discussion}
+\label{sec:generic:discussion}

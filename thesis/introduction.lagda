@@ -1,4 +1,4 @@
-%include lhs2TeX.fmt
+%include polycode.fmt
 %include introduction.fmt
 
 \chapter{Introduction}\label{sec:Introduction}
@@ -20,171 +20,202 @@ the fold's semantics.
 
 The |foldr| function is one of the first higher-order functions that any
 functional programmer learns. Many simple functions over lists such as |map|,
-|reverse|, |take|, |sum|, |or| and many more can be expressed in terms of |foldr|.
-However, if not used carefully, |foldr| may cause a program to fail dynamically
-with a stack overflow. In order to understand the problem, let us review the
-definition of |foldr|\footnote{All code snippets within this thesis use
-\Agda~notation.}:
-
-\begin{figure}[h]
+|reverse|, |take|, |sum|, and many more can be expressed in terms of
+|foldr|.  However, if not used carefully, |foldr| may cause a \emph{well-typed
+program go wrong} by dynamically failing with a stack overflow. In order to
+understand the problem, let us review the definition of |foldr|\footnote{All
+code snippets within this thesis use \Agda~notation.}:
+%
 \begin{code}
   foldr : (a -> b -> b) -> b -> List a -> b
   foldr f e []         = e
   foldr f e (x :: xs)  = f x (foldr f e xs)
 \end{code}
-\end{figure}
-
-In the second clause of the definition, the parameter function |f| needs to wait
-until a result has been computed for the recursive call before it can reduce
-further. In terms of execution on a stack machine, this means that a frame has
-to be allocated before passing the control to the recursive call for later
-processing.  Only a finite number of frames may be pushed on the stack before it
-reaches its limit. Performing a few steps of the evaluation of adding a very big
-list of numbers illustrates the issue.
-
-%{
-%format ~> = "\leadsto"
+%
+In the second clause of the definition, the parameter function |f| can not
+reduce further before the result of the recursive call on the argument |xs| is
+available. If we think about it in terms of the execution of a stack machine,
+before the control flow is passed to the recursive call, a new frame has to be
+allocated on the top of the stack to resume with the reduction of |f|.
+Only a finite number of frames may be ever pushed on the stack
+before it reaches its limit. Performing a few steps of the evaluation of adding
+a very big list of numbers illustrates the issue:
+%
 \begin{code}
-foldr (+) 0 [1..1000000] ~>
-1 + (foldr (+) 0 [2..1000000]) ~>
-1 + (2 + (foldr (+) 0 [3..1000000])) ~>
-1 + (2 + (3 + (foldr (+) 0 [4..1000000]))) ~>
-1 + (2 + (3 + (4 + (foldr (+) 0 [5..1000000])))) ~>
-...
+foldr  (+) 0 [1..1000000] 
+       ~> 1 + (foldr (+) 0 [2..1000000]) 
+       ~> 1 + (2 + (foldr (+) 0 [3..1000000])) 
+       ~> 1 + (2 + (3 + (foldr (+) 0 [4..1000000]))) 
+       ~> 1 + (2 + (3 + (4 + (foldr (+) 0 [5..1000000])))) 
+       ~> ...
 \end{code}
-%}
+%
+At each step of the reduction, denoted by |~>|, the size of the expression being
+evaluated reflects the size of the underlying machine's stack. Before any addition 
+can actually reduce, the function |foldr| has to reach the end of the list, thus 
+for every intermediate reduction, the function is allocating a partially applied |plusOp|
+on the stack. The linear dependency between the size of the input and the size
+of the stack, can potentially lead to a stack overflow on large inputs.
 
-At each step, the size of the expression matches the size of the underlying
-stack. Using a tail-recursive function --where the result of the recursive
-calls are not used by another function to compute the result-- an optimizing
-compiler can directly pass the control to the recursive call without needing to
-allocate a stack frame. Avoiding post processing means there is no need to save
-intermediate results.  For the list type, the problem can be solved by using a
-left fold\footnote{Imposing further restrictions on the function |f : (a -> b ->
-b)| (see \cite{Hutton93atutorial}).} (|foldl|). However, for non-linear
-structures, is not as straightforward to recover a tail-recursive function that
-evaluates to the same result.
+To solve this problem, we can rewrite the function to be
+\emph{tail-recursive}. The definition of a tail-recursive function does not
+allow for another function to post process the result of the recursive calls.
+In each clause, either a value is returned or a recursive call is the final action
+to be performed. Modern compilers typically map tail-recursive functions to
+machine code that runs in constant memory.
 
-As an example let us consider the type of arithmetic expressions or binary trees
-with integers in the leaves\footnote{The folklore names it Hutton's razor}.
+In the case of the function |foldr|, a possible implementation of an equivalent
+tail-recursive function would be a left fold, |foldl|\footnote{Imposing further
+restrictions on the function |f : (a -> b -> b)| (see
+\cite{Hutton93atutorial}).}. However, for inductive datatypes with constructors
+that have more than one recursive occurrence, such as the type of binary trees,
+recovering a tail-recursive fold from the regular fold is not as straightforward.
 
+In the following sections, we present a concrete example of a datatype with a
+tree-like branching structure and define its associated fold. Moreover, we show
+how to define a tail-recursive function that we claim, without proof, equivalent 
+to the fold. By doing so, we identify the key goal of the present master thesis,
+and subsequently formulate the research questions that it answers. Finally, in
+\Cref{sec:intro:org}, we explain how the rest of the document is organized. 
+
+\section{Folds for Binary Trees}
+\label{sec:intro:fold}
+
+As an example of a tree-like branching datatype we consider the type of
+binary trees with natural numbers in the leaves:
 \begin{code}
   data Expr : Set where
     Val  :  Nat   -> Expr
     Add  :  Expr  -> Expr -> Expr
 \end{code}
-
-Values of |Expr| can be evaluated by using an |eval| function that performs
-structural recursion on the input. The |Add| constructor represents addition
-|+|.
-
+We can write a simple evaluator, mapping expressions to natural numbers as
+follows:
 \begin{code}
   eval : Expr -> Nat
   eval (Val n)      = n
   eval (Add e1 e2)  = eval e1 + eval e2
 \end{code}
+%
+In the case for |Add e1 e2|, the |eval| function makes two recursive
+calls and sums their results. Such a function can be implemented using a
+fold, passing the addition and identity functions as the argument
+algebra.
+\begin{code}
+  foldExpr : (Nat -> a) -> (a -> a -> a) -> Expr -> a
+  foldExpr alg1 alg2 (Val n)      = alg1 n
+  foldExpr alg1 alg2 (Add e1 e2)  = alg2 (foldExpr alg1 alg2 e1) (foldExpr alg1 alg2 e2)
 
-The function |eval| is nothing more than a fold over |Expr| where the function
-that combines results from the subtrees is fixed. The |eval| function is not
-tail-recursive because the |plusOp| operator needs the result of both subtrees
-before the evaluation can proceed.
+  eval : Expr -> Nat
+  eval = foldExpr id plusOp
+\end{code}
+%
+Unfortunately, the definition of |eval| suffers from the same shortcomings as
+the |List| function |foldr|. The operator |plusOp| needs both of its parameters
+to be fully evaluated before it can reduce further, thus the stack used during
+execution grows \emph{again} linearly with the size of the input.
 
-To transform |eval| into a tail-recursive version that computes the "same" final
-result we make the execution stack, holding intermediate computations, explicit
-. The type of the stack reflects the state of evaluation at each step. The idea
-is that for computing the value of |Add e1 e2| we can store |e2| onto the stack
-while we evaluate |e1|. When |e1| yields a result we can pop up |e2| to process
-it while storing the result of |e1| onto the stack.  This can be accomplished by
-defining a type for the stack as follows.
-
+To address the problem, we can \emph{manually} rewrite the evaluator to be
+\emph{tail-recursive}. To write such a tail-recursive function, we need to 
+introduce an explicit stack storing both intermediate results and the subtrees 
+that have not yet been evaluated:
 \begin{code}
   data Stack : Set where
     Top    : Stack
     Left   : Expr  -> Stack -> Stack
     Right  : Nat   -> Stack -> Stack
 \end{code}
-
-A pair of mutually recursive functions, \AF{load} and \AF{unload}, perform the
-evaluation. The former searches for the leftmost subtree on the expression while
-the latter performs the evaluation once we are in a right subtree. Both
-functions are tail-recursive.
-
-%{
-%format loadN   = "\nonterm{" load "}"
-%format unloadN = "\nonterm{" unload "}"
+We can define a tail-recursive evaluation function by means of a pair of
+mutually recursive functions, |load| and |unload|. The |load| function traverses
+the expressions, pushing subtrees on the stack; the |unload| function unloads
+the stack, while accumulating a (partial) result.
 \begin{code}
   mutual
     loadN : Expr -> Stack -> Nat
     load (Val n)      stk = unloadN n stk
-    load (Add e1 e2)  stk = loadN e1 ( Left e2 stk )
+    load (Add e1 e2)  stk = loadN e1 (Left e2 stk)
 
     unloadN : Nat -> Stack -> Nat
-    unload v Top             = v
-    unload v (Right v' stk)  = unloadN (v' + v) stk
-    unload v (Left r stk)    = loadN r (Right v stk)
-
-  eval : Expr → ℕ
-  eval e = load e Top
+    unload v   Top             = v
+    unload v   (Right v' stk)  = unloadN (v' + v) stk
+    unload v   (Left r stk)    = loadN r (Right v stk)
 \end{code}
-%}
+We can now define a tail-recursive version of |eval| by
+calling |load| with an initially empty stack:
+\begin{code}
+  tail-rec-eval : Expr → Nat
+  tail-rec-eval e = load e Top
+\end{code}
+%
+Implementing this tail-recursive evaluator comes at a price: Agda's termination
+checker flags the |load| and |unload| functions as potentially non-terminating
+by highlighting them \nonterm{orange}. Indeed, in the very last clause of the
+|unload| function a recursive call is made to arguments that are not
+syntactically smaller. Furthermore, it is not clear at all whether the
+tail-recursive evaluator, |tail-rec-eval|, produces the same result as our original |eval|
+function.
 
+\section{Research questions}
+\label{sec:intro:research}
 
-Then what is the problem? The definition of \AF{load}/\AF{unload} is not
-accepted by \Agda's termination checker\footnote{With \nonterm{this color}
-\Agda~warns that the termination check fails.}. In the definition, the
-recursive calls are not performed over values that are evidently structurally
-smaller than the input.  Moreover, without proof we have no evidence that the
-result computed by the function is the same as the original \AF{eval} for every
-input.
+As we showed before, it is not obvious how to encode a \emph{provably}
+terminating and correct tail-recursive evaluator for the type of binary trees.
+A necessary prerequisite to prove correctness of the construction is define a
+tail-recursive function that is accepted as terminating by the termination
+checker. Thus, we are now ready to spell the research questions that this master 
+thesis is set out to answer:
 
-\section{Research objective}
+\begin{enumerate}
+  \item \textbf{Termination} \Agda's termination checker cannot verify that the 
+    functions |load| and |unload|, as previously defined, terminate for every
+    possible input. What it is necessary to demonstrate that the functions
+    terminate, consequently the tail-recursive evaluator terminates?
 
-The master thesis aims to investigate whether it would be possible to use
-McBride's notion of dissection to transform a fold into an extensionally
-equivalent tail-recursive function. To be more specific, we aim to
-provide a machine checked proof of this equality using the proof assistant \Agda.
+  \item \textbf{Correctness} In the case the tail-recursive evaluator
+    terminates, it is correct? By correct it is understood that both the
+    evaluation function, |eval|, and  its tail-recursive counterpart,
+    |tail-rec-eval|, are extensionally equivalent: for any input both functions
+    compute the same result.
 
-In order to do so, we need to address the following specific problems.
+  \item  \textbf{Generalization to the \emph{regular} universe} McBride proposes 
+    a method for calculating the type of the \emph{stack} from the definition of any type 
+    that can be generically expressed in the \emph{regular} universe. Can we
+    generalize the results of \textbf{termination} and \textbf{correctness} from
+    |Expr| to the generic case?
+\end{enumerate}
+%
+\section{Organization}
+\label{sec:intro:org}
 
-  \medskip
+  This master thesis is divided in two main parts, with some background material
+  at the beginning and conclusions at the end. 
 
-  \noindent
-  \textbf{Termination} As explained, the transformation requires to make
-  the stack underlying the computation explicit. During the execution, the stack
-  holds the parts of the branching structure of the datatype that will be
-  further processed.  By using a simply typed stack all information about the
-  relation between what is in the stack and what is being processed is lost and
-  recursive calls done on subtrees on the stack are -- obviously -- not structurally
-  smaller than the original input.
+  We start in \Cref{chap:background} giving the reader a broader
+  perspective on folds in programming languages so justifying the why of this
+  thesis.
+  Moreover, in this chapter, we revisit the available literature to explain
+  different methods of assisting the termination checker to accept functions
+  that are not defined by strictly structural recursion.
 
-  \medskip
+  In the first part of the thesis, \Cref{chap:expression}, we show how to
+  construct a tail-recursive evaluation function for the type of |Expr|, and
+  prove that it terminates and is correct. With this we answer research
+  questions one and two.
 
-  \noindent
-  \textbf{Correctness} Once termination is proved, the next step aims to prove
-  that the transformation is correct. By correct it is understood that both
-  the fold and the its tail-recursive transformation are extensionally equivalent,
-  i.e. for any input both functions compute the same result.
+  In the second part, \Cref{chap:generic}, we show how to generalize our
+  solution for the type |Expr|, from \Cref{chap:expression}, to the
+  generic setting. By doing so, we answer the third research question.
 
-  \medskip
+  We conclude this document, in \Cref{chap:conclusion}, with a few remarks about
+  the work presented here and discuss possible future work.
 
-  \noindent
-  \textbf{Generalization to Regular trees} McBride proposes a method for
-  calculating the type of the stack from the definition of any type that can be
-  expressed as a \emph{Regular} tree functor. We aim to formalize his notion of
-  \emph{dissection} of a datatype and show how termination and correctness can
-  be generalized to deal with types that can be expressed as \emph{Regular} tree
-  types.
-
-\section{Proposal}
-
-  The rest of the document is organized as follows. In \Cref{sec:termination} we
-  explore common techniques used in type theory to prove that a function
-  terminates even though it is not defined by structural induction
-  over its input. \Cref{sec:generic} explores how generic programming can be
-  exploited to define a tail-recursive fold through the notion of dissection.
-  \Cref{sec:prototype} describes the preliminary work done during the proposal
-  phase, showing that it is possible to prove termination through \emph{well
-  founded} recursion of a tail-recursive traversal over binary
-  trees.
-%}
-
+  Before dwelling into the content, we have to remark a few conventions that
+  this document follows. All code snippets use \Agda~syntax, although not all of
+  them directly typecheck. In any type signature, any mentioned variable of
+  type |Set| is taken as implicitly universally quantified. To differentiate
+  between `computational' functions and `proving' functions we choose to prepend
+  the type signatures of the latter with a explicit |forall| quantifier. The
+  purpose of the code shown in this thesis is to  guide the reader through the
+  important ideas we present, thus in many cases only the type signature of the
+  relevant functions/theorems/datatypes is given and the body is omitted
+  altogether. Nevertheless, the full code is freely available online in
+  \todo{code}.

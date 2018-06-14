@@ -44,11 +44,11 @@ main = shakeArgs shakeOptions $ do
     let files = [ "thesis" </> file <.> tex | file <-lagda_files]
                   where lagda_files = [ "main"      , "introduction" 
                                       , "background", "expression"
-                                      , "generic"]
+                                      , "generic"   , "conclusion" ]
         bib   = "thesis/main.bib"
         sty   = "thesis/agda.sty"
     need (bib : sty : files)
-    cmd_ "latexmk -f -pdf -cd -xelatex thesis/main.tex"
+    cmd_ "latexmk -f -pdf -cd thesis/main.tex"
 
   -- paper rules
   "paper/main" <.> tex %> \out -> do
