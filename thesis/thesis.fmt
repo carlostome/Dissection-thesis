@@ -40,6 +40,7 @@
 
 %% Constructors of the above types
 %format ::       = "\hspace{.4em}\AI{:\hspace{-.1em}:}\hspace{.4em}"
+%format ::Op     = "\AI{\_:\hspace{-.1em}:\_}"
 %format []       = "\AI{[]}"
 %format [        = "\AF{[}"
 %format ]        = "\AF{]}"

@@ -3,6 +3,8 @@
 \chapter{Background}
 \label{chap:background}
 
+\section{Fold from a broader perspective}
+\label{sec:background:fold}
 % - Fold in a bigger context -> 
 
 % There is a long tradition in the programming language community to 
@@ -62,7 +64,7 @@ to decide in general if a recursive function terminates, as it will imply that
 we have solved the halting problem. To ensure that any defined function
 terminates, \Agda~uses a termination checker based on foetus
 \cite{Abel98foetus}, that syntactically checks whether the recursive calls of a
-function are performed in \textbf{structurally} smaller arguments.
+function are performed over \textbf{structurally} smaller arguments.
 
 Many interesting --and terminating-- functions that we would like to define do 
 not conform to the pattern of being defined by structural recursion. For instance, 
@@ -92,7 +94,7 @@ above diverges:
 \end{code}
 %
 On its own, the function |filterBad| is a perfectly valid function that the
-termination checker accepts as terminating for any possible input. However, if
+termination checker classifies as terminating for any possible input. However, if
 called  by any other function, like |quickSort|, that uses its result as a
 recursive argument makes such function diverge.  
 
@@ -108,10 +110,10 @@ rise to a divergent function.
 In case functions are not defined by structural recursion, more advanced tools
 are needed to convince the termination checker of termination.  In the rest of
 this section, we will explore several available techniques that allow us to
-reason within \Agda~about the termination conditions. In particular,
-we will discuss how to show to \Agda~that the  |quickSort| example terminates
-using: \emph{sized types} (\Cref{subsec:background:sized}), \emph{Bove-Capretta}
-predicates (\Cref{subsec:background:bove}) and \emph{well-founded} recursion
+reason within \Agda~about termination conditions. In particular, we show to
+\Agda~that the  |quickSort| example terminates using: \emph{sized types}
+(\Cref{subsec:background:sized}), \emph{Bove-Capretta} predicates
+(\Cref{subsec:background:bove}) and \emph{well-founded} recursion
 (\Cref{subsec:background:wellfounded}).
 
 \subsection{Sized types} 
@@ -209,17 +211,14 @@ universe |SizeUniv|.}
   functions so they can be exploited for a more accurate assessment of
   termination. As we showed in the previous example, termination based on sized
   types is modular because it works across the boundaries of function
-  definitions. However, the expressively of the system is somewhat limited and in
+  definitions. However, the expressivity of the system is somewhat limited and in
   general sized types are not first class entities in the language, rather
   builtin objects with special treatment subject to some restrictions.
-
-\todo{there is previous work on sized types by pareto and hughes, abel's work is
-only about implementing sized types within dependent types}
 
 \subsection{Bove-Capretta predicate}
 \label{subsec:background:bove}
 
-Another technique commonly used in type theory to encode general recursive
+Another commonly used technique in type theory to encode general recursive
 functions is the Bove-Capretta\cite{Bove2001} transformation. The call graph of
 any function, even if is not defined by structural recursion, posses an inductive 
 structure that can be exploited to show termination. Instead of directly
@@ -236,7 +235,7 @@ terminate.
 However, not everything in the garden is rosy, every time we want to call
 function |f'| we have first to prove that the predicate holds on the argument we
 supply. Showing that the function terminates for every possible input, amounts
-to construct a proof that the predicate holds every element of type |a|, |forall
+to construct a proof that the predicate is true for every element of type |a|, |forall
 (x : a) -> P x|. 
 
 \begin{example}
@@ -262,8 +261,8 @@ to construct a proof that the predicate holds every element of type |a|, |forall
   and |filter (not . p x) xs|.
 
   Thus we can define now a version of the function |quickSort| that is accepted
-  by the termination checker by introducing as a new argument the predicate
-  |qsPred| applied to the input list:
+  by the termination checker. We introduce a new parameter, the predicate
+  |qsPred| applied to the input list, and recurse over it:
   %
   \begin{code}
   quickSortBC : (p : a -> a -> Bool)  -> (xs : List a) 
@@ -275,19 +274,21 @@ to construct a proof that the predicate holds every element of type |a|, |forall
        quickSortBC p (filter (not . (p x)) xs) bigger
   \end{code}
   %
-  Every time |quickSortBC| is called with a list |xs|, a proof that the
-  predicate holds for the specific |xs| has to be constructed, |qsPred p xs|. We
-  know that |quickSort| terminates for every possible input, thus it should be
-  possible to define a theorem that states that the |qsPred| predicate holds for
-  any list of any type:
+  Every time |quickSortBC| is called with a list |xs|, also a proof that the
+  predicate holds, |qsPred p xs| has to be supplied. We know that |quickSort|
+  terminates for every possible input, thus it should be possible to define a
+  theorem that states that the |qsPred| predicate is true for any list of any
+  type:
   %
   \begin{code}
     qsPred-true : forall (p : a -> a -> Bool) -> (xs : List a) -> qsPred p a
     qsPred-true = ...
   \end{code}
   %
-  We cannot prove the theorem above by just retrofitting to structural
-  recursion, it is just not possible to complete the proof. 
+  However, proving the previous theorem is not possible just by retrofitting to
+  structural recursion. In order to complete the proof we need a more advanced
+  technique, such as \emph{well-founded} recursion
+  (\Cref{subsec:background:wellfounded}).
 \end{example}
 
 The Bove-Capretta transformation allows the programmer to decouple the task of
@@ -297,205 +298,267 @@ construction of the domain predicate is a fully automatic matter. Nevertheless,
 the programmer is required to show every time the function is called that the
 input satisfies the predicate.  Even if the function obviously terminates for
 every input, showing that the domain predicate holds in general cannot be done
-by pattern matching and structural recursion. Showing termination for every
-input requires the use of another technique, \emph{well-founded} recursion
-(\Cref{subsec:background:wellfounded}).
-%{
-%format f = "\AF{f}"
-%format A = "\AD{A}"
-%format B = "\AD{B}"
-%format x = "\AB{x}"
-%format x1 = "\AB{x_1}"
-%format x2 = "\AB{x_2}"
-%format x3 = "\AB{x_3}"
-%format _<_ = "\AF{\_<\_}"
-%format <   = "\AF{<}"
+by pattern matching and structural recursion. 
 
-\subsection{Well founded recursion}
+\subsection{Well-founded recursion}
 \label{subsec:background:wellfounded}
 
-The essential idea of \emph{well founded} recursion is to define a relation over
-terms of type |A|, and show that starting from any term of type |A| any
-decreasing chain is finite.
+The last technique we will discuss is \emph{well-founded} recursion. Amidst the
+three, it is the most relevant for this work because the results of this master thesis 
+heavily rely on it. 
 
-% Formally, given a binary relation |<| over |A|, | < : A -> A -> Set |, an
-% element |x : A| is accessible if there is no infinite descending chain of the
-% form | x > x1 > x2 > x3 ... |. A more constructive characterization of the
-% accessibility predicate due to Nordstr{\"o}m \cite{nordstrom1988terminating} is
-% the following type in \Agda.
+The main idea is simple: define a relation over the type of the parameter that
+is `smaller' in each invocation of the function, and show that the relation has
+the property of not decreasing indefinitely.
 
-%{Proposal/WellFounded/WellFounded.tex}{Acc}
+Formally, for a given binary relation over elements of type |a|, | <Op : a -> a
+-> Set|, an element |x : a| is \emph{accessible} if there are not infinite descending
+chain starting from it by repeated decrements, |x0 < x1 < ... <
+xn1 < xn < x|. A more constructive characterization of the accessibility
+predicate, due to Nordstr{\"o}m \cite{nordstrom1988terminating}, is
+the following type:
+%
+\begin{code}
+  data Acc (<Op : a -> a -> a) (x : a) : Set where
+    acc : (forall (y : a) -> y < x -> Acc <Op y) -> Acc <Op x
+\end{code}
+%
+An element |x : a| is accessible, if every smaller element by the relation is
+also accessible. The type |Acc| is inductively defined in such a way that we can
+only construct a particular proof of |Acc <Op x| if transitively we can show
+that any smaller element is also accessible. A given element, for which no
+smaller elements exists, |y < x -> Bot|,  constitutes the base case and
+trivially satisfies the predicate.
 
-An element of |A| is accessible if every element smaller than |A| by |<|
-is also accessible. The relation |<| is then \emph{well founded} when every
-element of |A| is accessible.
+The recursive structure of the accessibility predicate can be used to turn a non
+structurally recursive function into one that is accepted by the termination
+checker. A possibly non terminating function |f : a -> a|, is transformed into
+another function |f' : (x : a) -> Acc <Op x -> a|, that takes as extra parameter
+a proof that the input satisfies the accessibility predicate. The recursive
+structure of the |Acc| datatype can be exploited only, if for each invocation of
+|f|, we can prove the result to be smaller than the input. 
 
-%{Proposal/WellFounded/WellFounded.tex}{WF}
-
-The eliminator associated to this type serves us to define recursive functions
-over a \emph{well founded} relation.
-
-%{Proposal/WellFounded/WellFounded.tex}{Elim}
+When another function calls |f'|, it has to explicitly supply a proof
+that the concrete input is accessible. If for every element in the relation
+there are no infinite descending chains, the relation is \emph{well-founded}.
+Thus, for every possible input of a function, defined by structural recursion
+over the accessibility predicate, the initial proof needed to kick off the
+computation can be algorithmically constructed. We express that a relation is
+well-founded as follows:
+%
+\begin{code}
+  Well-founded : (a -> a -> Set) -> Set
+  Well-founded <Op = forall x -> Acc <Op x
+\end{code}
 
 \begin{example}
-  For encoding the quicksort function using \emph{well founded} recursion, we
-  have to define a suitable relation over lists that we can use to show that the
-  result of applying |filter| yields a smaller element. We can either use the
-  eliminator for \emph{well founded} recursion or define the function by
-  explicit recursion over the accessibility predicate. For this matter the proof
-  that the relation is \emph{well founded} is mandatory.
+  We proceed to show how to encode the quickSort function using well-founded
+  recursion. The first step is to define a relation over the input type
+  |List|:
+  % 
+  \begin{code}
+  data <LOp : List a -> List a -> Set where
+    Base  : (x : a)    (xs : List a)                  -> []         <L (x :: xs)
+    Step  : (x y : a)  (xs ys : List a) -> xs <L ys   -> (x :: xs)  <L (y :: ys)
+  \end{code}
+  % 
+  The relation has two constructors:
+  \begin{itemize}
+    \item The constructor |Base| represents the base case: the empty list is
+      always smaller than any list built up with |::Op|.
+    \item The inductive case is provided by |Step|. A list |x :: xs| is smaller
+      than a list |y :: ys| if inductively the tail of the former is smaller
+      than the tail of the latter.
+  \end{itemize}
+  % 
+  In the next step, we define |quickSort| as a function that takes the
+  accessibility predicate over the relation as an extra argument and recurse
+  over it:
+  %
+  \begin{code}
+  quickSortWF : (a -> a -> Bool)  -> (xs : List a) 
+                                  -> Acc <LOp xs -> List a
+  quickSortWF p [] (acc rs)         = []
+  quickSortWF p (x :: xs) (acc rs)  = 
+    quickSortWF p (filter (p x) xs) (rs (filter (p x) xs) ??1)
+      ++ [ x ] ++
+    quickSortWF p (filter (not . p x) xs) (rs (filter (not . p x) xs) ??2) 
+  \end{code}
+  % 
+  The holes that are left, |??1 : filter (p x) xs <L (x :: xs)| and
+  |??2 : filter (not . p x) xs <L (x :: xs)|, necessitate of an ancillary lemma
+  expressing that the function filter, no matter what predicate is passed, always
+  returns a smaller list: 
+  %
+  \begin{code}
+  filter-<L : ∀ (p : a → Bool) (x : a) (xs : List a) → filter p xs <L (x :: xs)
+  filter-<L p x [] = Base x []
+  filter-<L p x (y :: xs) with p y 
+  ... | false = lemma-:: x (filter p xs) (y :: xs) (filter-<L p y xs)
+  ... | true  = Step y x (filter p xs) (y :: xs) (filter-<L p y xs)
+  \end{code}
+  %
+  The definition of |lemma-::| shows that for any lists |ys| and |ys|, if |ys|
+  is smaller than |xs|, |ys <L xs|, then regardless of how many elements are
+  prepended to |xs|, |ys| remains smaller:
+  %
+  \begin{code}
+  lemma-:: : ∀ (x : a) (ys xs : List a) -> ys <L xs -> ys <L (x :: xs)
+  \end{code}
+  %
+  The lemma is easily completed by induction over the argument |ys|.
 
-  %{Proposal/WellFounded/List.tex}{relation}
+  Every time the programmer wants to call |quickSortWF|, she has to produce a
+  proof that the input is accessible by |<LOp|. It is burdensome to impose such
+  requirement, specially when is clear that |quickSort| terminates for every possible
+  input. To solve this undesirable situation, we can show once and for all that
+  every element is accessible.The constructive nature of the
+  \emph{well-foundedness} proof (is an algorithm) serves as procedure to build
+  the accessibility predicate without human intervention. The proof is as
+  follows:
+  %
+  \begin{code}
+  <L-Well-founded : Well-founded <LOp
+  <L-Well-founded x = acc (aux x)
+    where  aux-Step  : ∀ (x : a) (xs : List a) -> Acc <LOp xs 
+                     -> ∀ (y : List a) → y <L (x :: xs) → Acc <LOp y
+           aux-Step x xs (acc rs)  .. []        (Base .. x .. xs) 
+              = acc lambda {_ }
+           aux-Step x xs (acc rs)  ..(y :: ys)  (Step y .. x ys .. xs p) 
+              = acc (aux-Step y ys (rs ys p))
 
-  We use the relation less-than over natural numbers to create a new relation
-  over lists by appealing to their length. We can lift the proof that less-than
-  is \emph{well founded}.
+           aux : ∀ (x : List a) -> (y : List a) -> y <L x -> Acc <LOp y
+           aux ..(x :: xs) .. [] (Base x xs) = acc lambda { y ()}
+           aux ..(y :: ys) ..(x :: xs) (Step x y xs ys p) 
+              = acc (aux-Step x xs (aux ys xs p))
 
-  %{Proposal/WellFounded/List.tex}{WF}
+  \end{code}
+  %
+  The proof follows usual structure of well-foundedness
+  proofs that can be found in the standard
+  library\footnote{\url{https://github.com/agda/agda-stdlib}} of \Agda. An
+  auxiliary function |aux| is used, whose definition is by induction over the
+  proof. In the base case, there are no smaller lists than |[]|, thus the proof
+  is discharged by appealing to the impossible pattern. In the inductive case,
+  where two lists  built up with |::Op| are compared, we need another ancillary
+  lemma, |aux-Step|. Such lemma says that if the tail of a list |xs| is
+  accessible, then any list that results from prepending elements to it is
+  accessible too.  It is
+  noteworthy to mention that the proof relies on showing the termination checker
+  that something \emph{structurally} decreases. In the case of |aux-Step|, the
+  proof decreases, while in the function |aux| both the proof and the input get
+  smaller.  Nevertheless, when the proof and the input are not related, i.e they
+  are not dependent by their type, this is not the case.
 
-  A couple of lemmas that relate the length of the input list
-  to \AF{filter} with the length of the output are also needed.
-
-  %{Proposal/WellFounded/List.tex}{lemma1}
-  \vspace*{-0.5cm}
-  %{Proposal/WellFounded/List.tex}{lemma2}
-
-  Finally, we can describe quicksort using an auxiliary function that explicitly
-  uses the accessibility as the structure in the recursion.
-
-  %{Proposal/WellFounded/List.tex}{QS}
-
+  Finally, the quicksort function is defined as a wrapper over |quickSortWF|:
+  %
+  \begin{code}
+    quickSort : (a -> a -> Bool) -> List a -> List a
+    quickSort p xs = quickSortWF p xs (<L-Well-founded xs)
+  \end{code}
 \end{example}
 
-\medskip
-
-A non structurally recursive function,  |f : A -> B|,  can be defined in
-\Agda~by giving an smaller-than relation over the input type and performing
-structural recursion on the accessibility predicate. For this to work, the
-recursive calls should be made over elements that, even though they might not be
-structurally smaller than the input, they are smaller by the relation.
-
-Then, for any input value we have to provide a proof that the value is accesible
-by the relation, which means all descending chains starting from such element
-are finite. If the relation is \emph{well founded}, then every element of the
-input type is accesible by the relation giving us a means of constructing
-automatically the required proof.
-
-For this reason, defining a function by \emph{well founded} recursion critically
-relies on showing that the relation itself is \emph{well founded} which is by no
-means an easy task that lastly forces us to show \Agda~that something
-structurally decreases.
-
-\medskip
-
-%{
-%format 0   = "\AN{0}"
-%format aux = "\AF{aux}"
-%format Base = "\AD{Base}"
-%format Step = "\AD{Step}"
-%format succ = "\AD{succ}"
-%format zero = "\AD{zero}"
-%format y = "\AB{y}"
-%format x = "\AB{x}"
-%format p = "\AB{p}"
-%format <2 = "\AI{\ensuremath{<_{2}}}"
+The previous example is well engineered to be straightforward. We declare a
+relation over lists and the proof of well-foundedness follows almost immediately
+from the definition of the relation. Not always is as easy, in the next example
+we examine how the proof is very dependent of the inductive structure of the
+relation.
 
 \begin{example}
 
   Let us consider the natural numbers and two equivalent definitions of the |<|
   (strict less than) relation.
-  %{Proposal/WellFounded/Nat.tex}{Rel}
-  In the first definition, constructors are peeled off from the first argument
+  %
+  \begin{code}
+
+  data Nat : Set where
+    zero  : Nat
+    suc   : Nat -> Nat
+
+  data <1Op (m : Nat) : Nat -> Set where
+    Base1 :                        m <1 suc m
+    Step1 : (n : Nat) → m <1 n ->  m <1 suc n
+
+  data <2Op : Nat → Nat → Set where
+    Base2 : (n : Nat)                  → zero   <2 suc n
+    Step2 : (n m : Nat)  → n <2 m      → suc n  <2 suc m
+  \end{code}
+  % 
+  In the first relation, constructors are peeled off from the first argument
   until there is a difference of one which constitutes the base case. On the
-  other hand, the second defintion peels constructors from the left argument
-  until it reaches |zero|.
+  other hand, in the second relation, the constructors are removed from the left
+  argument until |zero| is reached.
 
   It should be clear that both definitions are equivalent. However, the first is
-  more suitable to prove well foundedness due to the explicit structural relation
-  between both arguments.
-  %{Proposal/WellFounded/Nat.tex}{Proof-1}
+  more suitable to prove well-foundedness due to the explicit \emph{structural
+  relation} between both arguments.
+  %
+  \begin{code}
+  <1-Well-founded : Well-founded <1Op
+  <1-Well-founded x = acc (aux x)
+    where
+      aux : forall (x : Nat) -> forall (y : Nat) → y <1 x → Acc <1Op y
+      aux .. (suc y) y Base1        = <1-Well-founded y
+      aux .. (suc n) y (Step1 n p)  = aux n y p
+  \end{code}
+  %
   Pattern matching on the proof allows us to refine both arguments. The
-  recursive call to the well foundednees proof in the |Base| case is allowed
-  because |y| is structurally smaller than |succ y|. In the step case
+  recursive call to the well-foundednees proof in the |Base| case is allowed
+  because |y| is structurally smaller than |suc y|. In the step case
   we can recurse using |aux| because the proof |p| is structurally smaller than
   |Step p|.
 
-  Things are not that easy with the second definition. As an attempt we might
+  However, things are not that easy with the second definition. As an attempt we might
   try the following:
-  %{Proposal/WellFounded/Nat.tex}{Incomplete}
-  The |Base| case requires us to provide a proof of the well foundedness of
-  |zero|.  However, we cannot use the well founded proof itself because |zero|
-  is not structurally smaller than |succ x|. For the |Step| case we need to
-  prove that |succ y| is accesible. We can resort to |aux| and fill the two
-  first arguments. However, providing a proof of |succ y <2 succ x| from |p : y
-  <2 x| means passing |p| as an argument to the constructors |Step|, the same
-  that needed to be peeled in order to be structurally smaller.
+  %
+  \begin{code}
+    <2-Well-founded : Well-founded <2Op
+    <2-Well-founded x = acc (aux x)
+      where
+        aux : (x : Nat) -> forall (y : Nat) -> y <2 x -> Acc <2Op y
+        aux zero y ()
+        aux (suc x) .. zero Base2           = acc lambda { _ ()}
+        aux (suc x) .. (suc y) (Step2 y p)  = aux x (suc y) ??
+  \end{code}
+  %
+  The |Base2| case is easy: there are no natural numbers smaller than 0, thus it
+  is eliminated using the impossible pattern. In the inductive case, |Step2|,
+  the refined patterns are not adequate to use in a recursive call, the
+  arguments are not structurally related.
 
-  Because there is not a clear relation between the structure of both arguments
-  in the proof we cannot use recursive calls and we are stuck.
+  To tackle the problem, we have to introduce an auxiliary lemma that relates
+  structurally both inputs. The lemma is as follows:
+  %
+  \begin{code}
+    lemma2 : ∀ (n : Nat) (m : Nat) -> n <2 suc m → n == m U+ n <2 m
+  \end{code}
+  %
+  Finally, we can complete |<2-Well-founded| proof by appealing to the lemma and
+  dispatching a recursive call in the inductive case:
+  %
+  \begin{code}
+  <2-Well-founded : Well-founded <2Op
+  <2-Well-founded x = acc (aux x)
+    where
+      aux : (x : Nat) -> forall (y : Nat) → y <2 x → Acc <2Op y
+      aux zero y ()
+      aux (suc x) y p with lemma2 _ _ p
+      aux (suc x) .. x p  | inj1 refl = <2-Well-founded x
+      aux (suc x) y p     | inj2 i    = aux x y i
+  \end{code}
 
-  In order to solve the problem, we need to introduce an auxiliary lemma that
-  relates the structure of both inputs in such a way that pattern matching
-  on it refines the arguments clearing the path for the proof of well
-  foundedness.
-
-  The required lemma and the proof are as follows:
-
-  %{Proposal/WellFounded/Nat.tex}{Lemma}
-  \vspace*{-0.75cm} % remove space between blocks
-  %{Proposal/WellFounded/Nat.tex}{Proof-2}
+  This example illustrates how the proof of well-foundedness is totally dependent on the
+  choice of how the relation is defined. In the first relation, |<1Op|, the
+  proof follows by induction from the definition, but the second relation,
+  |<2Op|, necessitates some extra work and a bit of insight to complete the proof.
 \end{example}
-%}
 
-% to add size annotations to the constructors of
-% a type. The size of a value represents an upper bound on the number of
-% constructors used in its definition.
+Using well-founded recursion the programmer can write a non structurally
+recursive function directly in \Agda. Before writing such a function, a suitable
+relation over the type of elements that decreases with each application has to
+be defined. Moreover, it is necessary a proof showing that the function
+delivers a smaller result than the input.
 
-% Size annoation are attached to inductive types to track the number of
-% constructors used in the definition of a value of the type.
-
-% Moreover, functions can be also an
-% constructors that a value of a
-
-% \subsection{Bove-Capretta domain predicate}
-
-% Following the Curry-Howard correspondence, if types are to be interpreted as
-% propositions and terms inhabiting them as their proofs then termination of terms
-% is customary to keep the logic consistent. A non terminating term such as
-% |non-term = non-term| could stand as a proof for any proposition (respectively
-% as an inhabitanat of any type) thus even a false proposition would have a proof
-% backing its truth!
-
-
-% Moreover, in the dependently typed setting where types can and may depend on terms,
-% termination of terms also ensures decidability of the typechecking
-% procedure.\arewesure{decidability really depends on termination?}
-
-% Systems based on different flavours of dependent type theory such as Agda or Coq
-% \referenceneeded{Agda Coq}
-
-
-% The traditional approach to ensure termination in systems implementing type
-% theory is to restrict the kind of programs that would pass the typechecker.
-
-% By only allowing the user to write function that when performing a recursive
-% call this must be made in a structural smaller argument.
-
-
-% where structural smaller means that a
-% constructor or more must be peleed of before performing the recursive call.
-
-% As a first example the implementation of Euclides algorithm for computing the
-% greatest common division is analyzed. We state its definition in the following
-% snippet.
-
-% In the rest of this section we explore various techniques to approach the
-% termination problem in type theory.
-
-
-% Sized types are a type-based termination checkerk
-
-% \subsection{Bove-Capretta}
-
-% \section{Step back}
-
+Then, there are two options: each time the function is called a proof that the
+input is accessible by the relation is explicitly supplied, or, the relation is
+proven to be well-founded and used to produce the required evidence.

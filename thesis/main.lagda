@@ -212,7 +212,7 @@
 \newcommand{\Agda}{\emph{Agda}}
 
 \renewcommand\hscodestyle{%
-   \setlength\leftskip{1.5em}%
+   \setlength\leftskip{1.25em}%
 }
 %--------------------------------------------------
 

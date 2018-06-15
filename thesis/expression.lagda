@@ -1,7 +1,7 @@
 %include polycode.fmt
 %include expression.fmt
 
-\chapter{Verified tail-recursive fold for Expr}
+\chapter{A verified tail-recursive evaluator}
 \label{chap:expression}
 
  Before tackling the generic case, we will present the termination
@@ -28,6 +28,7 @@
   depicted in \Cref{fig:load-unload}.
 
  \begin{figure}
+   \centering
    \input{figures/figure1}
    \caption{Traversing a tree with {\color{blue}load} and {\color{red}unload}}
    \label{fig:load-unload}
@@ -110,7 +111,7 @@ states (|??2 : (n' , stk') < (n , stk)|).
 In the next section, we will define such a relation and prove it is
 well-founded.
 
-\subsection{Well-founded tree traversals}
+\section{Well-founded tree traversals}
 \label{sec:wf-example}
 The type of configurations of our abstract machine can be seen as a variation
 of Huet's \emph{zippers}~\citeyearpar{huet}. The zipper associated
@@ -139,6 +140,7 @@ rightmost leaf is the smallest. In our example expression from
 \Cref{sec:intro}, we would number the leaves as follows:
 
 \begin{figure}[ht]
+   \centering
   \input{figures/figure2}
   \caption{Numbered leaves of the tree}
   \label{fig:numbered}
@@ -171,13 +173,14 @@ the definition of the desired order relation (\Cref{subsec:topdown}).
 Finally we will define the relation over configurations,
 \Cref{subsec:relation}, and sketch the proof that it is well-founded.
 
-\subsection{Invariant preserving configurations}
+\section{Invariant preserving configurations}
 \label{subsec:stack}
 
 A value of type |ZipperType| denotes a leaf in our input expression. In the
 previous example, the following |ZipperType| corresponds to the third leaf:
 
 \begin{figure}[ht]
+   \centering
   \input{figures/figure3}
   \caption{Example: \emph{Configuration} of leaf number 3}
   \label{fig:examplezipper}
@@ -240,7 +243,7 @@ For a given expression |e : Expr|, any two terms of type |Zipperup e| are
 configurations of the same abstract machine during the tail-recursive fold over
 the expression |e|.
 
-\subsection{Up and down configurations}
+\section{Up and down configurations}
 \label{subsec:topdown}
 
 Next, we would like to formalize the left-to-right order on the configurations
@@ -253,6 +256,7 @@ We now consider the value of |ZipperType| corresponding to
 leaves with numbers 3 and 4 in our running example:
 
 \begin{figure}[ht]
+   \centering
   \input{figures/figure4}
   \caption{Comparison of \emph{configurations} for leaves 3 and 4}
   \label{fig:comparison}
@@ -312,7 +316,7 @@ pair of functions to switch between |Zipperup| and |Zipperdown|:
  Zipperup-to-Zipperdown : (e : Expr) -> Zipperup e -> Zipperdown e
 \end{code}
 
-\subsection{Ordering configurations}
+\section{Ordering configurations}
 \label{subsec:relation}
 
 Finally, we can define the ordering relation over values of type
