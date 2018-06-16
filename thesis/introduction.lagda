@@ -145,7 +145,7 @@ calling |load| with an initially empty stack:
   tail-rec-eval e = load e Top
 \end{code}
 %
-Implementing this tail-recursive evaluator comes at a price: Agda's termination
+Implementing this tail-recursive evaluator comes at a price: \Agda's termination
 checker flags the |load| and |unload| functions as potentially non-terminating
 by highlighting them \nonterm{orange}. Indeed, in the very last clause of the
 |unload| function a recursive call is made to arguments that are not
@@ -156,12 +156,11 @@ function.
 \section{Research questions}
 \label{sec:intro:research}
 
-As we showed before, it is not obvious how to encode a \emph{provably}
+As previously shown, it is not obvious how to write a \emph{provably}
 terminating and correct tail-recursive evaluator for the type of binary trees.
-A necessary prerequisite to prove correctness of the construction is define a
-tail-recursive function that is accepted as terminating by the termination
-checker. Thus, we are now ready to spell the research questions that this master 
-thesis is set out to answer:
+A necessary prerequisite to show correctness, is to convince \Agda's termination
+checker that the tail-recursive evaluator terminates. Thus, we are ready to
+spell the research questions that this master thesis is set out to answer:
 
 \begin{enumerate}
   \item \textbf{Termination} \Agda's termination checker cannot verify that the 
@@ -194,27 +193,28 @@ thesis is set out to answer:
   Moreover, in this chapter, we revisit the available literature to explain
   different methods of assisting the termination checker to accept functions
   that are not defined by strictly structural recursion.
-
   In the first part of the thesis, \Cref{chap:expression}, we show how to
   construct a tail-recursive evaluation function for the type of |Expr|, and
   prove that it terminates and is correct. With this we answer both research
   questions one and two.
-
   In the second part, \Cref{chap:generic}, we show how to generalize our
   solution for the type |Expr|, from \Cref{chap:expression}, to the
   generic setting. By doing so, we answer the third research question.
-
   We conclude this document, in \Cref{chap:conclusion}, with a few remarks about
   the work presented here and discuss possible future work.
 
+\paragraph{Style}
+
   Before dwelling into the content, we have to remark a few conventions that
-  this document follows. All code snippets use \Agda~syntax, although not all of
-  them directly typecheck. In any type signature, any mentioned variable of
-  type |Set| is taken as implicitly universally quantified. To differentiate
-  between `computational' functions and `proving' functions we choose to prepend
-  the type signatures of the latter with a explicit |forall| quantifier. The
-  purpose of the code shown in this thesis is to  guide the reader through the
-  important ideas we present, thus in many cases only the type signature of the
-  relevant functions/theorems/datatypes is given and the body is omitted
-  altogether. Nevertheless, the full code is freely available online in
-  \todo{code}.
+  this document follows. The purpose of the code snippets found in this thesis
+  is to  guide the reader through the important ideas we present, thus in many
+  cases only the type signature of the relevant functions/theorems/datatypes is
+  given, and the body is omitted altogether. All code snippets use \Agda~syntax,
+  although not all of them directly typecheck. In the type signatures, any
+  mentioned variable of type |Set| is taken as implicitly universally
+  quantified. To differentiate between `computational' functions and `proving'
+  functions (in dependent type theory they are the same thing) we choose to
+  prepend the type signatures of the latter with a explicit |forall| quantifier.
+  The full code  is freely available online in:
+
+  \todo{code}
