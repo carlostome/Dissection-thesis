@@ -93,7 +93,7 @@ above diverges:
 
 \end{code}
 %
-On its own, the function |filterBad| is a perfectly valid function that the
+On its own, |filterBad| is a perfectly valid function that the
 termination checker classifies as terminating for any possible input. However, if
 called  by any other function, like |quickSort|, that uses its result as a
 recursive argument makes such function diverge.  
@@ -239,6 +239,7 @@ to construct a proof that the predicate is true for every element of type |a|, |
 (x : a) -> P x|. 
 
 \begin{example}
+  \label{example:background:bove}
 
   We now turn our attention to encode the function quicksort using the
   Bove-Capretta technique. The first step is to define the call graph of the
@@ -352,6 +353,7 @@ well-founded as follows:
 \end{code}
 
 \begin{example}
+  \label{example:background:wellfounded-qs}
   We proceed to show how to encode the quickSort function using well-founded
   recursion. The first step is to define a relation over the input type
   |List|:

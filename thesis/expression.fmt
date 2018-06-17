@@ -1,12 +1,18 @@
+%include polycode.fmt
+%include thesis.fmt
+
 % Datatypes
 %format Expr   = "\AD{Expr}"
 %format Acc    = "\AD{Acc}"
 %format Stack  = "\AD{Stack}"
 %format Stack2 = "\AD{Stack\ensuremath{^{+}}}"
+%format Stack3 = "\AD{Stack\ensuremath{_{\iota}^{+}}}"
 %format Zipper   = "\AD{Zipper}"
 %format ZipperType   = "\AD{Config}"
 %format Zipperup   = "\AD{Config\ensuremath{_{\Uparrow}}}"
 %format Zipperdown = "\AD{Config\ensuremath{_{\Downarrow}}}"
+%format Eval    = "\AD{Eval}"
+%format ExprAlg = "\AD{Expr\ensuremath{_{\phi}}}"
 
 %format LtOp = "\AD{\ensuremath{\_<\_}}"
 %format IxLtOp = "\AD{\ensuremath{\llcorner\_\lrcorner\_<\_}}"
@@ -16,6 +22,8 @@
 
 % Constructors
 %format Val   = "\AI{Val}"
+%format eval-Val   = "\AI{Eval-Val}"
+%format eval-Add   = "\AI{Eval-Add}"
 %format Add   = "\AI{Add}"
 %format acc   = "\AI{acc}"
 %format Top   = "\AI{Top}"
@@ -26,6 +34,8 @@
 %format <-Base  = "\AI{<\text{-}Base}"
 
 % Functions
+%format accL   = "\AF{accL}"
+%format accR   = "\AF{accR}"
 %format <-WF = "\AF{<\text{-}WF}"
 %format aux  = "\AF{aux}"
 %format rec-correct  = "\AF{rec-correct}"
@@ -38,6 +48,7 @@
 %format unload = "\AF{unload}"
 %format unload-< = "\AF{unload-<}"
 %format unload-preserves-plugup = "\AF{unload-plug\ensuremath{_{\Uparrow}}}"
+%format load-preserves-plugup = "\AF{load-plug\ensuremath{_{\Uparrow}}}"
 %format to = "\AF{to}"
 %format correctness = "\AF{correctness}"
 %format sym = "\AF{sym}"
@@ -78,11 +89,13 @@
 
 % Bound variables
 %format X    = "\AB{X}"
+%format a    = "\AL{a}"
 %format ac    = "\AB{ac}"
 %format n     = "\AB{n}"
 %format n'     = "\AB{n''}"
 %format l     = "\AB{l}"
 %format r     = "\AB{r}"
+%format r'     = "\AB{r''}"
 %format z     = "\AB{c}"
 %format z1     = "\AB{\ensuremath{c_1}}"
 %format z2     = "\AB{\ensuremath{c_2}}"
@@ -90,6 +103,7 @@
 %format Is    = "\AB{Is}"
 %format rs    = "\AB{rs}"
 %format e     = "\AB{e}"
+%format e'    = "\AB{e''}"
 %format s     = "\AB{s}"
 %format s'     = "\AB{s''}"
 %format x     = "\AB{x}"
@@ -103,6 +117,8 @@
 %format t    = "\AB{\ensuremath{t}}"
 %format t'    = "\AB{\ensuremath{t''}}"
 %format eq    = "\AB{\ensuremath{eq}}"
+%format p    = "\AB{\ensuremath{p}}"
+%format eq'    = "\AB{\ensuremath{eq''}}"
 %format eq1    = "\AB{\ensuremath{eq_1}}"
 %format eq2    = "\AB{\ensuremath{eq_2}}"
 %format eq'    = "\AB{\ensuremath{eq''}}"
@@ -113,6 +129,9 @@
 %format t1'    = "\AB{\ensuremath{t_1}''}"
 %format t2' = "\AB{\ensuremath{t_2}''}"
 %format pr = "\AB{pr}"
+%format ValA = "\AL{\ensuremath{\phi_1}}"
+%format AddA = "\AL{\ensuremath{\phi_2}}"
+%format alg = "\AB{alg}"
 %format alg1 = "\AB{\ensuremath{\phi_1}}"
 %format alg2 = "\AB{\ensuremath{\phi_2}}"
 

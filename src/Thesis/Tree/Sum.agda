@@ -69,17 +69,18 @@ module Thesis.Tree.Sum where
   data [[_]]_<_ ( t : Tree) : Zipper → Zipper → Set where
     lt : ∀ z₁ z₂ → plugZ⇓ z₁ ≡ t → plugZ⇓ z₂ ≡ t → z₁ < z₂ → [[ t ]] z₁ < z₂
   
+  accR : ∀ r l x s n (eq : eval l ≡ n) → Acc ([[ r ]]_<_) (x , s) → WfRec ([[ Node l r ]]_<_ ) (Acc ([[ Node l r ]]_<_)) (x , Right l n eq ∷ s)
+  accR .(plug⇓ (Tip t₁) s₁) l x s n eq (acc rs) .(t₁ , inj₂ (l , n , eq) ∷ s₁)
+                                        (lt .(t₁ , inj₂ (l , n , eq) ∷ s₁) .(x , inj₂ (l , n , eq) ∷ s) refl eq₂ (<-Right-Step {t₁ = t₁} {s₁ = s₁} p))
+    = acc (accR (plug⇓ (Tip t₁) s₁) l t₁ s₁ n eq (rs (t₁ , s₁) (lt (t₁ , s₁) (x , s) refl (proj₂ (Node-inj eq₂)) p)))
+
   mutual
-    accR : ∀ r l x s n (eq : eval l ≡ n) → Acc ([[ r ]]_<_) (x , s) → WfRec ([[ Node l r ]]_<_ ) (Acc ([[ Node l r ]]_<_)) (x , Right l n eq ∷ s)
-    accR .(plug⇓ (Tip t₁) s₁) l x s n eq (acc rs) .(t₁ , inj₂ (l , n , eq) ∷ s₁)
-                                         (lt .(t₁ , inj₂ (l , n , eq) ∷ s₁) .(x , inj₂ (l , n , eq) ∷ s) refl eq₂ (<-Right-Step {t₁ = t₁} {s₁ = s₁} p))
-      = acc (accR (plug⇓ (Tip t₁) s₁) l t₁ s₁ n eq (rs (t₁ , s₁) (lt (t₁ , s₁) (x , s) refl (proj₂ (Node-inj eq₂)) p)))
-    accL : ∀ l r  x s →  Acc ([[ l ]]_<_) (x , s) → WfRec ([[ Node l r ]]_<_ ) (Acc ([[ Node l r  ]]_<_ )) (x , Left r ∷ s)
-    accL l r x s (acc rs) (y , .(inj₁ r ∷ s₁)) (lt .(y , inj₁ r ∷ s₁) .(x , inj₁ r ∷ s) eq₁ eq₂ (<-Left-Step {s₁ = s₁} p))
-      = acc (accL l r y s₁ (rs (y , s₁) (lt (y , s₁) (x , s) (proj₁ (Node-inj eq₁)) (proj₁ (Node-inj eq₂)) p)))
-    accL .(plug⇓ (Tip x) s) .(plug⇓ (Tip y) s₁) x s (acc rs) (y , .(inj₂ (plug⇓ (Tip x) s , n , eq) ∷ s₁))
+    accL : ∀ l r x s → Well-founded [[ r ]]_<_ → Acc ([[ l ]]_<_) (x , s) → WfRec ([[ Node l r ]]_<_ ) (Acc ([[ Node l r  ]]_<_ )) (x , Left r ∷ s)
+    accL l r x s wf (acc rs) (y , .(inj₁ r ∷ s₁)) (lt .(y , inj₁ r ∷ s₁) .(x , inj₁ r ∷ s) eq₁ eq₂ (<-Left-Step {s₁ = s₁} p))
+      = acc (accL l r y s₁ wf (rs (y , s₁) (lt (y , s₁) (x , s) (proj₁ (Node-inj eq₁)) (proj₁ (Node-inj eq₂)) p)))
+    accL .(plug⇓ (Tip x) s) .(plug⇓ (Tip y) s₁) x s wf (acc rs) (y , .(inj₂ (plug⇓ (Tip x) s , n , eq) ∷ s₁))
          (lt .(y , inj₂ (plug⇓ (Tip x) s , n , eq) ∷ s₁) .(x , inj₁ (plug⇓ (Tip y) s₁) ∷ s) refl eq₂ (<-Right-Left {n} {s₁ = s₁} {eq = eq} refl refl))
-      = acc (accR (plug⇓ (Tip y) s₁) (plug⇓ (Tip x) s) y s₁ n eq (<-WF (plug⇓ (Tip y) s₁) (y , s₁)))
+      = acc (accR (plug⇓ (Tip y) s₁) (plug⇓ (Tip x) s) y s₁ n eq (wf (y , s₁)))
     
     <-WF : ∀ t → Well-founded [[ t ]]_<_
     <-WF t x = acc (aux t x)
@@ -89,7 +90,7 @@ module Thesis.Tree.Sum where
                 = acc (accR (plug⇓ (Tip y) s₁) l y s₁ n eq (<-WF (plug⇓ (Tip y) s₁) (y , s₁)))
             aux .(Node (plug⇓ (Tip y) s₁) r) (x , .(inj₁ r ∷ s₂)) (y , .(inj₁ r ∷ s₁))
                 (lt .(y , inj₁ r ∷ s₁) .(x , inj₁ r ∷ s₂) refl eq₂ (<-Left-Step {r} {s₁ = s₁} {s₂} p))
-                = acc (accL (plug⇓ (Tip y) s₁) r y s₁ (<-WF (plug⇓ (Tip y) s₁) (y , s₁)))
+                = acc (accL (plug⇓ (Tip y) s₁) r y s₁ (<-WF r) (<-WF (plug⇓ (Tip y) s₁) (y , s₁)))
             aux .(Node (plug⇓ (Tip x) s₂) (plug⇓ (Tip y) s₁)) (x , .(inj₁ (plug⇓ (Tip y) s₁) ∷ s₂)) (y , .(inj₂ (plug⇓ (Tip x) s₂ , n , eq) ∷ s₁))
                 (lt .(y , inj₂ (plug⇓ (Tip x) s₂ , n , eq) ∷ s₁) .(x , inj₁ (plug⇓ (Tip y) s₁) ∷ s₂) refl eq₂
                     (<-Right-Left {n} {s₁ = s₁} {s₂} {.(plug⇓ (Tip x) s₂)} {.(plug⇓ (Tip y) s₁)} {eq} refl refl))

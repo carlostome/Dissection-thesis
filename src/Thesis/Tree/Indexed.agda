@@ -1,5 +1,5 @@
 
-module Thesis.FoldIx where
+module Thesis.Tree.Indexed where
 
   open import Data.Nat
   open import Data.List
@@ -157,8 +157,6 @@ module Thesis.FoldIx where
 
     ----------------------------------------------------------------------------------
     --                  Well-foundedness proof of [[_]]⇓_<_                         --
-
-
 
     accR : ∀ {l r : Tree} (t : ℕ) (s : Stack) eq₁
              {a : A} {eq : treeCata tAlg l ≡ a} →

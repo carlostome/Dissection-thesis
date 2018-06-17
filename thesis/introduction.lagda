@@ -77,8 +77,7 @@ to the fold. By doing so, we identify the key goal of the present master thesis,
 and subsequently formulate the research questions that it answers. Finally, in
 \Cref{sec:intro:org}, we explain how the rest of the document is organized. 
 
-\section{Folds for Binary Trees}
-\label{sec:intro:fold}
+\paragraph{Folds for Binary Trees}
 
 As an example of a tree-like branching datatype we consider the type of
 binary trees with natural numbers in the leaves:
