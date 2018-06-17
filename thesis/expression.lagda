@@ -433,18 +433,17 @@ right subtree |r|.  The former lemma, |accR| handles this case if we can supply
 a proof that the right subtree is accessible |Acc (llcorner r lrcornerLtOp) (x ,
 s)|. The |accL| lemma can produce the required evidence using its argument of
 type |Well-founded (llcorner r lrcornerLtOp)|. This is only possible because the
-auxiliary function |aux|, in the initial call to |accL| can recursively use the
-well-foundedness proof |<-WF| as pattern matching on |e| shows that whatever
-expressions |l| and |r| are they are structurally related by |Add l r|.
+auxiliary function |aux|, in the initial call to |accL|, can recursively use the
+well-foundedness proof |<-WF| because pattern matching reveals that whatever
+expressions |l| and |r| are they subtrees of the same node, |Add l r|.
 
-The type |IxLtOp|, more than being a single relation over configurations, is a family of
-relations, one for every possible value of type |Expr|. Although indexing the
-relation, and the configurations, is \emph{necessary} to prove that it is
-well-founded, it is not amenable to work with in other proofs, for instance
-showing that the function |unload| delivers a smaller configurations. Therefore,
-instead of working directly with |IxLtOp|, we define another relation over non
-type-indexed configurations, and prove that there is an injection between both
-under suitable assumptions:
+The type |IxLtOp|, more than being a single relation over configurations, is a
+family of relations, one for every possible value of type |Expr|. Although
+indexing the relation, and the configurations, is \emph{necessary} to prove that
+it is well-founded, it is not amenable to prove other properties. Therefore,
+instead of working directly with |IxLtOp|, we define another auxiliary relation
+over non type-indexed configurations, and prove that there is an injection
+between both under suitable assumptions:
 %
 \begin{code}
   data LtOp :  ZipperType -> ZipperType -> Set where
@@ -462,7 +461,7 @@ with the difference that all the refined type indices striped off from the const
 \label{sec:expression:tailrec}
 
 We now have almost all the definitions in place to revise our tail-recursive
-fold, |tail-rec-eval|. However, we are missing one essential ingredient: we still
+evaluator, |tail-rec-eval|. However, we are missing one essential ingredient: we still
 need to show that the configuration decreases after a call to the |unload|
 function.
 
@@ -614,7 +613,7 @@ suffices to prove the following property of |unload|:
 \begin{code}
   unload-correct  : forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack2)
                   -> forall (r : Nat) -> unload e n eq s ≡ inj2 r -> eval (plugup e s) == r
-  unload-correct e n eq [] .. n refl                  = sym eq
+  unload-correct e n eq Top .. n refl                 = sym eq
   unload-correct e n eq (Left x :: s) r p             = bot-elim ...
   unload-correct e n eq (Right r' e' eq' :: s) r p    
     = unload-correct (Add e' e) (r' + r) (cong2 plusOp eq' eq) s r p
@@ -631,8 +630,7 @@ The main correctness theorem now states that |eval| and
   ... | inj1 z = rec-correct e (z , ...) (<-WF e z)
   ... | inj2 _ = bot-elim ...
 \end{code}
-This finally completes the definition and verification of a
-tail-recursive evaluator. 
+Now, the definition and verification of a tail-recursive evaluator is complete. 
 
 \section{Discussion}
 \label{sec:expression:discuss}
@@ -656,7 +654,7 @@ we discuss concrete solutions to these issues.
 \Agda~allows the programmer to mark the arguments of a function or parameters of
 a constructor as \emph{computationally irrelevant}. When a executable is extracted from
 the proof carrying code, every irrelevant argument is erased (or interpreted as
-the unit type |Top|) because the typechecker has ensured that evaluation does
+the unit type |Unit|) because the typechecker has ensured that evaluation does
 not depend on it.
 
 If we compare the type of stacks, |Stack| and |Stack2|, the constructor |Right|
