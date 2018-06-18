@@ -16,3 +16,4 @@ The formalization in _Agda_ is stored under the directory `src/Thesis/`, the mod
   + `src/Thesis/Dissection/Load.agda` : Function _load_ and related properties.
   + `src/Thesis/Dissection/Relation.agda` : Relation over generic Zipper (Configurations in the paper) and the proof of well-foundedness.
 
+The code typechecks in Agda version 2.5.3 and standard library version 0.14
