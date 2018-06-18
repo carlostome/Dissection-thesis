@@ -143,7 +143,7 @@ well-founded.
 The type of configurations of our abstract machine can be seen as a variation
 of Huet's \emph{zippers}~\cite{Huet97thezipper}. The zipper associated
 with an expression |e : Expr| is pair of a (sub)expression of |e| and
-its \emph{context}. As demonstrated by~\cite{McBride:2008:CLM:1328438.1328474}, the zippers
+its \emph{context}. As demonstrated by McBride~\cite{McBride:2008:CLM:1328438.1328474}, the zippers
 can be generalized further to \emph{dissections}, where the values to
 the left and right of the current subtree may have different types. It
 is precisely this observation that we will exploit when considering
@@ -197,7 +197,7 @@ the type of |ZipperType|, we will show how to capture the wanted
 invariant (\Cref{subsec:expression:invariant}). Secondly, we
 explore a different representation of stacks, as paths from the root, that facilitates
 the definition of the desired order relation (\Cref{subsec:expression:topdown}).
-Finally we will define the relation over configurations,
+Subsequently, we will define the relation over configurations,
 \Cref{subsec:expression:ordering}, and sketch the proof that it is well-founded.
 
 \subsection{Invariant preserving configurations}
@@ -234,8 +234,8 @@ The |Right| constructor now not only stores the value |n|, but also
 records the subexpression |e| and the proof that |e| evaluates to
 |n|. Although we are modifying the definition of the |Stack| data
 type, we claim that the expression |e| and equality are not necessary
-at run-time, but only required for the proof of well-foundedness -- a
-point we will return to in our discussion (\Cref{sec:discussion}).
+at runtime, but only required for the proof of well-foundedness -- a
+point we will return to in our discussion (\Cref{sec:expression:discuss}).
 From now onwards, the type |ZipperType| uses |Stack2| as its right 
 component:
 \begin{code}
@@ -522,7 +522,7 @@ invariant too:
 %
 The lemma is proven by induction on the expression |e|.
 
-Finally, we can define the theorem stating that the |step| function always
+Lastly, we can define the theorem stating that the |step| function always
 returns a smaller configuration:
 %
 \begin{code}
@@ -739,8 +739,8 @@ algebra as a parameter:
 \end{code}
 %
 Instead of augmenting every datatype and function with the algebra as an
-argument, for instance the proof in the |Stack2| datatype requires it, we use an
-anonymous module parametrized under which we build and verify the fold:
+argument, for instance the proof in the |Stack2| datatype would depend on it, we
+use an \emph{anonymous} module parametrized under which we build and verify the fold:
 %
 \begin{code}
   module _ (alg : ExprAlg) where

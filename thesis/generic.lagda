@@ -1,149 +1,44 @@
-%include polycode.fmt
 %include generic.fmt
 
 \chapter{A verified generic tail-recursive catamorphism}
 \label{chap:generic}
 
-The previous section showed how to prove that our hand-written tail-recursive
-evaluation function was both terminating and equal to our original evaluator.
-In this section, we will show how we can generalize this construction to compute
-a tail-recursive equivalent of \emph{any} function that can be written as a fold
-over a simple algebraic datatype.
-In particular, we generalize the following:
-\begin{itemize}
-  \item The kind of datatypes, and their associated fold, that our tail-recursive
-    evaluator supports, \Cref{sec:universe}.
-  \item The type of configurations of the abstract machine that computes the
-    generic fold, \Cref{sec:dissection,sec:genconf}.
-  \item The functions |load| and |unload| such that they work over our choice of generic
-    representation, \Cref{subsec:onestep}.
-  \item The `smaller than' relation to handle generic configurations, and
-    its well-foundedness proof, \Cref{subsec:rel-gen}.
-  \item The tail-recursive evaluator, \Cref{sec:genmachine}.
-  \item The proof that the generic tail-recursive function is correct, \Cref{sec:correct-gen}.
-\end{itemize}
-Before we can define any such datatype generic constructions, however, we need
-to fix our universe of discourse.
+In the previous \namecref{chap:expression}, \Cref{chap:expression}, we showed
+how to \emph{manually} construct a tail-recursive evaluation function for the
+type of binary trees, and prove that is both terminating and equal to the
+original fold. 
 
-\section{The \emph{regular} universe}
-\label{sec:universe}
-
-In a dependently typed programming language such as Agda, we can
-represent a collection of types closed under certain operations as a
-\emph{universe}~\cite{altenkirch-mcbride,martin-loef}, that is, a data
-type |U : Set| describing the inhabitants of our universe together
-with its semantics, |el : U -> Set|, mapping each element of |U| to
-its corresponding type. We have chosen the following universe of
-\emph{regular} types~\cite{morris-regular, noort-regular}:
-\begin{code}
-  data Reg : Set1 where
-    Zero  : Reg
-    One   : Reg
-    I     : Reg
-    K     : (A : Set) -> Reg
-    O+Op  : (R Q : Reg)  -> Reg
-    O*Op  : (R Q : Reg) -> Reg
-\end{code}
-Types in this universe are formed from the empty type (|Zero|), unit type
-(|One|), and constant types (|K A|); the |I| constructor is used to refer to
-recursive subtrees. Finally, the universe is closed under both coproducts
-(|O+Op|) and products (|O*Op|). We could represent the \emph{pattern} functor
-corresponding to the \AD{Expr} type in this universe as follows:
-\begin{code}
-  expr : Reg
-  expr = K Nat O+ (I O* I)
-\end{code}
-Note that as the constant functor |K| takes an arbitrary type |A| as its
-argument, the entire datatype lives in |Set1|. This could easily be remedied by
-stratifying this universe explicitly and parametrising our development by a base
-universe.
-  
-We can interpret the inhabitants of |Reg| as a functor of type |Set -> Set|:
-\begin{code}
-  interp : Reg -> Set -> Set
-  interpl Zero interpr X       = Bot
-  interpl One interpr X        = Top
-  interpl I interpr X          = X
-  interpl (K A) interpr X      = A
-  interpl (R O+ Q) interpr X   = interpl R interpr X U+ interpl Q interpr X
-  interpl (R O* Q) interpr X   = interpl R interpr X * interpl Q interpr X
-\end{code}
-To show that this interpretation is indeed functorial, we define the
-following |fmap| operation:
-\begin{code}
-  fmap : (R : Reg) -> (X -> Y) -> interpl R interpr X -> interpl R interpr Y
-  fmap Zero f Empty
-  fmap One  f tt            = tt
-  fmap I f x                = f x
-  fmap (K A) f x            = x
-  fmap (R O+ Q) f (inj1 x)  = inj1 (fmap R f x)
-  fmap (R O+ Q) f (inj2 y)  = inj2 (fmap Q f y)
-  fmap (R O* Q) f (x , y)   = fmap R f x , fmap Q f y
-\end{code}
-Finally, we can tie the recursive knot, taking the least fixpoint of the functor
-associated with the elements of our universe:
-\begin{code}
-  data mu (R : Reg) : Set where
-    In : interpl R interpr (mu R) -> mu R
-\end{code}
-Next, we can define a \emph{generic} fold, or \emph{catamorphism}, to
-work on the inhabitants of the regular universe. For each code |R :
-Reg|, the |cata R| function takes an \emph{algebra} of type |interpl R
-interpr X -> X| as argument. This algebra assigns semantics to the
-`constructors' of |R|. Folding over a tree of type |mu R| corresponds
-to recursively folding over each subtree and assembling the results
-using the argument algebra:
-\begin{spec}
-  cataNT : (R : Reg) -> (interpl R interpr X -> X) -> mu R -> X
-  cata R alg (In r) = alg (fmap R cataN R alg) r)
-\end{spec}
-Unfortunately, Agda's termination checker does not accept this definition. The
-problem, once again, is that the recursive calls to |cata| are not made to
-structurally smaller trees, but rather |cata| is passed as an argument to the
-higher-order function |fmap|.
-
-To address this, we fuse the |fmap| and |cata| functions into a single
-|mapFold| function~\cite{norell-notes}:
-\begin{code}
-  mapFold : (R Q : Reg) -> (interpl Q interpr X -> X) -> interpl R interpr (mu Q) -> interpl R interpr X
-  mapFold Zero     Q alg Empty
-  mapFold One      Q alg tt        = tt
-  mapFold I        Q alg (In x)    = alg (mapFold Q Q alg x)
-  mapFold (K A)    Q alg x         = x
-  mapFold (R O+ Q) P alg (inj1 x)  = inj2 (mapFold R P alg x)
-  mapFold (R O+ Q) P alg (inj2 y)  = inj2 (mapFold Q P alg y)
-  mapFold (R O* Q) P alg (x , y)   = mapFold R P alg x , mapFold Q P alg y
-\end{code}
-We can now define |cata| in terms of |mapFold| as follows:
-\begin{code}
-  cata : (R : Reg) (interpl R interpr X -> X) -> mu R -> X
-  cata R alg (In r) = mapFold R R alg r
-\end{code}
-This definition is indeed accepted by Agda's termination checker.
-
-\paragraph{Example}
-We can now revisit our example evaluator from the introduction. To
-define the evaluator using the generic |cata| function, we instantiate
-the catamorphism to work on the expressions and pass the desired algebra:
-\begin{code}
-  eval : mu expr -> Nat
-  eval = cata expr [ id , plusOp ]
-\end{code}
-
-In the remainder of this paper, we will develop an alternative
-traversal that maps any algebra to a tail-recursive function that is
-guaranteed to terminate and produce the same result as
-the corresponding call to |cata|.
+%{
+%format load = "\AF{load}"
+%format unload = "\AF{unload}"
+In this chapter, we build upon and define a terminating tail-recursive function
+that we prove equivalent to any fold over any (simple) algebraic datatype that
+can be generically expressed in the \emph{regular} universe. We begin in
+\Cref{sec:generic:dissection}, recapitulating the idea of \emph{dissection}, due
+to McBride\cite{McBride:2008:CLM:1328438.1328474}, and show how it leads
+(\Cref{sec:generic:genconf}) to the definition of generic configurations of the
+abstract machine. Subsequently, in \Cref{sec:generic:onestep}, we introduce the
+generic version of the functions |load| and |unload|, that compute one step of
+the fold. In \Cref{sec:generic:relation} we set up the relation over generic
+configurations and present its well-foundedness proof. Finally, we define the
+terminating tail-recursive fold as the iteration of the one-step function fueled
+by well-founded recursion. The correctness proof, \Cref{sec:generic:correct},
+follows directly from the construction. To conclude, we present an example of
+the generic tail-recursive fold in action: we take the |Expr| datatype from the
+introduction and encode the evaluation function in terms of the generic
+evaluator.
+%}
 
 \section{Dissection}
-\label{sec:dissection}
+\label{sec:generic:dissection}
 
-As we mentioned in the previous section, the configurations of our
-abstract machine from the introduction are instances of McBride's
-dissections~\citeyearpar{dissection}. We briefly recap this
+The configurations of our abstract machine from the introduction are instances
+of McBride's dissections~\cite{McBride:2008:CLM:1328438.1328474}. We briefly recap this
 construction, showing how to calculate the type of abstract machine
-configurations for any type in our universe. The key definition,
-|nabla|, computes a bifunctor for each element of our universe:
+configurations for any type in our universe. The key definition, |nabla|, is
+defined as a new interpretation function over the regular universe: it maps
+elements of the universe into bifunctors:
+%
 \begin{code}
   nabla : (R : Reg) → (Set → Set → Set)
   nabla Zero      X Y  = Bot
@@ -153,28 +48,42 @@ configurations for any type in our universe. The key definition,
   nabla (R O+ Q)  X Y = nabla R X Y U+ nabla Q X Y
   nabla (R O* Q)  X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
 \end{code}
-This operation generalizes the zippers, by defining a bifunctor |nabla
-R X Y|. You may find it useful to think of the special case, |nabla R
-X (mu R)| as a configuration of an abstract machine traversing a tree
-of type |mu R| to produce a result of type |X|. The last clause of the
-definition of |nabla| is of particular interest: to \emph{dissect} a
-product, we either \emph{dissect} the left component pairing it with
-the second component interpreted over the second variable |Y|; or we
-\emph{dissect} the second component and pair it with the first
-interpreted over |X|.
+%
+This operation generalizes the zippers, by defining a bifunctor |nabla R X Y|.
+You may find it useful to think of the special case, |nabla R X (mu R)| as a
+configuration of an abstract machine traversing a tree of type |mu R| to produce
+a result of type |X|. Elements of type |X| represent partial results steeming
+from already evaluated subtrees; elements of type |mu R| are the generic trees
+that still have to be processed.
 
-A \emph{dissection} is formally defined as the pair of the one-hole context and
-the missing value that can fill the context.
+The |nabla| operation over a code |R : Reg| considers all the possible ways in
+which we can tear appart a value of type |interpl R interpr X| such that
+exactly one of the recursive positions (code |I|, inhabited by terms of type |X|) is on focus. Because only one
+variable is specially distinguished, the recursive positions appearing to its left 
+might be interpreted over a different type than those on its right. 
+
+The last clause of the definition of |nabla| is of particular interest: to
+\emph{dissect} a product, we either \emph{dissect} the left component pairing it
+with the second component interpreted over the second variable |Y|; or we
+\emph{dissect} the second component and pair it with the first interpreted over
+|X|.
+
+A \emph{dissection} is then formally defined as the pair of the one-hole
+context, resulting from \emph{dissecting} a concrete code |R|,  and the missing 
+value that can fill the hole:
+%
 \begin{code}
   Dissection : (R : Reg) -> (X Y : Set) -> Set
   Dissection R X Y = nabla R X Y * Y
 \end{code}
+%
 We can reconstruct Huet's zipper for generic trees of type |mu R| by
 instantiating both |X| and |Y| to |mu R|.
 
 Given a \emph{dissection}, we can define a |plug| operation that
 assembles the context and current value in focus to
 produce a value of type |interpl R interpr Y|:
+%
 \begin{code}
   plug : (R : Reg) -> (X -> Y) -> Dissection R X Y -> interpl R interpr Y
   plug Zero      eta  (Empty , x)
@@ -186,21 +95,22 @@ produce a value of type |interpl R interpr Y|:
   plug (R O* Q)  eta  (inj1 (dr , q) , x)  = (plug R eta (dr , x) , q)
   plug (R O* Q)  eta  (inj2 (r , dq) , x)  = (fmap R eta r , plug Q eta (dq , x))
 \end{code}
+%
 In the last clause of the definition, the \emph{dissection} is over the right
-component of the pair leaving a value |r : interpl R interpr X| to the left. In
-that case, it is only possible to reconstruct a value of type |interpl R interpr Y|, 
+component of the pair, leaving a value |r : interpl R interpr X| to the left. In
+that case, it is only possible to build a term of type |interpl R interpr Y|
 if we have a function |eta| to recover |Y|s from |X|s.
 
-In order to ease things later, we bundle a \emph{dissection} together with the
-functor to which it \emph{plug}s as a type-indexed type.
-
+We can bundle toghether a \emph{dissection} with the value of type |interpl R
+interpr Y| to which it \emph{plug}s as a type-indexed type:
+%
 \begin{code}
   data IxDissection (R : Reg) (X Y : Set) (eta : X → Y) (tx : interpl R interpr Y) : Set where
     prodOp : (d : Dissection R X Y) → plug R d eta == tx → IxDissection R X Y eta tx 
 \end{code}
 
 \section{Generic configurations}
-\label{sec:genconf}
+\label{sec:generic:genconf}
 
 While the \emph{dissection} computes the bifunctor \emph{underlying}
 our configurations, we still need to take a fixpoint of this
@@ -319,7 +229,7 @@ that work on a reversed stack.
 
 
 \section{One step of a catamorphism}
-\label{subsec:onestep}
+\label{sec:generic:onestep}
 
 %{
 %format load = "\AF{load}"
@@ -459,7 +369,7 @@ value equals to applying a |catamorphism| over the subtree.  The function
 |compute| massages |r| to adapt the arguments for the recursive call to |unload|.
 
 \section{Relation over generic configurations}
-\label{subsec:rel-gen}
+\label{sec:generic:relation}
 
 We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
 t|, for some concrete tree |t : mu R|, by explicity separating the functorial layer
@@ -546,14 +456,14 @@ the functor of type | interpl R interpr X | to which both \emph{dissections}
 \end{code}
 
 The proof of \emph{well-foundedness} of |IxLtdown| is a straightforward generalization
-of proof given for the example in \Cref{subsec:relation}. 
+of proof given for the example in \Cref{sec:expression:relation}. 
 The full proof of the following statement can found in the accompanying code:
 \begin{code}
   <Z-WF : (R : Reg)  -> (t : μ R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
 \section{A generic tail-recursive machine}
-\label{sec:genmachine}
+\label{sec:generic:machine}
 
 We are now ready to define a generic tail-recursive machine. To do so we
 now assemble the generic machinery we have defined so far. We follow the 
@@ -634,7 +544,7 @@ function that initiates the computation with suitable arguments:
 \end{code}
 
 \section{Correctness, generically}
-\label{sec:correct-gen}
+\label{sec:generic:correct}
 %{
 %format tail-rec-eval = "\AF{tail-rec-eval}"
 To prove our tail-recursive evaluator produces the same output as the catamorphism
@@ -658,7 +568,7 @@ Our generic correctness result is an immediate consequence:
 \end{code}
 
 \section{Example}
-\label{subsec:example-gen}
+\label{sec:generic:example}
 
 To conclude, we show how to generically implement the example from the
 introduction (\Cref{sec:intro}), and how the generic construction gives us a

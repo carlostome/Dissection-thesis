@@ -186,19 +186,22 @@ spell the research questions that this master thesis is set out to answer:
   This master thesis is divided in two main parts, with some background material
   at the beginning and conclusions at the end. 
 
-  We start in \Cref{chap:background} giving the reader a broader
-  perspective on folds in programming languages to justify the importance of our
-  our work.
-  Moreover, in this chapter, we revisit the available literature to explain
-  different methods of assisting the termination checker to accept functions
-  that are not defined by strictly structural recursion.
+  We start in \Cref{chap:background} giving the reader a broader perspective on
+  folds in programming languages to justify the importance of our our work.
+  Moreover, in this chapter, we revisit the available literature on techniques
+  to assist the termination checker to accept functions that are not defined by
+  strictly structural recursion. We end the \namecref{chap:background}, with an
+  introduction to generic programming in \Agda~using the \emph{regular}
+  universe, which form the basis of our generic tail-recursive evaluator.
+
   In the first part of the thesis, \Cref{chap:expression}, we show how to
-  construct a tail-recursive evaluation function for the type of |Expr|, and
-  prove that it terminates and is correct. With this we answer both research
-  questions one and two.
+  \emph{manually} write a tail-recursive evaluation function for the type of
+  |Expr|, and prove that it terminates and is correct. With this we answer both
+  research questions one and two.
+
   In the second part, \Cref{chap:generic}, we show how to generalize our
-  solution for the type |Expr|, from \Cref{chap:expression}, to the
-  generic setting. By doing so, we answer the third research question.
+  solution for the type |Expr|, from \Cref{chap:expression}, to the generic
+  setting. By doing so, we answer the third research question.  
   We conclude this document, in \Cref{chap:conclusion}, with a few remarks about
   the work presented here and discuss possible future work.
 

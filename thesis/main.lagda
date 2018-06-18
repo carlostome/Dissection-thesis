@@ -11,6 +11,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
+\usepackage{bbold} %% Font for fancy math letters
 
 \usepackage{scalerel}   %% Scale
 \usepackage{dsfont}     %% Font for fancy math letters

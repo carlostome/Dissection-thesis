@@ -1,3 +1,6 @@
+%include polycode.fmt
+%include thesis.fmt
+
 % Datatypes
 %format Reg = "\AD{Reg}"
 %format mu  = "\AD{\ensuremath{\mu}}"
@@ -25,10 +28,10 @@
 %format Zero  = "\AI{\ensuremath{\mathbb{0}}}"
 %format I     = "\AI{I}"
 %format K     = "\AI{K}"
-%format O+Op  = "\AI{\_\ensuremath{\oplus}\_}"
-%format O*Op  = "\AI{\_\ensuremath{\otimes}\_}"
-%format O+    = "\AI{\ensuremath{\oplus}}"
-%format O*    = "\AI{\ensuremath{\otimes}}"
+%format O+Op  = "\AI{\_\ensuremath{\bigoplus}\_}"
+%format O*Op  = "\AI{\_\ensuremath{\bigotimes}\_}"
+%format O+    = "\AI{\ensuremath{\bigoplus}}"
+%format O*    = "\AI{\ensuremath{\bigotimes}}"
 %format In    = "\AI{In}"
 %format prodOp = "\AI{\_\text{,}\_}"
 %format NonRec-One = "\AI{NonRec-\ensuremath{\mathbb{1}}}"

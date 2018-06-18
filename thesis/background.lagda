@@ -564,3 +564,192 @@ delivers a smaller result than the input.
 Then, there are two options: each time the function is called a proof that the
 input is accessible by the relation is explicitly supplied, or, the relation is
 proven to be well-founded and used to produce the required evidence.
+
+\section{Generic programming and the \emph{regular} universe}
+\label{sec:generic:universe}
+
+Datatype generic programming is a discipline 
++ What is generic programming
++ A representation of a type
++ Composable blocks
++ Define a function for the blocks
++ Gain the functionality for every type isomorphic to a type represenation for
+free.
++ Expressivity depends on the building blocks.
++ noort regular
+
+In a dependently typed programming language such as \Agda, we can
+represent a collection of types closed under certain operations as a
+\emph{universe}~\cite{altenkirch-mcbride,martin-loef}, that is, a data
+type |U : Set| describing the inhabitants of our universe together
+with its semantics, |el : U -> Set|, mapping each element of |U| to
+its corresponding type. We have chosen the following universe of
+\emph{regular} types~\cite{morris-regular, noort-regular}:
+%
+\begin{code}
+  data Reg : Set1 where
+    Zero  : Reg
+    One   : Reg
+    I     : Reg
+    K     : (A : Set) -> Reg
+    O+Op  : (R Q : Reg)  -> Reg
+    O*Op  : (R Q : Reg) -> Reg
+\end{code}
+%
+Types in this universe are formed from the empty type (|Zero|), unit type
+(|One|), and constant types (|K A|); the |I| constructor is used to refer to
+recursive subtrees. Finally, the universe is closed under both coproducts
+(|O+Op|) and products (|O*Op|). Note that as the constant functor |K| takes 
+an arbitrary type |A| as its
+argument, the entire datatype lives in |Set1|. This could easily be remedied by
+stratifying this universe explicitly and parametrising our development by a base
+universe.
+  
+We can interpret the inhabitants of |Reg| as a functor of type |Set -> Set|:
+\begin{code} 
+  interp : Reg -> Set -> Set
+  interpl Zero interpr X       = Bot
+  interpl One interpr X        = Top
+  interpl I interpr X          = X
+  interpl (K A) interpr X      = A
+  interpl (R O+ Q) interpr X   = interpl R interpr X U+ interpl Q interpr X
+  interpl (R O* Q) interpr X   = interpl R interpr X * interpl Q interpr X
+\end{code}
+To show that this interpretation is indeed functorial, we define the
+following law abiding |fmap| operation:
+\begin{code}
+  fmap : (R : Reg) -> (X -> Y) -> interpl R interpr X -> interpl R interpr Y
+  fmap Zero f Empty
+  fmap One  f tt            = tt
+  fmap I f x                = f x
+  fmap (K A) f x            = x
+  fmap (R O+ Q) f (inj1 x)  = inj1 (fmap R f x)
+  fmap (R O+ Q) f (inj2 y)  = inj2 (fmap Q f y)
+  fmap (R O* Q) f (x , y)   = fmap R f x , fmap Q f y
+\end{code}
+%
+Finally, we can tie the recursive knot, taking the least fixpoint of the functor
+associated with the elements of our universe:
+%
+\begin{code}
+  data mu (R : Reg) : Set where
+    In : interpl R interpr (mu R) -> mu R
+\end{code}
+
+\begin{example}
+  As a firs example, we show how to encode the usual type of cons-lists, so
+  pervasive in functional programming languages, in the \emph{regular} universe.
+  The construction is simple: express the \emph{pattern functor} underlying the
+  constructors, |::Op| and |[]|, as a generic code of type |Reg|, and take the
+  fixed point over it.
+  %
+  \begin{code}
+    ListF : Set -> Reg
+    ListF a = One U+ (K a O+ I)
+
+    ListG : Set -> Set
+    ListG a = mu (ListF a)
+  \end{code}
+  %
+  The type |ListG| is called the representation of the type |List|. We can witness
+  the equivalence of both by writing a pair of embedding-projection functions:
+  %
+  \begin{code}
+    from : {a : Set} -> List a -> ListG a
+    from []          = In (inj1 tt)
+    from (x :: xs)   = In (inj2 (x , from xs))
+
+    to : {a : Set} -> ListG a -> List a
+    to (In (inj1 tt))       = []  
+    to (In (inj2 (x , xs))  = x :: to xs
+  \end{code}
+  %
+  That satisfy the following roundtrip properties:
+  %
+  \begin{code}
+    from-to : forall {a : Set} -> (xs : List a) -> to (from xs) == xs
+
+    to-from : {a : Set} -> (xs : ListG a) -> from (to xs) == xs
+  \end{code}
+  %
+\end{example}
+
+Next, we can define a \emph{generic} fold, or \emph{catamorphism}, to
+work on the inhabitants of the regular universe. For each code |R :
+Reg|, the |cata R| function takes an \emph{algebra} of type |interpl R
+interpr X -> X| as argument. This algebra assigns semantics to the
+`constructors' of |R|. Folding over a tree of type |mu R| corresponds
+to recursively folding over each subtree and assembling the results
+using the argument algebra:
+\begin{spec}
+  cataNT : (R : Reg) -> (interpl R interpr X -> X) -> mu R -> X
+  cata R alg (In r) = alg (fmap R cataN R alg) r)
+\end{spec}
+Unfortunately, Agda's termination checker does not accept this definition. The
+problem, once again, is that the recursive calls to |cata| are not made to
+structurally smaller trees, but rather |cata| is passed as an argument to the
+higher-order function |fmap|.
+
+To address this, we fuse the |fmap| and |cata| functions into a single
+|mapFold| function~\cite{norell-notes}:
+\begin{code}
+  mapFold : (R Q : Reg) -> (interpl Q interpr X -> X) -> interpl R interpr (mu Q) -> interpl R interpr X
+  mapFold Zero     Q alg Empty
+  mapFold One      Q alg tt        = tt
+  mapFold I        Q alg (In x)    = alg (mapFold Q Q alg x)
+  mapFold (K A)    Q alg x         = x
+  mapFold (R O+ Q) P alg (inj1 x)  = inj2 (mapFold R P alg x)
+  mapFold (R O+ Q) P alg (inj2 y)  = inj2 (mapFold Q P alg y)
+  mapFold (R O* Q) P alg (x , y)   = mapFold R P alg x , mapFold Q P alg y
+\end{code}
+We can now define |cata| in terms of |mapFold| as follows:
+\begin{code}
+  cata : (R : Reg) (interpl R interpr X -> X) -> mu R -> X
+  cata R alg (In r) = mapFold R R alg r
+\end{code}
+This definition is indeed accepted by Agda's termination checker.
+
+\begin{example}
+  We can encode the type of expressions, |Expr|, in the \emph{regular} universe
+  in two steps: first, we define the code of the \emph{pattern functor}
+  underlying the constructors; second, the generic type of expressions |ExprG|
+  arises from tying the knot over the pattern functor.
+  %
+  \begin{code}
+  expr : Reg
+  expr = K Nat O+ (I O* I)
+
+  exprG : Set
+  exprG = mu expr
+  \end{code}
+  %
+  In order to witness the equivalence between the generic encoding and the
+  original type, we can define the embed-projection pair:
+  %
+  \begin{code}
+    to : exprG -> Expr
+    to (In (inj1 n))         = Val n
+    to (In (inj2 (e1 , e2))) = Add (to e1) (to e2)
+
+    from : Expr -> exprG
+    from (Val n)     = In (inj1 n)
+    from (Add e1 e2) = In (inj2 (from e1, from e2))
+  \end{code}
+We can now revisit our example evaluator, |eval|, from the introduction. To
+define the evaluation function using the generic |cata| function, we instantiate the
+code argument to be the expression pattern functor, and pass the appropriate
+algebra:
+\begin{code}
+  eval : exprG-> Nat
+  eval = cata expr alg
+    where alg : expr Nat -> Nat
+          alg (inj1 n)           = n
+          alg (inj2 (n , n'))    = n + n'
+\end{code}
+\end{example}
+
+In the remainder of this paper, we will develop an alternative
+traversal that maps any algebra to a tail-recursive function that is
+guaranteed to terminate and produce the same result as
+the corresponding call to |cata|.
+
