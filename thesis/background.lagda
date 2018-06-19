@@ -3,6 +3,8 @@
 \chapter{Background}
 \label{chap:background}
 
+In this \namecref{chap:background}, we introduce some of the concepts
+
 \section{Fold from a broader perspective}
 \label{sec:background:fold}
 % - Fold in a bigger context -> 
@@ -60,15 +62,26 @@
 
 \Agda~is a language for describing total functions. General recursive functions
 are not allowed as they would render the logic inconsistent. It is not possible
-to decide in general if a recursive function terminates, as it will imply that
+to decide in general if a recursive function terminates, as such will imply that
 we have solved the halting problem. To ensure that any defined function
 terminates, \Agda~uses a termination checker based on foetus
 \cite{Abel98foetus}, that syntactically checks whether the recursive calls of a
 function are performed over \textbf{structurally} smaller arguments.
 
-Many interesting --and terminating-- functions that we would like to define do 
-not conform to the pattern of being defined by structural recursion. For instance, 
-we can consider the sorting function \emph{quicksort} implemented in a functional style:
+Many interesting --and terminating-- functions that we would like to define do
+not conform to the pattern of being defined by structural recursion. For
+instance, the naive tail-recursive evaluator presented in the introduction
+(\Cref{sec:intro:descr}). 
+
+In this section, we explore several available techniques which allow us to
+reason within \Agda~about termination conditions. Particularly, we revisit
+\emph{sized types} (\Cref{subsec:background:sized}), \emph{Bove-Capretta}
+predicates (\Cref{subsec:background:bove}) and \emph{well-founded} recursion
+(\Cref{subsec:background:wellfounded}).
+
+As a running example, we consider the sorting
+function \emph{quicksort} implemented in a functional style:
+%
 \begin{code}
   quickSortN : (a -> a -> Bool) -> List a -> List a
   quickSortN p [] = []
@@ -76,9 +89,10 @@ we can consider the sorting function \emph{quicksort} implemented in a functiona
                               ++ [ x ] ++
                             quickSortN p (filter (not . (p x)) xs)
 \end{code}
-\Agda's termination checker marks the function as possibly non-terminating. In
-the second clause of the definition, the arguments to both recursive calls,
-|filter (p x) xs)| and |filter (not . (p x))| are not structurally smaller than
+%
+\Agda's termination checker marks the function as possibly non-terminating.
+In the second clause of the definition, the arguments to both recursive calls,
+|filter (p x) xs| and |filter (not . (p x))| are not structurally smaller than
 the input list |x :: xs|. The termination checker has no reason whatsoever to
 believe that the application of the function |filter| to the list does not
 increase its size. As a contrived example, we could have made a mistake in the
@@ -93,28 +107,21 @@ above diverges:
 
 \end{code}
 %
-On its own, |filterBad| is a perfectly valid function that the
-termination checker classifies as terminating for any possible input. However, if
-called  by any other function, like |quickSort|, that uses its result as a
-recursive argument makes such function diverge.  
+On its own, |filterBad| is a perfectly valid function that the termination
+checker classifies as terminating for any possible input. However, if any other
+function uses its result as a recursive argument, such function will diverge.  
 
 The termination checker only uses \emph{local} information of the definition of
 a function to classify it as terminating or possibly non-terminating.
 Concretely, it constructs a graph between the parameters of the function and the
 arguments passed to recursive calls and tries to find a well-founded order
 amongst them. In any case, calls to other functions are treated as a blackbox.
-The reason is that syntactically checking termination conditions is not modular,
-as in our example, two terminating functions when combined together may give
-rise to a divergent function. 
+The reason is that syntactically checking termination conditions is not modular:
+two terminating functions when combined together may give rise to a divergent
+function. 
 
-In case functions are not defined by structural recursion, more advanced tools
-are needed to convince the termination checker of termination.  In the rest of
-this section, we will explore several available techniques that allow us to
-reason within \Agda~about termination conditions. In particular, we show to
-\Agda~that the  |quickSort| example terminates using: \emph{sized types}
-(\Cref{subsec:background:sized}), \emph{Bove-Capretta} predicates
-(\Cref{subsec:background:bove}) and \emph{well-founded} recursion
-(\Cref{subsec:background:wellfounded}).
+The rest of this section is devoted to show how using the aforementioned
+techniques, we can convince \Agda~that |quickSort| terminates on any input.
 
 \subsection{Sized types} 
 \label{subsec:background:sized}
@@ -125,16 +132,16 @@ type index that represents an \textbf{upper bound} of the actual \textit{size}
 of the term being annotated. By size of an inductive datatype it is
 understood the number of constructors used to build a value of the type.
 
-Functions can quantify over size variables to relate the size of the
-parameters to the size of the result. A term is only well-typed if the 
+Functions can quantify over size variables to relate the size of its
+parameters to the size of its result. A term is only well-typed if the 
 type system can ensure during type checking that the size type
 annotation of a term conforms to its actual size. Size annotations are
 gathered during typechecking and passed to a linear inequality solver to check
 their validity. The type |Size| used to annotate sizes can be understood as the
 type of ordinal numbers without a base element. Its definition is builtin in the
-\Agda~compiler, but informally corresponds to the following type:\footnote{To
-make clear that |Size| has special treatment, it lives in its own
-universe |SizeUniv|.}
+\Agda~compiler, but informally corresponds to the following type:\footnote{The
+type |Size| it lives in its own universe |SizeUniv|, this reiterates the special
+treatment that is given by the typechecker.}
 %
 \begin{code}
   data Size : SizeUniv where
@@ -192,17 +199,17 @@ universe |SizeUniv|.}
   type of the resulting list. The concatenation function, |++Op|, has type |{i j :
   Size} -> List a i -> List a j -> List a omega|, where |omega| indicates
   that we know nothing about the \emph{size} of the resulting list. In fact this is a
-  limitation, both theoretical and at the implementation level, of sized
+  limitation, both theoretically and at the implementation level, of sized
   types.
   The system is not sufficiently expressive to give the function |++Op| a more precise
   type such as | {i j : Size} -> List a i -> List a j -> List a (i + j)|. Nevertheless,
   it is enough to demonstrate to \Agda~ that the implementation of quicksort terminates. 
   Specifically, in the second clause of the definition, the information about the size of the
   input, |up i|, is propagated to the function |filter| that it is known to
-  `preserve' the size of its input, thus the recursive call is provably
+  `preserve' the size of its input. The recursive call is now provably
   terminating. If we try to reimplement the bogus version of filter,
-  |filterBad|, using sized types, the definition is not even accepted by the
-  typechecker.
+  |filterBad|, using sized types, its definition is not well-typed and the
+  typechecker raises a compile-time error.
 \end{example}
 
   A termination check based on sized types represents an improvement over a
@@ -213,7 +220,7 @@ universe |SizeUniv|.}
   types is modular because it works across the boundaries of function
   definitions. However, the expressivity of the system is somewhat limited and in
   general sized types are not first class entities in the language, rather
-  builtin objects with special treatment subject to some restrictions.
+  built-in objects with special treatment subject to some restrictions.
 
 \subsection{Bove-Capretta predicate}
 \label{subsec:background:bove}
@@ -395,7 +402,7 @@ well-founded as follows:
   \begin{code}
   filter-<L : ∀ (p : a → Bool) (x : a) (xs : List a) → filter p xs <L (x :: xs)
   filter-<L p x [] = Base x []
-  filter-<L p x (y :: xs) with p y 
+  filter-<L /p x (y :: xs) with p y 
   ... | false = lemma-:: x (filter p xs) (y :: xs) (filter-<L p y xs)
   ... | true  = Step y x (filter p xs) (y :: xs) (filter-<L p y xs)
   \end{code}
@@ -412,12 +419,12 @@ well-founded as follows:
 
   Every time the programmer wants to call |quickSortWF|, she has to produce a
   proof that the input is accessible by |<LOp|. It is burdensome to impose such
-  requirement, specially when is clear that |quickSort| terminates for every possible
-  input. To solve this undesirable situation, we can show once and for all that
-  every element is accessible.The constructive nature of the
-  \emph{well-foundedness} proof (is an algorithm) serves as procedure to build
-  the accessibility predicate without human intervention. The proof is as
-  follows:
+  requirement, specially when is clear that |quickSort| terminates for every
+  possible input. To solve this undesirable situation, we can show once and for
+  all that every element is accessible. The constructive nature of the
+  \emph{well-foundedness} proof (it is an algorithm) serves as procedure to
+  build the accessibility predicate without human intervention. The proof of the
+  theorem is as follows:
   %
   \begin{code}
   <L-Well-founded : Well-founded <LOp
@@ -425,12 +432,12 @@ well-founded as follows:
     where  aux-Step  : ∀ (x : a) (xs : List a) -> Acc <LOp xs 
                      -> ∀ (y : List a) → y <L (x :: xs) → Acc <LOp y
            aux-Step x xs (acc rs)  .. []        (Base .. x .. xs) 
-              = acc lambda {_ }
+              = acc lambda {_ ()}
            aux-Step x xs (acc rs)  ..(y :: ys)  (Step y .. x ys .. xs p) 
               = acc (aux-Step y ys (rs ys p))
 
            aux : ∀ (x : List a) -> (y : List a) -> y <L x -> Acc <LOp y
-           aux ..(x :: xs) .. [] (Base x xs) = acc lambda { y ()}
+           aux ..(x :: xs) .. [] (Base x xs) = acc lambda { _ ()}
            aux ..(y :: ys) ..(x :: xs) (Step x y xs ys p) 
               = acc (aux-Step x xs (aux ys xs p))
 
@@ -504,7 +511,7 @@ relation.
       aux .. (suc n) y (Step1 n p)  = aux n y p
   \end{code}
   %
-  Pattern matching on the proof allows us to refine both arguments. The
+  Pattern matching on the relation allows us to refine both arguments. The
   recursive call to the well-foundednees proof in the |Base| case is allowed
   because |y| is structurally smaller than |suc y|. In the step case
   we can recurse using |aux| because the proof |p| is structurally smaller than
@@ -523,19 +530,19 @@ relation.
         aux (suc x) .. (suc y) (Step2 y p)  = aux x (suc y) ??
   \end{code}
   %
-  The |Base2| case is easy: there are no natural numbers smaller than 0, thus it
-  is eliminated using the impossible pattern. In the inductive case, |Step2|,
-  the refined patterns are not adequate to use in a recursive call, the
+  The |Base2| case is easy: there are no natural numbers smaller than |zero|,
+  thus it is eliminated using the impossible pattern. In the inductive case,
+  |Step2|, the refined patterns are not adequate to use in a recursive call, the
   arguments are not structurally related.
 
-  To tackle the problem, we have to introduce an auxiliary lemma that relates
-  structurally both inputs. The lemma is as follows:
+  To tackle the problem, we have to introduce an auxiliary lemma that links the
+  inductive structure of both inputs. Such the lemma states the following:
   %
   \begin{code}
     lemma2 : ∀ (n : Nat) (m : Nat) -> n <2 suc m → n == m U+ n <2 m
   \end{code}
   %
-  Finally, we can complete |<2-Well-founded| proof by appealing to the lemma and
+  Finally, we can complete |<2-Well-founded| proof by appealing to |lemma2| and
   dispatching a recursive call in the inductive case:
   %
   \begin{code}
@@ -545,16 +552,17 @@ relation.
       aux : (x : Nat) -> forall (y : Nat) → y <2 x → Acc <2Op y
       aux zero y ()
       aux (suc x) y p with lemma2 _ _ p
-      aux (suc x) .. x p  | inj1 refl = <2-Well-founded x
-      aux (suc x) y p     | inj2 i    = aux x y i
+      aux (suc x) .. x p  | inj1 refl  = <2-Well-founded x
+      aux (suc x) y p     | inj2 i     = aux x y i
   \end{code}
 
-  This example illustrates how the proof of well-foundedness is totally dependent on the
-  choice of how the relation is defined. In the first relation, |<1Op|, the
-  proof follows by induction from the definition, but the second relation,
-  |<2Op|, necessitates some extra work and a bit of insight to complete the proof.
+  This example illustrates how the proof of well-foundedness is totally
+  dependent on the choice of the relation. In the first relation, |<1Op|, the
+  proof follows directly by induction from the definition, but the second
+  relation, |<2Op|, necessitates some extra work and a bit of insight to
+  complete the proof.
 \end{example}
-
+%
 Using well-founded recursion the programmer can write a non structurally
 recursive function directly in \Agda. Before writing such a function, a suitable
 relation over the type of elements that decreases with each application has to
@@ -565,18 +573,28 @@ Then, there are two options: each time the function is called a proof that the
 input is accessible by the relation is explicitly supplied, or, the relation is
 proven to be well-founded and used to produce the required evidence.
 
-\section{Generic programming and the \emph{regular} universe}
+\section{Generic programming }
 \label{sec:generic:universe}
+There are many opinions on what the term "generic programming" means, depending
+of whom you ask. For a thoroughly account of its different flavours, we
+recommend the reader to the material by
+Gibbons\cite{10.1007/978-3-540-76786-2_1}. Nevertheless, a central idea
+prevails: find a common ground in the implementation details that can be
+abstracted away such that when instantiated can be applied over and over. 
 
-Datatype generic programming is a discipline 
-+ What is generic programming
-+ A representation of a type
-+ Composable blocks
-+ Define a function for the blocks
-+ Gain the functionality for every type isomorphic to a type represenation for
-free.
-+ Expressivity depends on the building blocks.
-+ noort regular
+The second part of this master thesis presents a generalization of the
+tail-recursive evaluator from part one (\Cref{chap:expression}), on the type
+|Expr|, to the "generic" case. What is meant by generic in this context? According 
+to Gibbons, it means \textbf{shape genericity}: abstract over the shape of a datatype, 
+or its inductive structure. 
+
+In the rest of this section, we give a fast-track introduction to generic
+programming with dependent types. We put special interest on the \emph{regular}
+universe, for which later, \Cref{chap:generic}, we construct a generic tail-recursive 
+evaluator.
+
+\subsection{The \emph{regular} universe}
+\label{subsec:background:regular}
 
 In a dependently typed programming language such as \Agda, we can
 represent a collection of types closed under certain operations as a
@@ -603,7 +621,7 @@ recursive subtrees. Finally, the universe is closed under both coproducts
 an arbitrary type |A| as its
 argument, the entire datatype lives in |Set1|. This could easily be remedied by
 stratifying this universe explicitly and parametrising our development by a base
-universe.
+universe. 
   
 We can interpret the inhabitants of |Reg| as a functor of type |Set -> Set|:
 \begin{code} 
@@ -627,32 +645,58 @@ following law abiding |fmap| operation:
   fmap (R O+ Q) f (inj2 y)  = inj2 (fmap Q f y)
   fmap (R O* Q) f (x , y)   = fmap R f x , fmap Q f y
 \end{code}
+
+\begin{example}
+  We can encode the type of disjoint union, |Either a b|, in the \emph{regular}
+  universe. Such type is represented by a code built out of the constant functor
+  |K|, to embed the type |a|; the code |I|, to indicate that is a functor over
+  its second argument, |b|; and the coproduct, |O+Op|, to choose between both:
+  %
+  \begin{code}
+    EitherR : Set -> Reg
+    EitherR a = K a O+ I
+
+    EitherG : Set -> (Set -> Set)
+    EitherG a b = interpl EitherR a interpr b
+  \end{code}
+\end{example}
 %
-Finally, we can tie the recursive knot, taking the least fixpoint of the functor
-associated with the elements of our universe:
+The universe as-is forbids the representation of inductive types. Simple
+recursive datatypes can be expressed as their underlying pattern functor and the fixed
+point that ties the recursion explicitly. In \Agda, the least fixed point of a
+functor associated with an element of our universe is defined as follows:
 %
 \begin{code}
   data mu (R : Reg) : Set where
     In : interpl R interpr (mu R) -> mu R
 \end{code}
+%
+A functor layer given by the code |R| is interpreted by substituting the
+recursive positions, marked by the constructor |I|, with generic trees of type
+|mu R|. The definition of the fixed point is constrained to functors built
+within the universe. In general, the fixed point of a non positive\footnote{The
+type being defined appears in negative positions --as a function argument-- in
+its own constructors.} type can be used to build non normalizing terms, thus
+leads to inconsistency.
 
 \begin{example}
-  As a firs example, we show how to encode the usual type of cons-lists, so
-  pervasive in functional programming languages, in the \emph{regular} universe.
-  The construction is simple: express the \emph{pattern functor} underlying the
-  constructors, |::Op| and |[]|, as a generic code of type |Reg|, and take the
-  fixed point over it.
+  As a first example of a recursive datatype, we show how to encode the usual
+  type of cons-lists in the regular universe.  The construction is simple:
+  first, we express the \emph{pattern functor} underlying the constructors, |::Op| and
+  |[]|, as a generic code of type |Reg|, then the fixed point delivers the
+  representation of |List|:
   %
   \begin{code}
-    ListF : Set -> Reg
-    ListF a = One U+ (K a O+ I)
+    ListR : Set -> Reg
+    ListR a = One U+ (K a O+ I)
 
     ListG : Set -> Set
-    ListG a = mu (ListF a)
+    ListG a = mu (ListR a)
   \end{code}
   %
-  The type |ListG| is called the representation of the type |List|. We can witness
-  the equivalence of both by writing a pair of embedding-projection functions:
+  The type |ListG| is the generic representation of the |List| type, and we can
+  witness their equivalence by writing a pair of embedding-projection
+  functions:
   %
   \begin{code}
     from : {a : Set} -> List a -> ListG a
@@ -667,28 +711,29 @@ associated with the elements of our universe:
   That satisfy the following roundtrip properties:
   %
   \begin{code}
-    from-to : forall {a : Set} -> (xs : List a) -> to (from xs) == xs
+    from-to : forall {a : Set} -> (xs : List a   ) -> to (from xs) == xs
 
-    to-from : {a : Set} -> (xs : ListG a) -> from (to xs) == xs
+    to-from : forall {a : Set} -> (xs : ListG a  ) -> from (to xs) == xs
   \end{code}
-  %
 \end{example}
+%
 
-Next, we can define a \emph{generic} fold, or \emph{catamorphism}, to
-work on the inhabitants of the regular universe. For each code |R :
-Reg|, the |cata R| function takes an \emph{algebra} of type |interpl R
-interpr X -> X| as argument. This algebra assigns semantics to the
-`constructors' of |R|. Folding over a tree of type |mu R| corresponds
-to recursively folding over each subtree and assembling the results
-using the argument algebra:
+Next, we can define a \emph{generic} fold, or \emph{catamorphism}, to work on
+the inhabitants of the regular universe. For each code |R : Reg|, the |cata R|
+function takes an \emph{algebra} of type |interpl R interpr X -> X| as argument.
+This algebra assigns semantics to the `constructors' of |R|. Folding over a tree
+of type |mu R| corresponds to recursively folding over each subtree and
+assembling the results using the argument algebra:
+%
 \begin{spec}
   cataNT : (R : Reg) -> (interpl R interpr X -> X) -> mu R -> X
   cata R alg (In r) = alg (fmap R cataN R alg) r)
 \end{spec}
+%
 Unfortunately, Agda's termination checker does not accept this definition. The
-problem, once again, is that the recursive calls to |cata| are not made to
-structurally smaller trees, but rather |cata| is passed as an argument to the
-higher-order function |fmap|.
+problem, is that the recursive calls to |cata| are not made to structurally
+smaller trees, but rather |cata| is passed as an argument to the higher-order
+function |fmap|.
 
 To address this, we fuse the |fmap| and |cata| functions into a single
 |mapFold| function~\cite{norell-notes}:
@@ -710,46 +755,41 @@ We can now define |cata| in terms of |mapFold| as follows:
 This definition is indeed accepted by Agda's termination checker.
 
 \begin{example}
-  We can encode the type of expressions, |Expr|, in the \emph{regular} universe
-  in two steps: first, we define the code of the \emph{pattern functor}
-  underlying the constructors; second, the generic type of expressions |ExprG|
-  arises from tying the knot over the pattern functor.
+  We can take the type of expressions from the introduction and represent it in
+  the \emph{regular} universe in two steps: first, we define the code of the
+  \emph{pattern functor} underlying the constructors; second, the generic type
+  of expressions |ExprG| arises from tying the knot over the pattern functor:
   %
   \begin{code}
-  expr : Reg
-  expr = K Nat O+ (I O* I)
+  ExprR : Reg
+  ExprR = K Nat O+ (I O* I)
 
-  exprG : Set
-  exprG = mu expr
+  ExprG : Set
+  ExprG = mu expr
   \end{code}
   %
-  In order to witness the equivalence between the generic encoding and the
-  original type, we can define the embed-projection pair:
+  The type |ExprG| is equivalent to |Expr|, so we can define a embedding-projection pair:
   %
   \begin{code}
-    to : exprG -> Expr
-    to (In (inj1 n))         = Val n
-    to (In (inj2 (e1 , e2))) = Add (to e1) (to e2)
+    to : ExprG -> Expr
+    to (In (inj1 n))          = Val n
+    to (In (inj2 (e1 , e2)))  = Add (to e1) (to e2)
 
-    from : Expr -> exprG
+    from : Expr -> ExprG
     from (Val n)     = In (inj1 n)
     from (Add e1 e2) = In (inj2 (from e1, from e2))
   \end{code}
-We can now revisit our example evaluator, |eval|, from the introduction. To
-define the evaluation function using the generic |cata| function, we instantiate the
-code argument to be the expression pattern functor, and pass the appropriate
-algebra:
-\begin{code}
-  eval : exprG-> Nat
-  eval = cata expr alg
-    where alg : expr Nat -> Nat
-          alg (inj1 n)           = n
-          alg (inj2 (n , n'))    = n + n'
-\end{code}
+  %
+  The example evaluator, |eval|, is equivalent to a function defined using the
+  generic catamorphism, |cata|.  To do so, we instantiate the code argument to
+  be the code for the expression pattern functor, |ExprR|, and pass as an
+  argument an algebra with |plusOp| and |id|:
+  %
+  \begin{code}
+    eval : ExprG -> Nat
+    eval = cata ExprR alg
+      where  alg : interpl ExprR interpr Nat -> Nat
+            alg (inj1 n)           = n
+            alg (inj2 (n , n'))    = n + n'
+  \end{code}
 \end{example}
-
-In the remainder of this paper, we will develop an alternative
-traversal that maps any algebra to a tail-recursive function that is
-guaranteed to terminate and produce the same result as
-the corresponding call to |cata|.
-

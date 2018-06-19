@@ -20,6 +20,7 @@
 %format lrcornerIxLtdown = "\AD{\ensuremath{\lrcorner\_<_{\mathds{Z}_{\scaleto{\Downarrow}{2pt}}}\_}}"
 %format lrcornerllcorner = "\AD{\ensuremath{\lrcorner\llcorner}}"
 %format Acc = "\AD{Acc}"
+%format Either  = "\AD{Either}"
 
 % Constructors
 %format Empty = "\AI{()}"
@@ -52,11 +53,21 @@
 %format NonRec-*  = "\AI{NonRec-\ensuremath{\otimes}}"
 %format NonRec-I  = "\AI{NonRec-I}"
 
-% Functions and definitions
-%format Val-NonRec  = "\AF{Val-NonRec}"
+% Functions 
+%format from  = "\AF{from}"
+%format from-to  = "\AF{from-to}"
+%format to  = "\AF{to}"
+%format to-from  = "\AF{to-from}"
+%format EitherG  = "\AF{Either\ensuremath{^{\scaleto{G}{4pt}}}}"
+%format EitherR  = "\AF{Either\ensuremath{^{\scaleto{Reg}{4pt}}}}"
+%format EitherG  = "\AF{Either\ensuremath{^{\scaleto{G}{4pt}}}}"
+%format ListR  = "\AF{List\ensuremath{^{\scaleto{Reg}{4pt}}}}"
+%format ListG  = "\AF{List\ensuremath{^{\scaleto{G}{4pt}}}}"
+%format ExprR         = "\AF{ExprR}"
+%format ExprG         = "\AF{ExprG}"
+%format Val-NonRec   = "\AF{Val-NonRec}"
 %format U            = "\AF{U}"
 %format el           = "\AF{el}"
-%format expr         = "\AF{exprF}"
 %format interp  = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
 %format interpl = "\AF{\ensuremath{\llbracket}}"
 %format interpr = "\AF{\ensuremath{\rrbracket}}"

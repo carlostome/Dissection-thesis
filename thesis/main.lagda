@@ -23,6 +23,7 @@
 \usepackage{textcomp}
 \usepackage{lmodern}
 \renewcommand{\familydefault}{\sfdefault}
+\usepackage{csquotes} %% Quotes
 
 % \usepackage{apalike}
 \usepackage{natbib}

@@ -457,7 +457,7 @@ between both under suitable assumptions:
 The definition of |LtOp| is an exact blueprint of its type-indexed counterpart
 with the difference that all the refined type indices striped off from the constructors.
 
-\section{A terminating and correct tail-recursive evaluator}
+\section{A terminating tail-recursive evaluator}
 \label{sec:expression:tailrec}
 
 We now have almost all the definitions in place to revise our tail-recursive
