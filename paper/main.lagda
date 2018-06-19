@@ -572,19 +572,19 @@ e|. The crucial lemma that we need to show to complete this proof,
 demonstrates that the |unload| function respects our invariant:
 \begin{code}
   unload-preserves-plugup  :
-    forall (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack2) (z' : ZipperType)
-    -> unload e x eq s == inj1 z'
-    -> forall (t : Expr) -> plugup e s == t -> plugZup z' == t
+    forall (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack2) (z : ZipperType)
+    -> unload e x eq s == inj1 z
+    -> forall (t : Expr) -> plugup e s == t -> plugZup z == t
 \end{code}
 
 Finally, we can define the theorem stating that the |step| function always
-returns a smaller configuration.
-
+returns a smaller configuration:
+%
 \begin{code}
   step-<  : forall (e : Expr) -> (z z' : Zipperup e) -> step e z == inj1 z'
           -> llcorner e lrcorner Zipperup-to-Zipperdown z' < Zipperup-to-Zipperdown z
 \end{code}
-
+%
 Proving this statement directly is tedious, as there are many cases to
 cover and the expression |e| occurring in the types makes it difficult
 to identify and prove lemmas covering the individual cases. Therefore,
@@ -666,7 +666,7 @@ The main correctness theorem now states that |eval| and
 |tail-rec-eval| are equal for all inputs:
 \begin{code}
   correctness : forall (e : Expr) -> eval e == tail-rec-eval e
-  correctness e with load e []
+  correctness e with load e Top
   ... | inj1 z = rec-correct e (z , ...) (<-WF e z)
   ... | inj2 _ = bot-elim ...
 \end{code}
