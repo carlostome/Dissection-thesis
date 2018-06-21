@@ -9,6 +9,7 @@
 %format Stack3 = "\AD{Stack\ensuremath{_{\iota}^{+}}}"
 %format Zipper   = "\AD{Zipper}"
 %format ZipperType   = "\AD{Config}"
+%format Config1   = "\AD{Config\ensuremath{^1}}"
 %format Zipperup   = "\AD{Config\ensuremath{_{\Uparrow}}}"
 %format Zipperdown = "\AD{Config\ensuremath{_{\Downarrow}}}"
 %format Eval    = "\AD{Eval}"
@@ -22,6 +23,8 @@
 
 % Constructors
 %format Val   = "\AI{Val}"
+%format Leaf    = "\AI{Leaf}"
+%format Redex   = "\AI{Redex}"
 %format eval-Val   = "\AI{Eval-Val}"
 %format eval-Add   = "\AI{Eval-Add}"
 %format Add   = "\AI{Add}"
@@ -46,6 +49,8 @@
 %format inspect = "\AF{inspect}"
 %format cong2 = "\AF{cong\ensuremath{_2}}"
 %format unload = "\AF{unload}"
+%format unload1 = "\AF{unload\ensuremath{^1}}"
+%format step1 = "\AF{step\ensuremath{^1}}"
 %format unload-< = "\AF{unload-<}"
 %format unload-preserves-plugup = "\AF{unload-plug\ensuremath{_{\Uparrow}}}"
 %format load-preserves-plugup = "\AF{load-plug\ensuremath{_{\Uparrow}}}"

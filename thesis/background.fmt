@@ -23,7 +23,9 @@
 %format Either  = "\AD{Either}"
 
 % Constructors
-%format Empty = "\AI{()}"
+%format Add   = "\AI{Add}"
+%format Val   = "\AI{Val}"
+%format Empty = "()"
 %format One   = "\AI{\ensuremath{\mathbb{1}}}"
 %format Zero  = "\AI{\ensuremath{\mathbb{0}}}"
 %format I     = "\AI{I}"
@@ -236,6 +238,7 @@
 % Bound variables
 %format x          = "\AB{x}"
 %format n          = "\AB{n}"
+%format n'          = "\AB{n''}"
 %format m          = "\AB{m}"
 %format x'          = "\AB{x''}"
 %format rs          = "\AB{rs}"

@@ -47,7 +47,9 @@ main = shakeArgs shakeOptions $ do
                                       , "generic"   , "conclusion" ]
         bib   = "thesis/main.bib"
         sty   = "thesis/agda.sty"
-    need (bib : sty : files)
+        figures    = [ "thesis" </> "figures" </> ("figure" ++ show n) <.> "tex" 
+                     | n <- [1..5]]
+    need (bib : sty : files ++ figures)
     cmd_ "latexmk -f -pdf -cd thesis/main.tex"
 
   -- paper rules

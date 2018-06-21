@@ -218,5 +218,7 @@ spell the research questions that this master thesis is set out to answer:
   functions (in dependent type theory they are the same thing) we choose to
   prepend the type signatures of the latter with a explicit |forall| quantifier.
   The full code  is freely available online in:
-
-  \todo{code}
+  \medskip
+  \begin{center}
+  \url{https://github.com/carlostome/Dissection-thesis}
+  \end{center}

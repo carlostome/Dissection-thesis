@@ -3,61 +3,116 @@
 \chapter{Background}
 \label{chap:background}
 
-In this \namecref{chap:background}, we introduce some of the concepts
+In this \namecref{chap:background}, we introduce some of the concepts that are
+mandatory prerequisites for understanding the main parts of this master thesis.
+The chapter is organized into three different sections, whose content is totally
+unrelated. We begin in \Cref{sec:background:fold} by broadly speaking about the
+role of "folds" in programming languages and its relation to abstract machines.
+In \Cref{sec:background:termination}, we revisit the literature about techniques
+for assisting the termination checker of \Agda. Lastly, in
+\Cref{sec:background:generic} we quickly overview generic programming in the
+context of this thesis. 
 
-\section{Fold from a broader perspective}
+\section{A broader perspective}
 \label{sec:background:fold}
-% - Fold in a bigger context -> 
 
-% There is a long tradition in the programming language community to 
 
-% understood that semantics of a programming language Programming languages can be studied by writting interpretes for 
-% Metalanguages such as ML or Haskell Programming languages represented as AST in a meta
-% language.
++ There are two ways to give semantics to a language: small step (operational) semantics and
+big-step (natural) semantics: One consists of specifying the step-by-step
+transition system to execute the program, the latter on specifying by defining a
+mathematicall function that assigns meaning to each language construct in an
+apropiate target domain.
+Long time ago results have shown the equivalence of both, 
+In this section, we give a brief overview of both methods to help the reader
+understand how the concrete work presented in this master thesis  the connection
+of the work presented in this master thesis
+ 
+\subsection{Abstract machines and \emph{tail-recursive functions}}
 
-% duality between tail recursive functions and abstract machines?
+Abstract machines are a mathematical model whose purpose is to study and
+analyze the runtime execution of a program written in the machine's source
+language. They are \textit{abstract} because the concrete implementation details
+are deliberately omitted; and they are \textit{machines} because they permit the
+step-by-step execution of programs. 
 
-% - Denotational semantics of the language can be expresed as a fold in the
-% metalanguage.
+Over the years a variety of abstract machines have been developed to study in
+depth the 
++ Many abstract machines for many different languages/paradigms
++ Special interest in abstract machines for functional programming
+languages/lazy based on lambda calculus
++ We can use a dependently typed programming language such as Agda to formalize
+abstract machines.
++ Much better than by hand, the typechecker make us be honest about correctness
+and termination.
++ We can then use the same language to carry proofs of properties about the
+machine such as progression, preservation etc.
++ As an example, we can encode a stack machine for "executing" addition on
+natural numbers. First we define the Instructions of the machine. We take
+advantage of agda dependent types to rule out "incorrect combinations of
+instructions, the type is parametrized by two natural numbers that specify the
+number of elements in the stack before and after executing the instruction
+The type of instructions is as follows:
+%
+\begin{code}
+data INSTR : Nat -> Nat -> Set where
+  HALT  : {n : Nat}                              -> INSTR n        n
+  PUSH  : {n k : Nat} -> Nat  -> INSTR (1 + n) k -> INSTR n        k
+  ADD   : {n k : Nat}         -> INSTR (1 + n) k -> INSTR (2 + n)  k
+\end{code}
+%
+Now we have to define what means to execute an instruction. Abstract machines
+are normaly specified as transition systems, 
+\begin{code}
+Stack = Vec Nat
 
-% - Danvy et al have managed to derive from a one step reduction function (small
-% step semantics) a tail recursive abstract machine in ML.
+execute : ∀ {n m} -> INSTR n m -> Stack n -> Stack m
+execute HALT stk                        = stk
+execute (PUSH n  is) stk                = execute is (n :: stk)
+execute (ADD     is) (y :: (x :: stk))  = execute is ((x + y) :: stk)
+\end{code}
 
-%   -> They state that the problem of doing so in a simply typed metalanguage such as ML 
-%      is that the types are not as precise as they could be to rule out cases
-%      that cannot happen.
+that permits the step-by-step
+execution of programs written in the machine source language. They are
+\textit{abstract} because the implementation details are deliberately omitted; they are high level
+mathematical tools to study and analyze programming languages.
 
-%     Dependently typed programming to the rescue!
+The design of abstract machines to formaly specify the semantics of programming
+languages is of a long tradition. Pioneering work by 
 
-%      that are imposible but the type system is not rich enough to  
-%   -> Problems is that is not easy to use a theorem prover to verify that the
-%   construction they make is correct wrt the initial reduction function.
-%   Their construction works in a series of steps that deliver a tail recursive fu
+Abstract machine 
 
-%   - The first part of proving correctness amounts to prove that the function
-%     in the metalanguage that performs the reduction free evaluation terminates.
-%     The first action of finding the leftmost redex avaliable for reduction is
-%     not defined by structural recursion over its arguments thus termination
-%     checkers built in theore provers flag the function as non terminating. The
-%     overal problem resides is that during the process of doing depth-first search
-%     through the input tree where subtrees still to be visited are saved into a
-%     Stack (represented by a list) when the search arrives to a point that it has
-%     to retrieve a subtree from the stack to proceed with the search and store
-%     in the stack a value corresponding to a leaf that is stored in the left
-%     subtree of a node, the recursive call is made over a Stack that is not
-%     structurally smaller than the input.
+The is a long tradition in the programming languages research to dote a
+programming language with semantics via the use of an abstract machine.
+  + Assign semantics via an abstract machine
+    - forget of implementation details and focus on transition system
+    - high level of abstraction => useful to carry proofs about properties of
+    the language being defined
+  + But an abstract machine is a first order transition system that can be
+  encoded in a suitable higher-order programming language
+  + A tail-recursive function does the job, any argument to the function is part
+  of the internal state of the machine
+  + For example, we can create a machine language for the type of expr in the
+  introduction. And a function that executes it. We can boil down from the s. What is really doing is assigning
+  semantics
 
-    
-%     Moreover, 
+\subsection{Denotational semantics and \emph{folds}}
 
-%     To put it another way, we can think of the stack used to perform the
-%     depth-first search over the tree as a execution stack. By making the execution
-%     stack explicit we lose the ability to connect the contents of the simply
-%     typed stack with the original tree and thus it requires us a great deal of
-%     work to use tools such as well founded recursion to convince the theorem
-%     prover that something is going smaller during the search.
+On the other hand, we can assign semantics to a programming language by
+embedding it in another with better understood semantics. The idea is that once
+we can represent the abstract syntax tree of the language, we can define an
+evaluator function that reduces (using the semantics of the host language)
+programms written in the object or defined language.
 
-\section{Termination in Type Theory}
+It wouldnt be nice that we can join efforts using a dependently typed
+programming language both as the way of implementing the abstact machine and the
+interpreter such that thanks to dependent types we can mathematically prove the
+equivalence between them.
+
+If somebody defines a programming language as an ast, a fold can the way that
+compossitionally we can assign a meaning to each of the constructs of the
+language.
+
+\section{Termination in type theory}
 \label{sec:back:term}
 
 \Agda~is a language for describing total functions. General recursive functions
@@ -321,7 +376,7 @@ the property of not decreasing indefinitely.
 
 Formally, for a given binary relation over elements of type |a|, | <Op : a -> a
 -> Set|, an element |x : a| is \emph{accessible} if there are not infinite descending
-chain starting from it by repeated decrements, |x0 < x1 < ... <
+chains starting from it by repeated decrements, |x0 < x1 < ... <
 xn1 < xn < x|. A more constructive characterization of the accessibility
 predicate, due to Nordstr{\"o}m \cite{nordstrom1988terminating}, is
 the following type:
@@ -590,7 +645,7 @@ or its inductive structure.
 
 In the rest of this section, we give a fast-track introduction to generic
 programming with dependent types. We put special interest on the \emph{regular}
-universe, for which later, \Cref{chap:generic}, we construct a generic tail-recursive 
+universe, for which we later, \Cref{chap:generic}, construct the generic tail-recursive 
 evaluator.
 
 \subsection{The \emph{regular} universe}
@@ -662,7 +717,7 @@ following law abiding |fmap| operation:
 \end{example}
 %
 The universe as-is forbids the representation of inductive types. Simple
-recursive datatypes can be expressed as their underlying pattern functor and the fixed
+recursive datatypes can be expressed as their underlying pattern functor and a fixed
 point that ties the recursion explicitly. In \Agda, the least fixed point of a
 functor associated with an element of our universe is defined as follows:
 %
@@ -676,8 +731,8 @@ recursive positions, marked by the constructor |I|, with generic trees of type
 |mu R|. The definition of the fixed point is constrained to functors built
 within the universe. In general, the fixed point of a non positive\footnote{The
 type being defined appears in negative positions --as a function argument-- in
-its own constructors.} type can be used to build non normalizing terms, thus
-leads to inconsistency.
+its own constructors.} type can be used to build non normalizing terms, 
+leading to inconsistency.
 
 \begin{example}
   As a first example of a recursive datatype, we show how to encode the usual
@@ -755,17 +810,18 @@ We can now define |cata| in terms of |mapFold| as follows:
 This definition is indeed accepted by Agda's termination checker.
 
 \begin{example}
-  We can take the type of expressions from the introduction and represent it in
-  the \emph{regular} universe in two steps: first, we define the code of the
-  \emph{pattern functor} underlying the constructors; second, the generic type
-  of expressions |ExprG| arises from tying the knot over the pattern functor:
+  We can take the type of expressions from the introduction,
+  \Cref{sec:intro:descr}, and encode it in the \emph{regular} universe in two
+  steps: first, we define the code of the \emph{pattern functor} underlying the
+  constructors; second, the generic representation of |Expr| arises from
+  tying the knot over the pattern functor:
   %
   \begin{code}
   ExprR : Reg
   ExprR = K Nat O+ (I O* I)
 
   ExprG : Set
-  ExprG = mu expr
+  ExprG = mu exprR
   \end{code}
   %
   The type |ExprG| is equivalent to |Expr|, so we can define a embedding-projection pair:
@@ -776,14 +832,13 @@ This definition is indeed accepted by Agda's termination checker.
     to (In (inj2 (e1 , e2)))  = Add (to e1) (to e2)
 
     from : Expr -> ExprG
-    from (Val n)     = In (inj1 n)
-    from (Add e1 e2) = In (inj2 (from e1, from e2))
+    from (Val n)      = In (inj1 n)
+    from (Add e1 e2)  = In (inj2 (from e1 , from e2))
   \end{code}
   %
   The example evaluator, |eval|, is equivalent to a function defined using the
-  generic catamorphism, |cata|.  To do so, we instantiate the code argument to
-  be the code for the expression pattern functor, |ExprR|, and pass as an
-  argument an algebra with |plusOp| and |id|:
+  generic catamorphism, |cata|, that instantiate the code argument with |ExprR|
+  and passes as an argument an algebra with |plusOp| and |id|:
   %
   \begin{code}
     eval : ExprG -> Nat
@@ -793,3 +848,8 @@ This definition is indeed accepted by Agda's termination checker.
             alg (inj2 (n , n'))    = n + n'
   \end{code}
 \end{example}
+
+The regular universe can be used to represent many simple algebraic datatypes as
+long as they do not contain function space --exponentials-- or the type variables 
+in the recursive occurrences are not polymorphically instantiated --nested
+datatypes.

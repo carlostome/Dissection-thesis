@@ -53,7 +53,7 @@
   inspects the stack in searching of an unevaluated subtree. This process is
   depicted in \Cref{fig:load-unload}.
 
- \begin{figure}
+ \begin{figure}[h]
    \centering
    \input{figures/figure1}
    \caption{Traversing a tree with {\color{blue}load} and {\color{red}unload}}
@@ -429,18 +429,19 @@ proceeds by recursion over the accessibility predicate on the left subexpression
 |Acc (llcorner l lrcornerLtOp) (x , s)|. However, the non-inductive case,
 constructor |<-Base|, posses a technical challenge: the relation being
 well-founded on expression |Add l r| depends on it being well-founded on the
-right subtree |r|.  The former lemma, |accR| handles this case if we can supply
+right subtree |r|.  The former lemma, |accR|, handles this case if we can supply
 a proof that the right subtree is accessible |Acc (llcorner r lrcornerLtOp) (x ,
-s)|. The |accL| lemma can produce the required evidence using its argument of
-type |Well-founded (llcorner r lrcornerLtOp)|. This is only possible because the
-auxiliary function |aux|, in the initial call to |accL|, can recursively use the
-well-foundedness proof |<-WF| because pattern matching reveals that whatever
-expressions |l| and |r| are they subtrees of the same node, |Add l r|.
+s)|, which indeed |accL| can produce using its argument of type |Well-founded
+(llcorner r lrcornerLtOp)|.  This is only only possible because in the auxiliary
+function, |aux|, the initial call to |accL|, can recursively use the
+well-foundedness proof |<-WF|. Pattern maching reveals that the input expression
+|e| is a node |Add l r|, thus the recursive call is done on a structurally
+smaller element. Acceptance by the termination checker certifies it.
 
 The type |IxLtOp|, more than being a single relation over configurations, is a
 family of relations, one for every possible value of type |Expr|. Although
 indexing the relation, and the configurations, is \emph{necessary} to prove that
-it is well-founded, it is not amenable to prove other properties. Therefore,
+it is well-founded, it is not amenable to show other properties. Therefore,
 instead of working directly with |IxLtOp|, we define another auxiliary relation
 over non type-indexed configurations, and prove that there is an injection
 between both under suitable assumptions:
@@ -454,8 +455,9 @@ between both under suitable assumptions:
       -> z1 < z2 -> llcorner e lrcorner (z1 , eq1) < (z2 , eq2)
 \end{code}
 %
-The definition of |LtOp| is an exact blueprint of its type-indexed counterpart
-with the difference that all the refined type indices striped off from the constructors.
+The definition of |LtOp| is an exact blueprint of its type-indexed counterpart.
+The only difference is that all the refined type indices striped off from the
+constructors.
 
 \section{A terminating tail-recursive evaluator}
 \label{sec:expression:tailrec}
@@ -556,21 +558,23 @@ an \Agda~idiom needed to remember that |z'| is the result of the call |step e z|
   rec e z (acc rs) = with step e z | inspect (step e) z
   ...  | inj2 n   | _       = inj2 n
   ...  | inj1 z'  | [ Is ]  = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
-
-  tail-rec-eval : Expr -> Nat
-  tail-rec-eval e with load e Top
-  ... | inj1 z = rec e (z , ...) (<-WF e z)
 \end{code}
 %
 The auxiliary recursor |rec| is defined by structural recursion over the
 accessibility predicate --thus it provably terminates. Using the ancillary lemma
 |step-<|, we demonstrate that repeated invocations of the function |step| are 
 done on strictly smaller configurations. Therefore, \Agda's termination checker
-determines that the function terminates.
+accepts the function as terminating.
 
 The tail-recursive evaluator, |tail-rec-eval|, is then defined as a wrapper over
 |rec|: it uses the fact that the relation is well-founded to feed the initial
-input and a proof that is accessible.
+input and a proof that is accessible:
+%
+\begin{code}
+  tail-rec-eval : Expr -> Nat
+  tail-rec-eval e with load e Top
+  ... | inj1 z = rec e (z , ...) (<-WF e z)
+\end{code}
 
 \section{Correctness}
 \label{sec:expression:correctness}
@@ -599,7 +603,7 @@ predicate, thus the proof is done by induction over the same argument:
 %
 While the proof by induction covers the recursion, we still have to prove the
 base case: when there are no more subexpressions left to fold, the resulting
-natural number is equal to evaluate the input expression using |eval|. The lemma
+natural number is equal to evaluating the input expression using |eval|. The lemma
 |step-correct| precisely states that:
 %
 \begin{code}
@@ -622,15 +626,17 @@ suffices to prove the following property of |unload|:
 The proof follows immediately by induction over |s : Stack2| using the fact
 that equality is congruent.
 
-The main correctness theorem now states that |eval| and
+The main correctness theorem now shows that |eval| and
 |tail-rec-eval| are equal for all inputs:
+%
 \begin{code}
   correctness : forall (e : Expr) -> eval e == tail-rec-eval e
   correctness e with load e Top
   ... | inj1 z = rec-correct e (z , ...) (<-WF e z)
   ... | inj2 _ = bot-elim ...
 \end{code}
-Now, the definition and verification of a tail-recursive evaluator is complete. 
+%
+The definition and verification of a tail-recursive evaluator is completed. 
 
 \section{Discussion}
 \label{sec:expression:discuss}
@@ -647,7 +653,7 @@ pair of mutually recursive functions |load| and |unload|
 tail-recursive evaluator is tied to a concrete algebra composed of the functions
 |plusOp| and |id|, but what we really want is a tail-recursive machine capable
 of computing the fold for any algebra over |Expr|. In the following paragraphs
-we discuss concrete solutions to these issues.
+we discuss concrete solutions to these issues. 
 
 \paragraph{Irrelevant arguments}
 
@@ -738,14 +744,123 @@ algebra as a parameter:
   foldExpr alg (Add e1 e2)  = AddA alg (foldExpr alg e1) (foldExpr alg e2)
 \end{code}
 %
-Instead of augmenting every datatype and function with the algebra as an
-argument, for instance the proof in the |Stack2| datatype would depend on it, we
-use an \emph{anonymous} module parametrized under which we build and verify the fold:
+The rest of the construction accounts for the algebra by augmenting every
+datatype, for instance the proof in |Stack2| requires the it, and function
+with the algebra as the parameter. Instead of doing so, it is possible in
+\Agda~to use an anonymous module that receives the algebra as an argument.
 %
 \begin{code}
   module _ (alg : ExprAlg) where
     ... 
 \end{code}
 %
-This version of the more general fold can be found on the code repository under
-the file \path{src/Thesis/Tree/Indexed.agda}. 
+The formalization of the tail-recursive fold that uses |ExprAlg| can be found in
+the repository under the file \path{src/Thesis/Tree/Indexed.agda}.
+
+\paragraph{Fine-grained reduction}
+
+Our tail-recursive evaluator, |tail-rec-eval|, iterates the function |unload|
+until the input expression is completely consumed and the result of the fold is
+returned. It can be argued that |unload| completes an excessive amount of work: while
+traversing the stack in search for the next subexpression, it might perform
+\emph{several reductions} before dispatching a call to |load| or returning a
+value. \Cref{fig:spine} shows an example; the function |unload|, starting
+from the configuration corresponding to the leaf |Val 1|, traverses the
+\emph{spine} at once while accumulating and reducing all partial results.
+
+\begin{figure}[h]
+  \centering
+  \input{figures/figure5}
+  \caption{{\color{red}unload} traverses the spine of an expression}
+  \label{fig:spine}
+\end{figure}
+
+It should be possible to have a one-step function that contracts at most one redex
+at a time. Such function would match more closely the concept of an abstract machine 
+designed as single-step transition system, but, as we will see, it would also increase 
+the complexity of the construction.
+
+There is one fundamental idea in the definition of our tail-recursive evaluator:
+the intermediate states, or configurations of the abstact machine, always
+represent locations of leaves in the input expression. However, if |unload| is
+implemented not to consume the spine at once, we have to reconsider what are
+valid configurations.  The new type of configurations of the abstract machine
+has to account not only for leaves, but also for the possibility of a not yet
+contracted redex:
+%
+\begin{code}
+  data Config1 : Set where
+    Leaf   : Nat -> Stack2 -> Config1
+
+    Redex  :  (n   : Nat) -> (e1 : Expr) → eval e1 == n 
+           →  (n'  : Nat) -> (e2 : Expr) → eval e2 == n' -> Stack2
+           → Config1
+\end{code}
+%
+The leaves of the input expression remain the same: a natural number and the stack
+pointing to its position. The new constructor, |Redex|, represents a \emph{redex} that
+is ready to be reduced. The definition of the function |unload1| clarifies its
+purpose:
+%
+\begin{code}
+  unload1 : (n : Nat) → (e : Expr) → eval e ≡ n → Stack → Config1 U+ Nat
+  unload1 n e1 eq (Left e2 stk)           = load e2 (Right n e1 eq stk)
+  unload1 n e1 eq1 (Right n' e2 eq2 stk)  = inj1 (Redex n' e2 eq2 n e1 eq1 stk)
+  unload1 n _ _ Top                       = inj2 n
+\end{code}
+%
+In the second clause, instead of recursing over the stack and applying |plusOp|
+to |n| and |n'|, the |redex| is imediately returned. The function |step1| is, in
+this case, the responsible of triggering the reduction: 
+%
+\begin{code}
+  step1 : Config1 → Config1 U+ Nat
+  step1 (Leaf n stk)                    
+    = unload1 n (Val n) refl stk 
+  step1 (Redex n e1 eq1 n' e2 eq2 stk)  
+    = unload1 (n + n') (Add e1 e2) (cong2 plusOp eq1 eq2) stk
+\end{code}
+
+The key ingredient to build our tail-recursive evaluator was a well-founded
+relation that decreases with every invocation of |step|.  Accordingly, we should
+find a suitable relation over elements of type |Config1| (we ommit the
+type-indexed relation for the sake of the argument), prove that it is
+well-founded, and show that it decreases with |step1|. For most of it, the
+relation can be defined as |LtOp|: comparing two leaves or redexes in a common
+subexpression is done inductively; comparing them if one is located on the left
+subexpression and the other on the right constitutes the base case. However,
+there are two more situations to be considered:
+
+  \begin{itemize}
+    \item Between two redexes, how do we determine which one is smaller if both
+      belong to the same spine.
+    \item Between a redex and a leaf, how we encode that the leaf is bigger
+      if it is located at the end of the spine where the redex stands.
+  \end{itemize}
+
+The definition of the type |Config1|, increases the diversity of possibilities
+that have to be dealt with, thus the complexity. In overall, we are trading a
+simple formulation that takes advantage of the fact that the function |unload|
+provably terminates --it is defined by structural recursion over the stack-- for
+a more complex one that requires us to provide explicit evidence of the
+termination.
+
+The main goal of this part of the thesis is not to just develop a tail-recursive
+evaluator for binary trees, but to prepare the stage for the generic solution
+that we further present in \Cref{chap:generic}. The simplicity of our approach
+pays off, as later will become clear, because it has a straightforward
+generalization.  However, it is not unequivocal how the one redex at a time
+concept fits in the construction as a whole neither how it would scale to the
+generic case.
+
+\paragraph{Decompose, contract, recompose}
+
+There has been previous work by Danvy 
+Starting from a small-step reduction function, Danvy shows to operationaly
+derive a reduction-free normalization. to derive an
+abstract machine that is equivalent to the 
+
+To find the leftmost redex requires an arbitrary number of interleaved calls to
+load and unload functions. \Agda termination checker cannot deal with that, it
+is precisely the termination problem that the pair of mutually recursive
+functions exibit.
