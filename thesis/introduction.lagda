@@ -77,7 +77,7 @@ to the fold. By doing so, we identify the key goal of the present master thesis,
 and subsequently formulate the research questions that it answers. Finally, in
 \Cref{sec:intro:org}, we explain how the rest of the document is organized. 
 
-\paragraph{Folds for Binary Trees}
+\paragraph{Folds for binary trees}
 
 As an example of a tree-like branching datatype we consider the type of
 binary trees with natural numbers in the leaves:
@@ -188,11 +188,11 @@ spell the research questions that this master thesis is set out to answer:
 
   We start in \Cref{chap:background} giving the reader a broader perspective on
   folds in programming languages to justify the importance of our our work.
-  Moreover, in this chapter, we revisit the available literature on techniques
-  to assist the termination checker to accept functions that are not defined by
-  strictly structural recursion. We end the \namecref{chap:background}, with an
+  Moreover, we revisit the available literature on techniques to assist the
+  termination checker to accept functions that are not defined by strictly
+  structural recursion. We end the \namecref{chap:background}, with an
   introduction to generic programming in \Agda~using the \emph{regular}
-  universe, which form the basis of our generic tail-recursive evaluator.
+  universe, which forms the basis of our generic tail-recursive evaluator.
 
   In the first part of the thesis, \Cref{chap:expression}, we show how to
   \emph{manually} write a tail-recursive evaluation function for the type of
@@ -208,8 +208,8 @@ spell the research questions that this master thesis is set out to answer:
 \paragraph{Style}
 
   Before dwelling into the content, we have to remark a few conventions that
-  this document follows. The purpose of the code snippets found in this thesis
-  is to  guide the reader through the important ideas we present, thus in many
+  this document follows. The purpose of the code snippets present in this thesis
+  is to guide the reader through the ideas of our construction, thus in many
   cases only the type signature of the relevant functions/theorems/datatypes is
   given, and the body is omitted altogether. All code snippets use \Agda~syntax,
   although not all of them directly typecheck. In the type signatures, any
@@ -217,7 +217,7 @@ spell the research questions that this master thesis is set out to answer:
   quantified. To differentiate between `computational' functions and `proving'
   functions (in dependent type theory they are the same thing) we choose to
   prepend the type signatures of the latter with a explicit |forall| quantifier.
-  The full code  is freely available online in:
+  The full code is freely available online in:
   \medskip
   \begin{center}
   \url{https://github.com/carlostome/Dissection-thesis}
