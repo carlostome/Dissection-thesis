@@ -6,8 +6,9 @@
 In this \namecref{chap:background}, we introduce some of the concepts that are
 mandatory prerequisites for understanding the main parts of this master thesis.
 The chapter is organized into three different sections, whose content is totally
-unrelated. We begin in \Cref{sec:background:fold} by broadly speaking about the
-role of "folds" in programming languages and its relation to abstract machines.
+unrelated. We begin in \Cref{sec:background:fold} with a broad overview of
+semantics in programming languages and its relation to the content of this
+master thesis.
 In \Cref{sec:background:termination}, we revisit the literature about techniques
 for assisting the termination checker of \Agda. Lastly, in
 \Cref{sec:background:generic} we quickly overview generic programming in the
@@ -16,104 +17,191 @@ context of this thesis.
 \section{A broader perspective}
 \label{sec:background:fold}
 
+There are two main approaches for formalizing the semantics of a programming
+language: small-step --or operational-- semantics, where for each construct of
+the language it is specified how the abstract machine, which is evaluating the
+program, evolves; and big-step --or natural-- semantics, where each construct is
+mapped by a \emph{mathematical} function to the value it evaluates in the
+denotational domain of the language. 
 
-+ There are two ways to give semantics to a language: small step (operational) semantics and
-big-step (natural) semantics: One consists of specifying the step-by-step
-transition system to execute the program, the latter on specifying by defining a
-mathematicall function that assigns meaning to each language construct in an
-apropiate target domain.
-Long time ago results have shown the equivalence of both, 
-In this section, we give a brief overview of both methods to help the reader
-understand how the concrete work presented in this master thesis  the connection
-of the work presented in this master thesis
+The connection between both style of formalizing the semantics has been
+extensively exploited , for example see Ager et
+al\cite{Ager:2003:FCE:888251.888254}, to derive well-known abstract machines,
+such as the Krivine machine, from a natural semantics specification and vice
+versa. However, as they acknowledge:
+
+\begin{displayquote}
+Most of our
+implementations of the abstract machines raise compiler warnings
+about non-exhaustive matches. These are inherent to programming
+abstract machines in an ML-like language.
+\end{displayquote}
+
+A dependently typed programming language such as \Agda~is a perfect vehicle for
+the study and implementation of programming languages. Dependent types can be
+fruitfully leveraged for defining both the language, and correspondingly
+formalize and verify its semantics either in a small-step or a natural style.  .
+For example, Swierstra\cite{swierstra2012mathematics} shows how to derive the
+Krivine machine in \Agda~starting from a small-step evaluation semantics for
+lambda terms.
+
+However, implementing both a small-step and a big-step evaluation function and
+proving that they are related is a tedious work that requires some not
+out of the book expertise. 
+
+From a high level perspective, the denotational semantics of a language is a
+function that is both compositional and structurally recursive. For each term,
+it specifies how the values that the subterms denote are combined together into
+a value for the term on focus. In disguise, the denotation function is just a
+fold! The fold is inherent to the inductive structure of the datatype that
+represents the language, thus everything is needed is the algebra that for each
+constructor determines how to combine the values.
+
+On the other hand, the small-step semantics of a language require some extra
+work. As a start, the programming language engineer has to define the
+configurations, or internal states, of the machine. Then, she has to specify the
+transition rules that govern the machine and finally show, if the language is
+strongly normalizing, that iterating the small-step evaluation function
+terminates.
+
+The work on this master thesis can be regarded as a step towards exploiting, in
+a formal environment such as \Agda, the connection between high-level
+denotational functions --in the form of folds-- and low-level abstract machines.
+Given a language in terms of its generic representation, and an algebra we
+construct a generic tail-recursive function --i.e. the low-level abstract
+machine-- that we later formally proof equal to the fold induced by its
+structure.
+
+
+
+% seen as a first step to, exploiting the connection between small-step and big-step semantics
+% it should be possible to derive one from the other. Given the semantics of a
+% programming language as a fold over its expressions, calculating a correspoding
+% small-step abstract machine that is equivalent 
+
+% it has to be possible to exploit the relation between big-step and
+% small-step to derive an abstract machine starting from a denotational function
+% expressed as a fold. The amount
+
+
+
+% Nevertheless, 
+% Starting from the configurations, or internal states, of the abstract
+% machine, the programming langrequires is a more involved 
+
+% specifying the natural
+% semantics of a language amounts to find 
+
+% Nevertheless, it is 
+
+% The relationship between big-step and small-step semantics for lambda calculi
+% In this section, we motivate the work presented in this master thesis by showing
+% how a dependently typed programming language such as \Agda is a perfect vehicle
+% for the study of semantics.
+
+
+
+% relation between the states of a machine abstract machine that uses the language as its input
+% language and describe the transitions between states of the machine
+% corresponding to the constructs in the language; or use a h
+
+% + There are two ways to give semantics to a language: small step (operational) semantics and
+% big-step (natural) semantics: One consists of specifying the step-by-step
+% transition system to execute the program, the latter on specifying by defining a
+% mathematicall function that assigns meaning to each language construct in an
+% apropiate target domain.
+% Long time ago results have shown the equivalence of both, 
+% In this section, we give a brief overview of both methods to help the reader
+% understand how the concrete work presented in this master thesis  the connection
+% of the work presented in this master thesis
  
-\subsection{Abstract machines and \emph{tail-recursive functions}}
+%\subsection{Abstract machines and \emph{tail-recursive functions}}
 
-Abstract machines are a mathematical model whose purpose is to study and
-analyze the runtime execution of a program written in the machine's source
-language. They are \textit{abstract} because the concrete implementation details
-are deliberately omitted; and they are \textit{machines} because they permit the
-step-by-step execution of programs. 
+%Abstract machines are a mathematical model whose purpose is to study and
+%analyze the runtime execution of a program written in the machine's source
+%language. They are \textit{abstract} because the concrete implementation details
+%are deliberately omitted; and they are \textit{machines} because they permit the
+%step-by-step execution of programs. 
 
-Over the years a variety of abstract machines have been developed to study in
-depth the 
-+ Many abstract machines for many different languages/paradigms
-+ Special interest in abstract machines for functional programming
-languages/lazy based on lambda calculus
-+ We can use a dependently typed programming language such as Agda to formalize
-abstract machines.
-+ Much better than by hand, the typechecker make us be honest about correctness
-and termination.
-+ We can then use the same language to carry proofs of properties about the
-machine such as progression, preservation etc.
-+ As an example, we can encode a stack machine for "executing" addition on
-natural numbers. First we define the Instructions of the machine. We take
-advantage of agda dependent types to rule out "incorrect combinations of
-instructions, the type is parametrized by two natural numbers that specify the
-number of elements in the stack before and after executing the instruction
-The type of instructions is as follows:
-%
-\begin{code}
-data INSTR : Nat -> Nat -> Set where
-  HALT  : {n : Nat}                              -> INSTR n        n
-  PUSH  : {n k : Nat} -> Nat  -> INSTR (1 + n) k -> INSTR n        k
-  ADD   : {n k : Nat}         -> INSTR (1 + n) k -> INSTR (2 + n)  k
-\end{code}
-%
-Now we have to define what means to execute an instruction. Abstract machines
-are normaly specified as transition systems, 
-\begin{code}
-Stack = Vec Nat
+%Over the years a variety of abstract machines have been developed to study in
+%depth the 
+%+ Many abstract machines for many different languages/paradigms
+%+ Special interest in abstract machines for functional programming
+%languages/lazy based on lambda calculus
+%+ We can use a dependently typed programming language such as Agda to formalize
+%abstract machines.
+%+ Much better than by hand, the typechecker make us be honest about correctness
+%and termination.
+%+ We can then use the same language to carry proofs of properties about the
+%machine such as progression, preservation etc.
+%+ As an example, we can encode a stack machine for "executing" addition on
+%natural numbers. First we define the Instructions of the machine. We take
+%advantage of agda dependent types to rule out "incorrect combinations of
+%instructions, the type is parametrized by two natural numbers that specify the
+%number of elements in the stack before and after executing the instruction
+%The type of instructions is as follows:
+%%
+%\begin{code}
+%data INSTR : Nat -> Nat -> Set where
+%  HALT  : {n : Nat}                              -> INSTR n        n
+%  PUSH  : {n k : Nat} -> Nat  -> INSTR (1 + n) k -> INSTR n        k
+%  ADD   : {n k : Nat}         -> INSTR (1 + n) k -> INSTR (2 + n)  k
+%\end{code}
+%%
+%Now we have to define what means to execute an instruction. Abstract machines
+%are normaly specified as transition systems, 
+%\begin{code}
+%Stack = Vec Nat
 
-execute : ∀ {n m} -> INSTR n m -> Stack n -> Stack m
-execute HALT stk                        = stk
-execute (PUSH n  is) stk                = execute is (n :: stk)
-execute (ADD     is) (y :: (x :: stk))  = execute is ((x + y) :: stk)
-\end{code}
+%execute : ∀ {n m} -> INSTR n m -> Stack n -> Stack m
+%execute HALT stk                        = stk
+%execute (PUSH n  is) stk                = execute is (n :: stk)
+%execute (ADD     is) (y :: (x :: stk))  = execute is ((x + y) :: stk)
+%\end{code}
 
-that permits the step-by-step
-execution of programs written in the machine source language. They are
-\textit{abstract} because the implementation details are deliberately omitted; they are high level
-mathematical tools to study and analyze programming languages.
+%that permits the step-by-step
+%execution of programs written in the machine source language. They are
+%\textit{abstract} because the implementation details are deliberately omitted; they are high level
+%mathematical tools to study and analyze programming languages.
 
-The design of abstract machines to formaly specify the semantics of programming
-languages is of a long tradition. Pioneering work by 
+%The design of abstract machines to formaly specify the semantics of programming
+%languages is of a long tradition. Pioneering work by 
 
-Abstract machine 
+%Abstract machine 
 
-The is a long tradition in the programming languages research to dote a
-programming language with semantics via the use of an abstract machine.
-  + Assign semantics via an abstract machine
-    - forget of implementation details and focus on transition system
-    - high level of abstraction => useful to carry proofs about properties of
-    the language being defined
-  + But an abstract machine is a first order transition system that can be
-  encoded in a suitable higher-order programming language
-  + A tail-recursive function does the job, any argument to the function is part
-  of the internal state of the machine
-  + For example, we can create a machine language for the type of expr in the
-  introduction. And a function that executes it. We can boil down from the s. What is really doing is assigning
-  semantics
+%The is a long tradition in the programming languages research to dote a
+%programming language with semantics via the use of an abstract machine.
+%  + Assign semantics via an abstract machine
+%    - forget of implementation details and focus on transition system
+%    - high level of abstraction => useful to carry proofs about properties of
+%    the language being defined
+%  + But an abstract machine is a first order transition system that can be
+%  encoded in a suitable higher-order programming language
+%  + A tail-recursive function does the job, any argument to the function is part
+%  of the internal state of the machine
+%  + For example, we can create a machine language for the type of expr in the
+%  introduction. And a function that executes it. We can boil down from the s. What is really doing is assigning
+%  semantics
 
-\subsection{Denotational semantics and \emph{folds}}
+%\subsection{Denotational semantics and \emph{folds}}
 
-On the other hand, we can assign semantics to a programming language by
-embedding it in another with better understood semantics. The idea is that once
-we can represent the abstract syntax tree of the language, we can define an
-evaluator function that reduces (using the semantics of the host language)
-programms written in the object or defined language.
+%On the other hand, we can assign semantics to a programming language by
+%embedding it in another with better understood semantics. The idea is that once
+%we can represent the abstract syntax tree of the language, we can define an
+%evaluator function that reduces (using the semantics of the host language)
+%programms written in the object or defined language.
 
-It wouldnt be nice that we can join efforts using a dependently typed
-programming language both as the way of implementing the abstact machine and the
-interpreter such that thanks to dependent types we can mathematically prove the
-equivalence between them.
+%It wouldnt be nice that we can join efforts using a dependently typed
+%programming language both as the way of implementing the abstact machine and the
+%interpreter such that thanks to dependent types we can mathematically prove the
+%equivalence between them.
 
-If somebody defines a programming language as an ast, a fold can the way that
-compossitionally we can assign a meaning to each of the constructs of the
-language.
+%If somebody defines a programming language as an ast, a fold can the way that
+%compossitionally we can assign a meaning to each of the constructs of the
+%language.
 
 \section{Termination in type theory}
-\label{sec:back:term}
+\label{sec:background:termination}
 
 \Agda~is a language for describing total functions. General recursive functions
 are not allowed as they would render the logic inconsistent. It is not possible
@@ -371,7 +459,7 @@ three, it is the most relevant for this work because the results of this master 
 heavily rely on it. 
 
 The main idea is simple: define a relation over the type of the parameter that
-is `smaller' in each invocation of the function, and show that the relation has
+gets `smaller' in each invocation of a function, and show that the relation has
 the property of not decreasing indefinitely.
 
 Formally, for a given binary relation over elements of type |a|, | <Op : a -> a
@@ -629,9 +717,9 @@ input is accessible by the relation is explicitly supplied, or, the relation is
 proven to be well-founded and used to produce the required evidence.
 
 \section{Generic programming }
-\label{sec:generic:universe}
+\label{sec:background:generic}
 There are many opinions on what the term "generic programming" means, depending
-of whom you ask. For a thoroughly account of its different flavours, we
+on whom you ask. For a thoroughly account of its different flavours, we
 recommend the reader to the material by
 Gibbons\cite{10.1007/978-3-540-76786-2_1}. Nevertheless, a central idea
 prevails: find a common ground in the implementation details that can be
@@ -651,13 +739,13 @@ evaluator.
 \subsection{The \emph{regular} universe}
 \label{subsec:background:regular}
 
-In a dependently typed programming language such as \Agda, we can
-represent a collection of types closed under certain operations as a
-\emph{universe}~\cite{altenkirch-mcbride,martin-loef}, that is, a data
-type |U : Set| describing the inhabitants of our universe together
-with its semantics, |el : U -> Set|, mapping each element of |U| to
-its corresponding type. We have chosen the following universe of
-\emph{regular} types~\cite{morris-regular, noort-regular}:
+In a dependently typed programming language such as \Agda, we can represent a
+collection of types closed under certain operations as a
+\emph{universe}~\cite{altenkirch-mcbride,martin-loef}, that is, a data type |U :
+Set| describing the inhabitants of our universe together with its semantics, and
+a function, |el : U -> Set|, mapping each element of |U| to its corresponding
+type. We have chosen the following universe of \emph{regular}
+types~\cite{morris-regular, noort-regular}:
 %
 \begin{code}
   data Reg : Set1 where
