@@ -1104,7 +1104,7 @@ The function |unload| is defined by induction over the \emph{stack}. If the
 \emph{stack} is empty the job is done and a final value is returned. In case the
 \emph{stack} has at least one \emph{dissection} in its head, the function
 |right| is called to check whether there are any more holes left. If there are
-none, a recursive call to |unload| is dispathed, otherwise, if there is still a subtree to be
+none, a recursive call to |unload| is dispatched, otherwise, if there is still a subtree to be
 processed the function |load| is called.
 
 \begin{code}
@@ -1123,7 +1123,7 @@ processed the function |load| is called.
 When the function |right| returns a |inj1| it means that there are not any
 subtrees left in the \emph{dissection}. If we take a closer look, the type of
 the |r| in |inj1 r| is | interpl R interpr (Computed R X alg) |. The functor
-|interpl R interpr| is storing at its leaves both values, subtrees and proofs.
+|interpl R interpr| is storing at its variable positions both values, subtrees and proofs.
 
 However, what is needed for the recursive call is: first, the functor
 interpreted over values, | interpl R interpr X|, in order to apply the algebra;
@@ -1136,7 +1136,7 @@ value equals to applying a |catamorphism| over the subtree.  The function
 \label{subsec:rel-gen}
 
 We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
-t|, for some concrete tree |t : mu R|, by explicity separating the functorial layer
+t|, for some concrete tree |t : mu R|, by explicitly separating the functorial layer
 from the recursive layer induced by the fixed point. At the functor level, we
 impose the order over \emph{dissection}s of |R|, while at the fixed point level
 we define the order by induction over the \emph{stack}s.
