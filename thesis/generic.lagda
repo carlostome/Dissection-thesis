@@ -16,13 +16,14 @@ that we prove equivalent to any fold over any (simple) algebraic datatype that
 can be generically expressed in the \emph{regular} universe. We begin in
 \Cref{sec:generic:dissection}, recapitulating the idea of \emph{dissection}, due
 to McBride\cite{McBride:2008:CLM:1328438.1328474}, and show how it leads
-(\Cref{sec:generic:stack,sec:generic:genconf}) to the definition of generic configurations of the
-abstract machine. Subsequently, in \Cref{sec:generic:onestep}, we introduce the
-generic version of the functions |load| and |unload|, that compute one step of
-the fold. In \Cref{sec:generic:relation} we set up the relation over generic
-configurations and present its well-foundedness proof. Finally, we define the
-terminating tail-recursive fold as the iteration of the one-step function fueled
-by well-founded recursion. The correctness proof, \Cref{sec:generic:correct},
+(\Cref{sec:generic:stack,sec:generic:genconf}) to the definition of generic
+configurations of the abstract machine. Subsequently, in
+\Cref{sec:generic:onestep}, we introduce the generic version of the functions
+|load| and |unload|, that compute one step of the fold. In
+\Cref{sec:generic:relation} we set up the relation over generic configurations
+and present its well-foundedness proof. Finally, we define the terminating
+tail-recursive fold as the iteration of the one-step function fueled by
+well-founded recursion. The correctness proof, \Cref{sec:generic:correct},
 follows directly from the construction. To conclude, we present an example of
 the generic tail-recursive fold in action: we take the |Expr| datatype from the
 introduction and encode the evaluation function in terms of the generic
@@ -340,10 +341,10 @@ R|. In a similar fashion as in the concrete case, we define a pair of
 \emph{plugging} functions that recompute the input tree:
 
 \begin{code}
-  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → μ R →  Set
+  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → mu R →  Set
   plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
 
-  plugZ-muup : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → μ R →  Set
+  plugZ-muup : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → mu R →  Set
   plugZ-muup R ((l , isl) , s) t = plug-muup R (In (coerce l isl)) s t
 \end{code}
 
@@ -366,7 +367,7 @@ we define a pair of datatypes indexed by the input tree:
 %format load = "\AF{load}"
 %format unload = "\AF{unload}"
 In this section, we show how to define the generic operations that correspond to
-the functions |load| and |unload| given in the introduction (\Cref{sec:basics}).
+the functions |load| and |unload| given in \Cref{sec:expression:stage}.
 Moreover, we outline the proofs of several properties later required to show
 correctness and termination.
 %}
@@ -567,7 +568,7 @@ second continuation |f|, and in case it returns another configuration, |z|, such
 should plug into the tree |t|. 
 
 Using |Prop|, we can complete the type signature of the lemma |first-cps-lemma|.
-The proof of is performed by decomposing the input with |view|, doing induction on the
+The proof is done by decomposing the input with |view|, induction on the
 code, and using properties of heterogeneous equality.
 
 Other properties about how |load| behaves follow the same pattern. First, state
@@ -595,13 +596,13 @@ The function |unload| is defined by induction over the \emph{stack}. If the
 \emph{stack} is empty the job is done and a final value is returned. In case the
 \emph{stack} has at least one \emph{dissection} in its head, the function
 |right| is called to check whether there are any more holes left. If there are
-none, a recursive call to |unload| is dispathed, otherwise, if there is still a subtree to be
+none, a recursive call to |unload| is dispatched, otherwise, if there is still a subtree to be
 processed the function |load| is called.
 
 \begin{code}
   unload : (R : Reg)
          -> (alg : interpl R interpr X → X)
-         -> (t : μ R) -> (x : X) -> catamorphism R alg t == x
+         -> (t : mu R) -> (x : X) -> catamorphism R alg t == x
          -> Stack R X alg
          -> Zipper R X alg U+ X
   unload R alg t x eq []        = inj2 x
@@ -614,27 +615,45 @@ processed the function |load| is called.
 When the function |right| returns a |inj1| it means that there are not any
 subtrees left in the \emph{dissection}. If we take a closer look, the type of
 the |r| in |inj1 r| is | interpl R interpr (Computed R X alg) |. The functor
-|interpl R interpr| is storing at its leaves both values, subtrees and proofs.
+|interpl R interpr| is storing at the variable positions both values, subtrees and proofs.
 
 However, what is needed for the recursive call is: first, the functor
 interpreted over values, | interpl R interpr X|, in order to apply the algebra;
 second, the functor interpreted over subtrees, | interpl R interpr (mu R)|, to
-keep the original subtree where the value came from; Third, the proof that the
+keep the original subtree where the value came from; third, the proof that the
 value equals to applying a |catamorphism| over the subtree.  The function
-|compute| massages |r| to adapt the arguments for the recursive call to |unload|.
+|compute| massages |r| to adapt the arguments for the recursive call to
+|unload|:
+%
+\begin{code}
+  compute : (R Q : Reg) {alg : interpl Q interpr X → X}
+      → interpl R interpr (Computed Q X alg)
+      → Sigma (interpl R interpr X * interpl R interpr (mu Q)) lambda { (r , t) -> mapFold Q alg R t == r }
+\end{code}
+
+The function |unload| satisfies the expected property: it preserves the input
+tree:
+%
+\begin{code}
+  unload-preserves  : forall (R : Reg) {alg : interpl R interpr X → X}
+                    → (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg)
+                    → (z : Zipper R X alg)
+                    → forall  (e : mu R) → plug-muup R t s == e 
+                              → unload R alg t x eq s == inj1 z → plug-muup R z == e
+\end{code}
 
 \section{Relation over generic configurations}
 \label{sec:generic:relation}
 
 We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
-t|, for some concrete tree |t : mu R|, by explicity separating the functorial layer
+t|, for some concrete tree |t : mu R|, by explicitly separating the functorial layer
 from the recursive layer induced by the fixed point. At the functor level, we
 impose the order over \emph{dissection}s of |R|, while at the fixed point level
 we define the order by induction over the \emph{stack}s.
 
 To reduce clutter in the definition, we give a non type-indexed
 relation over terms of type |Zipper|. We can later use the same technique as in
-\Cref{sec:basic-assembling} to recover a fully type-indexed relation over
+\Cref{sec:expression:wellfounded} to recover a fully type-indexed relation over
 elements of type |Zipperdown t| by requiring that the \emph{zipper}s respect the
 invariant, |plugZ-mudown z == t|. The relation is defined by induction over the
 |Stack| part of the |zipper|s as follows.
@@ -660,10 +679,10 @@ relation we are defining relies on an auxiliary relation |<NablaOp| that orders
 \emph{dissections} of type |Dissection R (Computed R X alg) (mu R)|.
 \end{itemize}
 
-We can define this relation on dissections directly, without having to
-consider the recursive nature of our datatypes. We define the
-required relation over dissections interpreted on \emph{any} sets |X|
-and |Y| as follows:
+We can define this relation on dissections directly, without having to consider
+the recursivity due to the fixpoint. We define the required relation over
+dissections interpreted on \emph{any} sets |X| and |Y| as follows:
+%
 \begin{code}
   data <NablaOp : (R : Reg) → Dissection R X Y → Dissection R X Y → Set where
     step-+1  :   llcorner  R lrcorner      (r , t1)       <Nabla    (r' , t2)
@@ -680,23 +699,22 @@ and |Y| as follows:
 
     base-*   :   llcorner R O* Q lrcorner (inj2 (r , dq) , t1)   <Nabla  (inj1 (dr , q) , t2)
 \end{code}
-The idea is that we order the elements of a \emph{dissection} in a
-left-to-right fashion.  All the constructors except for |base-*|
-simply follow the structure of the dissection. To define the base case,
-|base-*|, recall that
-the \emph{dissection} of the product of two functors, |R O* Q|, has two possible
-values. It is either a term of type |nabla R X Y * interpl Q interpr Y|, such as
-|inj1 (dr , q)| or a term of type |interpl R interpr X * nabla Q X Y| like |inj2
-(r , dq)|. The former denotes a position  in the left component of the
-pair while the latter denotes a position in the right component.
-The |base-*| constructor states that positions in right are smaller than
-those in the left.
+%
+The idea is that we order the elements of a \emph{dissection} in a left-to-right
+fashion.  All the constructors except for |base-*| simply follow the inductive
+structure of the dissection. To define the base case, |base-*|, recall that the
+\emph{dissection} of the product of two functors, |R O* Q|, has two possible
+values: it is either a term of type |nabla R X Y * interpl Q interpr Y|, such as
+|inj1 (dr , q)|; or a term of type |interpl R interpr X * nabla Q X Y| like |inj2
+(r , dq)|. The former denotes a configuration pointing to the left tree of the pair
+while the latter denotes a position in the right component.  The |base-*|
+constructor states that positions to the right are \textit{smaller} than those
+to the left.
 
-This completes the order relation on configurations; we still need to prove
-our relation is \emph{well-founded}.
-To prove this, we write a type-indexed version of each
-relation. The first relation, |<ZOp|, has to be type-indexed by the tree of
-type |mu R| to which both \emph{zipper} recursively plug through
+This completes the order relation on configurations; we still need to prove our
+relation is \emph{well-founded}.  To prove this, we write a type-indexed version
+of each relation. The first relation, |<ZOp|, has to be type-indexed by the tree
+of type |mu R| to which both \emph{zipper} recursively plug through
 |plugZ-mudown|. The auxiliary relation, |<NablaOp|, needs to be type-indexed by
 the functor of type | interpl R interpr X | to which both \emph{dissections}
 |plug|:
@@ -706,109 +724,164 @@ the functor of type | interpl R interpr X | to which both \emph{dissections}
              -> IxDissection R X Y eta tx -> IxDissection R X Y eta tx → Set where
 
 
-  data IxLtdown {X : Set} (R : Reg) {alg : interpl R interpr X -> X}  : (t : μ R) 
+  data IxLtdown {X : Set} (R : Reg) {alg : interpl R interpr X -> X}  : (t : mu R) 
              -> Zipperdown R X alg t -> Zipperdown R X alg t -> Set where
 \end{code}
 
-The proof of \emph{well-foundedness} of |IxLtdown| is a straightforward generalization
-of proof given for the example in \Cref{sec:expression:relation}. 
-The full proof of the following statement can found in the accompanying code:
+The proof that the first relation is well-founded follows from induction over
+the code. Like the proof in the relation for expressions, \Cref{subsec:expression:wellfounded}, 
+it necessitates several ancillary lemmas covering each of the constructors.
+Writing an indexed relation is, again, crucial to prove the lemma. Otherwise,
+the proof cannot recursively call itself because the inputs are not structurally
+related.
+
+The proof of \emph{well-foundedness} of |IxLtdown|, on the other hand, is not as
+straightforward. The recursive subtrees occurring in the functor layer are not
+directly accessible, thus, recursive calls are rejected by the termination
+checker. We tackle this issue in three steps: first, we define a predicate over
+functors that states whether a property holds for all the values in variable
+positions; second, we use recursion to build the proof that all such values are
+well-founded; third, if the property holds, then it also holds for any subtree
+resulting from a dissection over the value. The three definitions are as
+follows:
+%
 \begin{code}
-  <Z-WF : (R : Reg)  -> (t : μ R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
+  data All {A : Set} (P : A → Set) : (R : Reg) → interpl R interpr A → Set1 where
+\end{code}
+
+\begin{code}
+  all-is-WF  :  forall (R Q : Reg) (alg : interpl R interpr X → X) → (t : interpl Q interpr (mu R)) 
+                → All (mu R) (lambda r → Well-founded (llcorner R lrcornerllcorner r lrcornerIxLtdown)) Q t
+\end{code}
+
+\begin{code}
+  all-to-plug :  forall {X : Set}  {R Q : Reg} {eta : X → mu Q} {P : mu Q → Set}
+                 → (t : interpl R interpr (mu Q)) → All (mu Q) P R t 
+                 → forall (r : mu Q) (dr : nabla R X (mu Q)) → plug eta R dr r == t → P r
+\end{code}
+%
+The predicate, |All|, is defined by induction over the code.  In the particular
+case of the constructor for |I|, we require a proof that the predicate holds for
+the particular value of the type variable. Both lemmas, |all-is-WF| and
+|all-to-plug|, follow directly by induction over the code. 
+
+The full proof that the relation is well-founded can be found in the
+accompanying code. Here we only spell its signature:
+%
+\begin{code}
+  <Z-WF : (R : Reg)  -> (t : mu R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
 \section{A generic tail-recursive machine}
 \label{sec:generic:machine}
 
-We are now ready to define a generic tail-recursive machine. To do so we
-now assemble the generic machinery we have defined so far. We follow the 
-same outline as in \Cref{sec:basic-assembling}.
+Finally, we are ready to define a generic tail-recursive machine. To do so we
+assemble the generic machinery we have developed so far, following the same
+outline as in \Cref{sec:expression:tailrec}.
 
-The first point is to build a wrapper around the function |unload| that performs
-one step of the \emph{catamorphism}. The function |step| statically enforces
-that the input tree remains the same both in its argument and in its result.
-
+The first point is to write a wrapper around the function |unload| that performs
+one step of the \emph{catamorphism}:
+%
 \begin{code}
-  step  : (R : Reg) → (alg : interpl R interpr X → X) -> (t : mu R)
-        -> Zipperup R X alg t -> Zipperup R X alg t U+ X
+  step  : (R : Reg) → (alg : interpl R interpr X → X)
+        -> Zipper R X alg -> Zipper R X alg U+ X
+  step R alg ((x , nr-x) , s) = unload R alg (In (coerce x nr-x)) (alg x) (...) s
 \end{code}
-We omit the full definition. The function |step| performs a call to |unload|,
-coercing the leaf of type |interpl R interpr X| in the |Zipperdown| argument to
-a generic tree of type |interpl R interpr (mu R)|.
-
-We show that |unload| preserves the invariant, by proving the following lemma:
+%
+The function |step| performs a call to |unload|, coercing the leaf of type
+|interpl R interpr X| in the |Zipperdown| argument to a generic tree of type
+|interpl R interpr (mu R)|. Moreover, it supplies a proof, here omitted with
+elipsis, stating that applying catamorphism over a \emph{coerced} leaf is the
+same as directly evaluating the algebra on the leaf, |alg x|. Next, we define a
+type-indexed step function that statically enforces the configurations, both in its
+argument and in its result, to be states of a fold over the same generic tree:
+%
 \begin{code}
-  unload-preserves  : forall (R : Reg) {alg : interpl R interpr X → X}
-                    → (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg)
-                    → (z : Zipper R X alg)
-                    → forall  (e : μ R) → plug-muup R t s == e 
-                              → unload R alg t x eq s == inj1 z → plug-muup R z == e
+  stepIx  : (R : Reg) -> (alg : interpl R interpr X -> X) -> (t : mu R)
+          -> Zipperup R X alg t -> Zipperup R X alg t U+ X
+  stepIx R alg t (z , s) with step R alg (z , s) | inspect (step R alg) (z , s)
+    ... | inj1 z |  [ Is ]  = inj1 (z , unload-preserves ... z t Is ...)
+    ... | inj2 x |  _       = inj2 x
 \end{code}
 
-Next, we show that applying the function |step| to a
-configuration of the abstract machine produces a smaller configuration.
-As the function |step| is a wrapper over the |unload| function, we only have
-to prove that the property holds for |unload|.
+The key ingredient of our construction consists of proving that the function
+|stepIx| delivers a smaller configuration, by |IxLtdown|, each time the function
+is called. The required lemma has the following signature:
+%
+\begin{code}
+  step-<  : forall (R : Reg) (alg : interpl R interpr X -> X) -> (t : mu R)
+          -> (z1 : Zipperup R X alg t)
+          ->  forall (z2 : Zipperup R X alg t)
+              -> stepIx R alg t z1 == inj1 z2 -> llcorner R lrcornerllcorner t lrcorner z2 <Z z1
+\end{code}
 
-The |unload| function does two things. First, it calls the function
+As the function |step| is a wrapper over |unload|, it suffices to prove a
+similar property for such function.  The function |unload|
+(\Cref{sec:generic:onestep}) does two things: first, it calls the function
 |right| to check whether the \emph{dissection} has any more recursive subtrees
-to the right that still have to be processed.
-It then dispatches to either |load|, if there is, or recurses if case there is
-not.  When there is a hole left, a new \emph{dissection} is returned by |right|.
-Thus showing that the new configuration is smaller amounts to show that the
-\emph{dissection} returned by |right| is smaller by |<NablaOp|.  This amounts to
-proving the following lemma:
-\begin{code}
-  right-<  : right R dr (t , y , eq) == inj2 (dr' , t')
-           → llcorner R lrcorner ((dr' , t')) <Nabla ((dr , t)) 
-\end{code}
-We have simplified the type signature, leaving out the universally
-quantified variables and their types. 
+to the right, which still have to be processed; second, it dispatches to either
+|load|, if there is a subtree left, or recurses over the stack in case there is
+not.  In the former circumstance, a new \emph{dissection} is returned by
+|right|.  Proving that the new configuration is smaller, amounts to show that
+the returned \emph{dissection} is smaller by |<NablaOp|. The lemma states:
 
-Extending this result to show that the function |unload|
-delivers a smaller value are straightforward. By
-induction over the input stack we check if the
-traversal is done or not. If it is not yet done, there is
-at least one dissection in the top of the stack.  The
-function |right| applied to that element returns either a smaller
-dissection or a tree with all values on the leaves. If we obtain a new dissection,
-we use the |right-<| lemma; in the latter case, we continue by induction
-over the stack.
-In this fashion, we can prove the following statement that
-our traversal decreases:
 \begin{code}
-  step-<  : (R : Reg) (alg : interpl R interpr X → X) → (t : mu R)
-          → (z1 z2 : Zipperup R X alg t)
-          → step R alg t z1 == inj1 z2 → llcorner R lrcornerllcorner z2 lrcorner <ZOp z1
+  right-<  : forall  (R : Reg) (t : mu R) (x : X) (eq : cata R alg t == x)
+                     (dr  : nabla (Computed R X alg) (mu R)) 
+            -> (t' : mu R) (dr' : nabla (Computed R X alg) (mu R)) 
+            -> right R dr (t , x , eq) == inj2 (dr' , t') -> llcorner R lrcorner (dr' , t') <Nabla (dr , t) 
 \end{code}
+%
+The proof of this lemma follows  by induction over the code. 
+
+Extending this result to show that the function |unload| delivers a smaller
+value is straightforward. By induction over the input stack we check if the
+traversal is done or not. If it is not yet done, there is at least one
+dissection in the top of the stack.  The function |right| applied to that
+element returns either a smaller dissection or a tree with all values on the
+leaves. If we obtain a new dissection, we use the |right-<| lemma; in the latter
+case, we continue by induction over the stack. 
 
 Finally, we can write the \emph{tail-recursive machine}, |tail-rec-cata|, as the
 combination of an auxiliary recursor over the accessibility predicate and a top-level
 function that initiates the computation with suitable arguments:
+%
 \begin{code}
-  rec  : (R : Reg) (alg : interpl R interpr X → X) (t : mu R) 
-       → (z : Zipperup R X alg t) 
-       → Acc (llcorner R lrcornerllcorner t lrcornerIxLtdown ) (Zipperup-to-Zipperdown z) → X
+  rec  : (R : Reg) (alg : interpl R interpr X -> X) (t : mu R) 
+       -> (z : Zipperup R X alg t) 
+       -> Acc (llcorner R lrcornerllcorner t lrcornerIxLtdown ) (Zipperup-to-Zipperdown z) -> X
   rec R alg t z (acc rs) with step R alg t z | inspect (step R alg t) z
   ... | inj1 x |  [ Is  ] = rec R alg t x (rs x (step-< R alg t z x Is))
   ... | inj2 y |  [ _   ] = y
-
+\end{code}
+%
+\begin{code}
   tail-rec-cata : (R : Reg) → (alg : interpl R interpr X → X) → mu R → X
   tail-rec-cata R alg x  with load R alg x []
   ... | inj1 z = rec R alg (z , ...) (<Z-WF R z)
 \end{code}
 
-\section{Correctness, generically}
+\section{Correctness}
 \label{sec:generic:correct}
 %{
 %format tail-rec-eval = "\AF{tail-rec-eval}"
-To prove our tail-recursive evaluator produces the same output as the catamorphism
-is straight-forward. As we did in the |tail-rec-eval| example
-(\Cref{sec:basic-correctness}), we perform induction over the accessibility
-predicate in the auxiliary recursor. In the base case, when the function |step|
-returns a ground value of type |X|, we have to show that such value is is the
-result of applying the \emph{catamorphism} to the input. Recall that |step| is a
-wrapper around |unload|, hence it suffices to prove the following lemma:
+The proof that our tail-recursive function produces the same output as the
+catamorphism is uncomplicated. The function |step| is type-indexed by the input
+generic tree which remains constant across invocations, thus, the result of the
+catamorphism does so as well. As we did in the |tail-rec-eval| evaluator,
+\Cref{sec:expression:correctness}, we use an ancillary definition indicating that
+if when the result of |stepIx| is an |inj2| --the final value--, then it equates
+to applying the catamorphism on the input:
+%
+\begin{code}
+  stepIx-correct  :  forall (R : Reg) (alg : interpl R interpr X -> X) (t : mu R) 
+                  -> (z : Zipperup R X alg t)
+                     -> forall (x : X) -> step-Ix R alg t z ≡ inj2 x -> catamorphism R alg t == x
+\end{code}
+%
+Recall that |stepIx| is a wrapper around |unload|, hence it suffices to prove
+the following lemma:
+%
 \begin{code}
   unload-correct  : forall  (R : Reg) (alg : interpl R interpr X → X)
                             (t : mu R) (x : X) (eq : catamorphism R alg t == x)
@@ -816,7 +889,9 @@ wrapper around |unload|, hence it suffices to prove the following lemma:
                   → unload R alg t x eq s == inj2 y
                   → ∀ (e : mu R) → plug-muup R t s == e → catamorphism R alg e == y
 \end{code}
-Our generic correctness result is an immediate consequence:
+
+The correctness of our generic tail-recursive function is an immediate consequence of
+the above lemmas:
 \begin{code}
   correctness  : forall (R : Reg) (alg : interpl R interpr X → X) (t : mu R)
                → catamorphism R alg t == tail-rec-cata R alg t
@@ -825,21 +900,27 @@ Our generic correctness result is an immediate consequence:
 \section{Example}
 \label{sec:generic:example}
 
-To conclude, we show how to generically implement the example from the
-introduction (\Cref{sec:intro}), and how the generic construction gives us a
-\emph{correct} tail-recursive machine for free. First, we recap the \emph{pattern} 
-functor underlying the type |Expr|:
+To conclude this chapter, we show how to use the generic machinery to implement
+a tail-recursive evaluator for the type of |Expr| from the previous chapter
+(\Cref{chap:expression}). The generic construction gives us the tail-recursive
+machine almost for free  First, we remind the \emph{pattern}  functor underlying 
+the type |Expr|:
+%
 \begin{code}
   expr : Reg
   expr = K Nat O+ (I O* I)
 \end{code}
-The |Expr| type is then isomorphic to tying the knot over |expr|:
+%
+The type |Expr| type is isomorphic to tying the knot over |expr|:
+%
 \begin{code}
   ExprG : Set
   ExprG = mu expr
 \end{code}
-The function |eval| is equivalent to instantiating the
-\emph{catamorphism} with an appropriate algebra:
+%
+The function |eval| is equivalent to instantiating the \emph{catamorphism} with
+an appropriate algebra:
+%
 \begin{code}
   alg : expr Nat -> Nat
   alg (inj1 n)          = n
@@ -848,8 +929,11 @@ The function |eval| is equivalent to instantiating the
   eval : ExprG -> Nat
   eval = cata expr alg
 \end{code}
-Finally, a tail-recursive machine \emph{equivalent} to the one we derived in \Cref{sec:basic-assembling},
+%
+Finally, a tail-recursive machine \emph{equivalent} to the one we derived in
+\Cref{sec:expression:tailrec},
 |tail-rec-eval|, is given by:
+%
 \begin{code}
   tail-rec-evalG : ExprG -> Nat
   tail-rec-evalG = tail-rec-cata expr alg
@@ -857,3 +941,47 @@ Finally, a tail-recursive machine \emph{equivalent} to the one we derived in \Cr
 
 \section{Discussion}
 \label{sec:generic:discussion}
+
+In this \namecref{chap:generic}, we have explained how to derive a generic
+machine that computes the catamporphism of any algebra over any regular
+datatype. To conclude the \namecref{chap:generic}, we discuss some further ideas about 
+the development.
+
+\paragraph{Choice of universe} The generic tail-recursive machine that we
+implemented in this chapter works over a rather limited universe. The motivation
+behind this choice was practical: the universe is expressive enough to implement
+many simple algebraic datatypes, but, is sufficiently simple to to transport
+`directly' the ideas from the concrete example, |Expr| type, to the generic
+setting. The regular universe cannot represent, for example, nested or mutually
+recursive datatypes.
+
+Nevertheless, our work is easily generalizable to other universes. The landmark
+of every approach to generic programming is to show that is possible to define
+Huet's notion of \emph{zipper} generically.  Because dissections are a
+generalization of zippers, the steps we follow to construct our generic
+tail-recursive machine can be taken as a guide to implement terminating and
+correct-by-construction tail-recursive machines for those universes.
+
+\todo{add citations}
+
+\paragraph{Irrelevance} Generic programming in a programming
+language such as Agda heavily relies on the usage of dependent types and large
+elimination. Ideally, the generic tail-recursive machine that we derived should
+be, indeed, tail-recursive. However, due to the mixin of proofs and functions to
+construct it, it is not clear 
+
+
++ Irrelevance arguments
+  - Not clear whether the approach we follow is amenable to this
+  - there is a problem because a functor stores proofs, subtrees and values and
+  is not clear whether making irrelevant some of them is feasible
++ Problems with showing termination not trivial
+  - first-cps is a nasty function and properties about it are rather involved.
+  - however, there is no alternative. 
++ The universe is limited
+  + Something more expressive maybe
++ Nice trick to change equality proofs into custom relations
+  + better to work with 
++ As we mentioned in the discussion for theevaluator for expressions the function 
+unload traverses the spine reducing several redexes at a time. It is not
+straightforward to define it generically
