@@ -140,7 +140,7 @@ the stack, while accumulating a (partial) result.
 We can now define a tail-recursive version of |eval| by
 calling |load| with an initially empty stack:
 \begin{code}
-  tail-rec-eval : Expr → Nat
+  tail-rec-eval : Expr -> Nat
   tail-rec-eval e = load e Top
 \end{code}
 %

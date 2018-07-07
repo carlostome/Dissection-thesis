@@ -330,7 +330,7 @@ treatment that is given by the typechecker.}
   terminating by the termination checker:
   %
   \begin{code}
-    quickSortS : {i : Size} → (a → a → Bool) → List a i → List a omega
+    quickSortS : {i : Size} -> (a -> a -> Bool) -> List a i -> List a omega
     quickSortS {..(i)}     p (SNil   {i})       = SNil
     quickSortS {..(up i)}  p (SCons  {i} x xs)  
       =  quickSortS {i} p (filter {i} (p x) xs)
@@ -396,7 +396,7 @@ to construct a proof that the predicate is true for every element of type |a|, |
   function as a predicate:
   %
   \begin{code}
-  data qsPred (p : a → a → Bool) : List a → Set where
+  data qsPred (p : a -> a -> Bool) : List a -> Set where
     qsNil   : qsPred p []
     qsCons  : {x : a}  -> {xs : List a}
                        -> qsPred p (filter (p x) xs)
@@ -543,7 +543,7 @@ well-founded as follows:
   returns a smaller list: 
   %
   \begin{code}
-  filter-<L : ∀ (p : a → Bool) (x : a) (xs : List a) → filter p xs <L (x :: xs)
+  filter-<L : ∀ (p : a -> Bool) (x : a) (xs : List a) -> filter p xs <L (x :: xs)
   filter-<L p x [] = Base x []
   filter-<L /p x (y :: xs) with p y 
   ... | false = lemma-:: x (filter p xs) (y :: xs) (filter-<L p y xs)
@@ -573,7 +573,7 @@ well-founded as follows:
   <L-Well-founded : Well-founded <LOp
   <L-Well-founded x = acc (aux x)
     where  aux-Step  : ∀ (x : a) (xs : List a) -> Acc <LOp xs 
-                     -> ∀ (y : List a) → y <L (x :: xs) → Acc <LOp y
+                     -> ∀ (y : List a) -> y <L (x :: xs) -> Acc <LOp y
            aux-Step x xs (acc rs)  .. []        (Base .. x .. xs) 
               = acc lambda {_ ()}
            aux-Step x xs (acc rs)  ..(y :: ys)  (Step y .. x ys .. xs p) 
@@ -629,11 +629,11 @@ relation.
 
   data <1Op (m : Nat) : Nat -> Set where
     Base1 :                        m <1 suc m
-    Step1 : (n : Nat) → m <1 n ->  m <1 suc n
+    Step1 : (n : Nat) -> m <1 n ->  m <1 suc n
 
-  data <2Op : Nat → Nat → Set where
-    Base2 : (n : Nat)                  → zero   <2 suc n
-    Step2 : (n m : Nat)  → n <2 m      → suc n  <2 suc m
+  data <2Op : Nat -> Nat -> Set where
+    Base2 : (n : Nat)                  -> zero   <2 suc n
+    Step2 : (n m : Nat)  -> n <2 m      -> suc n  <2 suc m
   \end{code}
   % 
   In the first relation, constructors are peeled off from the first argument
@@ -649,7 +649,7 @@ relation.
   <1-Well-founded : Well-founded <1Op
   <1-Well-founded x = acc (aux x)
     where
-      aux : forall (x : Nat) -> forall (y : Nat) → y <1 x → Acc <1Op y
+      aux : forall (x : Nat) -> forall (y : Nat) -> y <1 x -> Acc <1Op y
       aux .. (suc y) y Base1        = <1-Well-founded y
       aux .. (suc n) y (Step1 n p)  = aux n y p
   \end{code}
@@ -682,7 +682,7 @@ relation.
   inductive structure of both inputs. Such the lemma states the following:
   %
   \begin{code}
-    lemma2 : ∀ (n : Nat) (m : Nat) -> n <2 suc m → n == m U+ n <2 m
+    lemma2 : ∀ (n : Nat) (m : Nat) -> n <2 suc m -> n == m U+ n <2 m
   \end{code}
   %
   Finally, we can complete |<2-Well-founded| proof by appealing to |lemma2| and
@@ -692,7 +692,7 @@ relation.
   <2-Well-founded : Well-founded <2Op
   <2-Well-founded x = acc (aux x)
     where
-      aux : (x : Nat) -> forall (y : Nat) → y <2 x → Acc <2Op y
+      aux : (x : Nat) -> forall (y : Nat) -> y <2 x -> Acc <2Op y
       aux zero y ()
       aux (suc x) y p with lemma2 _ _ p
       aux (suc x) .. x p  | inj1 refl  = <2-Well-founded x

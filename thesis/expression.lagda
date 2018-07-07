@@ -341,7 +341,7 @@ the stack. Furthermore, this conversion satisfies the
   convert (n , s) = (n , reverse s)
 
   plugdown-to-plugup  : forall (z : ZipperType)
-                      → plugZdown z ==  plugZup (convert z)
+                      -> plugZdown z ==  plugZup (convert z)
 \end{code}
 As before, we can create a wrapper around |ZipperType| that enforces
 the |ZipperType| type to denote a leaf in the input expression |e|:
@@ -353,7 +353,7 @@ As a corollary of the |plugdown-to-plugup| property, we can define a
 pair of functions to switch between |Zipperup| and |Zipperdown|:
 
 \begin{code}
- Zipperdown-to-Zipperup : (e : Expr) → Zipperdown e -> Zipperup e
+ Zipperdown-to-Zipperup : (e : Expr) -> Zipperdown e -> Zipperup e
 
  Zipperup-to-Zipperdown : (e : Expr) -> Zipperup e -> Zipperdown e
 \end{code}
@@ -404,7 +404,7 @@ We sketch the proof below:
     <-WF e x = acc (aux e x)
           where
             aux : forall (e : Expr)  (x y : Zipperdown e)
-                → llcorner e lrcorner y < x → Acc (llcorner e lrcornerLtOp) y
+                -> llcorner e lrcorner y < x -> Acc (llcorner e lrcornerLtOp) y
             aux = ...
 \end{code}
 %
@@ -613,7 +613,7 @@ The ancillary function |rec| is defined by recursion over the accessibility
 predicate, thus the proof is done by induction over the same argument:
 %
 \begin{code}
-  rec-correct  : forall (e : Expr) → (z : Zipperup e)
+  rec-correct  : forall (e : Expr) -> (z : Zipperup e)
                -> (ac : Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z))
                -> eval e == rec e z ac
   rec-correct e z (acc rs)
@@ -629,8 +629,8 @@ natural number is equal to evaluating the input expression using |eval|. The lem
 |step-correct| precisely states that:
 %
 \begin{code}
-    step-correct  : forall (e : Expr) → (z : Zipperup e) 
-                  -> forall (r : Nat) → step e z ≡ inj2 r → eval e ≡ r
+    step-correct  : forall (e : Expr) -> (z : Zipperup e) 
+                  -> forall (r : Nat) -> step e z ≡ inj2 r -> eval e ≡ r
 \end{code}
 %
 As |step| is a wrapper around the function |unload|, it
@@ -740,10 +740,10 @@ matching on its argument, but is given the relevant |e|. We can tackle this
 issue by reifiying the graph of the function |eval| as a datatype:
 %
 \begin{code}
-  data Eval : .. Expr → Nat → Set where
+  data Eval : .. Expr -> Nat -> Set where
     eval-Val  : (n : Nat)      -> Eval (Val n) n
     eval-Add  : (e1 e2 : Expr) -> (n n' : Nat) 
-              -> Eval e1 n → Eval e2 n' -> Eval (Add e1 e2) (n + n')
+              -> Eval e1 n -> Eval e2 n' -> Eval (Add e1 e2) (n + n')
 \end{code}
 %
 Because the first index of |Eval|, of type |Expr|, is marked as irrelevant, we can 
@@ -774,8 +774,8 @@ easily generalize |tail-rec-eval| to a tail-recursive fold equivalent to
   record ExprAlg : Set1 where
     field
       a     : Set
-      ValA  : Nat → a
-      AddA  : a → a → a
+      ValA  : Nat -> a
+      AddA  : a -> a -> a
 \end{code}
 %
 The folding function |foldExpr| rather than a pair of functions takes the
@@ -894,9 +894,9 @@ is also a possible internal state of the machine:
   data Config1 : Set where
     Leaf   : Nat -> Stack2 -> Config1
 
-    Redex  :  (n   : Nat) -> (e1 : Expr) → eval e1 == n 
-           →  (n'  : Nat) -> (e2 : Expr) → eval e2 == n' -> Stack2
-           → Config1
+    Redex  :  (n   : Nat) -> (e1 : Expr) -> eval e1 == n 
+           ->  (n'  : Nat) -> (e2 : Expr) -> eval e2 == n' -> Stack2
+           -> Config1
 \end{code}
 %
 The leaves of the input expression remain the same as before: a natural number and
@@ -905,7 +905,7 @@ a \emph{redex} that is ready to be reduced. The definition of the function
 |unload1| clarifies its purpose:
 %
 \begin{code}
-  unload1 : (n : Nat) → (e : Expr) → eval e ≡ n → Stack → Config1 U+ Nat
+  unload1 : (n : Nat) -> (e : Expr) -> eval e ≡ n -> Stack -> Config1 U+ Nat
   unload1 n e1 eq (Left e2 stk)           = load e2 (Right n e1 eq stk)
   unload1 n e1 eq1 (Right n' e2 eq2 stk)  = inj1 (Redex n' e2 eq2 n e1 eq1 stk)
   unload1 n _ _ Top                       = inj2 n
@@ -917,7 +917,7 @@ function |step1| will be, in this case, the responsible of triggering the
 reduction: 
 %
 \begin{code}
-  step1 : Config1 → Config1 U+ Nat
+  step1 : Config1 -> Config1 U+ Nat
   step1 (Leaf n stk)                    
     = unload1 n (Val n) refl stk 
   step1 (Redex n e1 eq1 n' e2 eq2 stk)  

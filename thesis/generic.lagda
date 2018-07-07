@@ -45,7 +45,7 @@ the regular universe, |nabla|, that maps elements of the universe into
 bifunctors:
 %
 \begin{code}
-  nabla : (R : Reg) → (Set → Set → Set)
+  nabla : (R : Reg) -> (Set -> Set -> Set)
   nabla Zero      X Y  = Bot
   nabla One       X Y  = Bot
   nabla I         X Y  = Top
@@ -104,8 +104,8 @@ Using a type-indexed type, we can bundle together a dissection with the value
 of type |interpl R interpr Y| to which it \emph{plug}s:
 %
 \begin{code}
-  data IxDissection (R : Reg) (X Y : Set) (eta : X → Y) (tx : interpl R interpr Y) : Set where
-    prodOp : (d : Dissection R X Y) → plug R eta d == tx → IxDissection R X Y eta tx 
+  data IxDissection (R : Reg) (X Y : Set) (eta : X -> Y) (tx : interpl R interpr Y) : Set where
+    prodOp : (d : Dissection R X Y) -> plug R eta d == tx -> IxDissection R X Y eta tx 
 \end{code}
 
 \section{Generic stacks}
@@ -125,7 +125,7 @@ each element of the list is a particular dissection of the corresponding
 functorial layer. Thus, the type of generics stacks is as follows:
 
 \begin{code}
-  StackG : (R : Reg) → (X Y : Set) → Set
+  StackG : (R : Reg) -> (X Y : Set) -> Set
   StackG R X Y = List (nabla R X Y)
 \end{code}
 %
@@ -134,11 +134,11 @@ generic trees of type |mu R|. Given such instantiation, we can define a pair
 of functions that reconstruct the tree by traversing the stack:
 %
 \begin{code}
-  plug-mudownG  : (R : Reg) -> mu R -> StackG R (mu R) (mu R) → mu R
+  plug-mudownG  : (R : Reg) -> mu R -> StackG R (mu R) (mu R) -> mu R
   plug-mudownG R t []         = t
   plug-mudownG R t (h :: hs)  = In (plug R id (h , plug-mudownG R t hs))
 
-  plug-muupG  : (R : Reg) -> mu R → StackG R (mu R) (mu R) → mu R
+  plug-muupG  : (R : Reg) -> mu R -> StackG R (mu R) (mu R) -> mu R
   plug-muupG R t []         = t
   plug-muupG R t (h :: hs)  = plug-muupG R (In (plug R id (h , t))) hs
 \end{code}
@@ -162,7 +162,7 @@ construction. For such matter, we define a record type that stores values,
 subtrees, and the corresponding correctness proofs:
 %
 \begin{code}
- record Computed (R : Reg) (X : Set) (alg : interpl R interpr X → X) : Set where
+ record Computed (R : Reg) (X : Set) (alg : interpl R interpr X -> X) : Set where
     constructor _,_,_
     field
       Tree   : mu R
@@ -237,12 +237,12 @@ different \emph{plugging} operations: one top-down, another bottom-up:
 %
 \begin{code}
   plug-mudown   : (R : Reg) -> {alg : interpl R interpr X -> X}
-                -> mu R -> Stack R X alg → mu R
+                -> mu R -> Stack R X alg -> mu R
   plug-mudown R t []         = t
   plug-mudown R t (h :: hs)  = In (plug R Computed.Tree h (plug-mudown R t hs))
 
   plug-muup   : (R : Reg) -> {alg : interpl R interpr X -> X}
-              -> mu R → Stack R X alg → mu R
+              -> mu R -> Stack R X alg -> mu R
   plug-muup R t []         = t
   plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
 \end{code}
@@ -274,15 +274,15 @@ not contain subtrees, but otherwise might be recursive because of (1).
 To describe a generic leaf, we introduce the following predicate:
 %
 \begin{code}
-  data NonRec : (R : Reg) → interpl R interpr X → Set where
+  data NonRec : (R : Reg) -> interpl R interpr X -> Set where
     NonRec-One  : NonRec One tt
-    NonRec-K    : (B : Set) → (b : B) → NonRec (K B) b
-    NonRec-+1   : (R Q : Reg) → (r : interpl R interpr X)
-                → NonRec R r → NonRec (R O+ Q) (inj1 r)
-    NonRec-+2   : (R Q : Reg) → (q : interpl Q interpr X)
-                → NonRec Q q → NonRec (R O+ Q) (inj2 q)
-    NonRec-*    : (R Q : Reg) → (r : interpl R interpr X) → (q : interpl Q interpr X)
-                → NonRec R r → NonRec Q q → NonRec (R O* Q) (r , q)
+    NonRec-K    : (B : Set) -> (b : B) -> NonRec (K B) b
+    NonRec-+1   : (R Q : Reg) -> (r : interpl R interpr X)
+                -> NonRec R r -> NonRec (R O+ Q) (inj1 r)
+    NonRec-+2   : (R Q : Reg) -> (q : interpl Q interpr X)
+                -> NonRec Q q -> NonRec (R O+ Q) (inj2 q)
+    NonRec-*    : (R Q : Reg) -> (r : interpl R interpr X) -> (q : interpl Q interpr X)
+                -> NonRec R r -> NonRec Q q -> NonRec (R O* Q) (r , q)
 
 \end{code}
 %
@@ -318,7 +318,7 @@ A leaf is independent of the type |X| --the predicate |NonRec| proves it--, thus
 we can coerce it to a different type:
 %
 \begin{code}
-  coerce : (R : Reg) -> (x : interpl R interpr X) → NonRec R x -> interpl R interpr Y  
+  coerce : (R : Reg) -> (x : interpl R interpr X) -> NonRec R x -> interpl R interpr Y  
 \end{code}
 %
 The function is defined by induction over the proof |NonRec R x|. The case for
@@ -330,7 +330,7 @@ focus and the stack that stores partial results and unprocessed subtrees --or
 points to it:
 %
 \begin{code}
-  Zipper : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
+  Zipper : (R : Reg) -> (X : Set) -> (alg : interpl R interpr X -> X) -> Set
   Zipper R X alg = Leaf R X * Stack R X alg
 \end{code}
 
@@ -341,10 +341,10 @@ R|. In a similar fashion as in the concrete case, we define a pair of
 \emph{plugging} functions that recompute the input tree:
 
 \begin{code}
-  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → mu R →  Set
+  plugZ-mudown : (R : Reg) {alg : interpl R interpr X -> X} -> Zipper R X alg -> mu R ->  Set
   plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
 
-  plugZ-muup : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → mu R →  Set
+  plugZ-muup : (R : Reg) {alg : interpl R interpr X -> X} -> Zipper R X alg -> mu R ->  Set
   plugZ-muup R ((l , isl) , s) t = plug-muup R (In (coerce l isl)) s t
 \end{code}
 
@@ -353,11 +353,11 @@ tree does not change during the evaluation of the tail-recursive catamorphism--
 we define a pair of datatypes indexed by the input tree:
 %
 \begin{code}
-  data Zipperdown (R : Reg) (X : Set) (alg : interpl R interpr X → X) (t : mu R) : Set where
-    _,_ : (z : Zipper R X alg) → plugZ-mudown R z == t → Zipperup R X alg t
+  data Zipperdown (R : Reg) (X : Set) (alg : interpl R interpr X -> X) (t : mu R) : Set where
+    _,_ : (z : Zipper R X alg) -> plugZ-mudown R z == t -> Zipperup R X alg t
 
-  data Zipperup (R : Reg) (X : Set) (alg : interpl R interpr X → X) (t : mu R) : Set where
-    _,_ : (z : Zipper R X alg) → plugZ-muup R z == t → Zipperup R X alg t 
+  data Zipperup (R : Reg) (X : Set) (alg : interpl R interpr X -> X) (t : mu R) : Set where
+    _,_ : (z : Zipper R X alg) -> plugZ-muup R z == t -> Zipperup R X alg t 
 \end{code}
 
 \section{One step of a catamorphism}
@@ -411,7 +411,7 @@ Q X alg| is the current stack. The entire function will compute the
 initial configuration of our machine of type |Zipper Q X alg|: \footnote{As in the introduction, we use a sum type |U+| to align its type with that of |unload|.}
 
 \begin{code}
-load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R
+load  : (R : Reg) {alg : interpl R interpr X -> X} -> mu R
       -> Stack R X alg -> Zipper R X alg U+ X
 load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
@@ -430,7 +430,7 @@ incremented by a new element that corresponds to the \emph{dissection} of the
 functor layer up to that point. The second continuation is replaced with the
 initial one.
 \begin{code}
-  first-cps I Q (In x) k f s  = first-cps Q Q x id (lambda z  → inj1 . prodOp z) (k tt :: s)
+  first-cps I Q (In x) k f s  = first-cps Q Q x id (lambda z  -> inj1 . prodOp z) (k tt :: s)
 \end{code}
 In the coproduct, both cases are similar, just having to account for the
 use of different constructors in the continuations.
@@ -495,9 +495,9 @@ fits in it. We express this in \Agda~as a
 view:\cite{wadler1987views}\cite{mcbride2004view}
 %
 \begin{code}
-    view  : (R Q : Reg) → {alg : interpl Q interpr X → X} → (r : interpl R interpr (mu Q))
-          →  (Sigma (nabla R (Computed Q X alg) (mu Q)) lambda dr →  Sigma (mu Q) lambda q → plug R (dr , q) == r)
-             U+ (Sigma (interpl R interpr X) lambda leaf → (NonRec R leaf x [ R ]-[ mu Q ] r ~[ X ] leaf))
+    view  : (R Q : Reg) -> {alg : interpl Q interpr X -> X} -> (r : interpl R interpr (mu Q))
+          ->  (Sigma (nabla R (Computed Q X alg) (mu Q)) lambda dr ->  Sigma (mu Q) lambda q -> plug R (dr , q) == r)
+             U+ (Sigma (interpl R interpr X) lambda leaf -> (NonRec R leaf x [ R ]-[ mu Q ] r ~[ X ] leaf))
 \end{code}
 %
 The value |r : interpl R interpr (mu Q)| either decomposes into a dissection,
@@ -601,7 +601,7 @@ processed the function |load| is called.
 
 \begin{code}
   unload : (R : Reg)
-         -> (alg : interpl R interpr X → X)
+         -> (alg : interpl R interpr X -> X)
          -> (t : mu R) -> (x : X) -> catamorphism R alg t == x
          -> Stack R X alg
          -> Zipper R X alg U+ X
@@ -626,20 +626,20 @@ value equals to applying a |catamorphism| over the subtree.  The function
 |unload|:
 %
 \begin{code}
-  compute : (R Q : Reg) {alg : interpl Q interpr X → X}
-      → interpl R interpr (Computed Q X alg)
-      → Sigma (interpl R interpr X * interpl R interpr (mu Q)) lambda { (r , t) -> mapFold Q alg R t == r }
+  compute : (R Q : Reg) {alg : interpl Q interpr X -> X}
+      -> interpl R interpr (Computed Q X alg)
+      -> Sigma (interpl R interpr X * interpl R interpr (mu Q)) lambda { (r , t) -> mapFold Q alg R t == r }
 \end{code}
 
 The function |unload| satisfies the expected property: it preserves the input
 tree:
 %
 \begin{code}
-  unload-preserves  : forall (R : Reg) {alg : interpl R interpr X → X}
-                    → (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg)
-                    → (z : Zipper R X alg)
-                    → forall  (e : mu R) → plug-muup R t s == e 
-                              → unload R alg t x eq s == inj1 z → plug-muup R z == e
+  unload-preserves  : forall (R : Reg) {alg : interpl R interpr X -> X}
+                    -> (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg)
+                    -> (z : Zipper R X alg)
+                    -> forall  (e : mu R) -> plug-muup R t s == e 
+                              -> unload R alg t x eq s == inj1 z -> plug-muup R z == e
 \end{code}
 
 \section{Relation over generic configurations}
@@ -684,7 +684,7 @@ the recursivity due to the fixpoint. We define the required relation over
 dissections interpreted on \emph{any} sets |X| and |Y| as follows:
 %
 \begin{code}
-  data <NablaOp : (R : Reg) → Dissection R X Y → Dissection R X Y → Set where
+  data <NablaOp : (R : Reg) -> Dissection R X Y -> Dissection R X Y -> Set where
     step-+1  :   llcorner  R lrcorner      (r , t1)       <Nabla    (r' , t2)
              ->  llcorner R O+ Q lrcorner  (inj1 r , t1)  <Nabla (inj1 r' , t2)
 
@@ -721,7 +721,7 @@ the functor of type | interpl R interpr X | to which both \emph{dissections}
 
 \begin{code}
   data IxLt {X Y : Set} {eta : X -> Y} :  (R : Reg) -> (tx : interpl R interpr Y) 
-             -> IxDissection R X Y eta tx -> IxDissection R X Y eta tx → Set where
+             -> IxDissection R X Y eta tx -> IxDissection R X Y eta tx -> Set where
 
 
   data IxLtdown {X : Set} (R : Reg) {alg : interpl R interpr X -> X}  : (t : mu R) 
@@ -746,18 +746,18 @@ resulting from a dissection over the value. The three definitions are as
 follows:
 %
 \begin{code}
-  data All {A : Set} (P : A → Set) : (R : Reg) → interpl R interpr A → Set1 where
+  data All {A : Set} (P : A -> Set) : (R : Reg) -> interpl R interpr A -> Set1 where
 \end{code}
 
 \begin{code}
-  all-is-WF  :  forall (R Q : Reg) (alg : interpl R interpr X → X) → (t : interpl Q interpr (mu R)) 
-                → All (mu R) (lambda r → Well-founded (llcorner R lrcornerllcorner r lrcornerIxLtdown)) Q t
+  all-is-WF  :  forall (R Q : Reg) (alg : interpl R interpr X -> X) -> (t : interpl Q interpr (mu R)) 
+                -> All (mu R) (lambda r -> Well-founded (llcorner R lrcornerllcorner r lrcornerIxLtdown)) Q t
 \end{code}
 
 \begin{code}
-  all-to-plug :  forall {X : Set}  {R Q : Reg} {eta : X → mu Q} {P : mu Q → Set}
-                 → (t : interpl R interpr (mu Q)) → All (mu Q) P R t 
-                 → forall (r : mu Q) (dr : nabla R X (mu Q)) → plug eta R dr r == t → P r
+  all-to-plug :  forall {X : Set}  {R Q : Reg} {eta : X -> mu Q} {P : mu Q -> Set}
+                 -> (t : interpl R interpr (mu Q)) -> All (mu Q) P R t 
+                 -> forall (r : mu Q) (dr : nabla R X (mu Q)) -> plug eta R dr r == t -> P r
 \end{code}
 %
 The predicate, |All|, is defined by induction over the code.  In the particular
@@ -783,7 +783,7 @@ The first point is to write a wrapper around the function |unload| that performs
 one step of the \emph{catamorphism}:
 %
 \begin{code}
-  step  : (R : Reg) → (alg : interpl R interpr X → X)
+  step  : (R : Reg) -> (alg : interpl R interpr X -> X)
         -> Zipper R X alg -> Zipper R X alg U+ X
   step R alg ((x , nr-x) , s) = unload R alg (In (coerce x nr-x)) (alg x) (...) s
 \end{code}
@@ -856,7 +856,7 @@ function that initiates the computation with suitable arguments:
 \end{code}
 %
 \begin{code}
-  tail-rec-cata : (R : Reg) → (alg : interpl R interpr X → X) → mu R → X
+  tail-rec-cata : (R : Reg) -> (alg : interpl R interpr X -> X) -> mu R -> X
   tail-rec-cata R alg x  with load R alg x []
   ... | inj1 z = rec R alg (z , ...) (<Z-WF R z)
 \end{code}
@@ -883,18 +883,18 @@ Recall that |stepIx| is a wrapper around |unload|, hence it suffices to prove
 the following lemma:
 %
 \begin{code}
-  unload-correct  : forall  (R : Reg) (alg : interpl R interpr X → X)
+  unload-correct  : forall  (R : Reg) (alg : interpl R interpr X -> X)
                             (t : mu R) (x : X) (eq : catamorphism R alg t == x)
                             (s : Stack R X alg) (y : X)  
-                  → unload R alg t x eq s == inj2 y
-                  → ∀ (e : mu R) → plug-muup R t s == e → catamorphism R alg e == y
+                  -> unload R alg t x eq s == inj2 y
+                  -> ∀ (e : mu R) -> plug-muup R t s == e -> catamorphism R alg e == y
 \end{code}
 
 The correctness of our generic tail-recursive function is an immediate consequence of
 the above lemmas:
 \begin{code}
-  correctness  : forall (R : Reg) (alg : interpl R interpr X → X) (t : mu R)
-               → catamorphism R alg t == tail-rec-cata R alg t
+  correctness  : forall (R : Reg) (alg : interpl R interpr X -> X) (t : mu R)
+               -> catamorphism R alg t == tail-rec-cata R alg t
 \end{code}
 
 \section{Example}
