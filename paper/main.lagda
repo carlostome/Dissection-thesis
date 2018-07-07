@@ -1010,7 +1010,7 @@ results and unprocessed subtrees:
 
 Finally, we can recompute the original tree using a |plug| function as before:
 \begin{code}
-  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → μ R →  Set
+  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → mu R →  Set
   plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
 \end{code}
 Note that the |coerce| function is used to embed a leaf into a larger
@@ -1136,7 +1136,7 @@ processed the function |load| is called.
 \begin{code}
   unload : (R : Reg)
          -> (alg : interpl R interpr X → X)
-         -> (t : μ R) -> (x : X) -> catamorphism R alg t == x
+         -> (t : mu R) -> (x : X) -> catamorphism R alg t == x
          -> Stack R X alg
          -> Zipper R X alg U+ X
   unload R alg t x eq []        = inj2 x
@@ -1241,7 +1241,7 @@ the functor of type | interpl R interpr X | to which both \emph{dissections}
              -> IxDissection R X Y eta tx -> IxDissection R X Y eta tx → Set where
 
 
-  data IxLtdown {X : Set} (R : Reg) {alg : interpl R interpr X -> X}  : (t : μ R) 
+  data IxLtdown {X : Set} (R : Reg) {alg : interpl R interpr X -> X}  : (t : mu R) 
              -> Zipperdown R X alg t -> Zipperdown R X alg t -> Set where
 \end{code}
 
@@ -1249,7 +1249,7 @@ The proof of \emph{well-foundedness} of |IxLtdown| is a straightforward generali
 of proof given for the example in \Cref{subsec:relation}. 
 The full proof of the following statement can found in the accompanying code:
 \begin{code}
-  <Z-WF : (R : Reg)  -> (t : μ R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
+  <Z-WF : (R : Reg)  -> (t : mu R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
 \subsection{A generic tail-recursive machine}
@@ -1276,7 +1276,7 @@ We show that |unload| preserves the invariant, by proving the following lemma:
   unload-preserves  : forall (R : Reg) {alg : interpl R interpr X → X}
                     → (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg)
                     → (z : Zipper R X alg)
-                    → forall  (e : μ R) → plug-muup R t s == e 
+                    → forall  (e : mu R) → plug-muup R t s == e 
                               → unload R alg t x eq s == inj1 z → plug-muup R z == e
 \end{code}
 
