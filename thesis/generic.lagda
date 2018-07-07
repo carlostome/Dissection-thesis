@@ -443,8 +443,8 @@ use of different constructors in the continuations.
 %
 The interesting clause is the one that deals with the product. First the
 function |first-cps| is recursively called on the left component  of the pair
-trying to find a subtree to recurse over. However, it may be the case that there
-are no subtrees at all, thus it is passed as the first continuation a call to
+trying to find a subtree to recurse over. It may be the case that there
+are no subtrees at all, thus, it is passed as the first continuation a call to
 |first-cps| over the right component of the product.  In case the
 continuation fails to to find a subtree, it returns the leaf as it is.
 %
@@ -944,16 +944,17 @@ Finally, a tail-recursive machine \emph{equivalent} to the one we derived in
 
 In this \namecref{chap:generic}, we have explained how to derive a generic
 machine that computes the catamporphism of any algebra over any regular
-datatype. To conclude the \namecref{chap:generic}, we discuss some further ideas about 
-the development.
+datatype. Adhering to the steps we followed in the concrete case,
+\Cref{chap:expression}, we derived an abstract machine that we proved to be both
+terminating and correct. Before concluding the chapter there are some open
+questions that are worth discussing:
 
 \paragraph{Choice of universe} The generic tail-recursive machine that we
 implemented in this chapter works over a rather limited universe. The motivation
 behind this choice was practical: the universe is expressive enough to implement
 many simple algebraic datatypes, but, is sufficiently simple to to transport
 `directly' the ideas from the concrete example, |Expr| type, to the generic
-setting. The regular universe cannot represent, for example, nested or mutually
-recursive datatypes.
+setting.
 
 Nevertheless, our work is easily generalizable to other universes. The landmark
 of every approach to generic programming is to show that is possible to define
@@ -962,26 +963,29 @@ generalization of zippers, the steps we follow to construct our generic
 tail-recursive machine can be taken as a guide to implement terminating and
 correct-by-construction tail-recursive machines for those universes.
 
-\todo{add citations}
+\paragraph{The function |load| written in continuation passing style} The
+function |load|, as defined in \Cref{sec:generic:onestep}, uses the ancillary
+function |first-cps| to look for the leftmost leaf in the input tree. Such
+function is defined in continuation passing style, which makes its definition
+look overly complicated.  However, it is necessary to keep the machine
+tail-recursive. The function is defined by induction over the code. When the
+code is a product of codes, |R O* Q|, the input tree has the shape of |(x , y)|
+for some |x : interpl R interpr (mu (R O* Q))| and |y : interpl Q interpr (mu (R
+O* Q))|. There are three possible situations: the value |x| is not a leaf, |x|
+is a leaf but |y| is not, or |x| and |y| are leaves and the product is a leaf
+itself. In the first case, a recursive call has to be made on |x| storing |y| on
+the stack; in the second case, the recursion is over |y| storing |x| on the
+stack; and in the last case, there is no recursion involved and the leaf |(x ,
+y)| is immediately returned. The problem is that checking whether |x| or |y| are
+leaves requires already to perform recursion over them. If the function
+|first-cps| was to wait until the result of the recursive call is available to 
+decide which case is met, the function would not be tail-recursive anymore.
 
-\paragraph{Irrelevance} Generic programming in a programming
-language such as Agda heavily relies on the usage of dependent types and large
-elimination. Ideally, the generic tail-recursive machine that we derived should
-be, indeed, tail-recursive. However, due to the mixin of proofs and functions to
-construct it, it is not clear 
-
-
-+ Irrelevance arguments
-  - Not clear whether the approach we follow is amenable to this
-  - there is a problem because a functor stores proofs, subtrees and values and
-  is not clear whether making irrelevant some of them is feasible
-+ Problems with showing termination not trivial
-  - first-cps is a nasty function and properties about it are rather involved.
-  - however, there is no alternative. 
-+ The universe is limited
-  + Something more expressive maybe
-+ Nice trick to change equality proofs into custom relations
-  + better to work with 
-+ As we mentioned in the discussion for theevaluator for expressions the function 
-unload traverses the spine reducing several redexes at a time. It is not
-straightforward to define it generically
+\paragraph{Irrelevance} The generic tail-recursive machine should not have extra
+runtime due to termination and correctness proofs. The inclusion of subtrees and
+proofs along with |Computed| values in the stack, indeed, incurs in a memory
+overhead during execution. We could use \emph{again} computational irrelevance
+to identify the parts of the stack not needed during runtime so they are
+automatically removed. However, it is not clear how to do so in Agda due the
+narrowness of irrelevance as we previously discussed in
+\Cref{sec:expression:discuss}.
