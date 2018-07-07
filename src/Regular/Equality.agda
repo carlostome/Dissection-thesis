@@ -1,5 +1,5 @@
 
-module Thesis.Regular.Equality where
+module Regular.Equality where
 
   open import Data.Unit
   open import Data.Product
@@ -8,7 +8,7 @@ module Thesis.Regular.Equality where
   open import Relation.Binary.PropositionalEquality
     renaming (refl to ≡-refl; sym to ≡-sym; trans to ≡-trans; proof-irrelevance to ≡-proof-irrelevance)
 
-  open import Thesis.Regular.Core
+  open import Regular.Core
 
   ----------------------------------------------------------------------------------------
   --                Heterogeneous equality over regular Functors

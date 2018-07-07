@@ -1,5 +1,4 @@
-
-module Thesis.Data.Product where
+module Data.Product.Extra where
 
   open import Data.Product
   open import Relation.Binary.PropositionalEquality

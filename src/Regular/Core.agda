@@ -1,10 +1,9 @@
-
-module Thesis.Regular.Core where
+module Regular.Core where
 
   open import Data.Product
-  open import Thesis.Data.Product
+  open import Data.Product.Extra
   open import Data.Sum
-  open import Thesis.Data.Sum
+  open import Data.Sum.Extra
   open import Data.Unit
   open import Data.Empty
   open import Function

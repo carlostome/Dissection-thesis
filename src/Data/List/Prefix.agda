@@ -1,5 +1,5 @@
 
-module Thesis.Data.List.Prefix where
+module Data.List.Prefix where
 
   open import Data.List
   open import Data.List.All as L

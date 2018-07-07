@@ -1,5 +1,5 @@
 
-module Thesis.Regular.NonRec where
+module Regular.NonRec where
   
   open import Data.Product
   open import Data.Sum
@@ -8,9 +8,9 @@ module Thesis.Regular.NonRec where
   open import Relation.Binary.PropositionalEquality
     renaming (refl to ≡-refl; proof-irrelevance to ≡-proof-irrelevance)
   open import Relation.Nullary
-  open import Thesis.Regular.Core
+  open import Regular.Core
 
-  open import Thesis.Regular.Equality
+  open import Regular.Equality
     renaming (refl to ≈-refl; proof-irrelevance to ≈-proof-irrelevance)
 
   -- A predicate over values of regular functors to determine
@@ -95,3 +95,4 @@ module Thesis.Regular.NonRec where
   coerce-Fmap .(R ⨁ Q) .(inj₁ r) (NonRec-⨁-inj₁ R Q r isl)  = Fmap-⨁₁ (coerce-Fmap R r isl)
   coerce-Fmap .(R ⨁ Q) .(inj₂ q) (NonRec-⨁-inj₂ R Q q isl)  = Fmap-⨁₂ (coerce-Fmap Q q isl)
   coerce-Fmap .(R ⨂ Q) .(r , q) (NonRec-⨂ R Q r q isl isl₁) = Fmap-⨂ (coerce-Fmap R r isl) (coerce-Fmap Q q isl₁)
+

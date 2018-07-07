@@ -1,5 +1,5 @@
 
-module Thesis.Data.Sum.Inj where
+module Data.Sum.Inj where
 
   open import Data.Sum
   open import Relation.Binary.PropositionalEquality

@@ -1,5 +1,5 @@
 
-module Thesis.Regular.Catamorphism where
+module Regular.Catamorphism where
 
   open import Data.Product
   open import Data.Sum
@@ -7,7 +7,7 @@ module Thesis.Regular.Catamorphism where
   open import Data.Empty
   open import Relation.Binary.PropositionalEquality
 
-  open import Thesis.Regular.Core
+  open import Regular.Core
 
   mapFold : ∀ {A : Set} (R Q : Reg) → (⟦ Q ⟧ A -> A) -> ⟦ R ⟧ (μ Q) -> ⟦ R ⟧ A
   mapFold 0′ Q alg ()
@@ -20,11 +20,11 @@ module Thesis.Regular.Catamorphism where
 
   data MapFold {X : Set} (Q : Reg) (alg : ⟦ Q ⟧ X → X) : (R : Reg) → ⟦ R ⟧ (μ Q) → ⟦ R ⟧ X → Set where
     MapFold-1′  : MapFold Q alg 1′ tt tt
-    MapFold-I   : ∀ {i o} → MapFold Q alg Q i o → MapFold Q alg I (In i) (alg o)
+    MapFold-I   : ∀ {i : ⟦ Q ⟧ (μ Q)} {o : ⟦ Q ⟧ X} → MapFold Q alg Q i o → MapFold Q alg I (In i) (alg o)
     MapFold-K   : ∀ {A} {a} → MapFold Q alg (K A) a a
     MapFold-⨁₁ : ∀ {R P} {i o} → MapFold Q alg R i o → MapFold Q alg (R ⨁ P) (inj₁ i) (inj₁ o)
     MapFold-⨁₂ : ∀ {R P} {i o} → MapFold Q alg P i o → MapFold Q alg (R ⨁ P) (inj₂ i) (inj₂ o)
-    MapFold-⨂  : ∀ {R P} {i₁ i₂} {o₁ o₂} → MapFold Q alg R i₁ o₁ → MapFold Q alg P i₂ o₂ → MapFold Q alg (R ⨂ P) (i₁ , i₂) (o₁ , o₂)
+    MapFold-⨂  : ∀ {R P} {i₁ : ⟦ R ⟧ (μ Q)} {i₂ : ⟦ P ⟧ (μ Q)} {o₁ : ⟦ R ⟧ X} {o₂ : ⟦ P ⟧ X} → MapFold Q alg R i₁ o₁ → MapFold Q alg P i₂ o₂ → MapFold Q alg (R ⨂ P) (i₁ , i₂) (o₁ , o₂)
 
   cata : ∀ {A : Set} (R : Reg) → (⟦ R ⟧ A -> A) → μ R -> A
   cata  R alg (In x) = alg (mapFold R R alg x)

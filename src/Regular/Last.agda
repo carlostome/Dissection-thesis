@@ -1,5 +1,5 @@
 
-module Thesis.Regular.Last where
+module Regular.Last where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
   open import Data.Product
@@ -8,14 +8,14 @@ module Thesis.Regular.Last where
   open import Relation.Binary.PropositionalEquality renaming ([_] to Is_)
   open import Relation.Nullary
   
-  open import Thesis.Regular.Core
-  open import Thesis.Regular.Dissection
+  open import Regular.Core
+  open import Regular.Dissection
     renaming ( Lt to Dissection-Lt
              ; IxLt to Dissection-IxLt
              ; Lt-to-IxLt to Dissection-Lt-to-IxLt
              ; IxLt-WF to Dissection-IxLt-WF
              ; proof-irrelevance to Plug-proof-irrelevance)
-  open import Thesis.Regular.NonRec
+  open import Regular.NonRec
     renaming (proof-irrelevance to NonRec-proof-irrelevance)
  
   -- Predicate to test if a dissection has only one hole left

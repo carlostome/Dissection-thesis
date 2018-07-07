@@ -152,7 +152,7 @@ module Thesis.Tree.Indexed where
                        → [[ l ]]⇓        ((t₁ , s₁)           ,, Node-injₗ eq₁) < ((t₂ , s₂ )               ,, Node-injₗ eq₂)
                        → [[ Node l r ]]⇓ ((t₁ , Left r  ∷ s₁) ,, eq₁)           < ((t₂ , Left r ∷ s₂ ) ,, eq₂)
                     
-         <-Right-Left  : ∀ {a} {l r} {t₁ t₂ s₁ s₂} {eq} {eq₁ eq₂} → [[ Node l r ]]⇓ ((t₁ , Right a l eq ∷ s₁) ,, eq₁) < ((t₂ , Left r ∷ s₂) ,, eq₂)
+         <-Right-Left  : ∀ {a} {l r} {t₁ t₂ s₁ s₂} {eq} {eq₁ : Node l (plug⇓ (Tip t₁) s₁) ≡ Node l r} {eq₂ : ?} → [[ Node l r ]]⇓ ((t₁ , Right a l eq ∷ s₁) ,, eq₁) < ((t₂ , Left r ∷ s₂) ,, eq₂)
 
 
     ----------------------------------------------------------------------------------

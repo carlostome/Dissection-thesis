@@ -1,4 +1,4 @@
-module Thesis.Dissection.Core where
+module Dissection.Core where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
   open import Data.Product
@@ -12,10 +12,10 @@ module Thesis.Dissection.Core where
   open import Data.List.Properties
   open import Induction.WellFounded
 
-  open import Thesis.Regular.Core
-  open import Thesis.Regular.NonRec
-  open import Thesis.Regular.Catamorphism
-  open import Thesis.Regular.Dissection
+  open import Regular.Core
+  open import Regular.NonRec
+  open import Regular.Catamorphism
+  open import Regular.Dissection
 
   ----------------------------------------------------------------------------------
   --                              Core definitions                

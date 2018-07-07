@@ -1,10 +1,10 @@
 
-module Thesis.Regular.Dissection where
+module Regular.Dissection where
 
   open import Data.Product
-  open import Thesis.Data.Product
+  open import Data.Product.Extra
   open import Data.Sum
-  open import Thesis.Data.Sum
+  open import Data.Sum.Extra
   open import Data.Empty
   open import Data.Unit
   open import Relation.Binary.PropositionalEquality
@@ -12,7 +12,7 @@ module Thesis.Regular.Dissection where
 
   open import Induction.WellFounded
 
-  open import Thesis.Regular.Core
+  open import Regular.Core
 
   -- Dissection operation
   ∇ : (R : Reg) → (Set → Set → Set)

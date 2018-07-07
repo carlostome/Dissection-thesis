@@ -1,5 +1,4 @@
-
-module Thesis.Data.Sum where
+module Data.Sum.Extra where
 
   open import Data.Sum
   open import Relation.Binary.PropositionalEquality

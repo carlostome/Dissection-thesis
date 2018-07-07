@@ -1,4 +1,4 @@
-module Thesis.Regular.Right where
+module Regular.Right where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
   open import Data.Product
@@ -7,20 +7,20 @@ module Thesis.Regular.Right where
   open import Relation.Binary.PropositionalEquality renaming ([_] to Is_)
   open import Relation.Nullary
   open import Function
-  open import Thesis.Regular.Core
-  open import Thesis.Regular.Equality
+  open import Regular.Core
+  open import Regular.Equality
     renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans)
-  open import Thesis.Regular.Dissection
+  open import Regular.Dissection
     renaming ( Lt to Dissection-Lt
              ; IxLt to Dissection-IxLt
              ; Lt-to-IxLt to Dissection-Lt-to-IxLt
              ; IxLt-WF to Dissection-IxLt-WF
              ; proof-irrelevance to Plug-proof-irrelevance)
-  open import Thesis.Regular.NonRec
+  open import Regular.NonRec
     renaming (proof-irrelevance to NonRec-proof-irrelevance)
 
-  open import Thesis.Regular.Last
-  open import Thesis.Regular.First
+  open import Regular.Last
+  open import Regular.First
   
   -- given a dissection and a value, try to find the next hole to the
   -- right along with the value in it.

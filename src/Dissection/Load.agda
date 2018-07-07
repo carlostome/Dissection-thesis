@@ -1,5 +1,5 @@
 
-module Thesis.Dissection.Load where
+module Dissection.Load where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
   open import Data.Product
@@ -11,24 +11,24 @@ module Thesis.Dissection.Load where
   open import Data.List
   open import Induction.WellFounded
 
-  open import Thesis.Data.Sum
-  open import Thesis.Data.List
+  -- open import Data.Sum.Extra
+  open import Data.List.Extra
 
-  open import Thesis.Regular.Core
-  open import Thesis.Regular.Equality
+  open import Regular.Core
+  open import Regular.Equality
     renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans)
-  open import Thesis.Regular.Dissection
+  open import Regular.Dissection
     renaming ( Lt to Dissection-Lt
              ; IxLt to Dissection-IxLt
              ; Lt-to-IxLt to Dissection-Lt-to-IxLt
              ; IxLt-WF to Dissection-IxLt-WF
              ; proof-irrelevance to Plug-proof-irrelevance)
-  open import Thesis.Regular.NonRec
+  open import Regular.NonRec
     renaming (proof-irrelevance to NonRec-proof-irrelevance)
-  open import Thesis.Regular.Catamorphism
+  open import Regular.Catamorphism
 
-  open import Thesis.Dissection.Core
-  open import Thesis.Regular.First
+  open import Dissection.Core
+  open import Regular.First
   
   ------------------------------------------------------------------------------
   --                           load function

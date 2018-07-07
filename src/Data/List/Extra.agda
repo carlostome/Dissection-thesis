@@ -1,5 +1,4 @@
-
-module Thesis.Data.List where
+module Data.List.Extra where
 
   open import Data.List
   open import Relation.Binary.PropositionalEquality

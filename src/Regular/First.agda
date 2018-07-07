@@ -1,4 +1,4 @@
-module Thesis.Regular.First where
+module Regular.First where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
   open import Data.Product
@@ -6,17 +6,17 @@ module Thesis.Regular.First where
   open import Data.Empty   using (⊥; ⊥-elim)
   open import Relation.Binary.PropositionalEquality renaming ([_] to Is_)
 
-  open import Thesis.Regular.Core
-  open import Thesis.Regular.Equality
+  open import Regular.Core
+  open import Regular.Equality
     renaming ( refl to ≈-refl
              ; sym  to ≈-sym )
-  open import Thesis.Regular.Dissection
+  open import Regular.Dissection
     renaming ( Lt to Dissection-Lt
              ; IxLt to Dissection-IxLt
              ; Lt-to-IxLt to Dissection-Lt-to-IxLt
              ; IxLt-WF to Dissection-IxLt-WF
              ; proof-irrelevance to Plug-proof-irrelevance)
-  open import Thesis.Regular.NonRec
+  open import Regular.NonRec
     renaming (proof-irrelevance to NonRec-proof-irrelevance)
 
   ------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 
-module Thesis.Dissection.Relation where
+module Dissection.Relation where
 
   open import Data.Product
   open import Data.Sum
@@ -15,20 +15,20 @@ module Thesis.Dissection.Relation where
   open import Induction.WellFounded
 
 
-  open import Thesis.Regular.Core
-  open import Thesis.Regular.Equality
+  open import Regular.Core
+  open import Regular.Equality
     renaming (refl to ≈-refl; sym to ≈-sym; trans to ≈-trans)
-  open import Thesis.Regular.Dissection
+  open import Regular.Dissection
     renaming ( Lt to Dissection-Lt
              ; IxLt to Dissection-IxLt
              ; Lt-to-IxLt to Dissection-Lt-to-IxLt
              ; IxLt-WF to Dissection-IxLt-WF
              ; proof-irrelevance to Plug-proof-irrelevance)
-  open import Thesis.Regular.NonRec
+  open import Regular.NonRec
     renaming (proof-irrelevance to NonRec-proof-irrelevance)
-  open import Thesis.Regular.Catamorphism
+  open import Regular.Catamorphism
 
-  open import Thesis.Dissection.Core
+  open import Dissection.Core
   
   ----------------------------------------------------------------------------------------------
   --                               Relation over Indexed Top-Down Zippers
@@ -52,7 +52,7 @@ module Thesis.Dissection.Relation where
 
   private
     all-to-plug : ∀ {X : Set}  {R Q : Reg} {ex : X → μ Q} {P : μ Q → Set}
-                → (∀ {t : ⟦ R ⟧ (μ Q)} → All (μ Q) P R t → (∀ (r : μ Q) (dr : ∇ R X (μ Q)) → Plug ex R dr r t → P r))
+                → ∀ {t : ⟦ R ⟧ (μ Q)} → All (μ Q) P R t → ∀ (r : μ Q) (dr : ∇ R X (μ Q)) → Plug ex R dr r t → P r
     all-to-plug (All-I x) r .tt Plug-I = x
     all-to-plug (All-⨂ x₁ x₂) r .(inj₁ (_ , _)) (Plug-⨂-inj₁ p)   = all-to-plug x₁ r _ p
     all-to-plug (All-⨂ x₁ x₂) r .(inj₂ (_ , _)) (Plug-⨂-inj₂ x p) = all-to-plug x₂ r _ p
