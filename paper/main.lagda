@@ -1292,8 +1292,8 @@ to prove that the property holds for |unload|.
 The |unload| function does two things. First, it calls the function
 |right| to check whether the \emph{dissection} has any more recursive subtrees
 to the right that still have to be processed.
-It then dispatches to either |load|, if there is, or recurses if case there is
-not.  When there is a hole left, a new \emph{dissection} is returned by |right|.
+It then dispatches to either |load|, if there is, or recurses otherwise.
+When there is a hole left, a new \emph{dissection} is returned by |right|.
 Thus showing that the new configuration is smaller amounts to show that the
 \emph{dissection} returned by |right| is smaller by |<NablaOp|.  This amounts to
 proving the following lemma:
@@ -1305,7 +1305,7 @@ We have simplified the type signature, leaving out the universally
 quantified variables and their types. 
 
 Extending this result to show that the function |unload|
-delivers a smaller value are straightforward. By
+delivers a smaller value is straightforward. By
 induction over the input stack we check if the
 traversal is done or not. If it is not yet done, there is
 at least one dissection in the top of the stack.  The
@@ -1345,7 +1345,7 @@ To prove our tail-recursive evaluator produces the same output as the catamorphi
 is straight-forward. As we did in the |tail-rec-eval| example
 (\Cref{sec:basic-correctness}), we perform induction over the accessibility
 predicate in the auxiliary recursor. In the base case, when the function |step|
-returns a ground value of type |X|, we have to show that such value is is the
+returns a ground value of type |X|, we have to show that such value is the
 result of applying the \emph{catamorphism} to the input. Recall that |step| is a
 wrapper around |unload|, hence it suffices to prove the following lemma:
 \begin{code}

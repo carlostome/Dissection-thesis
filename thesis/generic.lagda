@@ -820,8 +820,8 @@ similar property for such function.  The function |unload|
 (\Cref{sec:generic:onestep}) does two things: first, it calls the function
 |right| to check whether the \emph{dissection} has any more recursive subtrees
 to the right, which still have to be processed; second, it dispatches to either
-|load|, if there is a subtree left, or recurses over the stack in case there is
-not.  In the former circumstance, a new \emph{dissection} is returned by
+|load|, if there is a subtree left, or recurses over the stack otherwise.
+In the former circumstance, a new \emph{dissection} is returned by
 |right|.  Proving that the new configuration is smaller, amounts to show that
 the returned \emph{dissection} is smaller by |<NablaOp|. The lemma states:
 
