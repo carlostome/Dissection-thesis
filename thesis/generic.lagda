@@ -105,7 +105,7 @@ of type |interpl R interpr Y| to which it \emph{plug}s:
 %
 \begin{code}
   data IxDissection (R : Reg) (X Y : Set) (eta : X → Y) (tx : interpl R interpr Y) : Set where
-    prodOp : (d : Dissection R X Y) → plug R d eta == tx → IxDissection R X Y eta tx 
+    prodOp : (d : Dissection R X Y) → plug R eta d == tx → IxDissection R X Y eta tx 
 \end{code}
 
 \section{Generic stacks}
