@@ -74,7 +74,7 @@ cannot represent mutually recursive types~\cite{mutual}, nested data
 types~\cite{nested}, indexed families~\cite{dybjer-inductive}, or
 inductive-recursive types~\cite{induction-recursion}. Fortunately, there is a
 long tradition of generic programming with universes in Agda, arguably dating
-back to~\citet{martin-loef}. It would be worthwhile exploring how to extend our
+back to Martin-L{\"o}f~\cite{martinloef}. It would be worthwhile exploring how to extend our
 construction to more general universes, such as the context-free
 types~\cite{morris}, containers~\cite{containers,indexed-containers}, or the
 `sigma-of-sigma' universe~\cite{power-of-pi,levitation}.  Doing so would allow
