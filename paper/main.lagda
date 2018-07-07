@@ -110,9 +110,9 @@ been evaluated.
 \end{code}
 
 We can define a tail-recursive evaluation function by means of a
-pair of mutually recursive functions, |load| and |unload|. The |load|
+pair of mutually recursive functions, |load| and |unload1|. The |load|
 function traverses the expressions, pushing subtrees on the
-stack; the |unload| function unloads the stack, while accumulating a
+stack; the |unload1| function unloads the stack, while accumulating a
 (partial) result.
 
 \begin{code}
@@ -122,9 +122,9 @@ stack; the |unload| function unloads the stack, while accumulating a
     load (Add e1 e2)  stk = loadN e1 (Left e2 stk)
 
     unloadN : Nat -> Stack -> Nat
-    unload v   Top             = v
-    unload v   (Right v' stk)  = unloadN (v' + v) stk
-    unload v   (Left r stk)    = loadN r (Right v stk)
+    unload1 v   Top             = v
+    unload1 v   (Right v' stk)  = unloadN (v' + v) stk
+    unload1 v   (Left r stk)    = loadN r (Right v stk)
 \end{code}
 
 We can now define a tail-recursive version of |eval| by
@@ -136,9 +136,9 @@ calling |load| with an initially empty stack:
 \end{code}
 
 Implementing this tail-recursive evaluator comes at a price: Agda's
-termination checker flags the |load| and |unload| functions as
+termination checker flags the |load| and |unload1| functions as
 potentially non-terminating by highlighting them
-\nonterm{orange}. Indeed, in the very last clause of the |unload|
+\nonterm{orange}. Indeed, in the very last clause of the |unload1|
 function a recursive call is made to arguments that are not
 syntactically smaller. Furthermore, it is not clear at all that the
 tail-recursive evaluator produces the same result as our original
@@ -175,7 +175,7 @@ and correctness proof for the tail-recursive evaluator presented in
 the introduction in some detail.
 
 The problematic call for Agda's termination checker is the last clause of the
-|unload| function, that calls |load| on the expression stored on the top of the
+|unload1| function, that calls |load| on the expression stored on the top of the
 stack. From the definition of |load|, it is clear that we only ever push
 subtrees of the input on the stack. However, the termination checker has no
 reason to believe that the expression at the top of the stack is structurally
@@ -186,10 +186,10 @@ smaller in any way. Indeed, if we were to redefine |load| as follows:
 we might use some function |f : Expr -> Expr| to push \emph{arbitrary}
 expressions on the stack, potentially leading to non-termination.
 
-The functions |load| and |unload| use the stack to store subtrees and partial
+The functions |load| and |unload1| use the stack to store subtrees and partial
 results while folding the input expression. Thus, every node in the original
 tree is visited twice during the execution: first when the function |load|
-traverses the tree, until it finds the leftmost leaf; second when |unload|
+traverses the tree, until it finds the leftmost leaf; second when |unload1|
 inspects the stack in searching of an unevaluated subtree. This process is
 depicted in \Cref{fig:load-unload}.
 
@@ -200,23 +200,23 @@ depicted in \Cref{fig:load-unload}.
 \end{figure}
 
 As there are finitely many nodes on a tree, the depicted traversal
-using |load| and |unload| must terminate -- but how can we convince
+using |load| and |unload1| must terminate -- but how can we convince
 Agda's termination checker of this?
 
 As a first approximation, we revise the definitions of |load| and
-|unload|. Rather than consuming the entire input in one go with a pair
+|unload1|. Rather than consuming the entire input in one go with a pair
 of mutually recursive functions, we rewrite them to compute one `step' of the
 fold.
 
-The function |unload| is defined by recursion over the stack as before, but with
+The function |unload1| is defined by recursion over the stack as before, but with
 one crucial difference. Instead of always returning the final result, it may
 also\footnote{|U+| is Agda's type of disjoint union.} return a new configuration
 of our abstract machine, that is, a pair |Nat * Stack|:
 \begin{code}
-  unload : Nat -> Stack -> (Nat * Stack) U+ Nat
-  unload v   Top             = inj2 v
-  unload v   (Right v' stk)  = unload (v' + v) stk
-  unload v   (Left r stk)    = load r (Right v stk)
+  unload1 : Nat -> Stack -> (Nat * Stack) U+ Nat
+  unload1 v   Top             = inj2 v
+  unload1 v   (Right v' stk)  = unload1 (v' + v) stk
+  unload1 v   (Left r stk)    = load r (Right v stk)
 \end{code}
 
 The other key difference arises in the definition of |load|:
@@ -225,9 +225,9 @@ The other key difference arises in the definition of |load|:
   load (Val n)      stk = inj1 (n , stk)
   load (Add e1 e2)  stk = load e1 (Left e2 stk)
 \end{code}
-Rather than calling |unload| upon reaching a value, it returns the current stack
+Rather than calling |unload1| upon reaching a value, it returns the current stack
 and the value of the leftmost leaf. Even though the function never returns an
-|inj2|, its type is aligned with the type of |unload| so the definition of both
+|inj2|, its type is aligned with the type of |unload1| so the definition of both
 functions resembles an an abstract machine more closely.
 
 Both these functions are now accepted by Agda's termination checker as
@@ -242,7 +242,7 @@ can always be discharged with \hbox{|bot-elim : forall {X : Set} -> Bot -> X|}.}
   ... | inj1 (n , stk)  = rec (n , stk)
     where
       nrec : (Nat * Stack) -> Nat
-      rec (n , stk) with unload n stk
+      rec (n , stk) with unload1 n stk
       ... | inj1 (n' , stk' )  = nrec (n' , stk')
       ... | inj2 r             = r
 \end{code}
@@ -250,12 +250,12 @@ can always be discharged with \hbox{|bot-elim : forall {X : Set} -> Bot -> X|}.}
 Here we use |load| to compute the initial configuration of our machine
 -- that is, it finds the leftmost leaf in our initial expression and its associated stack.
 We proceed by
-repeatedly calling |unload| until it returns a value.  This version of
+repeatedly calling |unload1| until it returns a value.  This version of
 our evaluator, however, does not pass the termination checker. The new
 state, |(n' , stk')|, is not structurally smaller than the initial
 state |(n , stk)|. If we work under the assumption that we have a
 relation between the states |Nat * Stack| that decreases after every
-call to |unload| and a proof that the relation is well-founded -- we know
+call to |unload1| and a proof that the relation is well-founded -- we know
 this function will terminate eventually.
 We now define the following version of the tail-recursive evaluator:
 \begin{code}
@@ -264,14 +264,14 @@ We now define the following version of the tail-recursive evaluator:
   ... | inj1 (n , stk)  = rec (n , stk) ??1
     where
       rec : (c : Nat * Stack) -> Acc ltOp c -> Nat
-      rec (n , stk) (acc rs) with unload n stk
+      rec (n , stk) (acc rs) with unload1 n stk
       ... | inj1 (n' , stk')  = rec (n' , stk') (rs ??2)
       ... | inj2 r            = r
 \end{code}
 To complete this definition, we still need to define a suitable
 relation |ltOp| between configurations of type |Nat *
 Stack|, prove the relation to be well-founded (|??1 : Acc ltOp (n , stk)|)
-and show that the calls to |unload| produce `smaller'
+and show that the calls to |unload1| produce `smaller'
 states (|??2 : (n' , stk') < (n , stk)|).
 In the next section, we will define such a relation and prove it is
 well-founded.
@@ -360,12 +360,14 @@ when the traversal has reached the third leaf, all the
 subexpressions to its left have been evaluated.
 
 In order to record the necessary information, we redefine the |Stack| type as follows:
+%
 \begin{code}
   data Stack2 : Set where
     Left   : Expr -> Stack2 -> Stack2
     Right  : (n : Nat) -> (e : Expr) -> eval e == n -> Stack2 -> Stack2
     Top    : Stack2
 \end{code}
+%
 The |Right| constructor now not only stores the value |n|, but also
 records the subexpression |e| and the proof that |e| evaluates to
 |n|. Although we are modifying the definition of the |Stack| data
@@ -374,17 +376,31 @@ at run-time, but only required for the proof of well-foundedness -- a
 point we will return to in our discussion (\Cref{sec:discussion}).
 From now onwards, the type |ZipperType| uses |Stack2| as its right 
 component:
+%
 \begin{code}
 ZipperType = Nat * Stack2
+\end{code}
+
+The function |unload1| was previously defined by induction over the stack
+(\Cref{sec:basics}), thus, it needs to be modified to work over the new type of
+stacks, |Stack2|:
+%
+\begin{code}
+  unload  : (n : Nat) -> (e : Expr) -> eval e == n -> Stack2 
+          -> ZipperType U+ Nat
+  unload n e eq Top                   = inj2 n
+  unload n e eq (Left e' stk)         = load e' (Right n e eq stk)
+  unload n e eq (Right n' e' eq' stk) 
+    = unload  (n' + n) (Add e' e) (cong2 plusOp eq' eq) stk
 \end{code}
 
 A value of type |ZipperType| contains enough information to recover the input
 expression. This is analogous to the |plug| operation on zippers:
 \begin{code}
   plugup : Expr -> Stack2 -> Expr
-  plugup e Top                    = e
-  plugup e (Left t       :: stk)  = plugup (Add e t) stk
-  plugup e (Right _ t _  :: stk)  = plugup (Add t e) stk
+  plugup e Top                 = e
+  plugup e (Left t       stk)  = plugup (Add e t) stk
+  plugup e (Right _ t _  stk)  = plugup (Add t e) stk
 
   plugZup : ZipperType -> Expr
   plugZup (n , stk) = plugup (Val n) stk
@@ -445,9 +461,9 @@ can define a variant of the |plugup| function that interprets our
 contexts top-down rather than bottom-up:
 \begin{code}
   plugdown : Expr -> Stack2 -> Expr
-  plugdown e Top                    = e
-  plugdown e (Left t       :: stk)  = Add (plugdown e stk) t
-  plugdown e (Right _ t _  :: stk)  = Add t (plugdown e stk)
+  plugdown e Top                 = e
+  plugdown e (Left t       stk)  = Add (plugdown e stk) t
+  plugdown e (Right _ t _  stk)  = Add t (plugdown e stk)
 
   plugZdown : ZipperType -> Expr
   plugZdown (n , stk) = plugdown (Val n) stk
@@ -461,7 +477,7 @@ the stack. Furthermore, this conversion satisfies the
   convert (n , s) = (n , reverse s)
 
   plugdown-to-plugup  : forall (z : ZipperType)
-                      → plugZdown z ==  plugZup (convert z)
+                      -> plugZdown z ==  plugZup (convert z)
 \end{code}
 As before, we can create a wrapper around |ZipperType| that enforces
 that our |ZipperType| denotes a leaf in the input expression |e|:
@@ -492,12 +508,12 @@ the input expression |e|:
 \begin{code}
   data IxLtOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
     <-StepR  : llcorner r lrcorner (t1 , s1) < (t2 , s2)
-             ->  llcorner Add l r lrcorner (t1 , Right l n eq :: s1) < (t2 , Right l n eq :: s2)
+             ->  llcorner Add l r lrcorner (t1 , Right l n eq s1) < (t2 , Right l n eq s2)
     <-StepL  : llcorner l lrcorner (t1 , s1) < (t2 , s2)
-             ->  llcorner Add l r lrcorner (t1 , Left r :: s1)       < (t2 , Left r :: s2)
+             ->  llcorner Add l r lrcorner (t1 , Left r s1)       < (t2 , Left r s2)
 
     <-Base  :   (e1 == plugZdown t2 s2) ->  (e2 == plugZdown t1 s1)
-            ->  llcorner Add e1 e2 lrcorner (t1 , Right n e1 eq :: s1) < (t2 , Left e2 :: s2)
+            ->  llcorner Add e1 e2 lrcorner (t1 , Right n e1 eq s1) < (t2 , Left e2 s2)
 \end{code}
 Despite the apparent complexity, the relation is straightforward.
 The constructors |<-StepR| and |<-StepL| cover the inductive cases, consuming
@@ -562,7 +578,7 @@ terminates:
 \begin{code}
   step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
   step e ((n , stk) , eq)
-    with unload (Val n) n refl 
+    with unload n (Val n) refl 
     ... | inj1 (n' , stk')  = ((n' , stk' ) , ...)
     ... | inj2 v            = inj2 v
 \end{code}
@@ -573,7 +589,7 @@ demonstrates that the |unload| function respects our invariant:
 \begin{code}
   unload-preserves-plugup  :
     forall (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack2) (z : ZipperType)
-    -> unload e x eq s == inj1 z
+    -> unload x e eq s == inj1 z
     -> forall (t : Expr) -> plugup e s == t -> plugZup z == t
 \end{code}
 
@@ -606,7 +622,7 @@ Thus to complete the previous theorem, it is sufficient to show that the functio
 
 \begin{code}
   unload-<  : forall (n : Nat) (s : Stack2) (e : Expr) (s' : Stack2)
-            -> unload (Val n) n refl s == inj1 (t' , s')
+            -> unload n (Val n) refl s == inj1 (t' , s')
             -> (t' , reverse s') ltOp (n , reverse s)
 \end{code}
 The proof is done by induction over the stack supported; the complete
@@ -657,8 +673,9 @@ At this point, we still need to prove the |step-correct| lemma that it is
 repeatedly applied.  As the |step| function is defined as a wrapper around the
 |unload| function, it suffices to prove the following property of |unload|:
 \begin{code}
-  unload-correct  : forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack2)
-                  -> unload e n eq s ≡ inj2 n -> eval (plugup e s) == n
+  unload-correct  :  forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack2)
+                       forall (m : Nat) 
+                       -> unload n e eq s ≡ inj2 m -> eval (plugup e s) == m
 \end{code}
 This proof follows immediately by induction over |s : Stack2|.
 

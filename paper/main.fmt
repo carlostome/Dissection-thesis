@@ -14,6 +14,7 @@
 %format load  = "\AF{load}"
 %format Well-founded  = "\AF{Well\text{-}founded}"
 %format unload = "\AF{unload}"
+%format unload1 = "\AF{unload}"
 %format reverse = "\AF{reverse}"
 %format rec    = "\AF{rec}"
 %format plugup   = "\AF{plug\ensuremath{\Uparrow}}"
