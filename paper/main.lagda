@@ -823,7 +823,10 @@ define the evaluator using the generic |cata| function, we instantiate
 the catamorphism to work on the expressions and pass the desired algebra:
 \begin{code}
   eval : mu expr -> Nat
-  eval = cata expr [ id , plusOp ]
+  eval = cata expr phi
+    where  phi : interpl expr interpr Nat -> Nat
+           phi (inj1 n)         = n         
+           phi (inj2 (n , n'))  = n + n'
 \end{code}
 
 In the remainder of this paper, we will develop an alternative
