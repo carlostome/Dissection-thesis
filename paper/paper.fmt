@@ -75,7 +75,7 @@
 %format .      = "\AF{\ensuremath{\circ}}"
 
 %% Non-colored stuff
-%format *               = "\AF{\ensuremath{\times}}"
+%format *               = "\AD{\ensuremath{\times}}"
 %format U+              = "\AD{\ensuremath{\uplus}}"
 %format pi1             = "\pi_1"
 %format pi2             = "\pi_2"

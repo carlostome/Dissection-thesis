@@ -694,6 +694,7 @@ The main correctness theorem now states that |eval| and
 \end{code}
 This finally completes the definition and verification of a
 tail-recursive evaluator. 
+%} end of intro.fmt
 
 \section{A generic tail-recursive traversal}
 \label{sec:generic}
@@ -716,7 +717,6 @@ In particular, we generalize the following:
   \item The tail-recursive evaluator, \Cref{sec:genmachine}.
   \item The proof that the generic tail-recursive function is correct, \Cref{sec:correct-gen}.
 \end{itemize}
-%} end of intro.fmt
 %include generic.fmt
 Before we can define any such datatype generic constructions, however, we need
 to fix our universe of discourse.
@@ -846,8 +846,9 @@ configurations for any type in our universe. The key definition,
   nabla One       X Y  = Bot
   nabla I         X Y  = Top
   nabla (K A)     X Y  = Bot
-  nabla (R O+ Q)  X Y = nabla R X Y U+ nabla Q X Y
-  nabla (R O* Q)  X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
+  nabla (R O+ Q)  X Y  = nabla R X Y U+ nabla Q X Y
+  nabla (R O* Q)  X Y   =            (nabla R X Y           * interpl Q interpr Y   )
+                        {-"\ "-} U+  (interpl R interpr X   * nabla Q X Y           )
 \end{code}
 This operation generalizes the zippers, by defining a bifunctor |nabla
 R X Y|. You may find it useful to think of the special case, |nabla R

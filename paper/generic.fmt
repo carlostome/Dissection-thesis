@@ -18,9 +18,10 @@
 %format lrcornerIxLtdown = "\AD{\ensuremath{\lrcorner\_<_{\mathds{Z}_{\scaleto{\Downarrow}{2pt}}}\_}}"
 %format lrcornerllcorner = "\AD{\ensuremath{\lrcorner\llcorner}}"
 %format Acc = "\AD{Acc}"
+%format U            = "\AD{U}"
 
 % Constructors
-%format Empty = "\AI{()}"
+%format Empty = "()"
 %format One   = "\AI{\ensuremath{\mathbb{1}}}"
 %format Zero  = "\AI{\ensuremath{\mathbb{0}}}"
 %format I     = "\AI{I}"
@@ -52,7 +53,8 @@
 
 % Functions and definitions
 %format Val-NonRec  = "\AF{Val-NonRec}"
-%format U            = "\AF{U}"
+%format +            = "\AF{+}"
+%format phi          = "\AF{\ensuremath{\phi}}"
 %format el           = "\AF{el}"
 %format expr         = "\AF{exprF}"
 %format interp  = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
@@ -155,6 +157,8 @@
 %format t   = "\AB{t}"
 %format t'   = "\AB{t''}"
 %format z   = "\AB{c}"
+%format n   = "\AB{n}"
+%format n'   = "\AB{n''}"
 
 % Record fields
 %format Tree  = "\AL{Tree}"

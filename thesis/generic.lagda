@@ -50,8 +50,8 @@ bifunctors:
   nabla One       X Y  = Bot
   nabla I         X Y  = Top
   nabla (K A)     X Y  = Bot
-  nabla (R O+ Q)  X Y = nabla R X Y U+ nabla Q X Y
-  nabla (R O* Q)  X Y = nabla R X Y * interpl Q interpr Y U+ interpl R interpr X * nabla Q X Y
+  nabla (R O+ Q)  X Y  = nabla R X Y U+ nabla Q X Y
+  nabla (R O* Q)  X Y  = (nabla R X Y * interpl Q interpr Y)  U+  (interpl R interpr X * nabla Q X Y)
 \end{code}
 
 Following the metaphor of a functor as a container of things, the reader may
