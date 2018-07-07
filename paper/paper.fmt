@@ -45,8 +45,8 @@
 %% Constructors of the above types
 %format ::       = "\hspace{.4em}\AI{:\hspace{-.1em}:}\hspace{.4em}"
 %format []       = "\AI{[]}"
-%format [        = "\AF{[}"
-%format ]        = "\AF{]}"
+%format [        = "\AI{[}"
+%format ]        = "\AI{]}"
 %format just     = "\AI{just}"
 %format nothing  = "\AI{nothing}"
 %format yes      = "\AI{yes}"

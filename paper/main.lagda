@@ -1010,13 +1010,13 @@ results and unprocessed subtrees:
 
 Finally, we can recompute the original tree using a |plug| function as before:
 \begin{code}
-  plugZ-mudown : (R : Reg) {alg : interpl R interpr X -> X} -> Zipper R X alg -> mu R ->  Set
+  plugZ-mudown  : (R : Reg) {alg : interpl R interpr X -> X} 
+                -> Zipper R X alg -> mu R ->  Set
   plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
 \end{code}
 Note that the |coerce| function is used to embed a leaf into a larger
 tree. A similar function can be defined for the `bottom-up' zippers,
 that work on a reversed stack.
-
 
 \subsection{One step of a catamorphism}
 \label{subsec:onestep}
@@ -1314,7 +1314,7 @@ our traversal decreases:
 \begin{code}
   step-<  : (R : Reg) (alg : interpl R interpr X -> X) -> (t : mu R)
           -> (z1 z2 : Zipperup R X alg t)
-          -> step R alg t z1 == inj1 z2 -> llcorner R lrcornerllcorner z2 lrcorner <ZOp z1
+          -> step R alg t z1 == inj1 z2 -> llcorner R lrcornerllcorner t lrcorner z2 <ZOp z1
 \end{code}
 
 Finally, we can write the \emph{tail-recursive machine}, |tail-rec-cata|, as the
@@ -1325,8 +1325,8 @@ function that initiates the computation with suitable arguments:
        -> (z : Zipperup R X alg t) 
        -> Acc (llcorner R lrcornerllcorner t lrcornerIxLtdown ) (Zipperup-to-Zipperdown z) -> X
   rec R alg t z (acc rs) with step R alg t z | inspect (step R alg t) z
-  ... | inj1 x |  [ Is  ] = rec R alg t x (rs x (step-< R alg t z x Is))
-  ... | inj2 y |  [ _   ] = y
+  ... | inj1 z' |  [ Is  ] = rec R alg t z' (rs z' (step-< R alg t z z' Is))
+  ... | inj2 x  |  [ _   ] = x
 
   tail-rec-cata : (R : Reg) -> (alg : interpl R interpr X -> X) -> mu R -> X
   tail-rec-cata R alg x  with load R alg x []

@@ -159,6 +159,7 @@
 %format z   = "\AB{c}"
 %format n   = "\AB{n}"
 %format n'   = "\AB{n''}"
+%format s = "\AB{s}"
 
 % Record fields
 %format Tree  = "\AL{Tree}"
