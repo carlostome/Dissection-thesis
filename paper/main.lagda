@@ -989,9 +989,13 @@ level (code |I|).
 
 Crucially, any non-recursive subtree is independent of |X| -- as is
 exhibited by the following coercion function:
+%
 \begin{code}
   coerce : (R : Reg) -> (x : interpl R interpr X) -> NonRec R x -> interpl R interpr Y  
 \end{code}
+%
+Whose definition is not worth including as it follows directly by induction over
+the predicate.
 
 We can now define the notion of leaf generically, as a substructure
 without recursive subtrees:
