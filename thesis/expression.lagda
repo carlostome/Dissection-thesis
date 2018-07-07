@@ -372,13 +372,15 @@ the input expression |e|:
 %
 \begin{code}
   data IxLtOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
-    <-StepR  : llcorner r lrcorner (t1 , s1) < (t2 , s2)
-             ->  llcorner Add l r lrcorner (t1 , Right l n eq s1) < (t2 , Right l n eq s2)
-    <-StepL  : llcorner l lrcorner (t1 , s1) < (t2 , s2)
-             ->  llcorner Add l r lrcorner (t1 , Left r s1)       < (t2 , Left r s2)
+  data IxLtOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
+    <-StepR  : llcorner r lrcorner ((t1 , s1) , ...) < ((t2 , s2) , ...)
+      ->  llcorner Add l r lrcorner ((t1 , Right l n eq s1) , eq1) < ((t2 , Right l n eq s2) , eq2)
+    <-StepL  : llcorner l lrcorner ((t1 , s1) , ...) < ((t2 , s2) , ...)
+      ->  llcorner Add l r lrcorner ((t1 , Left r s1) , eq1) < ((t2 , Left r s2) , eq2)
 
-    <-Base  :   (e1 == plugZdown t2 s2) ->  (e2 == plugZdown t1 s1)
-            ->  llcorner Add e1 e2 lrcorner (t1 , Right n e1 eq s1) < (t2 , Left e2 s2)
+    <-Base  :   (eq1 : Add e1 e2 == Add e1 (plugZdown t1 s1)) 
+      ->        (eq2 : Add e1 e2 == Add (plugZdown t2 s2) e2)
+      ->  llcorner Add e1 e2 lrcorner ((t1 , Right n e1 eq s1) , eq1) < ((t2 , Left e2 s2) , eq2)
 \end{code}
 %
 Despite the apparent complexity, the relation is straightforward.  The
