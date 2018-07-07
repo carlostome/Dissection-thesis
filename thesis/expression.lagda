@@ -508,7 +508,7 @@ terminates:
   step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
   step e ((n , stk) , eq)
     with unload n (Val n) refl 
-    ... | inj1 (n' , stk')  = ((n' , stk' ) , ...)
+    ... | inj1 (n' , stk')  = inj1 ((n' , stk' ) , ...)
     ... | inj2 v            = inj2 v
 \end{code}
 %
@@ -519,7 +519,7 @@ demonstrates that the |unload| function respects our invariant:
 %
 \begin{code}
   unload-preserves-plugup  :
-    forall (e : Expr) (n : Nat) (eq : eval e == x) (s : Stack2) (z : ZipperType)
+    forall (n : Nat) (e : Expr) (eq : eval e == x) (s : Stack2) (z : ZipperType)
     -> unload n e eq s == inj1 z
     -> forall (e' : Expr) -> plugup e s == e' -> plugZup z == e'
 \end{code}
@@ -630,7 +630,7 @@ As |step| is a wrapper around the function |unload|, it
 suffices to prove the following property of |unload|:
 %
 \begin{code}
-  unload-correct  : forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack2)
+  unload-correct  : forall (n : Nat) (e : Expr)  (eq : eval e == n) (s : Stack2)
                   -> forall (m : Nat) -> unload n e eq s ≡ inj2 m -> eval (plugup e s) == m
   unload-correct e n eq Top .. n refl              = sym eq
   unload-correct e n eq (Left x s) r p             = bot-elim ...

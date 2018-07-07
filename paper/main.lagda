@@ -579,7 +579,7 @@ terminates:
   step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
   step e ((n , stk) , eq)
     with unload n (Val n) refl 
-    ... | inj1 (n' , stk')  = ((n' , stk' ) , ...)
+    ... | inj1 (n' , stk')  = inj1 ((n' , stk' ) , ...)
     ... | inj2 v            = inj2 v
 \end{code}
 We have omitted the second component of the result returned in the
@@ -588,9 +588,9 @@ e|. The crucial lemma that we need to show to complete this proof,
 demonstrates that the |unload| function respects our invariant:
 \begin{code}
   unload-preserves-plugup  :
-    forall (e : Expr) (x : Nat) (eq : eval e == x) (s : Stack2) (z : ZipperType)
-    -> unload x e eq s == inj1 z
-    -> forall (t : Expr) -> plugup e s == t -> plugZup z == t
+    forall (n : Nat) (e : Expr) (eq : eval e == x) (s : Stack2) (z : ZipperType)
+    -> unload n e eq s == inj1 z
+    -> forall (e' : Expr) -> plugup e s == e' -> plugZup z == e'
 \end{code}
 
 Finally, we can define the theorem stating that the |step| function always
@@ -673,7 +673,7 @@ At this point, we still need to prove the |step-correct| lemma that it is
 repeatedly applied.  As the |step| function is defined as a wrapper around the
 |unload| function, it suffices to prove the following property of |unload|:
 \begin{code}
-  unload-correct  :  forall (e : Expr) (n : Nat) (eq : eval e == n) (s : Stack2)
+  unload-correct  :  forall (n : Nat) (e : Expr) (eq : eval e == n) (s : Stack2)
                        forall (m : Nat) 
                        -> unload n e eq s ≡ inj2 m -> eval (plugup e s) == m
 \end{code}
