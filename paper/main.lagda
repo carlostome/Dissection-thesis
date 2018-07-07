@@ -578,7 +578,7 @@ terminates:
 \begin{code}
   step : (e : Expr) -> Zipperup e -> Zipperup e U+ Nat
   step e ((n , stk) , eq)
-    with unload n (Val n) refl 
+    with unload n (Val n) refl stk
     ... | inj1 (n' , stk')  = inj1 ((n' , stk' ) , ...)
     ... | inj2 v            = inj2 v
 \end{code}
