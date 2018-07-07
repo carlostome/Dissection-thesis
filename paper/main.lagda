@@ -601,16 +601,20 @@ returns a smaller configuration:
           -> llcorner e lrcorner Zipperup-to-Zipperdown z' < Zipperup-to-Zipperdown z
 \end{code}
 %
-Proving this statement directly is tedious, as there are many cases to
-cover and the expression |e| occurring in the types makes it difficult
-to identify and prove lemmas covering the individual cases. Therefore,
-we instead define another relation over our configurations directly,
-and prove that there is an injection between both relations under
-suitable assumptions:
+Proving this statement directly is tedious, as there are many cases to cover and
+the expression |e| occurring in the types makes it difficult to identify and
+prove lemmas covering the individual cases. Therefore, we instead define another
+relation over non type-indexed configurations directly, and prove that there
+is an injection between both relations under suitable assumptions:
 
 \begin{code}
   data LtOp :  ZipperType -> ZipperType -> Set where
-    ...
+    <-StepR  : (t1 , s1) < (t2 , s2) 
+             ->  (t1 , Right l n eq s1) < (t2 , Right l n eq s2)
+    <-StepL  : (t1 , s1) < (t2 , s2) 
+             ->  (t1 , Left r s1)  < (t2 , Left r s2)
+    <-Base   :   (e1 == plugZdown t2 s2) ->  (e2 == plugZdown t1 s1)
+             ->  (t1 , Right n e1 eq s1) < (t2 , Left e2 s2)
 
   to  :  (e : Expr) (z1 z2 : ZipperType)
       -> (eq1 : plugZdown z1 == e) (eq2 : plugZdown z2 == e)
@@ -623,7 +627,7 @@ Thus to complete the previous theorem, it is sufficient to show that the functio
 \begin{code}
   unload-<  : forall (n : Nat) (s : Stack2) (e : Expr) (s' : Stack2)
             -> unload n (Val n) refl s == inj1 (t' , s')
-            -> (t' , reverse s') ltOp (n , reverse s)
+            -> (t' , reverse s') < (n , reverse s)
 \end{code}
 The proof is done by induction over the stack supported; the complete
 proof requires some bookkeeping, covering around 200 lines of code,
@@ -637,7 +641,7 @@ an Agda idiom needed to remember that |z'| is the result of the call |step e z|.
   rec e z (acc rs) = with step e z | inspect (step e) z
   ...  | inj2 n  | _       = inj2 n
   ...  | inj1 z' | [ Is ]
-       = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
+       = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is))
 
   tail-rec-eval : Expr -> Nat
   tail-rec-eval e with load e Top
@@ -674,8 +678,8 @@ repeatedly applied.  As the |step| function is defined as a wrapper around the
 |unload| function, it suffices to prove the following property of |unload|:
 \begin{code}
   unload-correct  :  forall (n : Nat) (e : Expr) (eq : eval e == n) (s : Stack2)
-                       forall (m : Nat) 
-                       -> unload n e eq s ≡ inj2 m -> eval (plugup e s) == m
+                       forall (m : Nat) -> unload n e eq s == inj2 m 
+                       -> eval (plugup e s) == m
 \end{code}
 This proof follows immediately by induction over |s : Stack2|.
 

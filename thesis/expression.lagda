@@ -463,7 +463,12 @@ between both under suitable assumptions:
 %
 \begin{code}
   data LtOp :  ZipperType -> ZipperType -> Set where
-    ...
+    <-StepR  : (t1 , s1) < (t2 , s2) 
+             ->  (t1 , Right l n eq s1) < (t2 , Right l n eq s2)
+    <-StepL  : (t1 , s1) < (t2 , s2) 
+             ->  (t1 , Left r s1)  < (t2 , Left r s2)
+    <-Base   :   (e1 == plugZdown t2 s2) ->  (e2 == plugZdown t1 s1)
+             ->  (t1 , Right n e1 eq s1) < (t2 , Left e2 s2)
 
   to  :  (e : Expr) (z1 z2 : ZipperType)
       -> (eq1 : plugZdown z1 == e) (eq2 : plugZdown z2 == e)
@@ -557,7 +562,7 @@ Thus to complete the theorem, it is sufficient to show that the function
 \begin{code}
   unload-<  : forall (n : Nat) (s : Stack2) (e : Expr) (s' : Stack2)
             -> unload n (Val n) refl s == inj1 (t' , s')
-            -> (t' , reverse s') ltOp (n , reverse s)
+            -> (t' , reverse s') < (n , reverse s)
 \end{code}
 %
 The proof is done by induction over the stack supported; the complete
@@ -572,7 +577,7 @@ an \Agda~idiom needed to remember that |z'| is the result of the call |step e z|
        -> Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z) -> Zipperup e U+ Nat
   rec e z (acc rs) = with step e z | inspect (step e) z
   ...  | inj2 n   | _       = inj2 n
-  ...  | inj1 z'  | [ Is ]  = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is)
+  ...  | inj1 z'  | [ Is ]  = rec e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is))
 \end{code}
 %
 The auxiliary recursor |rec| is defined by structural recursion over the
@@ -631,7 +636,7 @@ suffices to prove the following property of |unload|:
 %
 \begin{code}
   unload-correct  : forall (n : Nat) (e : Expr)  (eq : eval e == n) (s : Stack2)
-                  -> forall (m : Nat) -> unload n e eq s ≡ inj2 m -> eval (plugup e s) == m
+                  -> forall (m : Nat) -> unload n e eq s == inj2 m -> eval (plugup e s) == m
   unload-correct e n eq Top .. n refl              = sym eq
   unload-correct e n eq (Left x s) r p             = bot-elim ...
   unload-correct e n eq (Right r' e' eq' s) r p    
@@ -751,7 +756,7 @@ define the type of stacks as follows:
 If we assume that the rest of the facilities, such as auxiliary datatypes,
 functions, etc, can be adapted to use |Stack3| then the tail-recursive evaluator
 would have the same runtime impact as the pair of mutually recursive function |load|
-and |unload| from the introduction (\Cref{sec:intro:descr}).
+and |unload1| from the introduction (\Cref{sec:intro:descr}).
 
 \paragraph{Tail-recursive fold}
 
@@ -820,14 +825,14 @@ relate for the type of expressions, |Expr|?
 
 The first problem that arises, when formalizing Danvy's machine in a total
 language such as \Agda, is that the decomposition step essentially corresponds
-to the pair of mutually recursive functions |load| and |unload|, from the
+to the pair of mutually recursive functions |load| and |unload1|, from the
 introduction (\Cref{sec:intro:descr}), that the termination checker classifies
 as non terminating. As we did for our tail-recursive machine, we could define a
 well-founded relation to show that traversing an expression to find its leftmost
 redex terminates. 
 
 Once a redex is found, it is contracted. In our machine, the algebra passed as a
-parameter is used in |unload| to combine the results of previously evaluated
+parameter is used in |unload1| to combine the results of previously evaluated
 subexpressions. 
 
 In Danvy's one-step function, the next step is to recompose the term by plugging
@@ -854,12 +859,12 @@ machine.
 
 \paragraph{Fine-grained reduction}
 
-Our tail-recursive evaluator, |tail-rec-eval|, iterates the function |unload|
+Our tail-recursive evaluator, |tail-rec-eval|, iterates the function |unload1|
 until the input expression is completely consumed and the result of the fold is
-returned. It can be argued that |unload| completes an excessive amount of work: while
+returned. It can be argued that |unload1| completes an excessive amount of work: while
 traversing the stack in search for the next subexpression, it might perform
 \emph{several reductions} before dispatching a call to |load| or returning a
-value. \Cref{fig:spine} shows an example; the function |unload|, starting
+value. \Cref{fig:spine} shows an example; the function |unload1|, starting
 from the configuration corresponding to the leaf |Val 1|, traverses the
 \emph{spine} at once while accumulating and reducing all partial results.
 
@@ -878,7 +883,7 @@ construction.
 
 There is one fundamental idea in the definition of our tail-recursive evaluator:
 the intermediate states, or configurations of the abstract machine, always
-represent locations of leaves in the input expression. If |unload| is
+represent locations of leaves in the input expression. If |unload1| is
 implemented not to consume the spine at once, we will have to reconsider what
 constitute a valid configuration; aside from leaves, a not yet contracted redex
 is also a possible internal state of the machine:
