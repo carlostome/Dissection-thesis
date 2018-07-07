@@ -131,7 +131,7 @@ We can now define a tail-recursive version of |eval| by
 calling |load| with an initially empty stack:
 
 \begin{code}
-  tail-rec-eval : Expr → Nat
+  tail-rec-eval : Expr -> Nat
   tail-rec-eval e = load e Top
 \end{code}
 
@@ -489,7 +489,7 @@ As a corollary of the |plugdown-to-plugup| property, we can define a
 pair of functions to switch between |Zipperup| and |Zipperdown|:
 
 \begin{code}
- Zipperdown-to-Zipperup : (e : Expr) → Zipperdown e -> Zipperup e
+ Zipperdown-to-Zipperup : (e : Expr) -> Zipperdown e -> Zipperup e
 
  Zipperup-to-Zipperdown : (e : Expr) -> Zipperup e -> Zipperdown e
 \end{code}
@@ -529,7 +529,7 @@ proof below:
     <-WF e x = acc (aux e x)
           where
             aux : forall (e : Expr)  (x y : Zipperdown e)
-                → llcorner e lrcorner y < x → Acc (llcorner e lrcornerLtOp) y
+                -> llcorner e lrcorner y < x -> Acc (llcorner e lrcornerLtOp) y
             aux = ...
 \end{code}
 The proof follows the standard schema\footnote{Most well-founded proofs in Agda standard
@@ -665,7 +665,7 @@ produced, will behave the same as the original evaluator, |eval|. This
 is expressed by the following lemma, proven by induction over the
 accessibility predicate:
 \begin{code}
-  rec-correct  : forall (e : Expr) → (z : Zipperup e)
+  rec-correct  : forall (e : Expr) -> (z : Zipperup e)
                -> (ac : Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z))
                -> eval e == rec e z ac
   rec-correct e z (acc rs)
@@ -844,7 +844,7 @@ construction, showing how to calculate the type of abstract machine
 configurations for any type in our universe. The key definition,
 |nabla|, computes a bifunctor for each element of our universe:
 \begin{code}
-  nabla : (R : Reg) → (Set → Set → Set)
+  nabla : (R : Reg) -> (Set -> Set -> Set)
   nabla Zero      X Y  = Bot
   nabla One       X Y  = Bot
   nabla I         X Y  = Top
@@ -895,8 +895,8 @@ In order to ease things later, we bundle a \emph{dissection} together with the
 functor to which it \emph{plug}s as a type-indexed type.
 
 \begin{code}
-  data IxDissection (R : Reg) (X Y : Set) (eta : X → Y) (tx : interpl R interpr Y) : Set where
-    prodOp : (d : Dissection R X Y) → plug R eta d == tx → IxDissection R X Y eta tx 
+  data IxDissection (R : Reg) (X Y : Set) (eta : X -> Y) (tx : interpl R interpr Y) : Set where
+    prodOp : (d : Dissection R X Y) -> plug R eta d == tx -> IxDissection R X Y eta tx 
 \end{code}
 
 \subsection{Generic configurations}
@@ -916,7 +916,7 @@ As we did for the |Stack2| datatype from the introduction, we also
 choose to store the original subtrees that have been visited and their
 corresponding correctness proofs:
 \begin{code}
- record Computed (R : Reg) (X : Set) (alg : interpl R interpr X → X) : Set where
+ record Computed (R : Reg) (X : Set) (alg : interpl R interpr X -> X) : Set where
     constructor _,_,_
     field
       Tree   : mu R
@@ -925,7 +925,7 @@ corresponding correctness proofs:
 
 \end{code}
 \begin{code}
-  Stack : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
+  Stack : (R : Reg) -> (X : Set) -> (alg : interpl R interpr X -> X) -> Set
   Stack R X alg = List (nabla R (Computed R X alg) (mu R))
 \end{code}
 A \emph{stack} is a list of \emph{dissections}. To the left we have
@@ -938,12 +938,12 @@ As we saw in \Cref{sec:basic-correctness}, we can define two
 different \emph{plug} operations on these stacks:
 \begin{code}
   plug-mudown  : (R : Reg) -> {alg : interpl R interpr X -> X}
-               -> mu R -> Stack R X alg → mu R
+               -> mu R -> Stack R X alg -> mu R
   plug-mudown R t []         = t
   plug-mudown R t (h :: hs)  = In (plug R Computed.Tree h (plug-mudown R t hs))
 
   plug-muup  : (R : Reg) -> {alg : interpl R interpr X -> X}
-             -> mu R → Stack R X alg → mu R
+             -> mu R -> Stack R X alg -> mu R
   plug-muup R t []         = t
   plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
 \end{code}
@@ -959,15 +959,15 @@ To describe leaves, we introduce the following predicate |NonRec|,
 stating when a tree of type |interpl R interpr X| does not refer to
 the variable |X|, that will be used to represent recursive subtrees:
 \begin{code}
-  data NonRec : (R : Reg) → interpl R interpr X → Set where
+  data NonRec : (R : Reg) -> interpl R interpr X -> Set where
     NonRec-One  : NonRec One tt
-    NonRec-K    : (B : Set) → (b : B) → NonRec (K B) b
-    NonRec-+1   : (R Q : Reg) → (r : interpl R interpr X)
-                → NonRec R r → NonRec (R O+ Q) (inj1 r)
-    NonRec-+2   : (R Q : Reg) → (q : interpl Q interpr X)
-                → NonRec Q q → NonRec (R O+ Q) (inj2 q)
-    NonRec-*    : (R Q : Reg) → (r : interpl R interpr X) → (q : interpl Q interpr X)
-                → NonRec R r → NonRec Q q → NonRec (R O* Q) (r , q)
+    NonRec-K    : (B : Set) -> (b : B) -> NonRec (K B) b
+    NonRec-+1   : (R Q : Reg) -> (r : interpl R interpr X)
+                -> NonRec R r -> NonRec (R O+ Q) (inj1 r)
+    NonRec-+2   : (R Q : Reg) -> (q : interpl Q interpr X)
+                -> NonRec Q q -> NonRec (R O+ Q) (inj2 q)
+    NonRec-*    : (R Q : Reg) -> (r : interpl R interpr X) -> (q : interpl Q interpr X)
+                -> NonRec R r -> NonRec Q q -> NonRec (R O* Q) (r , q)
 
 \end{code}
 As an example, in the pattern functor for the \AD{Expr} type, |K Nat O+ (I O* I)|,
@@ -990,7 +990,7 @@ level (code |I|).
 Crucially, any non-recursive subtree is independent of |X| -- as is
 exhibited by the following coercion function:
 \begin{code}
-  coerce : (R : Reg) -> (x : interpl R interpr X) → NonRec R x -> interpl R interpr Y  
+  coerce : (R : Reg) -> (x : interpl R interpr X) -> NonRec R x -> interpl R interpr Y  
 \end{code}
 
 We can now define the notion of leaf generically, as a substructure
@@ -1004,13 +1004,13 @@ Just as we saw previously, a configuration is now given by the current
 leaf in focus and the stack, given by a dissection, storing partial
 results and unprocessed subtrees:
 \begin{code}
-  Zipper : (R : Reg) → (X : Set) → (alg : interpl R interpr X → X) → Set
+  Zipper : (R : Reg) -> (X : Set) -> (alg : interpl R interpr X -> X) -> Set
   Zipper R X alg = Leaf R X * Stack R X alg
 \end{code}
 
 Finally, we can recompute the original tree using a |plug| function as before:
 \begin{code}
-  plugZ-mudown : (R : Reg) {alg : interpl R interpr X → X} → Zipper R X alg → mu R →  Set
+  plugZ-mudown : (R : Reg) {alg : interpl R interpr X -> X} -> Zipper R X alg -> mu R ->  Set
   plugZ-mudown R ((l , isl) , s) t = plug-mudown R (In (coerce l isl)) s t
 \end{code}
 Note that the |coerce| function is used to embed a leaf into a larger
@@ -1068,7 +1068,7 @@ Q X alg| is the current stack. The entire function will compute the
 initial configuration of our machine of type |Zipper Q X alg| \footnote{As in the introduction, we use a sum type |U+| to align its type with that of |unload|.}:
 
 \begin{code}
-load  : (R : Reg) {alg : interpl R interpr X → X} -> mu R
+load  : (R : Reg) {alg : interpl R interpr X -> X} -> mu R
       -> Stack R X alg -> Zipper R X alg U+ X
 load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
@@ -1087,7 +1087,7 @@ incremented by a new element that corresponds to the \emph{dissection} of the
 functor layer up to that point. The second continuation is replaced with the
 initial one.
 \begin{code}
-  first-cps I Q (In x) k f s  = first-cps Q Q x id (lambda z  → inj1 . prodOp z) (k tt :: s)
+  first-cps I Q (In x) k f s  = first-cps Q Q x id (lambda z  -> inj1 . prodOp z) (k tt :: s)
 \end{code}
 In the coproduct, both cases are similar, just having to account for the
 use of different constructors in the continuations.
@@ -1135,7 +1135,7 @@ processed the function |load| is called.
 
 \begin{code}
   unload : (R : Reg)
-         -> (alg : interpl R interpr X → X)
+         -> (alg : interpl R interpr X -> X)
          -> (t : mu R) -> (x : X) -> catamorphism R alg t == x
          -> Stack R X alg
          -> Zipper R X alg U+ X
@@ -1200,7 +1200,7 @@ consider the recursive nature of our datatypes. We define the
 required relation over dissections interpreted on \emph{any} sets |X|
 and |Y| as follows:
 \begin{code}
-  data <NablaOp : (R : Reg) → Dissection R X Y → Dissection R X Y → Set where
+  data <NablaOp : (R : Reg) -> Dissection R X Y -> Dissection R X Y -> Set where
     step-+1  :   llcorner  R lrcorner      (r , t1)       <Nabla    (r' , t2)
              ->  llcorner R O+ Q lrcorner  (inj1 r , t1)  <Nabla (inj1 r' , t2)
 
@@ -1238,7 +1238,7 @@ the functor of type | interpl R interpr X | to which both \emph{dissections}
 
 \begin{code}
   data IxLt {X Y : Set} {eta : X -> Y} :  (R : Reg) -> (tx : interpl R interpr Y) 
-             -> IxDissection R X Y eta tx -> IxDissection R X Y eta tx → Set where
+             -> IxDissection R X Y eta tx -> IxDissection R X Y eta tx -> Set where
 
 
   data IxLtdown {X : Set} (R : Reg) {alg : interpl R interpr X -> X}  : (t : mu R) 
@@ -1264,7 +1264,7 @@ one step of the \emph{catamorphism}. The function |step| statically enforces
 that the input tree remains the same both in its argument and in its result.
 
 \begin{code}
-  step  : (R : Reg) → (alg : interpl R interpr X → X) -> (t : mu R)
+  step  : (R : Reg) -> (alg : interpl R interpr X -> X) -> (t : mu R)
         -> Zipperup R X alg t -> Zipperup R X alg t U+ X
 \end{code}
 We omit the full definition. The function |step| performs a call to |unload|,
@@ -1273,11 +1273,11 @@ a generic tree of type |interpl R interpr (mu R)|.
 
 We show that |unload| preserves the invariant, by proving the following lemma:
 \begin{code}
-  unload-preserves  : forall (R : Reg) {alg : interpl R interpr X → X}
-                    → (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg)
-                    → (z : Zipper R X alg)
-                    → forall  (e : mu R) → plug-muup R t s == e 
-                              → unload R alg t x eq s == inj1 z → plug-muup R z == e
+  unload-preserves  : forall (R : Reg) {alg : interpl R interpr X -> X}
+                    -> (t : mu R) (x : X) (eq : catamorphism R alg t == x) (s : Stack R X alg)
+                    -> (z : Zipper R X alg)
+                    -> forall  (e : mu R) -> plug-muup R t s == e 
+                              -> unload R alg t x eq s == inj1 z -> plug-muup R z == e
 \end{code}
 
 Next, we show that applying the function |step| to a
@@ -1295,7 +1295,7 @@ Thus showing that the new configuration is smaller amounts to show that the
 proving the following lemma:
 \begin{code}
   right-<  : right R dr (t , y , eq) == inj2 (dr' , t')
-           → llcorner R lrcorner ((dr' , t')) <Nabla ((dr , t)) 
+           -> llcorner R lrcorner ((dr' , t')) <Nabla ((dr , t)) 
 \end{code}
 We have simplified the type signature, leaving out the universally
 quantified variables and their types. 
@@ -1312,23 +1312,23 @@ over the stack.
 In this fashion, we can prove the following statement that
 our traversal decreases:
 \begin{code}
-  step-<  : (R : Reg) (alg : interpl R interpr X → X) → (t : mu R)
-          → (z1 z2 : Zipperup R X alg t)
-          → step R alg t z1 == inj1 z2 → llcorner R lrcornerllcorner z2 lrcorner <ZOp z1
+  step-<  : (R : Reg) (alg : interpl R interpr X -> X) -> (t : mu R)
+          -> (z1 z2 : Zipperup R X alg t)
+          -> step R alg t z1 == inj1 z2 -> llcorner R lrcornerllcorner z2 lrcorner <ZOp z1
 \end{code}
 
 Finally, we can write the \emph{tail-recursive machine}, |tail-rec-cata|, as the
 combination of an auxiliary recursor over the accessibility predicate and a top-level
 function that initiates the computation with suitable arguments:
 \begin{code}
-  rec  : (R : Reg) (alg : interpl R interpr X → X) (t : mu R) 
-       → (z : Zipperup R X alg t) 
-       → Acc (llcorner R lrcornerllcorner t lrcornerIxLtdown ) (Zipperup-to-Zipperdown z) → X
+  rec  : (R : Reg) (alg : interpl R interpr X -> X) (t : mu R) 
+       -> (z : Zipperup R X alg t) 
+       -> Acc (llcorner R lrcornerllcorner t lrcornerIxLtdown ) (Zipperup-to-Zipperdown z) -> X
   rec R alg t z (acc rs) with step R alg t z | inspect (step R alg t) z
   ... | inj1 x |  [ Is  ] = rec R alg t x (rs x (step-< R alg t z x Is))
   ... | inj2 y |  [ _   ] = y
 
-  tail-rec-cata : (R : Reg) → (alg : interpl R interpr X → X) → mu R → X
+  tail-rec-cata : (R : Reg) -> (alg : interpl R interpr X -> X) -> mu R -> X
   tail-rec-cata R alg x  with load R alg x []
   ... | inj1 z = rec R alg (z , ...) (<Z-WF R z)
 \end{code}
@@ -1345,16 +1345,16 @@ returns a ground value of type |X|, we have to show that such value is is the
 result of applying the \emph{catamorphism} to the input. Recall that |step| is a
 wrapper around |unload|, hence it suffices to prove the following lemma:
 \begin{code}
-  unload-correct  : forall  (R : Reg) (alg : interpl R interpr X → X)
+  unload-correct  : forall  (R : Reg) (alg : interpl R interpr X -> X)
                             (t : mu R) (x : X) (eq : catamorphism R alg t == x)
                             (s : Stack R X alg) (y : X)  
-                  → unload R alg t x eq s == inj2 y
-                  → ∀ (e : mu R) → plug-muup R t s == e → catamorphism R alg e == y
+                  -> unload R alg t x eq s == inj2 y
+                  -> ∀ (e : mu R) -> plug-muup R t s == e -> catamorphism R alg e == y
 \end{code}
 Our generic correctness result is an immediate consequence:
 \begin{code}
-  correctness  : forall (R : Reg) (alg : interpl R interpr X → X) (t : mu R)
-               → catamorphism R alg t == tail-rec-cata R alg t
+  correctness  : forall (R : Reg) (alg : interpl R interpr X -> X) (t : mu R)
+               -> catamorphism R alg t == tail-rec-cata R alg t
 \end{code}
 
 \subsection{Example}
