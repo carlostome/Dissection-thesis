@@ -94,7 +94,6 @@ determines the order of the effects involved. A common method to encode effects
 in pure functional languages is to use monads, thus, a monadic fold would be the
 self-evident choice. Nonetheless, it is not straightforward to understand if it
 is possible to adapt our construction to cope with the effectful fold.
-\todo{citations}
 
 Marking some parts of the code as computationally irrelevant, such as
 the relation or the proofs, is important to keep the resulting abstract machine
@@ -111,7 +110,7 @@ possible to export our construction to a more mature proof system such as
 and those used for computing can be clearly separated.  The impredicative
 universe \textbf{Prop} could be used for the former, while, the predicative
 universe, \textbf{Type}, for the latter.  Nevertheless, it is well-known
-\todo{do you know anyone to cite} that \emph{Coq} as a theorem prover excels for
+that \emph{Coq} as a theorem prover excels for
 its capability of using the dependently typed part of the language to prove
 properties about programs expressed in the simply typed fragment. The generic
 machinery relies upon dependent types, thus, it is not unambiguous how suitable is
