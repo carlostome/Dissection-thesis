@@ -944,28 +944,6 @@ Finally, a tail-recursive machine \emph{equivalent} to the one we derived in
   tail-rec-evalG = tail-rec-cata expr alg
 \end{code}
 
-\paragraph{Dyck words}
-
-We start by defining the type of Dyck words that our machine will recognize. To
-do so, we assume that there are three different types of parethesis: parethesis
-`)', brackets `}', and square brackets `]'. The regular code for a three option
-choice is the following:
-%
-\begin{code}
-  Parenthesis : Reg
-  Parenthesis = One O+ One O+ One
-\end{code}
-
-A Dyck word is a finite sequence of parenthesis that may be empty --a list
-specialized to |Parenthesis|:
-%
-\begin{code}
-  DyckF : Reg
-  DyckF = One O+ (Parenthesis O* I)
-
-  Dyck : Set
-  Dyck = mu DyckF
-\end{code}
 
 
 \section{Discussion}

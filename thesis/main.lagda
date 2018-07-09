@@ -216,6 +216,8 @@
 \renewcommand\hscodestyle{%
    \setlength\leftskip{1.25em}%
 }
+
+\bibpunct{[}{]}{,}{a}{}{;}
 %--------------------------------------------------
 
 \newcommand{\rewrite}[1]{\todo[color=blue!40,noline]{Rewrite}}
@@ -247,7 +249,10 @@
 \input{generic}
 \input{conclusion}
 
-\bibliographystyle{plain}
+% \bibliographystyle{ACM-Reference-Format}
+%% Citation style
+% \citestyle{acmauthoryear}  %% For author/year citations
+\bibliographystyle{plainnat}
 % \bibliographystyle{alpha}
 % \bibliographystyle{apa}
 \bibliography{main}
