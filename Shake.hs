@@ -29,6 +29,9 @@ main = shakeArgs shakeOptions $ do
   phony "paper" $ do
     need ["paper/main" <.> pdf]
 
+  phony "presentation" $ do
+    need ["presentation/main" <.> pdf]
+
   phony "distclean" $ do
     need ["clean-paper" , "clean-thesis"]
 
@@ -72,6 +75,21 @@ main = shakeArgs shakeOptions $ do
     need $ [main , bib] ++ figures
     cmd_ "latexmk -f -pdf -cd paper/main.tex"
 
+  -- presentation
+  "presentation/main" <.> tex %> \out -> do
+    putNormal "Building presentation"
+    let input  = out -<.> lagda
+        dir    = takeDirectory out
+    need [input, "presentation/presentation.fmt"]
+    cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
+     
+
+  "presentation/main" <.> pdf %> \out -> do
+    putNormal "Building presentation"
+    let main  = out -<.> tex
+    need [main]
+    cmd_ "latexmk -xelatex -pdf -cd presentation/main.tex"
+
   -- cleaning
   phony "clean-paper" $ do
     putNormal "Cleaning files in paper"
@@ -82,3 +100,8 @@ main = shakeArgs shakeOptions $ do
     putNormal "Cleaning files in paper"
     cmd_ "latexmk -C -cd thesis/main.tex"
     removeFilesAfter "thesis" ["*.tex", "*.bbl", "main.pdf", "main.ptb"]
+
+  phony "clean-presentation" $ do
+    putNormal "Cleaning files in paper"
+    cmd_ "latexmk -C -cd presentation/main.tex"
+    removeFilesAfter "presentation" ["*.tex", "*.bbl", "main.pdf", "main.ptb" , "main.nav", "main.snm"]
