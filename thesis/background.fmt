@@ -21,6 +21,7 @@
 %format lrcornerllcorner = "\AD{\ensuremath{\lrcorner\llcorner}}"
 %format Acc = "\AD{Acc}"
 %format Either  = "\AD{Either}"
+%format Bool  = "\AD{Bool}"
 
 % Constructors
 %format Add   = "\AI{Add}"
@@ -61,7 +62,9 @@
 %format to  = "\AF{to}"
 %format to-from  = "\AF{to-from}"
 %format EitherG  = "\AF{Either\ensuremath{^{\scaleto{G}{4pt}}}}"
+%format BoolG  = "\AF{Bool\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format EitherR  = "\AF{Either\ensuremath{^{\scaleto{Reg}{4pt}}}}"
+%format BoolR  = "\AF{Bool\ensuremath{^{\scaleto{Reg}{4pt}}}}"
 %format EitherG  = "\AF{Either\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format ListR  = "\AF{List\ensuremath{^{\scaleto{Reg}{4pt}}}}"
 %format ListG  = "\AF{List\ensuremath{^{\scaleto{G}{4pt}}}}"
@@ -116,6 +119,7 @@
 %format right-<  = "\AF{right-<}"
 %format Zipperup-to-Zipperdown = "\AF{Config\ensuremath{_{\Uparrow}^{\scaleto{G}{4pt}}}-to-Config\ensuremath{_{\Downarrow}^{\scaleto{G}{4pt}}}}"
 %format bot-elim = "\AF{\ensuremath{\bot}-elim}"
+%format idS     = "\AF{id\ensuremath{_{S}}}"
 
 
 % Bound variables

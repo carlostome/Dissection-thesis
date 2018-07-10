@@ -85,6 +85,8 @@
 %format prodOp = "\AI{\_\text{,}\_}"
 %format convert   = "\AF{convert}"
 %format foldExpr   = "\AF{fold}"
+%format go   = "\AF{go}"
+%format tail-rec-cont   = "\AF{tail-rec-cont}"
 
 
 %format <-Well-founded = "\AF{<\text{-}Well-founded}"
@@ -94,7 +96,8 @@
 
 % Bound variables
 %format X    = "\AB{X}"
-%format a    = "\AL{a}"
+%format a    = "\AL{\ensuremath{\alpha}}"
+%format k    = "\AL{\ensuremath{k}}"
 %format ac    = "\AB{ac}"
 %format n     = "\AB{n}"
 %format n'     = "\AB{n''}"

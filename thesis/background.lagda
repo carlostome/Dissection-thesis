@@ -5,14 +5,13 @@
 
 In this \namecref{chap:background}, we introduce some of the concepts that are
 mandatory prerequisites for understanding the main parts of this master thesis.
-The chapter is organized into three different sections, whose content is totally
-unrelated. We begin in \Cref{sec:background:fold} with a broad overview of
-semantics in programming languages and its relation to the content of this
-master thesis.
-In \Cref{sec:background:termination}, we revisit the literature about techniques
-for assisting the termination checker of \Agda. Lastly, in
-\Cref{sec:background:generic} we quickly overview generic programming in the
-context of this thesis. 
+The chapter is organized into three different sections, whose content is
+seemingly unrelated. We begin in \Cref{sec:background:fold} with a broad
+overview of semantics in programming languages and its relation to the content
+of this master thesis.  In \Cref{sec:background:termination}, we revisit the
+literature about techniques for assisting the termination checker of \Agda.
+Lastly, in \Cref{sec:background:generic} we quickly overview generic programming
+in the context of this thesis. 
 
 \section{A broader perspective}
 \label{sec:background:fold}
@@ -20,34 +19,32 @@ context of this thesis.
 There are two main approaches for formalizing the semantics of a programming
 language: small-step --or operational-- semantics, where for each construct of
 the language it is specified how the abstract machine, which is evaluating the
-program, evolves; and big-step --or natural-- semantics, where each construct is
-mapped by a \emph{mathematical} function to the value it evaluates in the
-denotational domain of the language. 
+program, evolves; and denotational semantics, where each construct is mapped by
+a \emph{mathematical} function to the value it evaluates in the denotational
+domain of the language. 
 
 The connection between both style of formalizing the semantics has been
-extensively exploited , for example see Ager et
-al\cite{Ager:2003:FCE:888251.888254}, to derive well-known abstract machines,
-such as the Krivine machine, from a natural semantics specification and vice
-versa. However, as they acknowledge:
+extensively exploited, for example see \cite{Ager:2003:FCE:888251.888254}, to
+derive well-known abstract machines, such as the \cite{krivine2007call} machine,
+from a denotational semantics specification and vice versa. However, as they
+state in the article:
 
 \begin{displayquote}
-Most of our
-implementations of the abstract machines raise compiler warnings
-about non-exhaustive matches. These are inherent to programming
-abstract machines in an ML-like language.
+Most of our implementations of the abstract machines raise compiler warnings
+  about non-exhaustive matches. These are inherent to programming abstract
+  machines in an ML-like language.
 \end{displayquote}
 
 A dependently typed programming language such as \Agda~is a perfect vehicle for
 the study and implementation of programming languages. Dependent types can be
 fruitfully leveraged for defining both the language, and correspondingly
-formalize and verify its semantics either in a small-step or a natural style.  .
-For example, Swierstra\cite{swierstra2012mathematics} shows how to derive the
+formalize and verify its semantics either in a small-step or a denotational style.  .
+For example, \Citet{swierstra2012mathematics} shows how to derive the
 Krivine machine in \Agda~starting from a small-step evaluation semantics for
 lambda terms.
 
-However, implementing both a small-step and a big-step evaluation function and
-proving that they are related is a tedious work that requires some not
-out of the book expertise. 
+However, implementing both a small-step and a denotation function and proving
+that they are related is a tedious work that requires some particular expertise. 
 
 From a high level perspective, the denotational semantics of a language is a
 function that is both compositional and structurally recursive. For each term,
@@ -72,144 +69,17 @@ construct a generic tail-recursive function --i.e. the low-level abstract
 machine-- that we later formally proof equal to the fold induced by its
 structure.
 
-
-
-% seen as a first step to, exploiting the connection between small-step and big-step semantics
-% it should be possible to derive one from the other. Given the semantics of a
-% programming language as a fold over its expressions, calculating a correspoding
-% small-step abstract machine that is equivalent 
-
-% it has to be possible to exploit the relation between big-step and
-% small-step to derive an abstract machine starting from a denotational function
-% expressed as a fold. The amount
-
-
-
-% Nevertheless, 
-% Starting from the configurations, or internal states, of the abstract
-% machine, the programming langrequires is a more involved 
-
-% specifying the natural
-% semantics of a language amounts to find 
-
-% Nevertheless, it is 
-
-% The relationship between big-step and small-step semantics for lambda calculi
-% In this section, we motivate the work presented in this master thesis by showing
-% how a dependently typed programming language such as \Agda is a perfect vehicle
-% for the study of semantics.
-
-
-
-% relation between the states of a machine abstract machine that uses the language as its input
-% language and describe the transitions between states of the machine
-% corresponding to the constructs in the language; or use a h
-
-% + There are two ways to give semantics to a language: small step (operational) semantics and
-% big-step (natural) semantics: One consists of specifying the step-by-step
-% transition system to execute the program, the latter on specifying by defining a
-% mathematicall function that assigns meaning to each language construct in an
-% apropiate target domain.
-% Long time ago results have shown the equivalence of both, 
-% In this section, we give a brief overview of both methods to help the reader
-% understand how the concrete work presented in this master thesis  the connection
-% of the work presented in this master thesis
- 
-%\subsection{Abstract machines and \emph{tail-recursive functions}}
-
-%Abstract machines are a mathematical model whose purpose is to study and
-%analyze the runtime execution of a program written in the machine's source
-%language. They are \textit{abstract} because the concrete implementation details
-%are deliberately omitted; and they are \textit{machines} because they permit the
-%step-by-step execution of programs. 
-
-%Over the years a variety of abstract machines have been developed to study in
-%depth the 
-%+ Many abstract machines for many different languages/paradigms
-%+ Special interest in abstract machines for functional programming
-%languages/lazy based on lambda calculus
-%+ We can use a dependently typed programming language such as Agda to formalize
-%abstract machines.
-%+ Much better than by hand, the typechecker make us be honest about correctness
-%and termination.
-%+ We can then use the same language to carry proofs of properties about the
-%machine such as progression, preservation etc.
-%+ As an example, we can encode a stack machine for "executing" addition on
-%natural numbers. First we define the Instructions of the machine. We take
-%advantage of agda dependent types to rule out "incorrect combinations of
-%instructions, the type is parametrized by two natural numbers that specify the
-%number of elements in the stack before and after executing the instruction
-%The type of instructions is as follows:
-%%
-%\begin{code}
-%data INSTR : Nat -> Nat -> Set where
-%  HALT  : {n : Nat}                              -> INSTR n        n
-%  PUSH  : {n k : Nat} -> Nat  -> INSTR (1 + n) k -> INSTR n        k
-%  ADD   : {n k : Nat}         -> INSTR (1 + n) k -> INSTR (2 + n)  k
-%\end{code}
-%%
-%Now we have to define what means to execute an instruction. Abstract machines
-%are normaly specified as transition systems, 
-%\begin{code}
-%Stack = Vec Nat
-
-%execute : ∀ {n m} -> INSTR n m -> Stack n -> Stack m
-%execute HALT stk                        = stk
-%execute (PUSH n  is) stk                = execute is (n :: stk)
-%execute (ADD     is) (y :: (x :: stk))  = execute is ((x + y) :: stk)
-%\end{code}
-
-%that permits the step-by-step
-%execution of programs written in the machine source language. They are
-%\textit{abstract} because the implementation details are deliberately omitted; they are high level
-%mathematical tools to study and analyze programming languages.
-
-%The design of abstract machines to formaly specify the semantics of programming
-%languages is of a long tradition. Pioneering work by 
-
-%Abstract machine 
-
-%The is a long tradition in the programming languages research to dote a
-%programming language with semantics via the use of an abstract machine.
-%  + Assign semantics via an abstract machine
-%    - forget of implementation details and focus on transition system
-%    - high level of abstraction => useful to carry proofs about properties of
-%    the language being defined
-%  + But an abstract machine is a first order transition system that can be
-%  encoded in a suitable higher-order programming language
-%  + A tail-recursive function does the job, any argument to the function is part
-%  of the internal state of the machine
-%  + For example, we can create a machine language for the type of expr in the
-%  introduction. And a function that executes it. We can boil down from the s. What is really doing is assigning
-%  semantics
-
-%\subsection{Denotational semantics and \emph{folds}}
-
-%On the other hand, we can assign semantics to a programming language by
-%embedding it in another with better understood semantics. The idea is that once
-%we can represent the abstract syntax tree of the language, we can define an
-%evaluator function that reduces (using the semantics of the host language)
-%programms written in the object or defined language.
-
-%It wouldnt be nice that we can join efforts using a dependently typed
-%programming language both as the way of implementing the abstact machine and the
-%interpreter such that thanks to dependent types we can mathematically prove the
-%equivalence between them.
-
-%If somebody defines a programming language as an ast, a fold can the way that
-%compossitionally we can assign a meaning to each of the constructs of the
-%language.
-
 \section{Termination in type theory}
 \label{sec:background:termination}
 
 \Agda~is a language for describing total functions. General recursive functions
 are not allowed as they would render the logic inconsistent. It is not possible
-to decide in general if a recursive function terminates, as such will imply that
-we have solved the halting problem. To ensure that any defined function
-terminates, \Agda~uses a termination checker based on foetus
-\cite{Abel98foetus}, that syntactically checks whether the recursive calls of a
-function are performed over \textbf{structurally} smaller arguments.
+to decide in general if a recursive function terminates. To ensure that any
+defined function terminates, \Agda~uses a termination checker based on foetus
+\citep{Abel98foetus}, that syntactically checks whether the recursive calls of a
+function are performed over \textbf{structurally} smaller arguments. The
+termination checker, however, is not complete: there are programs that terminate
+but the termination checker classifies as possibly non terminating.
 
 Many interesting --and terminating-- functions that we would like to define do
 not conform to the pattern of being defined by structural recursion. For
@@ -233,14 +103,14 @@ function \emph{quicksort} implemented in a functional style:
                             quickSortN p (filter (not . (p x)) xs)
 \end{code}
 %
-\Agda's termination checker marks the function as possibly non-terminating.
+\Agda's termination checker marks the function as possibly non terminating.
 In the second clause of the definition, the arguments to both recursive calls,
 |filter (p x) xs| and |filter (not . (p x))| are not structurally smaller than
 the input list |x :: xs|. The termination checker has no reason whatsoever to
 believe that the application of the function |filter| to the list does not
 increase its size. As a contrived example, we could have made a mistake in the
 definition of |filter|, replicating elements, so that |quickSort| as defined
-above diverges:
+above may diverge:
 %
 \begin{code}
   filterBad : (a -> Bool) -> List a -> List a
@@ -252,10 +122,10 @@ above diverges:
 %
 On its own, |filterBad| is a perfectly valid function that the termination
 checker classifies as terminating for any possible input. However, if any other
-function uses its result as a recursive argument, such function will diverge.  
+function uses its result as a recursive argument, such function could diverge.  
 
 The termination checker only uses \emph{local} information of the definition of
-a function to classify it as terminating or possibly non-terminating.
+a function to classify it as terminating or possibly non terminating.
 Concretely, it constructs a graph between the parameters of the function and the
 arguments passed to recursive calls and tries to find a well-founded order
 amongst them. In any case, calls to other functions are treated as a blackbox.
@@ -269,7 +139,7 @@ techniques, we can convince \Agda~that |quickSort| terminates on any input.
 \subsection{Sized types} 
 \label{subsec:background:sized}
 
-Sized types \cite{abel2010miniagda} is a type system extension that allows to
+Sized types \citep{abel2010miniagda} is a type system extension that allows to
 track structural information on the type level. Terms can be annotated with a
 type index that represents an \textbf{upper bound} of the actual \textit{size}
 of the term being annotated. By size of an inductive datatype it is
@@ -281,7 +151,7 @@ type system can ensure during type checking that the size type
 annotation of a term conforms to its actual size. Size annotations are
 gathered during typechecking and passed to a linear inequality solver to check
 their validity. The type |Size| used to annotate sizes can be understood as the
-type of ordinal numbers without a base element. Its definition is builtin in the
+type of ordinal numbers without a base element. Its definition is built-in in the
 \Agda~compiler, but informally corresponds to the following type:\footnote{The
 type |Size| it lives in its own universe |SizeUniv|, this reiterates the special
 treatment that is given by the typechecker.}
@@ -292,13 +162,26 @@ treatment that is given by the typechecker.}
     upOp   : Size -> Size
 \end{code}
 %
+Usually, sized types are used to relate the size of the input of a function to
+the size of its result. Therefore, sizes in functions are universally quantified
+variables that index both the type of the domain and the codomain. For instance,
+the identity function over a sized type would be written as:
+%
+\begin{code}
+  idS : {A : Size -> Set} -> {i : Size} -> A i -> A i
+  idS x = x
+\end{code}
+
+In the next example we explain in more detail how to program with sized types in
+order to show that the \emph{quicksort} function always terminates.
+
 \begin{example}
-  We can start the example by defining the type of \textit{sized} lists. The
+  We start the example by defining the type of \textit{sized} lists. The
   difference with the regular definition of list, |List|, is that its signature
   has a new type index of type |Size|. The return type of every constructor
   explicitly instantiates the |Size| index in such a way that the size of the
   recursive occurrences are related to the size of the value being constructed.
-  The definition is as follows:
+  The definition of sized lists is as follows:
   %
   \begin{code}
   data SList (a : Set) : Size -> Set where
@@ -312,11 +195,10 @@ treatment that is given by the typechecker.}
   by one , |up i|. Indeed, the constructor is adding a new `layer' on top
   of its parameter.
 
-  Using the type-indexed type |SList| we can define a |filter| function, that by
-  construction is guaranteed to preserve the size of its input list. We do so by
-  explicitly declaring in its type signature that the size of the result does
-  not exceed the size of the parameter --the result list does not gain new 
-  elements:
+  Using the sized type |SList| we define a |filter| function that is guaranteed
+  to preserve the size of its input list. We do so by explicitly declaring in
+  its type signature that the size of the result does not exceed the size of the
+  parameter --the result list does not gain new elements:
   %
   \begin{code}
   filterS : {i : Size} -> (a -> Bool) -> List a i -> List a i
@@ -326,7 +208,7 @@ treatment that is given by the typechecker.}
   \end{code}
   %
   With this definition of |filter| in hand, we are ready to define the function
-  quicksort over the type of size-indexed lists such that it is catalogued as
+  quicksort over the type of sized lists such that it is catalogued as
   terminating by the termination checker:
   %
   \begin{code}
@@ -349,10 +231,12 @@ treatment that is given by the typechecker.}
   it is enough to demonstrate to \Agda~ that the implementation of quicksort terminates. 
   Specifically, in the second clause of the definition, the information about the size of the
   input, |up i|, is propagated to the function |filter| that it is known to
-  `preserve' the size of its input. The recursive call is now provably
-  terminating. If we try to reimplement the bogus version of filter,
-  |filterBad|, using sized types, its definition is not well-typed and the
-  typechecker raises a compile-time error.
+  preserve the size of its input. The recursive call is now provably
+  terminating. 
+  
+  If we try to reimplement the bogus version of filter, |filterBad|, using sized
+  types, its definition is not \emph{well-typed} and the typechecker raises a
+  compile-time error.
 \end{example}
 
   A termination check based on sized types represents an improvement over a
@@ -369,7 +253,7 @@ treatment that is given by the typechecker.}
 \label{subsec:background:bove}
 
 Another commonly used technique in type theory to encode general recursive
-functions is the Bove-Capretta\cite{Bove2001} transformation. The call graph of
+functions is the Bove-Capretta~\citep{Bove2001} transformation. The call graph of
 any function, even if is not defined by structural recursion, posses an inductive 
 structure that can be exploited to show termination. Instead of directly
 defining the function, the call graph of the original function is added as a new
@@ -377,16 +261,16 @@ parameter so the function can be defined by structural recursion over it.
 
 The call graph of a function of type |f : a -> b|, can be made explicit as a
 predicate over the input type |a|, |P : a -> Set|. Thus, the possibly
-non-terminating function |f| is transformed into another function |f' : a ->
-P a -> b| that uses the argument |P a| as the recursive structure. The domain 
+non terminating function |f| is transformed into another function |f' : (x : a) ->
+P x -> b| that uses the argument |P x| as the recursive structure. The domain 
 predicate |P| outlines the conditions for which the function |f| is known to 
 terminate.
 
-However, not everything in the garden is rosy, every time we want to call
+However, not everything in the garden is rosy. Every time we want to call
 function |f'| we have first to prove that the predicate holds on the argument we
 supply. Showing that the function terminates for every possible input, amounts
-to construct a proof that the predicate is true for every element of type |a|, |forall
-(x : a) -> P x|. 
+to construct a proof that the predicate is true for every element of type |a|,
+that is |forall (x : a) -> P x|. 
 
 \begin{example}
   \label{example:background:bove}
@@ -436,10 +320,9 @@ to construct a proof that the predicate is true for every element of type |a|, |
     qsPred-true = ...
   \end{code}
   %
-  However, proving the previous theorem is not possible just by retrofitting to
-  structural recursion. In order to complete the proof we need a more advanced
-  technique, such as \emph{well-founded} recursion
-  (\Cref{subsec:background:wellfounded}).
+  However, proving the previous theorem is not possible just by structural
+  recursion. In order to complete the proof we need a more advanced technique,
+  such as \emph{well-founded} recursion (\Cref{subsec:background:wellfounded}).
 \end{example}
 
 The Bove-Capretta transformation allows the programmer to decouple the task of
@@ -456,7 +339,7 @@ by pattern matching and structural recursion.
 
 The last technique we will discuss is \emph{well-founded} recursion. Amidst the
 three, it is the most relevant for this work because the results of this master thesis 
-heavily rely on it. 
+heavily rely on its use. 
 
 The main idea is simple: define a relation over the type of the parameter that
 gets `smaller' in each invocation of a function, and show that the relation has
@@ -466,7 +349,7 @@ Formally, for a given binary relation over elements of type |a|, | <Op : a -> a
 -> Set|, an element |x : a| is \emph{accessible} if there are not infinite descending
 chains starting from it by repeated decrements, |x0 < x1 < ... <
 xn1 < xn < x|. A more constructive characterization of the accessibility
-predicate, due to Nordstr{\"o}m \cite{nordstrom1988terminating}, is
+predicate in type theory, due to \Citet{nordstrom1988terminating}, is
 the following type:
 %
 \begin{code}
@@ -478,7 +361,7 @@ An element |x : a| is accessible, if every smaller element by the relation is
 also accessible. The type |Acc| is inductively defined in such a way that we can
 only construct a particular proof of |Acc <Op x| if transitively we can show
 that any smaller element is also accessible. A given element, for which no
-smaller elements exists, |y < x -> Bot|,  constitutes the base case and
+smaller elements exists, i.e. |y < x -> Bot|,  constitutes the base case and
 trivially satisfies the predicate.
 
 The recursive structure of the accessibility predicate can be used to turn a non
@@ -545,9 +428,9 @@ well-founded as follows:
   \begin{code}
   filter-<L : ∀ (p : a -> Bool) (x : a) (xs : List a) -> filter p xs <L (x :: xs)
   filter-<L p x [] = Base x []
-  filter-<L /p x (y :: xs) with p y 
-  ... | false = lemma-:: x (filter p xs) (y :: xs) (filter-<L p y xs)
-  ... | true  = Step y x (filter p xs) (y :: xs) (filter-<L p y xs)
+  filter-<L p x (y :: xs) with p y 
+  ... | false  = lemma-:: x (filter p xs) (y :: xs) (filter-<L p y xs)
+  ... | true   = Step y x (filter p xs) (y :: xs) (filter-<L p y xs)
   \end{code}
   %
   The definition of |lemma-::| shows that for any lists |ys| and |ys|, if |ys|
@@ -586,21 +469,20 @@ well-founded as follows:
 
   \end{code}
   %
-  The proof follows usual structure of well-foundedness
-  proofs that can be found in the standard
-  library\footnote{\url{https://github.com/agda/agda-stdlib}} of \Agda. An
+  The proof follows the usual structure of well-foundedness
+  proofs that can be found in the \cite{agdastdlib} standard library. An
   auxiliary function |aux| is used, whose definition is by induction over the
   proof. In the base case, there are no smaller lists than |[]|, thus the proof
   is discharged by appealing to the impossible pattern. In the inductive case,
   where two lists  built up with |::Op| are compared, we need another ancillary
-  lemma, |aux-Step|. Such lemma says that if the tail of a list |xs| is
+  lemma, |aux-Step|. This lemma says that if the tail of a list |xs| is
   accessible, then any list that results from prepending elements to it is
   accessible too.  It is
   noteworthy to mention that the proof relies on showing the termination checker
   that something \emph{structurally} decreases. In the case of |aux-Step|, the
   proof decreases, while in the function |aux| both the proof and the input get
-  smaller.  Nevertheless, when the proof and the input are not related, i.e they
-  are not dependent by their type, this is not the case.
+  smaller.  Nevertheless, when the proof and the input are not related, i.e
+  their type does not depend on a common argument, this is not the case.
 
   Finally, the quicksort function is defined as a wrapper over |quickSortWF|:
   %
@@ -612,14 +494,15 @@ well-founded as follows:
 
 The previous example is well engineered to be straightforward. We declare a
 relation over lists and the proof of well-foundedness follows almost immediately
-from the definition of the relation. Not always is as easy, in the next example
-we examine how the proof is very dependent of the inductive structure of the
+from the definition of the relation. Well-founded proofs are not always that
+simple, in the next example we examine how the proof is very dependent of the
+inductive structure of the
 relation.
 
 \begin{example}
 
   Let us consider the natural numbers and two equivalent definitions of the |<|
-  (strict less than) relation.
+  (strict less than) relation:
   %
   \begin{code}
 
@@ -673,7 +556,7 @@ relation.
         aux (suc x) .. (suc y) (Step2 y p)  = aux x (suc y) ??
   \end{code}
   %
-  The |Base2| case is easy: there are no natural numbers smaller than |zero|,
+  The |Base2| case is effortless: there are no natural numbers smaller than |zero|,
   thus it is eliminated using the impossible pattern. In the inductive case,
   |Step2|, the refined patterns are not adequate to use in a recursive call, the
   arguments are not structurally related.
@@ -705,31 +588,32 @@ relation.
   relation, |<2Op|, necessitates some extra work and a bit of insight to
   complete the proof.
 \end{example}
-%
+
 Using well-founded recursion the programmer can write a non structurally
 recursive function directly in \Agda. Before writing such a function, a suitable
-relation over the type of elements that decreases with each application has to
-be defined. Moreover, it is necessary a proof showing that the function
-delivers a smaller result than the input.
+relation over the type of elements has to be defined. Moreover, it is necessary
+to prove that the argument decreases, by the relation, with each application of
+the function.
 
 Then, there are two options: each time the function is called a proof that the
 input is accessible by the relation is explicitly supplied, or, the relation is
-proven to be well-founded and used to produce the required evidence.
+proven to be well-founded and the proof is used to produce the required evidence.
 
 \section{Generic programming }
 \label{sec:background:generic}
+
 There are many opinions on what the term "generic programming" means, depending
 on whom you ask. For a thoroughly account of its different flavours, we
-recommend the reader to the material by
-Gibbons\cite{10.1007/978-3-540-76786-2_1}. Nevertheless, a central idea
-prevails: find a common ground in the implementation details that can be
-abstracted away such that when instantiated can be applied over and over. 
+recommend the reader to the material by \Citet{10.1007/978-3-540-76786-2_1}.
+Nevertheless, a central idea prevails: find a common ground in the
+implementation details that can be abstracted away such that when instantiated
+can be applied over and over. 
 
 The second part of this master thesis presents a generalization of the
 tail-recursive evaluator from part one (\Cref{chap:expression}), on the type
-|Expr|, to the "generic" case. What is meant by generic in this context? According 
-to Gibbons, it means \textbf{shape genericity}: abstract over the shape of a datatype, 
-or its inductive structure. 
+|Expr|, to the "generic" case. What is meant by generic in this context? it
+means \textbf{datatype generic}, which Gibbons refers to as \textit{shape
+genericity}: abstract over the shape of a datatype, or its inductive structure. 
 
 In the rest of this section, we give a fast-track introduction to generic
 programming with dependent types. We put special interest on the \emph{regular}
@@ -741,11 +625,11 @@ evaluator.
 
 In a dependently typed programming language such as \Agda, we can represent a
 collection of types closed under certain operations as a
-\emph{universe}~\cite{altenkirch-mcbride,martin-loef}, that is, a data type |U :
+\emph{universe}~\citep{altenkirch-mcbride,martin-loef}, that is, a data type |U :
 Set| describing the inhabitants of our universe together with its semantics, and
 a function, |el : U -> Set|, mapping each element of |U| to its corresponding
 type. We have chosen the following universe of \emph{regular}
-types~\cite{morris-regular, noort-regular}:
+types~\citep{morris-regular, noort-regular}:
 %
 \begin{code}
   data Reg : Set1 where
@@ -790,17 +674,17 @@ following law abiding |fmap| operation:
 \end{code}
 
 \begin{example}
-  We can encode the type of disjoint union, |Either a b|, in the \emph{regular}
-  universe. Such type is represented by a code built out of the constant functor
-  |K|, to embed the type |a|; the code |I|, to indicate that is a functor over
-  its second argument, |b|; and the coproduct, |O+Op|, to choose between both:
+  We can encode the type of booleans, |Bool|, in the \emph{regular}
+  universe. Such type is represented by a code built out of the combination of
+  two unit functors, |One|, using the coproduct |O+Op|. The lack of the
+  constructor |I| in the code allow us to interpret it over any type we like:
   %
   \begin{code}
-    EitherR : Set -> Reg
-    EitherR a = K a O+ I
+    BoolR : Reg
+    BoolR = One O+ One
 
-    EitherG : Set -> (Set -> Set)
-    EitherG a b = interpl EitherR a interpr b
+    BoolG : Set 
+    BoolG = interpl BoolR interpr Top
   \end{code}
 \end{example}
 %
@@ -864,7 +748,7 @@ leading to inconsistency.
 Next, we can define a \emph{generic} fold, or \emph{catamorphism}, to work on
 the inhabitants of the regular universe. For each code |R : Reg|, the |cata R|
 function takes an \emph{algebra} of type |interpl R interpr X -> X| as argument.
-This algebra assigns semantics to the `constructors' of |R|. Folding over a tree
+This algebra assigns semantics to the constructors of | interpl R interpr X|. Folding over a tree
 of type |mu R| corresponds to recursively folding over each subtree and
 assembling the results using the argument algebra:
 %
@@ -909,7 +793,7 @@ This definition is indeed accepted by Agda's termination checker.
   ExprR = K Nat O+ (I O* I)
 
   ExprG : Set
-  ExprG = mu exprR
+  ExprG = mu ExprR
   \end{code}
   %
   The type |ExprG| is equivalent to |Expr|, so we can define a embedding-projection pair:
@@ -937,7 +821,30 @@ This definition is indeed accepted by Agda's termination checker.
   \end{code}
 \end{example}
 
-The regular universe can be used to represent many simple algebraic datatypes as
-long as they do not contain function space --exponentials-- or the type variables 
-in the recursive occurrences are not polymorphically instantiated --nested
-datatypes.
+Generic programming within the regular universe was first explored by
+\cite{noort-regular} in the context of a generic rewriting system written in
+\Haskell~\citep{hudak1992report}. The implementation in \Haskell~differs from the
+one we have presented here because the language has no support for first class
+dependent types (yet). Each code in the universe we defined, |Reg|, is encoded
+as a different datatype. Generic functions are written as methods of a
+typeclass~\citep{wadler1989make} that is then instantiated to every datatype in
+the `universe'. In addition, the library provides a typeclass |Regular| that
+uses associated type synonyms~\citep{chakravarty2005associated} to witness the
+isomorphism, i.e. embedding-projection pair, between a datatype and its generic
+representation.
+
+The regular library has, however, a rather limited expressivity. As the authors
+acknowledge:
+
+\begin{displayquote}
+ One of the most important limitations of the library described in this paper is
+  that it only works for datatypes that can be represented by means of a
+  fixed-point. Such datatypes are also known as regular datatypes. This is a
+  severe limitation, which implies that we cannot apply the rewriting library to
+  nested datatypes or systems of (mutually recursive) datatypes.
+\end{displayquote}
+
+Indeed, the regular universe can only represent simple algebraic datatypes.
+Datatypes that contain functions --exponentials-- \citep{meijer1995bananas};
+that are nested~\citep{nested}; or that are type indexed
+~\citep{dybjer-inductive} cannot be encoded in the universe.

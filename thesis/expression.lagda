@@ -64,9 +64,9 @@ As there are finitely many nodes on a tree, the depicted traversal
 using |load| and |unload1| must terminate -- but how can we convince
 \Agda's termination checker of this?
 
-As a first approximation, we revise the definitions of |load| and
-|unload1|. Rather than consuming the entire input in one go with a pair
-of mutually recursive functions, we rewrite them to compute one `step' of the
+As a first approximation, we revise the definitions of |load| and |unload1|.
+Rather than consuming the entire input in one go with a pair of mutually
+recursive functions, we rewrite them to perform one `step' of the tail-recursive
 fold.
 
 The function |unload1| is defined by recursion over the stack as before, but with
@@ -141,7 +141,7 @@ well-founded.
 \label{sec:expression:wellfounded}
 
 The type of configurations of our abstract machine can be seen as a variation
-of Huet's \emph{zippers}~\cite{Huet97thezipper}. The zipper associated
+of Huet's \emph{zippers}~\citeyearpar{Huet97thezipper}. The zipper associated
 with an expression |e : Expr| is pair of a (sub)expression of |e| and
 its \emph{context}. As demonstrated by McBride~\cite{McBride:2008:CLM:1328438.1328474}, the zippers
 can be generalized further to \emph{dissections}, where the values to
@@ -193,7 +193,7 @@ two central problems with our choice of |ZipperType| datatype:
 \end{enumerate}
 
 We will now address these limitations one by one. Firstly, by refining
-the type of |ZipperType|, we will show how to capture the wanted
+the type of |ZipperType|, we will show how to capture the desired
 invariant (\Cref{subsec:expression:invariant}). Secondly, we
 explore a different representation of stacks, as paths from the root, that facilitates
 the definition of the desired order relation (\Cref{subsec:expression:topdown}).
@@ -213,10 +213,12 @@ previous example, the following |ZipperType| corresponds to the third leaf:
   \label{fig:examplezipper}
 \end{figure}
 
+\newpage
+
 As we observed previously, we would like to refine the type |ZipperType| to
 capture the invariant that execution preserves: every |ZipperType| denotes a
 unique leaf in our input expression, or equivalently, a state of the abstract
-machine that computes the fold.
+machine computing the fold.
 There is one problem still: the |Stack| datatype stores the values of the subtrees that have
 been evaluated, but does not store the subtrees themselves.
 In the example in \Cref{fig:examplezipper}, 
@@ -245,7 +247,7 @@ ZipperType = Nat * Stack2
 \end{code}
 
 The function |unload| was previously defined by induction over the stack
-(\Cref{sec:basics}), thus, it needs to be modified to work over the new type of
+(\Cref{sec:expression:stage}), thus, it needs to be modified to work over the new type of
 stacks, |Stack2|:
 %
 \begin{code}
@@ -444,16 +446,16 @@ predicate. In the second lemma, |accL|, the proof is done by induction over the
 argument |y|. There are two cases to consider: the inductive case, |<-StepL|,
 proceeds by recursion over the accessibility predicate on the left subexpression
 |Acc (llcorner l lrcornerLtOp) (x , s)|. However, the non-inductive case,
-constructor |<-Base|, posses a technical challenge: the relation being
-well-founded on expression |Add l r| depends on it being well-founded on the
+constructor |<-Base|, posses a technical challenge: for the relation to be
+well-founded on the expression |Add l r| depends on itself being well-founded on the
 right subtree |r|.  The former lemma, |accR|, handles this case if we can supply
 a proof that the right subtree is accessible |Acc (llcorner r lrcornerLtOp) (x ,
-s)|, which indeed |accL| can produce using its argument of type |Well-founded
+s)|, which indeed, |accL| can produce using its argument of type |Well-founded
 (llcorner r lrcornerLtOp)|.  This is only only possible because in the auxiliary
 function, |aux|, the initial call to |accL|, can recursively use the
-well-foundedness proof |<-WF|. Pattern maching reveals that the input expression
+well-foundedness proof |<-WF|. Pattern matching reveals that the input expression
 |e| is a node |Add l r|, thus the recursive call is done on a structurally
-smaller element. Acceptance by the termination checker certifies it.
+smaller input. Acceptance by the termination checker certifies it.
 
 The type |IxLtOp|, more than being a single relation over configurations, is a
 family of relations, one for every possible value of type |Expr|. Although
@@ -478,7 +480,7 @@ between both under suitable assumptions:
 \end{code}
 %
 The definition of |LtOp| is an exact blueprint of its type-indexed counterpart.
-The only difference is that all the refined type indices striped off from the
+The only difference is that all the refined type indices stripped off the
 constructors.
 
 \section{A terminating tail-recursive evaluator}
@@ -521,8 +523,8 @@ terminates:
 %
 We have omitted the second component of the result returned in the
 first branch, corresponding to a proof that |plugZup (n' , stk') ==
-e|. The crucial lemma that we need to show to complete this proof,
-demonstrates that the |unload| function respects our invariant:
+e|. The crucial lemma, which we need to complete this proof,
+states that the |unload| function respects our invariant:
 %
 \begin{code}
   unload-preserves-plugup  :
@@ -583,7 +585,7 @@ an \Agda~idiom needed to remember that |z'| is the result of the call |step e z|
 \end{code}
 %
 The auxiliary recursor |rec| is defined by structural recursion over the
-accessibility predicate --thus it provably terminates. Using the ancillary lemma
+accessibility predicate, thus, it provably terminates. Using the ancillary lemma
 |step-<|, we demonstrate that repeated invocations of the function |step| are 
 done on strictly smaller configurations. Therefore, \Agda's termination checker
 accepts the function as terminating.
@@ -605,7 +607,7 @@ Indexing the datatype of configurations comes in hand when proving correctness
 of the tail-recursive evaluator. The type of the function |step| guarantees by
 construction that the input expression never changes during the fold: the
 invariant consistently holds. Because the input expression remains constant
-across invocations, the result of |eval| does so.
+across invocations, the result of |eval| does so also.
 
 Proving the function |tail-rec-eval| correct amounts to show that the auxiliary
 function, |rec|, iterated until a value is produced, behaves as |eval|.
@@ -676,7 +678,7 @@ type-index in the configuration type, |Zipperdown|, is not possible to prove
 well-foundedness.  However, enlarging the type of the stacks to prove the
 required properties comes at a cost: the runtime impact of the function
 |tail-rec-eval| is larger than the pair of mutually recursive functions |load|
-and |unload| (\Cref{sec:intro:descr}) that we took as starting point. 
+and |unload1| (\Cref{sec:intro:descr}) that we took as starting point. 
 
 \item
 Our tail-recursive evaluator is tied to a concrete algebra composed of
@@ -684,10 +686,17 @@ the functions |plusOp| and |id|, however, a tail-recursive machine capable
 of computing the fold for any algebra over any |Expr| would be preferable. 
 
 \item
-Previous work by Danvy has focused on constructing abstract machines from a one
-step reduction function. Our tail-recursive evaluator is an example of an
-abstract machine that uses a reduction function --the algebra--. Both machines
-are definitely related.
+Alternatively, we can formulate a tail-recursive fold using continuations. The
+    idea consists in constructing the continuation with a recursive call at the
+    point where the argument is known to be structurally smaller than the input.
+    However, in such approach the execution stack is no longer a first-order
+    object. We loss the ability to understand the tail-recursive function as the
+    representation of an abstract machine.
+\item
+Previous work by \citep{Danvy2009} has focused on constructing abstract machines
+    from a one step reduction function. Our tail-recursive evaluator is an
+    example of an abstract machine that uses a reduction function, the algebra.
+    Both machines are definitely related.
 
 \item
 The one-step function, that our evaluator iterates, performs several reductions
@@ -701,10 +710,10 @@ In the next paragraphs we discuss each of these points.
 \paragraph{Irrelevant arguments}
 
 \Agda~allows the programmer to mark the arguments of a function or parameters of
-a constructor as \emph{computationally irrelevant}. When a executable is extracted from
-the proof carrying code, every irrelevant argument is erased (or interpreted as
-the unit type |Unit|) because the typechecker has ensured that evaluation does
-not depend on it.
+a constructor as \emph{computationally irrelevant}. When a \Haskell~executable is
+extracted from the \Agda~code, every irrelevant argument is erased (or
+interpreted as the unit type |Unit|) because the typechecker has ensured that
+evaluation does not depend on it.
 
 If we compare the type of stacks, |Stack| and |Stack2|, the constructor |Right|
 in the latter additionally stores the already evaluated subexpressions and the
@@ -733,7 +742,7 @@ of |Stack2|:
 \end{code}
 %
 In the above definition, the expression |e : Expr| and the proof |eval e == n|
-are irrelevant --marked with a precceding |..| (dot). Unfortunately, the
+are irrelevant ---marked with a preceding |..| (dot). Unfortunately, the
 datatype |Stack3| does not typecheck, the function |eval| expects a
 non-irrelevant argument, which is necessary since it is defined by pattern
 matching on its argument, but is given the relevant |e|. We can tackle this
@@ -798,11 +807,24 @@ with the algebra as the parameter. Instead of doing so, it is possible in
 \end{code}
 %
 The formalization of the tail-recursive fold that uses |ExprAlg| can be found in
-the repository under the file \path{src/Thesis/Tree/Indexed.agda}.
+the repository under the file \path{src/Tree/Indexed.agda}.
+
+\paragraph{Continuations}
+
+It is possible to write in \Agda~a tail-recursive function that is equivalent to
+the fold directly without worrying about termination issues:
+%
+\begin{code}
+  tail-rec-cont : (Nat -> a) -> (a -> a -> a) -> Expr -> a
+  tail-rec-cont alg1 alg2  e = go id e
+    where  go : (a -> a) -> Expr -> a
+           go k (Add e1 e2)  = go (lambda x -> go (k . (alg2 x)) e2) e1
+           go k (Val x)      = k (alg1 x) 
+\end{code}
 
 \paragraph{Decompose, contract, recompose}
 
-Danvy\cite{Danvy2009} has previously shown how to operationally derive a
+Danvy~\citeyearpar{Danvy2009} has previously shown how to operationally derive a
 reduction-free evaluation function beginning from a small step reduction
 semantics. Given a term language, a specification of redexes in the language
 --i.e. terms subject to reduction--, and a one-step contraction function, Danvy
@@ -815,7 +837,7 @@ context, \textit{contract} the redex, and \textit{recompose} the term by
 plugging back the result into the context. The abstract machine is then obtained
 by repeatedly applying the previous three steps. Observing that the
 decomposition step always happens right after a
-recomposition\cite{danvy2004refocusing}, the machine is later optimized by
+recomposition~\citep{danvy2004refocusing}, the machine is later optimized by
 deforesting the intermediate terms. The fusion of both steps is dubbed
 \textit{refocusing}.
 
@@ -853,7 +875,7 @@ Danvy's machine in \Agda: one to prove that decomposition terminates, one to
 prove that iterating the one-step function terminates. Surprisingly, the
 optimization that Danvy applies to the machine, which removes any intermediate
 expression by fusing the recomposition and the recomposition steps, makes its
-more amenable to construct in \Agda~, indeed is a variation of our
+more amenable to construct in \Agda, indeed, is a variation of our
 tail-recursive evalutator with one difference: our one-step function contracts
 several redexes at once while Danvy's only one at a time. In the next paragraph,
 we explore the ramifications of modifying our one-step function to match Danvy's

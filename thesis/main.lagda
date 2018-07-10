@@ -212,6 +212,7 @@
 % \newunicodechar{||}{\textxits{||}}
 
 \newcommand{\Agda}{\emph{Agda}}
+\newcommand{\Haskell}{\emph{Haskell}}
 
 \renewcommand\hscodestyle{%
    \setlength\leftskip{1.25em}%
