@@ -65,8 +65,8 @@ The work on this master thesis can be regarded as a step towards exploiting, in
 a formal environment such as \Agda, the connection between high-level
 denotational functions --in the form of folds-- and low-level abstract machines.
 Given a language in terms of its generic representation, and an algebra we
-construct a generic tail-recursive function --i.e. the low-level abstract
-machine-- that we later formally proof equal to the fold induced by its
+construct a generic tail-recursive function ,i.e. the low-level abstract
+machine, that we later formally proof equal to the fold induced by its
 structure.
 
 \section{Termination in type theory}

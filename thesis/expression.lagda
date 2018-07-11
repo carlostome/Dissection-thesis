@@ -668,7 +668,7 @@ The definition and verification of a tail-recursive evaluator is completed.
 
 In this \namecref{chap:expression}, we have seen how to define and verify a
 tail-recursive evaluator for the type of expressions |Expr|. Before wrapping up
-the evaluator there are some open questions and issues that have to be
+the evaluator, there are some open questions and issues that have to be
 addressed:
 
 \begin{itemize}
@@ -679,7 +679,7 @@ type-index in the configuration type, |Zipperdown|, is not possible to prove
 well-foundedness.  However, enlarging the type of the stacks to prove the
 required properties comes at a cost: the runtime impact of the function
 |tail-rec-eval| is larger than the pair of mutually recursive functions |load|
-and |unload1| (\Cref{sec:intro:descr}) that we took as starting point. 
+and |unload1|, \Cref{sec:intro:descr}, that we took as starting point. 
 
 \item
 Our tail-recursive evaluator is tied to a concrete algebra composed of
@@ -687,12 +687,12 @@ the functions |plusOp| and |id|, however, a tail-recursive machine capable
 of computing the fold for any algebra over any |Expr| would be preferable. 
 
 \item
-Alternatively, we can formulate a tail-recursive fold using continuations. The
-    idea consists in constructing the continuation with a recursive call at the
-    point where the argument is known to be structurally smaller than the input.
-    However, in such approach the execution stack is no longer a first-order
-    object. We loss the ability to understand the tail-recursive function as the
-    representation of an abstract machine.
+Alternatively, we can formulate a provably terminating tail-recursive fold using
+    continuations. The idea consists in storing a partially applied recursive
+    call --the continuation-- at the point where the argument is known to be
+    structurally smaller than the input. In such approach, however, the execution
+    stack is no longer a first-order object, thus, the tail-recursive function
+    cannot be longer understood as the formalization of an abstract machine.
 \item
 Previous work by \citep{Danvy2009} has focused on constructing abstract machines
     from a one step reduction function. Our tail-recursive evaluator is an
@@ -812,16 +812,78 @@ the repository under the file \path{src/Tree/Indexed.agda}.
 
 \paragraph{Continuations}
 
-It is possible to write in \Agda~a tail-recursive function that is equivalent to
-the fold directly without worrying about termination issues:
+We can write a tail-recursive version of the evaluator from the introduction
+(\Cref{sec:intro:descr}) using continuations. In order to do so, we use an
+auxiliary function, |go|, that takes the continuation as a parameter and is
+defined by structural recursion over the input expression:
 %
 \begin{code}
-  tail-rec-cont : (Nat -> a) -> (a -> a -> a) -> Expr -> a
-  tail-rec-cont alg1 alg2  e = go id e
-    where  go : (a -> a) -> Expr -> a
-           go k (Add e1 e2)  = go (lambda x -> go (k . (alg2 x)) e2) e1
-           go k (Val x)      = k (alg1 x) 
+  tail-rec-cont : Expr -> Nat
+  tail-rec-cont = go id
+    where  go : (Nat -> Nat) -> Expr -> Nat
+           go k (Add e1 e2)  = go (lambda n -> go (k . (n +)) e2) e1
+           go k (Val n)      = k n 
 \end{code}
+% 
+In the first clause of the definition of |go|, the continuation passed as an
+argument to recursive call uses the result of left subexpression |e1| to recurse
+over the right subexpression, |e2|. \Agda's termination checker classifies the
+function as terminating because the recursive call is done at a point where the
+argument is structurally smaller.
+
+As an alternative design, we could redefine the type of stacks to explicitly
+store the continuation. In the |Left| constructor instead of saving the right
+subexpression for later processing, we cache the continuation corresponding to a
+call of |unload1| over such expression. The type of stacks with continuations
+would be as follows:
+\newpage
+%
+\begin{code}
+  data StackKP : Set where
+    Rightk  : Nat                     -> StackK -> StackK
+    Leftk   : (Nat -> StackKP -> Nat)  -> StackK -> StackK
+    Topk    : StackK
+\end{code}
+
+Accordingly, the pair of functions |load| and |unload1| have to change to
+account for the continuations. The new |load| function, |loadk|, creates a
+continuation on the right subexpression and saves it on the stack before it
+proceeds by recursion over the left subexpression. The replacement of the
+|unload1| function, |unloadk|, applies the continuation once it finds a |Left|
+in the stack. The definition of both functions is the following:
+%
+\begin{code}
+    unloadk : Nat -> StackK -> Nat
+    unloadk n Topk             = n
+    unloadk n (Rightk n' stk)  = unloadk (n + n') stk
+    unloadk n (Leftk k stk)    = k n stk
+
+    loadk : Expr -> StackK -> Nat
+    loadk (Add e1 e2) stk   = loadk e1 (Left (lambda n -> loadk e2 . (Right n)) stk)
+    loadk (Val n) stk       = unloadk x stk
+
+    evalk : Expr -> Nat
+    evalk e = loadk e Topk
+\end{code}
+
+There is a problem, however, with this last approach. The |StackK| datatype is
+not strictly positive, indeed, \Agda's positivity checker highlights the non
+strictly positive occurrences in \nonpos{pink}. The type |StackK| appears as an
+argument to the continuation in its own constructor |Leftk|.
+
+Using continuations explicitly, the evaluators are obviously terminating: they
+are solely defined by structural recursion over their input.  Nonetheless, the
+tail-recursive functions |tail-rec-cont| and |evalk| cannot be understood
+anymore as first-order stack-based abstract machines. The function
+|tail-rec-cont| does not manipulate explicitly a stack but rather uses functions
+in the host language, in this case \Agda, to implement tail-recursion. On the
+other hand, the function |evalk| does use a stack, but \emph{again} relies on
+using functions from the host language to do tail-recursion. We have traded a
+first-order formulation in exchange for tail-recursion and termination.
+
+Moreover, it is not apparent how to use continuations to encode a tail-recursive
+function that we can prove equivalent to the \emph{catamorphism} in the generic
+case.
 
 \paragraph{Decompose, contract, recompose}
 

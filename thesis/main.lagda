@@ -86,6 +86,7 @@
 
 % find a solution for hspace -- crappy crappy--
 \newcommand{\nonterm}[1]{\hspace*{-0.1cm}\colorbox{orange!25}{#1}}
+\newcommand{\nonpos}[1]{\hspace*{-0.1cm}\colorbox{pink!25}{#1}}
 \newcommand{\hole}[1]{\colorbox{yellow!50}{\ensuremath{\bigbox_{#1}}}}
 
 %--------------------------------------------------
