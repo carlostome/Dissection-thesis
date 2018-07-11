@@ -3,16 +3,17 @@
 \chapter{Introduction}\label{sec:Introduction}
 \label{chap:intro}
 
-The functional programming paradigm advocates a style of programming based on
-higher-order functions over inductively defined datatypes. A fold, which
-captures their common pattern of recursion, is the prototypical example of such
-a function. However, its use comes at a price. The definition of a fold is not
-tail-recursive which means that the size of the stack during execution grows
-proportionally to the size of the input. \cite{McBride:2008:CLM:1328438.1328474}
-has proposed a method called \emph{dissection}, to transform a fold into its
-tail-recursive counterpart. Nevertheless, it is not clear why the resulting
-function terminates, nor it is clear that the transformation preserves the
-fold's semantics.
+Folds, or \emph{catamorphisms}, are a pervasive programming pattern. Folds
+generalize many simple traversals over algebraic data types. Functions
+implemented by means of a fold are both compositional and structurally
+recursive. The fold associated with a datatype, however, is not a tail-recursive
+function.
+
+We start this chapter with a detailed description of the problem that motivates
+the research conducted within this master thesis (\Cref{sec:intro:descr}), and
+subsequently, we formulate the concrete research questions
+(\Cref{sec:intro:research}). Lastly, in \Cref{sec:intro:org} we outline the
+organization of the rest of this document.
 
 \section{Description of the problem}\label{subsec:problem}
 \label{sec:intro:descr}

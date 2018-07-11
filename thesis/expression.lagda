@@ -143,7 +143,7 @@ well-founded.
 The type of configurations of our abstract machine can be seen as a variation
 of Huet's \emph{zippers}~\citeyearpar{Huet97thezipper}. The zipper associated
 with an expression |e : Expr| is pair of a (sub)expression of |e| and
-its \emph{context}. As demonstrated by McBride~\cite{McBride:2008:CLM:1328438.1328474}, the zippers
+its \emph{context}. As demonstrated by \cite{McBride:2008:CLM:1328438.1328474}, the zippers
 can be generalized further to \emph{dissections}, where the values to
 the left and right of the current subtree may have different types. It
 is precisely this observation that we will exploit when considering
@@ -258,6 +258,7 @@ stacks, |Stack2|:
   unload n e eq (Right n' e' eq' stk) 
     = unload  (n' + n) (Add e' e) (cong2 plusOp eq' eq) stk
 \end{code}
+%
 
 A value of type |ZipperType| contains enough information to recover the input
 expression. This is analogous to the |plug| operation on zippers:

@@ -1,6 +1,5 @@
 \documentclass[a4paper]{book}
-% \usepackage[top=1in, bottom=1.25in, left=1.70in, right=1.70in]{geometry}
-
+\usepackage[pass]{geometry}
 \usepackage[english]{babel}
 \usepackage{lmodern}
 \usepackage{graphicx}
@@ -8,10 +7,18 @@
 \usepackage[draft]{todonotes}
 \usepackage[framemethod=TikZ]{mdframed}
 \usepackage{alltt}
+\usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{amsthm}
-\usepackage{bbold} %% Font for fancy math letters
+% \usepackage{mathspec}
+\usepackage{bbold}      %% Font for fancy math letters
+
+% \usepackage{geometry}
+\usepackage{fancyhdr}
+% \usepackage{xcolor}
+\usepackage{titlesec}
+% \usepackage{ccaption}
+% \usepackage{tocloft}
 
 \usepackage{scalerel}   %% Scale
 \usepackage{dsfont}     %% Font for fancy math letters
@@ -25,7 +32,6 @@
 \renewcommand{\familydefault}{\sfdefault}
 \usepackage{csquotes} %% Quotes
 
-% \usepackage{apalike}
 \usepackage{natbib}
 
 \usepackage{tikz}
@@ -54,18 +60,7 @@
 % Frame color
 \definecolor{shadecolor}{rgb}{1.0,0.9,0.7}
 
-% Theorem styles
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{remark}{Remark}[section]
-\newtheorem{conjecture}{Conjecture}[section]
-\theoremstyle{definition}
-% \newtheorem{example}{Example}[section]
-% \newtheorem{examplex}{Example}[section]
-% \newenvironment{example}
-%   {\pushQED{\qed}\renewcommand{\qedsymbol}{$\triangle$}\examplex}
-%   {\popQED\endexamplex}
-\newtheorem{definition}{Definition}[section]
-
+%% Example frames
 \newcounter{example}[section]
 
 \renewcommand{\theexample}{\thesection.\arabic{example}}
@@ -93,24 +88,6 @@
 \newcommand{\nonterm}[1]{\hspace*{-0.1cm}\colorbox{orange!25}{#1}}
 \newcommand{\hole}[1]{\colorbox{yellow!50}{\ensuremath{\bigbox_{#1}}}}
 
-\newcommand{\definedin}[1]{\footnote{Module: #1}}
-\newcommand{\args}[1]{\overline{#1}}
-\newcommand{\ttargs}[1]{\(\args{\texttt{#1}}\)}
-\newcommand{\ttunderline}[1]{\(\underline{\texttt{#1}}\)}
-\definecolor{ttemph1}{HTML}{BB0000}
-\definecolor{ttemph2}{HTML}{0000BB}
-% \newcommand{\ttemph}[2]{%
-% \ifnum#1=1\textcolor{ttemph1}{\textbf{#2}}%
-% \else\ifnum#1=2\textcolor{ttemph2}{\textbf{#2}}%
-% \else\textbf{#2}%
-% \fi\fi}
-\newcommand{\codeemph}[2]{%
-\ifnum#1=1\textcolor{ttemph1}{\textsf{\textbf{#2}}}%
-\else\ifnum#1=2\textcolor{ttemph2}{\textsf{\textbf{#2}}}%
-\else\textbf{#2}%
-\fi\fi}
-
-
 %--------------------------------------------------
 
 %  Agda mess
@@ -135,81 +112,7 @@
 \newcommand{\AP}{\AgdaPostulate}
 \newcommand{\APT}{\AgdaPrimitiveType}
 
-%% And a non-numbered variant
-\newenvironment{agda*}{%
-%\par\addvspace{1em}
-\noindent%
-\begin{samepage}%
-\normalsize%
-}{%
-\end{samepage}%
-\noindent%
-%\par\addvspace{1em}%
-}
-
-%% Multiple columns of agda code.
-%% Optional argument represents percentage of
-%% \textwidth that the minipage will use.
-\newenvironment{agdaCol}[1][0.49]{%
-\begin{minipage}[t]{#1\textwidth}
-}{%
-\end{minipage}
-}
-
-%% standard vertical spacing
-\newcommand{\stdvspace}{%
-\par\addvspace{0.8em}
-}
-\newcommand{\InsertCodeInline}[2]{\codeinlinetrue\ExecuteMetaData[../src-tex/#1]{#2}}
-
-\newcommand{\InsertCode}[2]
-  { \begin{samepage}
-    \ExecuteMetaData[../src-tex/#1]{#2}
-    \end{samepage}
-  }
-
-\newcommand{\InsertCodeN}[2]{
-  % \codeinlinefalse
-  \medskip
-  \ExecuteMetaData[../src-tex/#1]{#2}\refstepcounter{codeblock}\begin{center}Listing \thecodeblock\end{center}\label{code:#2}%
-
-  \medskip}
-
-\newcounter{codeblock}
-\newcommand{\labelcodeblock}[2]{\refstepcounter{codeblock}\label{#1}\begin{center}Listing \thecodeblock\end{center}}
-
-
 %--------------------------------------------------
-
-% \setmainfont[ItalicFont = xits-italic.otf
-% , BoldFont = xits-bold.otf
-% , BoldItalicFont = xits-bolditalic.otf]{xits-regular.otf}
-% \setmathfont[BoldFont = xits-mathbold.otf]{xits-math.otf}
-% \setsansfont[Scale=MatchLowercase
-% , ItalicFont = DejaVuSans-Oblique.ttf
-% , BoldFont = DejaVuSans-Bold.ttf
-% , BoldItalicFont = DejaVuSans-BoldOblique.ttf]{DejaVuSans.ttf}
-% \setmonofont[Scale=MatchLowercase
-% , ItalicFont = DejaVuSansMono-Oblique.ttf
-% , BoldFont = DejaVuSansMono-Bold.ttf
-% , BoldItalicFont = DejaVuSansMono-BoldOblique.ttf]{DejaVuSansMono.ttf}
-
-% \newfontfamily{\xitsfont}[Scale=MatchLowercase]{xits-regular.otf}
-
-% \DeclareTextFontCommand{\textxits}{\xitsfont}
-
-% \renewcommand{\familydefault}{\sfdefault}
-
-\usepackage{newunicodechar}
-
-\newunicodechar{∇}{\textxits{∇}}
-\newunicodechar{μ}{\textxits{μ}}
-\newunicodechar{φ}{\textxits{φ}}
-\newunicodechar{ϕ}{\textxits{ϕ}}
-% \newunicodechar{⌷}{\textxits{$\vrectangle$}}
-% \newunicodechar{▱}{\textxits{\rotatebox[origin=c]{105}{▱}}}
-\newunicodechar{⊎}{\textxits{⊎}}
-% \newunicodechar{||}{\textxits{||}}
 
 \newcommand{\Agda}{\emph{Agda}}
 \newcommand{\Haskell}{\emph{Haskell}}
@@ -221,25 +124,117 @@
 \bibpunct{[}{]}{,}{a}{}{;}
 %--------------------------------------------------
 
-\newcommand{\rewrite}[1]{\todo[color=blue!40,noline]{Rewrite}}
-\newcommand{\arewesure}[1]{\todo[color=red!40,noline]{#1}}
-\newcommand{\referenceneeded}[1]{\todo[color=green!40,noline]{#1}}
-\newcommand{\colored}{\todo[color=pink!40,noline]{Color the stuff}}
-
 \setcounter{tocdepth}{1} % Show only up to sections in ToC
 
-\title{Verified tail recursive folds through dissection}
+%-------------------------------------------------
+% Title page take from https://github.com/VictorCMiraldo/latex-uustthesis
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for horizontal lines, change thickness here
+% %% Declare a supervisor variable for our title page.
+% % \let\@@supervisor\@@empty
+% \newcommand{\supervisor}[1]{\gdef\@@supervisor{#1}}
+
+%\renewcommand{\maketitle}{
+%\thispagestyle{empty}
+%\begin{center}
+%%%%%%%%%%%%%%
+%%% Headings
+%  \begin{minipage}{0.25\textwidth}%
+%  \includegraphics[width=.8\textwidth]{img/logo.pdf}%
+%  \end{minipage}
+%  ~
+%  \begin{minipage}{0.7\textwidth}%
+%  \begin{flushleft}
+%  \textsc{\huge Universiteit Utrecht}\vskip 1.5em
+%  \textsc{\Large Faculty of Science}\vskip 0.5em
+%  \textsc{\large Dept. of Information and Computing Sciences}%
+%  \end{flushleft}
+%  \end{minipage}
+%%%%%%%%%%%%
+%%% Title
+%  \vfill
+%  \HRule\vskip 1.5em
+%  {\huge\bfseries \@@title }
+%  \vskip 1em \HRule
+%  \vfill
+%%%%%%%%%%
+%% Author(s)
+  %\begin{minipage}{0.4\textwidth}
+  %  \begin{flushleft}\large
+  %  \textit{Author}\vskip .5em
+  %  \@@author
+  %  \end{flushleft}
+  %\end{minipage}
+  %~
+  %\begin{minipage}{0.4\textwidth}
+  %\begin{flushright}\large
+  %\textit{Supervisor}\vskip .5em
+  %\@@supervisor
+  %\end{flushright}
+  %\end{minipage}
+  %\vfill\vfill\vfill
+%%%%%%%%%%%%%
+%%%% Date
+ % {\large\@@date} 
+ % \vfill\newpage
+% \end{center}
+% }
+
+\titleformat{\chapter}[block]%
+{\bfseries\Large\filleft}%
+{\Huge\color{gray}\thechapter}%
+{1em}
+{\hfill\Huge\scshape}%
+[\HRule]
+
+\title{Verified tail-recursive folds through dissection}
 \date{\today}
 \author{Carlos Tom\'e Corti\~nas}
 
 \begin{document}
 
-\maketitle
+\newgeometry{hmarginratio=1:1} %% Change geometry for titlepage
+\begin{titlepage}
+  \vspace*{3em}
+  \centering
+  \includegraphics[width=.8\textwidth]{img/UU_logo_NL_RGB.jpg}%
 
-% \begin{flushright}
-% \emph{Supervised by} Wouter Swierstra\\
-% \emph{Second supervisor} Alejandro Serrano Mena
-% \end{flushright}
+  {\Large{Master Thesis in Computing Science}}
+
+  \vspace*{3em}
+  {\huge\bfseries Verified tail-recursive folds\\ through dissection}
+  \vspace*{3em}
+
+  {\LARGE{Carlos Tomé Cortiñas}}
+
+  
+\end{titlepage}
+\restoregeometry
+
+\thispagestyle{empty}
+\section*{Abstract}
+
+The functional programming paradigm advocates a style of programming based on
+higher-order functions over inductively defined datatypes. A fold, which
+captures their common pattern of recursion, is the prototypical example of such
+a function. However, its use comes at a price. 
+
+The definition of a fold is not tail-recursive which means that the size of the
+stack during execution grows proportionally to the size of the input.
+\cite{McBride:2008:CLM:1328438.1328474} has proposed a method called
+\emph{dissection}, to transform a fold into its tail-recursive counterpart.
+Nevertheless, it is not clear why the resulting function terminates, nor it is
+clear that the transformation preserves the fold's semantics.
+
+In this thesis, we formalize the construction of such tail-recursive function
+and prove that it is both terminating and equivalent to the fold. In addition,
+using \citeauthor{McBride:2008:CLM:1328438.1328474}'s dissection, we generalize
+the tail-recursive function to work on any algebra over any regular datatype.
+
+\newpage
+\thispagestyle{empty}
+\section*{Acknowledgements}
+\todo{say something nice}
 
 \tableofcontents
 
@@ -250,12 +245,7 @@
 \input{generic}
 \input{conclusion}
 
-% \bibliographystyle{ACM-Reference-Format}
-%% Citation style
-% \citestyle{acmauthoryear}  %% For author/year citations
 \bibliographystyle{plainnat}
-% \bibliographystyle{alpha}
-% \bibliographystyle{apa}
 \bibliography{main}
 
 \end{document}
