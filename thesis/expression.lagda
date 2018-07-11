@@ -693,6 +693,15 @@ Alternatively, we can formulate a provably terminating tail-recursive fold using
     structurally smaller than the input. In such approach, however, the execution
     stack is no longer a first-order object, thus, the tail-recursive function
     cannot be longer understood as the formalization of an abstract machine.
+
+\item 
+The tail-recursive evaluator we developed exchanges space in the execution stack
+    for space in the heap. The runtime environment where the function is
+    executed has to explicitly allocate space in the heap to hold the |Stack|
+    argument of |tail-rec-eval|. In the practical level, it is not clear what it
+    is to be gained from our transformation.
+    
+    
 \item
 Previous work by \citep{Danvy2009} has focused on constructing abstract machines
     from a one step reduction function. Our tail-recursive evaluator is an
@@ -836,7 +845,6 @@ store the continuation. In the |Left| constructor instead of saving the right
 subexpression for later processing, we cache the continuation corresponding to a
 call of |unload1| over such expression. The type of stacks with continuations
 would be as follows:
-\newpage
 %
 \begin{code}
   data StackKP : Set where
@@ -884,6 +892,32 @@ first-order formulation in exchange for tail-recursion and termination.
 Moreover, it is not apparent how to use continuations to encode a tail-recursive
 function that we can prove equivalent to the \emph{catamorphism} in the generic
 case.
+
+\paragraph{Space trade-off}
+
+Our tail-recursive evaluator uses a |Stack| argument as the reification of the
+underlying execution stack. The evaluator, indeed, is tail-recursive because it
+uses such argument to perform the tail calls. A explicit |Stack|, however, is not
+for free; the runtime system still has to allocate and manage it.
+
+For instance, in a functional language such as \Haskell,
+GHC~\citep{marlow2004glasgow} --the \emph{de facto} \Haskell~implementation--
+uses the same memory region for the allocation of the heap and the stack; the
+former grows upwards while the latter grows downwards. Then, what do we gain by
+transforming a fold into its tail-recursive counterpart?
+
+We can mark the values saved in the stack with
+strictness~\citep{wadler1987projections} annotations. At the point where the
+function |unload| stores a term |n : Nat| in the stack, such term is a fully
+evaluated value. The runtime system can reclaim the space that otherwise would
+occupy as a thunk.
+
+In a language like \Haskell, however, we have to take some extra care because of
+its non-strict semantics. Our tail-recursive evaluator is not exactly equivalent
+to a fold associated with a non inductive, possibly infinite, datatype. For
+instance, if we pass to the |foldr| function on lists a function |const x y = x|
+and the input list is infinite, then, our tail-recursive function does not
+terminate while the original |foldr| does.
 
 \paragraph{Decompose, contract, recompose}
 

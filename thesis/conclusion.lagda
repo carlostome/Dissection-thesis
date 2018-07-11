@@ -102,7 +102,7 @@ derived is `morally' tail-recursive but not practically: to show termination the
 step function is executed by the recursor, but its result is then used to show
 termination before actually recursing on the accessibility predicate. Ideally,
 the derived machine should have the same runtime impact as if it was implemented
-in a general purpose functional programming language, such as Haskell.  At the
+in a general purpose functional programming language, such as \Haskell.  At the
 end of both \Cref{chap:expression,chap:generic} we discussed about the
 shortcomings of using irrelevance directly in Agda. However, it should be
 possible to export our construction to a more mature proof system such as

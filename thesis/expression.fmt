@@ -41,6 +41,8 @@
 %format <-Base  = "\AI{<\text{-}Base}"
 
 % Functions
+%format foldr = "\AF{foldr}"
+%format const = "\AF{const}"
 %format accL   = "\AF{accL}"
 %format accR   = "\AF{accR}"
 %format <-WF = "\AF{<\text{-}WF}"
