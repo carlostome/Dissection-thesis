@@ -668,8 +668,7 @@ The definition and verification of a tail-recursive evaluator is completed.
 
 In this \namecref{chap:expression}, we have seen how to define and verify a
 tail-recursive evaluator for the type of expressions |Expr|. Before wrapping up
-the evaluator, there are some open questions and issues that have to be
-addressed:
+the evaluator, we address some open questions and issues:
 
 \begin{itemize}
   \item
@@ -702,16 +701,16 @@ The tail-recursive evaluator we developed exchanges space in the execution stack
     we gain from the transformation.
     
 \item
-Previous work by \citep{Danvy2009} has focused on constructing abstract machines
+Previous work by \cite{Danvy2009} has focused on constructing abstract machines
     from a one step reduction function. Our tail-recursive evaluator is an
     example of an abstract machine that uses a reduction function, the algebra.
     Both machines are definitely related.
 
 \item
 The one step function, which our evaluator iterates, performs several reductions
-each time is applied. However, the interpretation of a tail-recursive
-function as an abstract machine fits more naturally, if the function it iterates
-reduces at most one redex at a time.
+    each time it is applied. However, the interpretation of a tail-recursive
+    function as an abstract machine fits more naturally when the function it
+    iterates reduces at most one redex at a time.
 \end{itemize}
 
 In the next paragraphs we discuss each of these points.
@@ -754,8 +753,8 @@ In the above definition, the expression |e : Expr| and the proof |eval e == n|
 are irrelevant ---marked with a preceding |..| (dot). Unfortunately, the
 datatype |Stack3| does not typecheck, the function |eval| expects a non
 irrelevant argument, which is necessary since we defined it by pattern matching
-on its argument. However, its argument is the relevant |e|. We can tackle this
-issue by reifiying the graph of the function |eval| as a datatype:
+on its argument. We can tackle this obstacle by reifiying the graph of the function
+|eval| as a datatype:
 %
 \begin{code}
   data Eval : .. Expr -> Nat -> Set where
@@ -780,7 +779,7 @@ would have the same runtime impact as the pair of mutually recursive functions
 
 \paragraph{Tail-recursive fold}
 
-We showed how to construct a tail-recursive evaluator equivalent to a fold over expressions
+We constructed a tail-recursive evaluator equivalent to a fold over expressions
 for a concrete algebra composed of |plusOp|, for the constructor |Add|, and |id|
 for |Val|. The presentation in this simple terms is meant to reduce the overall
 clutter and let the reader focus on the ideas driving the construction.
@@ -806,15 +805,18 @@ algebra as a parameter:
 \end{code}
 %
 The rest of the construction accounts for the algebra by augmenting every
-datatype, for instance the proof in |Stack2| requires the it, and function with
-the algebra as the parameter. Instead, we can parametrize a module, where the
-construction takes place, by the algebra:
+datatype and function with a new parameter, the algebra. We can, instead,
+use a module parametrized by the algebra:
 %
 \begin{code}
   module _ (alg : ExprAlg) where
     ... 
 \end{code}
 %
+Using this approach, the definitions become more simple and clear; we do not
+have to keep track of the algebra in every type signature. However, at the formal 
+level the formalizations are equivalent.
+
 The reader can find the formalization of the tail-recursive fold that uses
 |ExprAlg| in the repository under the file \path{src/Tree/Indexed.agda}.
 
@@ -834,10 +836,10 @@ the continuation as a parameter:
 \end{code}
 % 
 In the first clause of the definition of |go|, the continuation passed as an
-argument to recursive call uses the result of left subexpression |e1| to recurse
-over the right subexpression, |e2|. \Agda's termination checker classifies the
-function as terminating because the recursive call is done at a point where the
-argument is structurally smaller.
+argument to the recursive call uses the result of left subexpression, |e1|, to
+recurse over the right subexpression, |e2|. \Agda's termination checker
+classifies the function as terminating because the recursive call is done at a
+point where the argument is structurally smaller.
 
 As an alternative design, we could redefine the type of stacks to explicitly
 store the continuation. In the |Left| constructor instead of saving the right
@@ -847,17 +849,17 @@ would be as follows:
 %
 \begin{code}
   data StackKP : Set where
-    Rightk  : Nat                     -> StackK -> StackK
+    Rightk  : Nat                      -> StackK -> StackK
     Leftk   : (Nat -> StackKP -> Nat)  -> StackK -> StackK
     Topk    : StackK
 \end{code}
 
 Accordingly, the pair of functions |load| and |unload1| have to change to
 account for the continuations. The new |load| function, |loadk|, creates a
-continuation on the right subexpression and saves it on the stack before it
+continuation on the right subexpression, and saves it on the stack, before it
 proceeds by recursion over the left subexpression. The replacement of the
 |unload1| function, |unloadk|, applies the continuation once it finds a |Left|
-in the stack. The definition of both functions is the following:
+constructor in the stack. The definition of both functions is the following:
 %
 \begin{code}
     unloadk : Nat -> StackK -> Nat
@@ -875,29 +877,25 @@ in the stack. The definition of both functions is the following:
 
 There is a problem, though, with this last approach. The |StackK| datatype is
 not strictly positive, indeed, \Agda's positivity checker highlights the non
-strictly positive occurrences in \nonpos{pink}. The type |StackK| appears as an
+strictly positive occurrences in \nonpos{pink}: the type |StackK| appears as an
 argument to the continuation in its own constructor |Leftk|.
 
 Using continuations explicitly, the evaluators are obviously terminating: they
-are solely defined by structural recursion over their input.  Nonetheless, the
-tail-recursive functions |tail-rec-cont| and |evalk| cannot be understood
-anymore as first-order stack-based abstract machines. The function
-|tail-rec-cont| does not manipulate explicitly a stack but rather uses functions
-in the host language, in this case \Agda, to implement tail-recursion. On the
-other hand, the function |evalk| does use a stack, but \emph{again} relies on
-using functions from the host language to do tail-recursion. We have traded a
+are solely defined by structural recursion over their input.  Nonetheless, we
+cannot understand the tail-recursive functions |tail-rec-cont| and |evalk| as
+first-order stack-based abstract machines anymore. The function |tail-rec-cont|
+does not manipulate explicitly a stack but rather uses functions in the host
+language, in this case \Agda, to implement tail-recursion. On the other hand,
+the function |evalk| does use a stack, but \emph{again} relies on using
+functions from the host language to do tail-recursion. We have traded a
 first-order formulation in exchange for tail-recursion and termination.
-
-Moreover, it is not apparent how to use continuations to encode a tail-recursive
-function that we can prove equivalent to the \emph{catamorphism} in the generic
-case.
 
 \paragraph{Space trade-off}
 
 Our tail-recursive evaluator uses a |Stack| argument as the reification of the
 underlying execution stack. The evaluator, indeed, is tail-recursive because it
 uses such argument to perform the tail calls. A explicit |Stack|, however, is not
-for free; the runtime system still has to allocate and manage it.
+for free; the runtime system still has to allocate and manage the stack.
 
 For instance, in a functional language such as \Haskell,
 GHC~\citep{marlow2004glasgow} --the \emph{de facto} \Haskell~implementation--
@@ -914,67 +912,70 @@ occupy as a thunk.
 In a language like \Haskell, however, we have to take some extra care because of
 its non-strict semantics. Our tail-recursive evaluator is not exactly equivalent
 to a fold associated with a non inductive, possibly infinite, datatype. For
-instance, if we pass to the |foldr| function on lists a function |const x y = x|
-and the input list is infinite, then, our tail-recursive function does not
-terminate while the original |foldr| does.
+instance, if we pass to the |fold| function on |Expr| a function |const x y = x|
+and the right subtree is an infinite value, then, our tail-recursive function
+does not terminate while the original |fold| does.
 
 \paragraph{Decompose, contract, recompose}
 
-Danvy~\citeyearpar{Danvy2009} has previously shown how to operationally derive a
+Danvy~\citeyearpar{Danvy2009} has previously shown how to derive a
 reduction-free evaluation function beginning from a small step reduction
 semantics. Given a term language, a specification of redexes in the language
---i.e. terms subject to reduction--, and a one step contraction function, Danvy
-shows how to construct an abstract machine to evaluate terms, that later turns
-into a reduction-free evaluation function.
+--i.e. terms the can be immediately reduced in one step--, and a one-step
+contraction function, Danvy shows how to construct an abstract machine to
+evaluate terms, that later turns into a reduction-free evaluation function.
 
 The high level idea of his construction consists of applying a series of
 functions: \textit{decompose} a term into potential redex and its evaluation
 context, \textit{contract} the redex, and \textit{recompose} the term by
 plugging back the result into the context. He then obtains the abstract machine
-by finding a fixpoint of the composition of the previous three functions. He
-later observes~\citep{danvy2004refocusing} that the decomposition step always
-happens right after a recomposition, thus, he further optimizes the machine by
-deforesting the intermediate terms. He dubs the fusion of both steps, recompose and
-decompose, \textit{refocusing}.
+by finding a fixpoint of the composition of the three functions. He later
+observes~\citep{danvy2004refocusing} that the decomposition step always happens
+right after a recomposition, thus, he further optimizes the machine by
+deforesting the intermediate terms. He dubs the fusion of both functions, recompose
+and decompose, \textit{refocusing}.
 
 This concept of a machine is not very dissimilar to how our tail-recursive
-evaluator, |tail-rec-eval|, operates. Danvy's abstract machine iterates the one
-step reduction function -- decompose, contract, recompose-- until the term is
-fully evaluated, while, our tail-recursive evaluator iterates |step|. A question
-is to wonder: how are both machines related for the type of expressions, |Expr|? 
+evaluator, |tail-rec-eval|, operates. Danvy's abstract machine iterates the
+one-step reduction function -- decompose, contract, recompose-- until the term
+is fully evaluated, while, our tail-recursive evaluator iterates the function
+|step|. A question is to wonder: how are both machines related for the type of
+expressions, |Expr|? 
 
 The first problem that arises, when formalizing Danvy's machine in a total
 language such as \Agda, is that the decomposition step essentially corresponds
 to the pair of mutually recursive functions |load| and |unload1|. As we
 previously saw, \Cref{sec:intro:descr}, the termination checker classifies them
-as non terminating. As we did for our tail-recursive machine, we could define a
-well-founded relation to show that traversing an expression to find its leftmost
-redex terminates. 
+as possibly non terminating. As we did for our tail-recursive machine, we could
+define a well-founded relation to show that traversing an expression to find its
+leftmost redex terminates. 
 
-In Danvy's machine, once decompose finds a redex it contracts it. Our machine,
-on the other hand, uses the algebra, passed as a parameter to |unload1|, to
-combine the results of previously evaluated subexpressions. 
+In Danvy's machine, once \emph{decompose} finds a redex, \emph{contract} reduces
+it to a value. Our machine, on the other hand, uses the algebra, passed as a
+parameter to |unload1|, to combine the results of previously evaluated
+subexpressions. 
 
 After Danvy's machine contracts the redex, it recomposes expression by plugging
 the value into the context. Our function |unload1|, instead, recursively
 traverses the stack looking for the next subexpression to |load|. 
 
-We proved that our tail-recursive evaluator finds the fixpoint of the one step
-function, because we carefully engineered such function to deliver a smaller
-value by the well-founded relation over configurations. However, to iterate
-decompose-contract-recompose we would need to define a well-founded relation
-over elements of type |Expr| and prove it decreases with each invocation. 
+We proved that our tail-recursive evaluator finds the fixpoint of the one-step
+function, |step|, because we carefully engineered such function to deliver a
+smaller value by the well-founded relation over configurations. However, to
+iterate \emph{decompose-contract-recompose} we would need to define a
+well-founded relation over elements of type |Expr| and prove it decreases with
+each invocation. 
 
 Up to this point, we need to have two different relations just to construct
 Danvy's machine in \Agda: one to prove that decomposition terminates, one to
 prove that iterating the one step function terminates. Surprisingly, the
 optimization that Danvy applies to the machine, \emph{refocusing}, which removes
-any intermediate expression by fusing the recomposition and the recomposition
-steps, makes its more amenable to construct in \Agda, indeed, is a variation of
-our tail-recursive evaluator with one difference: our one step function
-contracts several redexes at once while Danvy's only one at a time. In the next
-paragraph, we explore the ramifications of modifying our one step function to
-match Danvy's abstract machine.
+any intermediate expression by fusing the decomposition and recomposition steps,
+makes its more amenable to construct in \Agda. Indeed, is a variation of our
+tail-recursive evaluator with one difference: our one step function contracts
+several redexes at once while Danvy's only one at a time. In the next paragraph,
+we explore the ramifications of modifying our one-step function to match Danvy's
+abstract machine.
 
 \paragraph{Fine-grained reduction}
 
@@ -1011,9 +1012,9 @@ will also be a possible internal state:
   data Config1 : Set where
     Leaf   : Nat -> Stack2 -> Config1
 
-    Redex  :  (n   : Nat) -> (e1 : Expr) -> eval e1 == n 
-           ->  (n'  : Nat) -> (e2 : Expr) -> eval e2 == n' -> Stack2
-           -> Config1
+    Redex  :   (n   : Nat) -> (e1 : Expr) -> eval e1 == n 
+           ->  (n'  : Nat) -> (e2 : Expr) -> eval e2 == n' 
+           -> Stack2 -> Config1
 \end{code}
 %
 The leaves of the input expression remain the same as before: a natural number and
@@ -1022,14 +1023,14 @@ a \emph{redex} that is ready to be reduced. The definition of the function
 |unload1| clarifies its purpose:
 %
 \begin{code}
-  unload1 : (n : Nat) -> (e : Expr) -> eval e ≡ n -> Stack -> Config1 U+ Nat
+  unload1 : (n : Nat) -> (e : Expr) -> eval e ≡ n -> Stack2 -> Config1 U+ Nat
   unload1 n e1 eq (Left e2 stk)           = load e2 (Right n e1 eq stk)
   unload1 n e1 eq1 (Right n' e2 eq2 stk)  = inj1 (Redex n' e2 eq2 n e1 eq1 stk)
   unload1 n _ _ Top                       = inj2 n
 \end{code}
 %
 In the second clause, instead of recursing over the stack and applying |plusOp|
-to |n| and |n'|, the function |unload1| returns immediately the |redex|. The
+to |n| and |n'|, the function |unload1| returns immediately the |Redex|. The
 function |step1| will be, in this case, the responsible of triggering the
 reduction: 
 %
@@ -1043,7 +1044,7 @@ reduction:
 
 The key ingredient to build our tail-recursive evaluator was a well-founded
 relation that decreases with every invocation of |step|.  Accordingly, we will
-have to find a suitable relation over elements of type |Config1| (we ommit the
+have to find a suitable relation over elements of type |Config1| (we omit the
 type-indexed relation for the sake of the argument), prove it is
 well-founded, and show it decreases with |step1|. For most of it, the
 relation can be defined as |LtOp|: comparing two leaves or redexes in a common
@@ -1071,4 +1072,5 @@ generic solution that we further present in \Cref{chap:generic}. The simplicity
 of our approach pays off, as later will become clear, because it has a
 straightforward generalization.  However, it is not clear how changing the
 function |unload| to one, that reduces at most one redex at a time, fits in the
-construction as a whole, nor how it scales to the generic case.
+construction as a whole, nor how it scales to the generic case. Certainly, it
+should be possible but we have not explored such direction any further.
