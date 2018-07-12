@@ -809,8 +809,8 @@ This definition is indeed accepted by Agda's termination checker.
   \end{code}
   %
   The example evaluator, |eval|, is equivalent to a function defined using the
-  generic catamorphism, |cata|, that instantiate the code argument with |ExprR|
-  and passes as an argument an algebra with |plusOp| and |id|:
+  generic catamorphism, |cata|, that instantiates the code argument with |ExprR|
+  and the algebra with |plusOp| and |id|:
   %
   \begin{code}
     eval : ExprG -> Nat
@@ -845,6 +845,6 @@ acknowledge:
 \end{displayquote}
 
 Indeed, the regular universe can only represent simple algebraic datatypes.
-Datatypes that contain functions --exponentials-- \citep{meijer1995bananas};
+Datatypes that contain functions --exponentials-- \citep{meijer1995space};
 that are nested~\citep{nested}; or that are type indexed
 ~\citep{dybjer-inductive} cannot be encoded in the universe.

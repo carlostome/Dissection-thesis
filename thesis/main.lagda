@@ -61,7 +61,7 @@
 \definecolor{shadecolor}{rgb}{1.0,0.9,0.7}
 
 %% Example frames
-\newcounter{example}[section]
+\newcounter{example}[subsection]
 
 \renewcommand{\theexample}{\thesection.\arabic{example}}
 
@@ -74,6 +74,23 @@
         linewidth=0.5pt,
         frametitlerule=true,
         frametitlebackgroundcolor=gray!20,
+        rightline=false,
+        leftline=false
+    ]\medskip
+}{%
+    \medskip
+    \end{mdframed}
+    \medskip
+}
+
+\newenvironment{disgression}{%
+    \begin{mdframed}[%
+        frametitle={Disgression},
+        skipabove=\baselineskip plus 2pt minus 1pt,
+        skipbelow=\baselineskip plus 2pt minus 1pt,
+        linewidth=0.5pt,
+        frametitlerule=true,
+        frametitlebackgroundcolor=red!10,
         rightline=false,
         leftline=false
     ]\medskip

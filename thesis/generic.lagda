@@ -11,13 +11,13 @@ original fold.
 %{
 %format load = "\AF{load}"
 %format unload = "\AF{unload}"
-In this chapter, we build upon and define a terminating tail-recursive function
-that we prove equivalent to any fold over any (simple) algebraic datatype that
-can be generically expressed in the \emph{regular} universe. We begin in
-\Cref{sec:generic:dissection}, recapitulating the idea of \emph{dissection}, due
-to McBride\cite{McBride:2008:CLM:1328438.1328474}, and show how it leads
-(\Cref{sec:generic:stack,sec:generic:genconf}) to the definition of generic
-configurations of the abstract machine. Subsequently, in
+In this chapter, we build upon this work and define a terminating tail-recursive
+function that we prove equivalent to any fold over any (simple) algebraic
+datatype that can be generically expressed in the \emph{regular} universe. We
+begin in \Cref{sec:generic:dissection}, recapitulating the idea of
+\emph{dissection}, due to \cite{McBride:2008:CLM:1328438.1328474}, and
+show how it leads (\Cref{sec:generic:stack,sec:generic:genconf}) to the
+definition of generic configurations of the abstract machine. Subsequently, in
 \Cref{sec:generic:onestep}, we introduce the generic version of the functions
 |load| and |unload|, that compute one step of the fold. In
 \Cref{sec:generic:relation} we set up the relation over generic configurations
@@ -35,7 +35,7 @@ evaluator.
 
 The configurations of the abstract machine, which computes the tail-recursive
 fold for the type |Expr|, are instances of a more general concept: McBride's
-dissections~\cite{McBride:2008:CLM:1328438.1328474}. We briefly recap this
+dissections~\citeyearpar{McBride:2008:CLM:1328438.1328474}. We briefly recap this
 construction, showing how it allow us to calculate the type of configurations of
 the abstract machine that computes the catamorphism of any type expressible in
 the regular universe (\Cref{subsec:background:regular}).
@@ -59,10 +59,11 @@ find useful to think of its dissection as tearing apart the container in two
 subcontainers. The elements contained in the left subcontainer do not need to be
 of the same type as those stored in the right. The |nabla| operation
 applied to a code |R : Reg| considers all the possible ways in which exactly one of
-the recursive positions --code |I|, inhabited by terms of type |X|-- is on focus
+the recursive positions --code |I|, inhabited by terms of type |X|-- is in focus
 and serves as the breaking point. Because only one variable is specially
 distinguished, the recursive positions appearing to its left can be interpreted
-over a different type than those on its right. 
+over a different type than those on its right --this is where |nabla| differs
+from a \emph{zipper}. 
 
 The last clause of the definition of |nabla| is of particular interest: to
 \emph{dissect} a product, we either \emph{dissect} the left component pairing it
@@ -143,17 +144,17 @@ of functions that reconstruct the tree by traversing the stack:
   plug-muupG R t (h :: hs)  = plug-muupG R (In (plug R id (h , t))) hs
 \end{code}
 %
-The zipper, can be both interpreted as the path starting from the root and
+We can interpret the zipper both as the path starting from the root and
 descending to the subtree in focus, |plug-mudownG|, or beginning from the
-position of the subtree and navigating up to the root, |plug-muupG|. Because
-the left side of the dissection stores generic trees, we pass the identity
-function to |plug|.
+position of the subtree and navigating up to the root, |plug-muupG|. Because the
+left side of the dissection stores generic trees, we pass the identity function
+to |plug|.
 
 An abstract machine, which computes the tail-recursive catamorphism, traverses a
 generic tree from left to right. The stack of such machine is a list of
 dissections of type |nabla X (mu R)|: for each of the subtrees that have been
-already processed we store a value of type |X|, while those still to be
-visited are stored untouched --type |mu R|.
+already processed we store a value of type |X|, while those still to be visited
+are stored untouched --type |mu R|.
 
 As we did in the concrete tail-recursive evaluator for the type |Expr|,
 \Cref{subsec:expression:invariant}, we have to keep extra information in the
@@ -170,7 +171,8 @@ subtrees, and the corresponding correctness proofs:
       Proof  : Catamorphism R alg Tree Value
 \end{code}
 %
-\paragraph{Disgression}
+\begin{disgression}
+
 Compared to the stack of the tail-recursive evaluator, |tail-rec-eval|, the type
 of correctness proofs is not anymore propositional equality, but, a custom
 relation that reyfies the function |catamorphism|:
@@ -218,7 +220,8 @@ the propositional equality proof:
 %
 In the rest of this chapter, we use propositional equality to indicate equality
 whereas in the accompanying code, for every function that is involved in a
-equality proof we use a datatype that reifies the graph of such function.
+equality proof we use a datatype that reifies the call graph of such function.
+\end{disgression}
 
 Finally, the type of stacks of the generic abstract machine is defined as a
 list of \emph{dissections}: on the left we have the |Computed| results; on the
@@ -393,6 +396,7 @@ first-cps : (R Q : Reg) {alg : interpl Q interpr X -> X}
           ->  Stack Q X alg
           ->  Zipper Q X alg U+ X
 \end{code}
+%
 The first two arguments are codes of type |Reg|. The code |Q|
 represents the datatype for which we are defining a traversal; the
 code |R| is the code on which we pattern match. In the initial call to
@@ -424,16 +428,20 @@ cases are as expected. In |Zero| there is nothing to be done. The |One| and
   first-cps One  Q x k f s    = f (tt , NonRec-One) s
   first-cps (K A) Q x k f s   = f (x , NonRec-K A x) s
 \end{code}
+%
 The recursive case, constructor |I|, corresponds to the occurrence of a subtree.
 The function |first-cps| is recursively called over that subtree with the stack
 incremented by a new element that corresponds to the \emph{dissection} of the
 functor layer up to that point. The second continuation is replaced with the
 initial one.
+%
 \begin{code}
   first-cps I Q (In x) k f s  = first-cps Q Q x id (lambda z  -> inj1 . prodOp z) (k tt :: s)
 \end{code}
+%
 In the coproduct, both cases are similar, just having to account for the
 use of different constructors in the continuations.
+%
 \begin{code}
   first-cps (R O+ Q) P (inj1 x) k f s = first-cps R P x  (k . inj1) cont s
     where cont (l , isl) = f ((inj1 l) , NonRec-+1 R Q l isl)
@@ -453,6 +461,11 @@ continuation fails to to find a subtree, it returns the leaf as it is.
     where cont (l , isl) = first-cps Q P q (k . inj2 . prodOp (coerce l isl)) cont'
       where cont' (l' , isl') = f (l , l') (NonRec-* R Q l l' isl isl')
 \end{code}
+
+Using continuations in the definition of |first-cps| might seem overkill,
+however, they are necessary to keep the function load tail-recursive. We will
+discuss further this issue at the end of the chapter
+(\Cref{sec:generic:discussion}).
 
 There is one important property that the function |load| satisfies: it preserves
 the input tree. In the concrete case, we proved such property directly by
@@ -492,7 +505,7 @@ Given a term of type |interpl R interpr (mu Q)|, for any |R| and |Q|, there are
 two possibilities: either the term is a leaf and recursive subtrees do not
 occur; or the term can be \emph{dissected} into a context and the subtree that
 fits in it. We express this in \Agda~as a
-view:\cite{wadler1987views}\cite{mcbride2004view}
+view\citep{wadler1987views}\citep{mcbride2004view}:
 %
 \begin{code}
     view  : (R Q : Reg) -> {alg : interpl Q interpr X -> X} -> (r : interpl R interpr (mu Q))
@@ -579,10 +592,10 @@ differentiate the possible cases.
 
 Armed with |load| we turn our attention to |unload|. First of all, it is
 necessary to define an auxiliary function, |right|, that given a
-\emph{dissection} and a value (of the type of the left variables), either finds
+\emph{dissection} and a value, of the type of the left variables, either finds
 a dissection |Dissection R X Y| or it shows that  there are no occurrences of
 the variable left. In the latter case, it returns the functor interpreted over
-|Y|, | interpl R interpr Y|.
+|X|, | interpl R interpr X|.
 
 \begin{code}
   right  : (R : Reg) -> nabla R X Y -> X -> interpl R interpr X U+ Dissection R X Y
@@ -656,7 +669,7 @@ relation over terms of type |Zipper|. We can later use the same technique as in
 \Cref{sec:expression:wellfounded} to recover a fully type-indexed relation over
 elements of type |Zipperdown t| by requiring that the \emph{zipper}s respect the
 invariant, |plugZ-mudown z == t|. The relation is defined by induction over the
-|Stack| part of the |zipper|s as follows.
+|Stack| part of the configurations as follows.
 \begin{code}
   data <ZOp : Zipper R X alg -> Zipper R X alg -> Set where
     Step  :  (t1 , s1) <Z (t2 ,  s2) -> (t1 , h :: s1) <Z (t2 , h  :: s2)
@@ -900,12 +913,12 @@ the above lemmas:
 \section{Example}
 \label{sec:generic:example}
 
-To conclude this chapter, we show how to use the generic machinery to implement
-two tail-recursive evaluators: one for the type of |Expr| from the previous
-chapter (\Cref{chap:expression}); and one for flattening binary trees
-outside-in, following Danvy's lecture notes~\cite{danvy2008reduction}. By doing
-so, we demonstrate how the generic construction gives us the tail-recursive
-machine almost for free.
+To conclude the construction of the generic tail-recursive evaluator, we show
+how to use the generic machinery to implement two tail-recursive evaluators: one
+for the type of |Expr| from the previous chapter (\Cref{chap:expression}); and
+another for a problem dubbed "the balancer of Calder mobiles" by
+~\cite{Danvy_2004}. By doing so, we demonstrate how we get a
+correct-by-construction tail-recursive machine almost for free.
 
 \paragraph{Expressions}
 
@@ -935,22 +948,22 @@ an appropriate algebra:
   eval = cata expr alg
 \end{code}
 %
-Finally, a tail-recursive machine \emph{equivalent} to the one we derived in
-\Cref{sec:expression:tailrec},
-|tail-rec-eval|, is given by:
+Finally, we can define a tail-recursive machine \emph{equivalent} to the one we
+derived in \Cref{sec:expression:tailrec}, |tail-rec-eval|:
 %
 \begin{code}
   tail-rec-evalG : ExprG -> Nat
   tail-rec-evalG = tail-rec-cata expr alg
 \end{code}
 
-
+\paragraph{Calder mobiles}
+\todo{to be filled}
 
 \section{Discussion}
 \label{sec:generic:discussion}
 
 In this \namecref{chap:generic}, we have explained how to derive a generic
-machine that computes the catamporphism of any algebra over any regular
+machine that computes the catamorphism of any algebra over any regular
 datatype. Adhering to the steps we followed in the concrete case,
 \Cref{chap:expression}, we derived an abstract machine that we proved to be both
 terminating and correct. Before concluding the chapter there are some open
@@ -971,28 +984,30 @@ tail-recursive machine can be taken as a guide to implement terminating and
 correct-by-construction tail-recursive machines for those universes.
 
 \paragraph{The function |load| written in continuation passing style} The
-function |load|, as defined in \Cref{sec:generic:onestep}, uses the ancillary
-function |first-cps| to look for the leftmost leaf in the input tree. Such
-function is defined in continuation passing style, which makes its definition
-look overly complicated.  However, it is necessary to keep the machine
-tail-recursive. The function is defined by induction over the code. When the
-code is a product of codes, |R O* Q|, the input tree has the shape of |(x , y)|
-for some |x : interpl R interpr (mu (R O* Q))| and |y : interpl Q interpr (mu (R
-O* Q))|. There are three possible situations: the value |x| is not a leaf, |x|
-is a leaf but |y| is not, or |x| and |y| are leaves and the product is a leaf
-itself. In the first case, a recursive call has to be made on |x| storing |y| on
-the stack; in the second case, the recursion is over |y| storing |x| on the
-stack; and in the last case, there is no recursion involved and the leaf |(x ,
-y)| is immediately returned. The problem is that checking whether |x| or |y| are
-leaves requires already to perform recursion over them. If the function
-|first-cps| was to wait until the result of the recursive call is available to 
+function |load|, as we defined it in \Cref{sec:generic:onestep}, uses the
+ancillary function |first-cps| to look for the leftmost leaf in the input tree.
+Such function is defined in continuation passing style, which makes its
+definition looks overly complicated. However, it is necessary to keep the
+machine tail-recursive. 
+
+The function is defined by induction over the code. When the code is a product
+of codes, |R O* Q|, the input tree has the shape of |(x , y)| for some |x :
+interpl R interpr (mu (R O* Q))| and |y : interpl Q interpr (mu (R O* Q))|.
+There are three possible situations: the value |x| is not a leaf, |x| is a leaf
+but |y| is not, or |x| and |y| are leaves and the product is a leaf itself. In
+the first case, it is necessary to perform recursion over |x|, while storing |y|
+on the stack; in the second case, the recursion is on the right component, |y|,
+saving |x| on the stack; and in the last case, there is no recursion involved and 
+the leaf |(x , y)| is immediately returned. The problem is that checking whether 
+|x| or |y| are leaves requires already to perform recursion over them. If the function
+|first-cps| was to wait until the result of the recursive call is available to
 decide which case is met, the function would not be tail-recursive anymore.
 
 \paragraph{Irrelevance} The generic tail-recursive machine should not have extra
-runtime due to termination and correctness proofs. The inclusion of subtrees and
-proofs along with |Computed| values in the stack, indeed, incurs in a memory
-overhead during execution. We could use \emph{again} computational irrelevance
-to identify the parts of the stack not needed during runtime so they are
-automatically removed. However, it is not clear how to do so in Agda due the
+runtime impact due to termination and correctness proofs. The inclusion of
+subtrees and proofs along with |Computed| values in the stack, indeed, incurs in
+memory overhead during execution. We could use \emph{again} computational
+irrelevance to identify the parts of the stack not needed during runtime so they
+are automatically removed. However, it is not clear how to do so in Agda due the
 narrowness of irrelevance as we previously discussed in
 \Cref{sec:expression:discuss}.
