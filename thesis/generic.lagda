@@ -957,7 +957,123 @@ derived in \Cref{sec:expression:tailrec}, |tail-rec-eval|:
 \end{code}
 
 \paragraph{Calder mobiles}
-\todo{to be filled}
+
+We define a Calder mobile inductively as an object of a certain weight or a bar
+of a certain weight and two sub-mobiles:
+%
+\begin{code}
+  data Mobile : Set where
+    OBJ : Nat -> Mobile
+    BAR : Nat -> Mobile -> Mobile -> Mobile 
+\end{code}
+%
+For instance, |m1| and |m2| are two |Mobile|s:
+\begin{code}
+  m1 : Mobile
+  m1 = BAR 1  (BAR 1  (OBJ 2) 
+                      (OBJ 2)) 
+              (OBJ 5)
+
+  m2 : Mobile
+  m2 = BAR 1  (OBJ 6) 
+              (BAR 1  (OBJ 2) 
+                      (OBJ 9))
+\end{code}
+%
+The weight of a |Mobile| is the sum of the weight of its objects and its bars.
+The following function computes recursively the weight of a |Mobile|:
+%
+\begin{code}
+  weight : Mobile -> Nat
+  weight (OBJ n)        = n
+  weight (BAR n m1 m2)  = n + weight m1 + weight m2
+\end{code}
+%
+For example, the |weight| of |m1| is 11 and the |weight| of |m2| is 19:
+%
+\begin{code}
+  prop1 : weight m1 == 11
+  prop1 = refl
+
+  prop2  : weight m2 == 19
+  prop2 = refl
+\end{code}
+
+A |Mobile| is in equilibrium if it is an |OBJ|, or if it is a |BAR| and its
+sub-mobiles are of the same weight and also in equilibrium. The following
+function determines whether a |Mobile| is in equilibrium:
+%
+\begin{code}
+  equilibrium : Mobile -> Bool
+  equilibrium (OBJ _)        = true
+  equilibrium (BAR _ m1 m2)  = weight m1 =Nat weight m2 and equilibrium m1 and equilibrium m2
+\end{code}
+
+This solution is highly inefficient because it repeatedly traverses the
+|Mobile|s to compute the weight and the equilibrium. In order to reduce the
+number of traversals we can fuse together the weight and the equilibrium.
+Before defining another recursive function over |Mobile|, however, let us
+express the type in the regular universe:
+%
+\begin{code}
+  MobileF : Reg
+  MobileF = K Nat O+ (K ℕ O* I O* I)
+  
+  MobileG : Set
+  MobileG = mu MobileF
+\end{code}
+%
+And the embedding from |Mobile| into its generic representation:
+%
+\begin{code}
+  from : Mobile → MobileG
+  from (OBJ n)        = In (inj1 n)
+  from (BAR n m1 m2)  = In (inj2 (n , from m1 , from m2))
+\end{code}  
+
+Now, we can define a much more efficient solution in terms of performance and
+code size using the generic tail-recursive evaluator. First and foremost, we
+define an algebra of the functor |MobileF| interpreted over |Maybe Nat|. A |just
+n| denotes that the |Mobile| is in equilibrium and has weight |n|, while
+|nothing| means the |Mobile| is not in equilibrium. Its definition is as
+follows:
+%
+\begin{code}
+  alg : interpl MobileF interpr (Maybe Nat) -> Maybe Nat
+  alg (inj1 n)                        = just n
+  alg (inj2 (n , just m1 , just m2))  = if m1 =Nat m2  then  just (n + m1 + m2) 
+                                                       else  nothing
+  alg (inj2 (_ , _ , _))              = nothing
+\end{code}
+
+We define the tail-recursive function that traverses only once each |Mobile|
+using the generic tail-recursive evaluator, |tail-rec-cata|:
+%
+\begin{code}
+  equilibriumG : Mobile → Bool
+  equilibriumG = is-just . tail-rec-cata MobileF alg . from
+\end{code}
+
+Using the generic equilibrium function, we show that the |Mobile| |m1| is in
+equilibrium, but, |m2| is not:
+%
+\begin{code}
+  prop3 : equilibriumG m1 == true
+  prop3 = refl
+
+  prop4 : equilibriumG m2 == false
+  prop4 = refl
+\end{code}
+
+There is still an inefficiency in the code. In case the left sub-mobile is not
+in equilibrium, it is not necessary to check whether the right is in equilibrium
+or not. Danvy~\citeyearpar{Danvy_2004} proposes to either use exceptions (in
+\emph{ML}) or transform the evaluator to continuation passing style to
+overcome this inefficiency. 
+
+Unfortunately, the |tail-rec-cata| function has to traverse the full |Mobile|
+term to obtain an answer: we cannot short-circuit the catamorphism at any point
+using the algebra.
 
 \section{Discussion}
 \label{sec:generic:discussion}
