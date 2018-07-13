@@ -929,7 +929,7 @@ The high level idea of his construction consists of applying a series of
 functions: \textit{decompose} a term into potential redex and its evaluation
 context, \textit{contract} the redex, and \textit{recompose} the term by
 plugging back the result into the context. He then obtains the abstract machine
-by finding a fixpoint of the composition of the three functions. He later
+by finding a fixed point of the composition of the three functions. He later
 observes~\citep{danvy2004refocusing} that the decomposition step always happens
 right after a recomposition, thus, he further optimizes the machine by
 deforesting the intermediate terms. He dubs the fusion of both functions, recompose
@@ -959,7 +959,7 @@ After Danvy's machine contracts the redex, it recomposes expression by plugging
 the value into the context. Our function |unload1|, instead, recursively
 traverses the stack looking for the next subexpression to |load|. 
 
-We proved that our tail-recursive evaluator finds the fixpoint of the one-step
+We proved that our tail-recursive evaluator finds the fixed point of the one-step
 function, |step|, because we carefully engineered such function to deliver a
 smaller value by the well-founded relation over configurations. However, to
 iterate \emph{decompose-contract-recompose} we would need to define a
