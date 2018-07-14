@@ -1176,7 +1176,7 @@ relation over terms of type |Zipper|. We can later use the same technique as in
 \Cref{sec:basic-assembling} to recover a fully type-indexed relation over
 elements of type |Zipperdown t| by requiring that the \emph{zipper}s respect the
 invariant, |plugZ-mudown z == t|. The relation is defined by induction over the
-|Stack| part of the |zipper|s as follows.
+|Stack| part of the configurations as follows.
 \begin{code}
   data <ZOp : Zipper R X alg -> Zipper R X alg -> Set where
     Step  :  (t1 , s1) <Z (t2 ,  s2) -> (t1 , h :: s1) <Z (t2 , h  :: s2)
@@ -1342,12 +1342,12 @@ function that initiates the computation with suitable arguments:
 %{
 %format tail-rec-eval = "\AF{tail-rec-eval}"
 To prove our tail-recursive evaluator produces the same output as the catamorphism
-is straight-forward. As we did in the |tail-rec-eval| example
+is straightforward. As we did in the |tail-rec-eval| example
 (\Cref{sec:basic-correctness}), we perform induction over the accessibility
 predicate in the auxiliary recursor. In the base case, when the function |step|
 returns a ground value of type |X|, we have to show that such value is the
 result of applying the \emph{catamorphism} to the input. Recall that |step| is a
-wrapper around |unload|, hence it suffices to prove the following lemma:
+wrapper around the function |unload|, hence, it suffices to prove the following lemma:
 \begin{code}
   unload-correct  : forall  (R : Reg) (alg : interpl R interpr X -> X)
                             (t : mu R) (x : X) (eq : catamorphism R alg t == x)
