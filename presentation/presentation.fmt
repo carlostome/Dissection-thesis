@@ -113,12 +113,12 @@
 
 % Datatypes
 %format Expr  = "\AD{Expr}"
-%format Val   = "\AD{Val}"
-%format Add   = "\AD{Add}"
+%format Val   = "\AI{Val}"
+%format Add   = "\AI{Add}"
 %format Stack = "\AD{Stack}"
-%format Top   = "\AD{Top}"
-%format Left  = "\AD{Left}"
-%format Right = "\AD{Right}"
+%format Top   = "\AI{Top}"
+%format Left  = "\AI{Left}"
+%format Right = "\AI{Right}"
 
 % Functions
 %format load    = "\AF{load}"
@@ -136,6 +136,8 @@
 %format +     = "\AF{+}"
 %format plusOp = "\AF{\_+\_}"
 %format tail-rec-eval  = "\AF{tail\text{-}rec\text{-}eval}"
+%format expr1  = "\AF{expr\ensuremath{_1}}"
+%format prop1  = "\AF{prop\ensuremath{_1}}"
 
 % Bound variables
 %format n     = "\AB{n}"
@@ -158,4 +160,13 @@
 
 % Symbols
 %format ~> = "\leadsto"
+
+%Numbers
+%format 1 = "\AN{1}"
+%format 2 = "\AN{2}"
+%format 3 = "\AN{3}"
+%format 4 = "\AN{4}"
+%format 5 = "\AN{5}"
+%format 6 = "\AN{6}"
+%format 7 = "\AN{7}"
 

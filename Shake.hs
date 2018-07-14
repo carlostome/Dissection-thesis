@@ -19,6 +19,10 @@ tex = "tex"
 fmt :: FilePath
 fmt = "fmt"
 
+thesis_lagda_files = [ "main"      , "introduction" 
+                     , "background", "expression"
+                     , "generic"   , "conclusion" ]
+
 main :: IO ()
 main = shakeArgs shakeOptions $ do
   want ["thesis"]
@@ -44,16 +48,13 @@ main = shakeArgs shakeOptions $ do
     cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
 
   "thesis/main" <.> pdf %> \out -> do
-    let files = [ "thesis" </> file <.> tex | file <-lagda_files]
-                  where lagda_files = [ "main"      , "introduction" 
-                                      , "background", "expression"
-                                      , "generic"   , "conclusion" ]
+    let files = [ "thesis" </> file <.> tex | file <- thesis_lagda_files]
         bib   = "thesis/main.bib"
         sty   = "thesis/agda.sty"
         figures    = [ "thesis" </> "figures" </> ("figure" ++ show n) <.> "tex" 
                      | n <- [1..5]]
     need (bib : sty : files ++ figures)
-    cmd_ "latexmk -f -pdf -cd thesis/main.tex"
+    cmd_ "latexmk -f -xelatex -pdf -cd thesis/main.tex"
 
   -- paper rules
   "paper/main" <.> tex %> \out -> do
@@ -80,7 +81,9 @@ main = shakeArgs shakeOptions $ do
     putNormal "Building presentation"
     let input  = out -<.> lagda
         dir    = takeDirectory out
-    need [input, "presentation/presentation.fmt"]
+        figures    = [ "presentation" </> "figures" </> ("figure" ++ show n) <.> "tex" 
+                     | n <- [1..3]]
+    need $ [input, "presentation/presentation.fmt"] ++ figures
     cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
      
 
@@ -99,7 +102,8 @@ main = shakeArgs shakeOptions $ do
   phony "clean-thesis" $ do
     putNormal "Cleaning files in paper"
     cmd_ "latexmk -C -cd thesis/main.tex"
-    removeFilesAfter "thesis" ["*.tex", "*.bbl", "main.pdf", "main.ptb"]
+    removeFilesAfter "thesis" $ ["*.bbl", "main.pdf", "main.ptb"]
+                              ++ map (<.> tex) thesis_lagda_files
 
   phony "clean-presentation" $ do
     putNormal "Cleaning files in paper"

@@ -4,13 +4,12 @@
 ### CUstom ###
 src-tex
 documentation
-proposal/*.pdf
-proposal/*.tex
-proposal/*.sty
 dirty
 proposal/out
 
 thesis/*.tex
+presentation/*.tex
+presentation/*.ptb
 ### Agda ###
 *.agdai
 
