@@ -40,8 +40,8 @@ Most of our implementations of the abstract machines raise compiler warnings
 A dependently typed programming language such as \Agda~is a perfect vehicle for
 the study and implementation of programming languages. Dependent types can be
 fruitfully leveraged for defining both the language, and correspondingly
-formalize and verify its semantics either in a small-step or a denotational style.  .
-For example, \Citet{swierstra2012mathematics} shows how to derive the
+formalize and verify its semantics either in a small-step or a denotational
+style.  For example, \Citet{swierstra2012mathematics} shows how to derive the
 Krivine machine in \Agda~starting from a small-step evaluation semantics for
 lambda terms.
 
