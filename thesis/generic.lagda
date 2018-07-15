@@ -3,7 +3,7 @@
 \chapter{A verified generic tail-recursive catamorphism}
 \label{chap:generic}
 
-In the previous \namecref{chap:expression}, \Cref{chap:expression}, we showed
+In the previous \namecref{chap:expression}, \cref{chap:expression}, we showed
 how to \emph{manually} construct a tail-recursive evaluation function for the
 type of binary trees, and prove that is both terminating and equal to the
 original fold. 
@@ -14,18 +14,18 @@ original fold.
 In this chapter, we build upon this work and we define a terminating tail-recursive
 function that we prove equivalent to any fold over any (simple) algebraic
 datatype that can be generically expressed in the \emph{regular} universe. We
-begin in \Cref{sec:generic:dissection}, recapitulating the idea of
+begin in \cref{sec:generic:dissection}, recapitulating the idea of
 \emph{dissection}, due to \cite{McBride:2008:CLM:1328438.1328474}, and show how
 it leads (\Cref{sec:generic:stack,sec:generic:genconf}) to the definition of
 generic configurations of the abstract machine. Subsequently, in
-\Cref{sec:generic:onestep}, we introduce the generic version of the functions
+\cref{sec:generic:onestep}, we introduce the generic version of the functions
 |load| and |unload|, which compute one step of the fold. In
-\Cref{sec:generic:relation} we set up the relation over generic configurations
+\cref{sec:generic:relation} we set up the relation over generic configurations
 and present its well-foundedness proof. Finally, in
-\Cref{sec:generic:machine}, we define the terminating tail-recursive abstract
+\cref{sec:generic:machine}, we define the terminating tail-recursive abstract
 machine as the iteration of the one step function fueled by well-founded
-recursion. The correctness proof, \Cref{sec:generic:correct}, follows directly
-from the construction. In \Cref{sec:generic:example}, we present some examples
+recursion. The correctness proof, \cref{sec:generic:correct}, follows directly
+from the construction. In \cref{sec:generic:example}, we present some examples
 of the generic tail-recursive fold in action. We conclude this chapter
 (\Cref{sec:generic:discussion}) discussing some open issues about the
 construction.
@@ -60,10 +60,10 @@ find useful to think of its dissection as tearing apart the container in two
 subcontainers. The elements contained in the left subcontainer do not need to be
 of the same type as those stored in the right. The |nabla| operation
 applied to a code |R : Reg| considers all the possible ways in which exactly one of
-the recursive positions --code |I|, inhabited by terms of type |X|-- is in focus
+the recursive positions---code |I|, inhabited by terms of type |X|---is in focus
 and serves as the breaking point. Because only one variable is specially
 distinguished, the recursive positions appearing to its left can be interpreted
-over a different type than those on its right --this is where |nabla| differs
+over a different type than those on its right: this is where |nabla| differs
 from a \emph{zipper}. 
 
 The last clause of the definition of |nabla| is of particular interest: to
@@ -72,9 +72,9 @@ with the second component interpreted over the second variable |Y|; or we
 \emph{dissect} the right component and pair it with the first interpreted over
 |X|.
 
-A \emph{dissection} is then formally defined as the pair of the one-hole
-context, resulting from \emph{dissecting} a concrete code |R|,  and the missing
-value that fits in the hole:
+A \emph{dissection} is then formally defined as the pair of the context,
+resulting from \emph{dissecting} a concrete code |R|,  and the missing value
+that fits in it:
 %
 \begin{code}
   Dissection : (R : Reg) -> (X Y : Set) -> Set
@@ -155,10 +155,10 @@ An abstract machine, which computes the tail-recursive catamorphism, traverses a
 generic tree from left to right. The stack of such machine is a list of
 dissections of type |nabla X (mu R)|: for each of the subtrees that have been
 already processed we store a value of type |X|, while we save those that still
-have to be visited untouched --type |mu R|.
+have to be visited untouched---type |mu R|.
 
 As we did in the concrete tail-recursive evaluator for the type |Expr|,
-\Cref{subsec:expression:invariant}, we have to keep extra information in the
+\cref{subsec:expression:invariant}, we have to keep extra information in the
 stack to assist \Agda's termination checker and later prove correctness of the
 construction. For such matter, we define a record type that stores values,
 subtrees, and the corresponding correctness proofs:
@@ -172,10 +172,10 @@ subtrees, and the corresponding correctness proofs:
       Proof  : Catamorphism R alg Tree Value
 \end{code}
 %
-\begin{disgression}
+\begin{digression}
 
 Compared to the stack of the tail-recursive evaluator, |tail-rec-eval|, the type
-of correctness proofs is not anymore propositional equality, but, a custom
+of correctness proofs is not anymore propositional equality, but a custom
 relation that reifies the function |catamorphism|:
 %
 \begin{code}
@@ -222,7 +222,7 @@ recover the propositional equality proof:
 In the rest of this chapter, we use propositional equality to indicate equality
 whereas in the accompanying code, for every function that is involved in a
 equality proof, we use a datatype that reifies the call graph of such function.
-\end{disgression}
+\end{digression}
 
 Finally, the type of stacks of the generic abstract machine is defined as a
 list of \emph{dissections}: on the left we have the |Computed| results; on the
@@ -259,7 +259,7 @@ extract the subtree from the |Computed| record.
 
 Recapitulating from the tail-recursive evaluator, |tail-rec-eval|, the type of
 configurations of the abstract machine represent locations within the expression
-that is being evaluated. However, we are interested in any location within the
+that is being evaluated. However, we are not interested in any location within the
 generic tree, but only on those paths that lead to a leaf. A question, then, is to be
 asked: what constitutes a leaf in the generic setting?
 
@@ -271,8 +271,8 @@ First, let us recall the two different levels of recursion present in a generic 
       \item At fixed point level, because positions marked with the constructor |I|
         are interpreted over generic subtrees.
   \end{enumerate}
-It would be hard pressed to enforce that a leaf is truly non-recursive value,
-thus, we consider to be leaves only those values of the functor layer that do
+It would be troubled to enforce that a leaf is truly non-recursive value,
+thus, we consider only to be leaves those values of the functor layer that do
 not contain subtrees, but otherwise might be recursive because of (1).
 
 To describe a generic leaf, we introduce the following predicate:
@@ -290,8 +290,8 @@ To describe a generic leaf, we introduce the following predicate:
 
 \end{code}
 %
-Given a value of type |t : interpl R interpr X|, the predicate is only true --we
-can build a term of type |NonRec R t|-- \emph{iff} it has no occurrences of
+Given a value of type |t : interpl R interpr X|, the predicate is only true,
+i.e. we can build a term of type |NonRec R t|, \emph{iff} it has no occurrences of
 elements of type |X|.
 
 As an example, in the pattern functor for the \AD{Expr} type, |K Nat O+ (I O* I)|,
@@ -302,12 +302,12 @@ Val-NonRec : forall (n : Nat) -> NonRec (K Nat O+ (I O* I)) (inj1 n)
 Val-NonRec : n = NonRec-+1 (K Nat) (I O* I) n (NonRec-K Nat n)
 \end{code}
 %
-Corresponding to the idea that the constructor |Val| is a leaf in a tree of
+This corresponds to the idea that the constructor |Val| is a leaf in a tree of
 type |Expr|. 
 
-On the other hand, we can not prove that the predicate |NonRec| holds for
+On the other hand, we cannot prove that the predicate |NonRec| holds for
 terms using the right injection. The occurrences of recursive positions disallow
-us from framing the proof (The type |NonRec| does not have a constructor such as
+us from constructing the proof (The type |NonRec| does not have a constructor such as
 |NonRec-I : (x : X) -> NonRec I x|).
 
 Now, we define the notion of leaf generically; it is a value of the functor
@@ -319,7 +319,7 @@ for dependent pair.}
   Leaf R X = Sigma (interpl R interpr X) (NonRec R)
 \end{code}
 
-A leaf is independent of the type |X| --the predicate |NonRec| proves it--, thus
+A leaf is independent of the type |X|, the predicate |NonRec| proves it, thus
 we can coerce it to a different type:
 %
 \begin{code}
@@ -331,7 +331,7 @@ the code |I| is eliminated which means we do not have to produce a value of
 type |Y| out of thin air.
 
 Just as before, a generic configuration is given by the current leaf in
-focus and the stack that stores partial results and unprocessed subtrees --or
+focus and the stack that stores partial results and unprocessed subtrees---or
 points to it:
 %
 \begin{code}
@@ -353,9 +353,9 @@ R|. In a similar fashion as in the concrete case, we define a pair of
   plugZ-muup R ((l , isl) , s) t = plug-muup R (In (coerce l isl)) s t
 \end{code}
 
-Moreover, to ensure that the configurations preserve the invariant --the input
-tree does not change during the evaluation of the tail-recursive catamorphism--
-we define a pair of datatypes indexed by the input tree:
+Moreover, to ensure that the configurations preserve the invariant---the input
+tree does not change during the evaluation of the tail-recursive catamorphism---we 
+define a pair of datatypes indexed by the input tree:
 %
 \begin{code}
   data Zipperdown (R : Reg) (X : Set) (alg : interpl R interpr X -> X) (t : mu R) : Set where
@@ -372,7 +372,7 @@ we define a pair of datatypes indexed by the input tree:
 %format load = "\AF{load}"
 %format unload = "\AF{unload}"
 In this section, we show how to define the generic operations that correspond to
-the functions |load| and |unload| given in \Cref{sec:expression:stage}.
+the functions |load| and |unload| given in \cref{sec:expression:stage}.
 Moreover, we outline the proofs of several properties we later require to show
 correctness and termination.
 %}
@@ -390,10 +390,10 @@ load  : (R : Reg) {alg : interpl R interpr X -> X} -> mu R
 load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
 
-We write |load| by appealing to an ancillary definition |first-cps|, that uses
+We write |load| by appealing to an auxiliary definition |first-cps|, that uses
 continuation passing style (CPS) to keep the definition tail-recursive and obviously
 structurally recursive.  If we were to try to define |load| by recursion
-directly, we would need to find the leftmost subtree and recurse on it -- but
+directly, we would need to find the leftmost subtree and recurse on it---but
 this subtree is not syntactically smaller for the termination checker.
 
 The type of our |first-cps| function is daunting at first:
@@ -412,7 +412,7 @@ represents the datatype for which we are defining a traversal; the
 code |R| is the code on which we pattern match. In the initial call to
 |first-cps| these two codes are equal. As we define our function,
 we pattern match on |R|, recursing over the codes in (nested) pairs or
-sums -- yet we still want to remember the original code for our data
+sums---yet we still want to remember the original code for our data
 type, |Q|.
 
 The next argument of type |interpl R interpr (mu Q)| is the data we
@@ -468,7 +468,7 @@ continuation fails to to find a subtree, it returns the leaf as-is.
 
 Using continuations in the definition of |first-cps| might seem overkill,
 however, they are necessary to keep the function tail-recursive. We will
-discuss further this issue at the end of the chapter
+discuss this issue further at the end of the chapter
 (\Cref{sec:generic:discussion}).
 
 There is one important property that the function |load| satisfies: it preserves
@@ -486,7 +486,7 @@ function, |first-cps|. The signature of the property is spelled as follows:
 
 The function |load| directly calls |first-cps|, so proving the above lemma
 amounts to show that it holds for |first-cps|. However, from its type
-it is not clear what property do we need. We start with the
+it is not clear what property we need. We start with the
 obvious skeleton:
 %
 \begin{code}
@@ -523,7 +523,7 @@ view\citep{wadler1987views}\citep{mcbride2004view}:
 The value |r : interpl R interpr (mu Q)| either decomposes into a dissection,
 |dr|, and the subtree |q|, such that plugged together recompose to |r|; or there is
 a leaf, |leaf|, \textit{equal} to |r|. The variables |r| and |leaf| are not of
-the same type, thus, we cannot assert they are equals using propositional
+the same type, thus, we cannot assert they are equal using propositional
 equality. Instead, we need a different notion of equality: heterogeneous
 equality. Its definition is as follows:
 %
@@ -632,7 +632,7 @@ subtree to be processed the function |load| is called.
   ...  | inj2 (dr , q)         = load R q (dr :: hs)
 \end{code}
 
-When the function |right| returns a |inj1| it means that there are not any
+When the function |right| returns a |inj1| it means that there are not
 subtrees left in the \emph{dissection}. If we take a closer look, the type of
 the |r| in |inj1 r| is | interpl R interpr (Computed R X alg) |. The functor
 |interpl R interpr| is storing at the variable positions both values, subtrees and proofs.
@@ -675,8 +675,8 @@ we define the order by induction over the \emph{stack}s.
 
 To reduce clutter in the definition, we give a non type-indexed
 relation over terms of type |Zipper|. We can later use the same technique as in
-\Cref{sec:expression:wellfounded} to recover a fully type-indexed relation over
-elements of type |Zipperdown t| by requiring that the \emph{zipper}s respect the
+\cref{sec:expression:wellfounded} to recover a fully type-indexed relation over
+elements of type |Zipperdown t| by requiring that the configurations respect the
 invariant, |plugZ-mudown z == t|. We define inductively the relation over the
 |Stack| part of the configurations as follows:
 %
@@ -737,7 +737,7 @@ than those to the left.
 This completes the order relation on configurations; we still need to prove our
 relation is \emph{well-founded}.  To prove this, we write a type-indexed version
 of each relation. The first relation, |<ZOp|, has to be type-indexed by the tree
-of type |mu R| to which both \emph{zipper} recursively plug through
+of type |mu R| to which both \emph{configurations} recursively plug through
 |plugZ-mudown|. Likewise, the auxiliary relation on \emph{dissections},
 |<NablaOp|, needs to be type-indexed by the functor of type | interpl R interpr
 X | to which both \emph{dissections} |plug|:
@@ -752,8 +752,8 @@ X | to which both \emph{dissections} |plug|:
 \end{code}
 
 The proof that the first relation is well-founded follows from induction over
-the code. Like the proof in the relation for expressions, \Cref{subsec:expression:wellfounded}, 
-it necessitates several ancillary lemmas covering each of the constructors.
+the code. Like the proof in the relation for expressions, \cref{subsec:expression:wellfounded}, 
+it necessitates several lemmas covering each of the constructors.
 Writing an indexed relation is, again, crucial to prove the lemma. Otherwise,
 the proof cannot recursively call itself because the inputs are not structurally
 related.
@@ -770,6 +770,7 @@ follows:
 %
 \begin{code}
   data All {A : Set} (P : A -> Set) : (R : Reg) -> interpl R interpr A -> Set1 where
+    ...
 \end{code}
 
 \begin{code}
@@ -800,7 +801,7 @@ accompanying code. Here we only spell its signature:
 
 Finally, we are ready to define a generic tail-recursive machine. To do so we
 assemble the generic machinery we have developed so far, following the same
-outline as in \Cref{sec:expression:tailrec}.
+outline as in \cref{sec:expression:tailrec}.
 
 The first point is to write a wrapper around the function |unload| that performs
 one step of the \emph{catamorphism}:
@@ -814,7 +815,7 @@ one step of the \emph{catamorphism}:
 The function |step| performs a call to |unload|, coercing the leaf of type
 |interpl R interpr X| in the |Zipperdown| argument to a generic tree of type
 |interpl R interpr (mu R)|. Moreover, it supplies a proof, here omitted with
-elipsis, stating that applying catamorphism over a \emph{coerced} leaf is the
+elipsis, stating that applying the catamorphism over a \emph{coerced} leaf is the
 same as directly evaluating the algebra on the leaf, |alg x|. Next, we define a
 type-indexed step function that statically enforces the configurations, both in its
 argument and in its result, to be states of the catamorphism over the same generic tree:
@@ -845,7 +846,7 @@ the \emph{dissection} has any more recursive subtrees to the right, which still
 have to be processed; second, it dispatches to either |load|, if there is a
 subtree left, or recurses over the stack otherwise.  In the former circumstance,
 a new \emph{dissection} is returned by |right|.  Proving that the new
-configuration is smaller, amounts to show that the returned \emph{dissection} is
+configuration is smaller, amounts to showing that the returned \emph{dissection} is
 smaller by |<NablaOp|. The lemma states:
 
 \begin{code}
@@ -892,8 +893,8 @@ The proof that our tail-recursive function produces the same output as the
 catamorphism is uncomplicated. The function |step| is type-indexed by the input
 generic tree which remains constant across invocations, thus, the result of the
 catamorphism does so as well. As we did in the |tail-rec-eval| evaluator,
-\Cref{sec:expression:correctness}, we use an ancillary definition indicating that
-when the result of |stepIx| is an |inj2| --the final value--, then it equates
+\cref{sec:expression:correctness}, we use an ancillary definition indicating that
+when the result of |stepIx| is an |inj2|, the final value, then it equates
 to applying the catamorphism to the input:
 %
 \begin{code}
@@ -959,7 +960,7 @@ an appropriate algebra:
 \end{code}
 %
 Finally, we can define a tail-recursive machine \emph{equivalent} to the one we
-derived in \Cref{sec:expression:tailrec}, |tail-rec-eval|:
+derived in \cref{sec:expression:tailrec}, |tail-rec-eval|:
 %
 \begin{code}
   tail-rec-evalG : ExprG -> Nat
@@ -1056,7 +1057,7 @@ follows:
   alg (inj2 (_ , _ , _))              = nothing
 \end{code}
 
-We define the tail-recursive function that traverses only once each |Mobile|
+We define the tail-recursive function that traverses each |Mobile| only once
 using the generic tail-recursive evaluator, |tail-rec-cata|:
 %
 \begin{code}
@@ -1091,7 +1092,7 @@ using the algebra.
 In this \namecref{chap:generic}, we have explained how to derive a generic
 machine that computes the catamorphism of any algebra over any regular
 datatype. Adhering to the steps we followed in the concrete case,
-\Cref{chap:expression}, we derived an abstract machine that we proved to be both
+\cref{chap:expression}, we derived an abstract machine that we proved to be both
 terminating and correct. Before concluding the chapter there are some open
 questions that are worth discussing:
 
@@ -1102,7 +1103,7 @@ many simple algebraic datatypes, but, is sufficiently simple to to transport
 `directly' the ideas from the concrete example, |Expr| type, to the generic
 setting.
 
-Nevertheless, our work is easily generalizable to other universes. The landmark
+Nevertheless, our work is generalizable to other universes. The landmark
 of every approach to generic programming is to show that is possible to define
 Huet's notion of \emph{zipper} generically.  Because dissections are a
 generalization of zippers, the steps we follow to construct our generic
@@ -1110,7 +1111,7 @@ tail-recursive machine can be taken as a guide to implement terminating and
 correct-by-construction tail-recursive machines for those universes.
 
 \paragraph{The function |load| written in continuation passing style} The
-function |load|, as we defined it in \Cref{sec:generic:onestep}, uses the
+function |load|, as we defined it in \cref{sec:generic:onestep}, uses the
 ancillary function |first-cps| to look for the leftmost leaf in the input tree.
 Such function is defined in continuation passing style, which makes its
 definition looks overly complicated. However, it is necessary to keep the
@@ -1131,9 +1132,9 @@ decide which case is met, the function would not be tail-recursive anymore.
 
 \paragraph{Irrelevance} The generic tail-recursive machine should not have extra
 runtime impact due to termination and correctness proofs. The inclusion of
-subtrees and proofs along with |Computed| values in the stack, indeed, incurs in
+subtrees and proofs along with |Computed| values in the stack indeed incur
 memory overhead during execution. We could use \emph{again} computational
 irrelevance to identify the parts of the stack not needed during runtime so they
 are automatically removed. However, it is not clear how to do so in Agda due the
 narrowness of irrelevance as we previously discussed in
-\Cref{sec:expression:discuss}.
+\cref{sec:expression:discuss}.

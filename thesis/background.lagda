@@ -6,18 +6,18 @@
 In this \namecref{chap:background}, we introduce some of the concepts that are
 mandatory prerequisites for understanding the main parts of this master thesis.
 The chapter is organized into three different sections, whose content is
-seemingly unrelated. We begin in \Cref{sec:background:fold} with a broad
+seemingly unrelated. We begin in \cref{sec:background:fold} with a broad
 overview of semantics in programming languages and its relation to the content
-of this master thesis.  In \Cref{sec:background:termination}, we revisit the
+of this master thesis.  In \cref{sec:background:termination}, we revisit the
 literature about techniques for assisting the termination checker of \Agda.
-Lastly, in \Cref{sec:background:generic} we quickly overview generic programming
+Lastly, in \cref{sec:background:generic} we quickly overview generic programming
 in the context of this thesis. 
 
 \section{A broader perspective}
 \label{sec:background:fold}
 
 There are three main approaches for formalizing the semantics of a programming
-language: small-step --or operational-- semantics, where for each construct of
+language: small-step operational semantics, where for each construct of
 the language it is specified how the abstract machine, which is evaluating the
 program, evolves; denotational semantics, where each construct is mapped by
 a \emph{mathematical} function to the value it evaluates in the denotational
@@ -65,9 +65,9 @@ terminates.
 
 The work on this master thesis can be regarded as a step towards exploiting, in
 a formal environment such as \Agda, the connection between high-level
-denotational functions --in the form of folds-- and low-level abstract machines.
+denotational functions---in the form of folds---and low-level abstract machines.
 Given a language in terms of its generic representation, and an algebra we
-construct a generic tail-recursive function ,i.e. the low-level abstract
+construct a generic tail-recursive function, i.e. the low-level abstract
 machine, that we later formally proof equal to the fold induced by its
 structure.
 
@@ -83,7 +83,7 @@ function are performed over \textbf{structurally} smaller arguments. The
 termination checker, however, is not complete: there are programs that terminate
 but the termination checker classifies as possibly non terminating.
 
-Many interesting --and terminating-- functions that we would like to define do
+Many interesting and terminating functions that we would like to define do
 not conform to the pattern of being defined by structural recursion. For
 instance, the naive tail-recursive evaluator presented in the introduction
 (\Cref{sec:intro:descr}). 
@@ -199,7 +199,7 @@ order to show that the \emph{quicksort} function always terminates.
   Using the sized type |SList| we define a |filter| function that is guaranteed
   to preserve the size of its input list: the result list does not gain new
   elements. We do so by explicitly declaring in its type signature that the size
-  of the result does not exceed --recall that the size is an upper bound-- the
+  of the result does not exceed---recall that the size is an upper bound---the
   size of the parameter:
   %
   \begin{code}
@@ -627,7 +627,7 @@ genericity}: abstract over the shape of a datatype, or its inductive structure.
 
 In the rest of this section, we give a fast-track introduction to generic
 programming with dependent types. We put special interest on the \emph{regular}
-universe, for which we later, \Cref{chap:generic}, construct the generic tail-recursive 
+universe, for which we later, \cref{chap:generic}, construct the generic tail-recursive 
 evaluator.
 
 \subsection{The \emph{regular} universe}
@@ -713,7 +713,7 @@ A functor layer given by the code |R| is interpreted by substituting the
 recursive positions, marked by the constructor |I|, with generic trees of type
 |mu R|. The definition of the fixed point is constrained to functors built
 within the universe. In general, the fixed point of a non-positive\footnote{The
-type being defined appears in negative positions --as a function argument-- in
+type being defined appears in negative positions, that is as a function argument, in
 its own constructors.} type can be used to build non-normalizing terms, 
 leading to inconsistency.
 
@@ -794,7 +794,7 @@ This definition is indeed accepted by Agda's termination checker.
 
 \begin{example}
   We can take the type of expressions from the introduction,
-  \Cref{sec:intro:descr}, and encode it in the \emph{regular} universe in two
+  \cref{sec:intro:descr}, and encode it in the \emph{regular} universe in two
   steps: first, we define the code of the \emph{pattern functor} underlying the
   constructors; second, the generic representation of |Expr| arises from
   tying the knot over the pattern functor:
@@ -856,6 +856,6 @@ acknowledge:
 \end{displayquote}
 
 Indeed, the regular universe can only represent simple algebraic datatypes.
-Datatypes that contain functions --exponentials-- \citep{meijer1995space};
+Datatypes that contain functions---exponentials---\citep{meijer1995space};
 that are nested~\citep{nested}; or that are type indexed
 ~\citep{dybjer-inductive} cannot be encoded in the universe.

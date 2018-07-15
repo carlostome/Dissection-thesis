@@ -83,9 +83,9 @@
     \medskip
 }
 
-\newenvironment{disgression}{%
+\newenvironment{digression}{%
     \begin{mdframed}[%
-        frametitle={Disgression},
+        frametitle={Digression},
         skipabove=\baselineskip plus 2pt minus 1pt,
         skipbelow=\baselineskip plus 2pt minus 1pt,
         linewidth=0.5pt,

@@ -12,7 +12,7 @@ function.
 We start this chapter with a detailed description of the problem that motivates
 the research conducted within this master thesis (\Cref{sec:intro:descr}), and
 subsequently, we formulate the concrete research questions
-(\Cref{sec:intro:research}). Lastly, in \Cref{sec:intro:org} we outline the
+(\Cref{sec:intro:research}). Lastly, in \cref{sec:intro:org} we outline the
 organization of the rest of this document.
 
 \section{Description of the problem}\label{subsec:problem}
@@ -33,7 +33,7 @@ language \Agda~\citep{norell}}
   foldr f e (x :: xs)  = f x (foldr f e xs)
 \end{code}
 %
-In the second clause of the definition, the parameter function |f| can not
+In the second clause of the definition, the parameter function |f| cannot
 reduce further before the result of the recursive call on the argument |xs| is
 available. This is a problem both of strict languages and non-strict languages
 with strict functions. 
@@ -187,13 +187,13 @@ spell the research questions that this master thesis is set out to answer:
     |Expr| to the generic case through \emph{dissection}?
 \end{enumerate}
 
-We answer questions one and two in \Cref{chap:expression}, where we show how to
+We answer questions one and two in \cref{chap:expression}, where we show how to
 \emph{manually} write a tail-recursive evaluator for the type of |Expr|. We
 subsequently prove the evaluator to be both terminating and correct with respect
 to the fold.
 
-In \Cref{chap:generic}, we answer the third research question. Particularly, we
-generalize the result from \Cref{chap:expression} and develop a terminating
+In \cref{chap:generic}, we answer the third research question. Particularly, we
+generalize the result from \cref{chap:expression} and develop a terminating
 tail-recursive evaluator that works for any algebra over any regular datatype.
 Additionally, we prove the evaluator to be correct with regard to the
 fold associated with the datatype.
@@ -204,7 +204,7 @@ fold associated with the datatype.
   This master thesis is divided in four chapters.
   
   We start in
-  \Cref{chap:background} giving the reader a broader perspective on folds in
+  \cref{chap:background} giving the reader a broader perspective on folds in
   programming languages to justify the importance of our our work.  Furthermore,
   we revisit the available literature on techniques to assist the termination
   checker to accept functions that are not defined by strictly structural
@@ -217,7 +217,7 @@ fold associated with the datatype.
   equivalent to the fold over |Expr|, and its generalization to the regular
   universe.
 
-  We conclude this document, in \Cref{chap:conclusion}, with a few remarks about
+  We conclude this document, in \cref{chap:conclusion}, with a few remarks about
   the work presented here and discuss possible future directions to pursue.
 
 \paragraph{Style}

@@ -5,15 +5,15 @@
 
  In this \namecref{chap:expression}, we present the termination and correctness proof of a
  tail-recursive fold equivalent to the evaluation function |eval|, introduced in
- \Cref{sec:intro:descr}. As a starting point, \Cref{sec:expression:stage}, we
+ \cref{sec:intro:descr}. As a starting point, \cref{sec:expression:stage}, we
  take the definitions of the functions |load| and |unload1| and reformulate them:
  the problem of termination is reduced into finding a suitable well-founded
- relation. In the next \namecref{sec:expression:wellfounded}, \Cref{sec:expression:wellfounded}, we show how
+ relation. In the next \namecref{sec:expression:wellfounded}, \cref{sec:expression:wellfounded}, we show how
  to step-by-step construct such relation and prove its well-foundedness.
  \Cref{sec:expression:tailrec}, presents the terminating tail-recursive
- evaluator, and finally, in \Cref{sec:expression:correctness}, we prove its
+ evaluator, and finally, in \cref{sec:expression:correctness}, we prove its
  correctness with regard to the |eval| function. We conclude in
- \Cref{sec:expression:discuss} with a discussion about the pros and cons of our
+ \cref{sec:expression:discuss} with a discussion about the pros and cons of our
  evaluator and point out other possible solutions in the design space.
  
 \section{Setting the stage}
@@ -51,7 +51,7 @@
   tree is visited twice during the execution: first when the function |load|
   traverses the tree, until it finds the leftmost leaf; second when |unload1|
   inspects the stack in searching of an unevaluated subtree. This process is
-  depicted in \Cref{fig:load-unload}.
+  depicted in \cref{fig:load-unload}.
 
  \begin{figure}[h]
    \centering
@@ -61,7 +61,7 @@
  \end{figure}
 
 As there are finitely many nodes on a tree, the depicted traversal
-using |load| and |unload1| must terminate -- but how can we convince
+using |load| and |unload1| must terminate---but how can we convince
 \Agda's termination checker of this?
 
 As a first approximation, we revise the definitions of |load| and |unload1|.
@@ -109,15 +109,14 @@ to define the following evaluator:
       ... | inj2 r             = r
 \end{code}
 %}
-Here we use |load| to compute the initial configuration of our machine
--- that is, it finds the leftmost leaf in our initial expression and its associated stack.
+Here we use |load| to compute the initial configuration of our machine---that is, it finds the leftmost leaf in our initial expression and its associated stack.
 We proceed by
 repeatedly calling |unload1| until it returns a value.  This version of
 our evaluator, however, does not pass the termination checker. The new
-state, |(n' , stk')|, is not structurally smaller than the initial
+state |(n' , stk')| is not structurally smaller than the initial
 state |(n , stk)|. If we work under the assumption that we have a
 relation between the states |Nat * Stack| that decreases after every
-call to |unload1| and a proof that the relation is well-founded -- we know
+call to |unload1| and a proof that the relation is well-founded---we know
 this function will terminate eventually, we define the following version of the tail-recursive evaluator:
 \begin{code}
   tail-rec-eval : Expr -> Nat
@@ -161,10 +160,10 @@ general. In particular, the configurations presented in the previous
 section \emph{only} ever denote a \emph{leaf} in the input expression.
 
 The tail-recursive evaluator, |tail-rec-eval| processes the leaves of the input
-expression in a left-to-right fashion. The leftmost leaf -- that is the first
-leaf found after the initial call to |load| -- is the greatest element; the
+expression in a left-to-right fashion. The leftmost leaf---i.e. the first
+leaf found after the initial call to |load|---is the greatest element; the
 rightmost leaf is the smallest. In our example expression, 
-\Cref{fig:load-unload}, we would number the leaves as follows:
+\cref{fig:load-unload}, we would number the leaves as follows:
 
 \begin{figure}[ht]
   \centering
@@ -182,12 +181,12 @@ two central problems with our choice of |ZipperType| datatype:
 \item The |ZipperType| datatype is too liberal. As we evaluate our input expression
   the configuration of our abstract machine changes constantly, but satisfies
   one important \emph{invariant}: each configuration is a decomposition of the
-  original input. Unless this invariant is captured, we will be hard pressed
+  original input. Unless this invariant is captured, we will be hard-pressed
   to prove the well-foundedness of any relation defined on configurations.
 
 \item The choice of the |Stack| datatype, as a path from the leaf to the
   root is convenient to define the tail-recursive machine, but impractical
-  when defining the coveted order relation. The top of a stack stores information about
+  when defining the desired order relation. The top of a stack stores information about
     neighbouring nodes, but to compare two leaves we need \emph{global} information
     about their positions relative to the root.
 \end{enumerate}
@@ -198,7 +197,7 @@ invariant (\Cref{subsec:expression:invariant}). Secondly, we
 explore a different representation of stacks, as paths from the root, that facilitates
 the definition of the desired order relation (\Cref{subsec:expression:topdown}).
 Subsequently, we will define the relation over configurations,
-\Cref{subsec:expression:ordering}, and sketch the proof that it is well-founded.
+\cref{subsec:expression:ordering}, and sketch the proof that it is well-founded.
 
 \subsection{Invariant preserving configurations}
 \label{subsec:expression:invariant}
@@ -221,7 +220,7 @@ unique leaf in our input expression, or equivalently, a state of the abstract
 machine computing the fold.
 There is one problem still: the |Stack| datatype stores the values of the subtrees that have
 been evaluated, but does not store the subtrees themselves.
-In the example in \Cref{fig:examplezipper}, 
+In the example in \cref{fig:examplezipper}, 
 when the traversal has reached the third leaf, all the
 subexpressions to its left have been evaluated.
 
@@ -315,7 +314,7 @@ respect to its \emph{parent} node. This kind of \emph{local} information cannot 
 used to decide which one of the leaves is located in a position further to the
 right in the original input expression.
 
-Instead, we would like to compare the \emph{last} elements of both
+Instead, we would like to compare the \emph{bottom} elements of both
 stacks.  The common suffix of the stacks shows that both positions are
 in the left subtree of the root. Once these paths -- read from right
 to left -- diverge, we have found the exact node |Add| where one of the
@@ -375,7 +374,6 @@ the input expression |e|:
 %
 \begin{code}
   data IxLtOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
-  data IxLtOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
     <-StepR  : llcorner r lrcorner ((t1 , s1) , ...) < ((t2 , s2) , ...)
       ->  llcorner Add l r lrcorner ((t1 , Right l n eq s1) , eq1) < ((t2 , Right l n eq s2) , eq2)
     <-StepL  : llcorner l lrcorner ((t1 , s1) , ...) < ((t2 , s2) , ...)
@@ -425,7 +423,7 @@ only comparing configurations arising from traversing the same initial
 expression |e|.
 
 Following the same layout of \cref{example:background:wellfounded-qs}, the proof
-uses two ancillary lemmas that propagate the property of well-foundedness from
+uses two lemmas that propagate the property of well-foundedness from
 structurally smaller configurations, i.e. with less elements in the stack: 
 %
 \begin{code}
@@ -447,7 +445,7 @@ predicate. In the second lemma, |accL|, the proof is done by induction over the
 argument |y|. There are two cases to consider: the inductive case, |<-StepL|,
 proceeds by recursion over the accessibility predicate on the left subexpression
 |Acc (llcorner l lrcornerLtOp) (x , s)|. However, the non-inductive case,
-constructor |<-Base|, posses a technical challenge: for the relation to be
+constructor |<-Base|, poses a technical challenge: for the relation to be
 well-founded on the expression |Add l r| depends on itself being well-founded on the
 right subtree |r|.  The former lemma, |accR|, handles this case if we can supply
 a proof that the right subtree is accessible |Acc (llcorner r lrcornerLtOp) (x ,
@@ -461,8 +459,11 @@ smaller input. Acceptance by the termination checker certifies it.
 The type |IxLtOp|, more than being a single relation over configurations, is a
 family of relations, one for every possible value of type |Expr|. Although
 indexing the relation, and the configurations, is \emph{necessary} to prove that
-it is well-founded, it is not amenable to show other properties. Therefore,
-instead of working directly with |IxLtOp|, we define another auxiliary relation
+it is well-founded, it is not amenable to prove properties of functions regarding
+the relation. For instance, a proof that the function |unload| returns a smaller
+configuration would require a lot of bookkeeping for the type index.
+
+Instead of working directly with |IxLtOp|, we define another auxiliary relation
 over non type-indexed configurations, and prove that there is an injection
 between both under suitable assumptions:
 %
@@ -535,10 +536,10 @@ states that the |unload| function respects our invariant:
 \end{code}
 %
 The proof proceeds by induction over the stack part of the configuration. In the
-case the stack is empty, there is nothing to show, |unload| returns natural
+case the stack is empty, there is nothing to show, |unload| returns a natural
 number wrapped in |inj2|. In case the stack is not empty, depending on the
 element in the top, either |Right| or |Left|, it calls itself recursively or
-uses an ancillary lemma showing that the function |load| honors the
+uses a lemma showing that the function |load| honors the
 invariant too:
 %
 \begin{code}
@@ -604,15 +605,15 @@ input and a proof that is accessible:
 \section{Correctness}
 \label{sec:expression:correctness}
 
-Indexing the datatype of configurations comes in hand when proving correctness
+Indexing the datatype of configurations is useful when proving correctness
 of the tail-recursive evaluator. The type of the function |step| guarantees by
 construction that the input expression never changes during the fold: the
 invariant consistently holds. Because the input expression remains constant
 across invocations, the result of |eval| does so also.
 
-Proving the function |tail-rec-eval| correct amounts to show that the auxiliary
+Proving the function |tail-rec-eval| correct amounts to showing that the auxiliary
 function, |rec|, iterated until a value is produced, behaves as |eval|.
-The ancillary function |rec| is defined by recursion over the accessibility
+The auxiliary function |rec| is defined by recursion over the accessibility
 predicate, thus the proof is done by induction over the same argument:
 %
 \begin{code}
@@ -678,7 +679,7 @@ type-index in the configuration type, |Zipperdown|, is not possible to prove
 well-foundedness.  However, enlarging the type of the stacks to prove the
 required properties comes at a cost: the runtime impact of the function
 |tail-rec-eval| is larger than the pair of mutually recursive functions |load|
-and |unload1|, \Cref{sec:intro:descr}, that we took as starting point. 
+and |unload1|, \cref{sec:intro:descr}, that we took as starting point. 
 
 \item
 Our tail-recursive evaluator is tied to a concrete algebra composed of
@@ -697,7 +698,7 @@ Alternatively, we can formulate a provably terminating tail-recursive fold using
 The tail-recursive evaluator we developed exchanges space in the execution stack
     for space in the heap. The runtime environment where the function is
     executed has to explicitly allocate space in the heap to hold the |Stack|
-    argument of |tail-rec-eval|. On the practical level, it is not clear what do
+    argument of |tail-rec-eval|. On the practical level, it is not clear what
     we gain from the transformation.
     
 \item
@@ -707,7 +708,7 @@ Previous work by \cite{Danvy2009} has focused on constructing abstract machines
     Both machines are definitely related.
 
 \item
-The one step function, which our evaluator iterates, performs several reductions
+The |step| function, which our evaluator iterates, performs several reductions
     each time it is applied. However, the interpretation of a tail-recursive
     function as an abstract machine fits more naturally when the function it
     iterates reduces at most one redex at a time.
@@ -795,8 +796,8 @@ for any |Expr|. First, we define an algebra over |Expr| as the following triple:
       AddA  : a -> a -> a
 \end{code}
 %
-The folding function |foldExpr| rather than a pair of functions takes the
-algebra as a parameter:
+The folding function |foldExpr| takes the
+algebra as a parameter rather than a pair of functions:
 %
 \begin{code}
   foldExpr : (alg : ExprAlg) -> Expr -> a alg
@@ -945,7 +946,7 @@ expressions, |Expr|?
 The first problem that arises, when formalizing Danvy's machine in a total
 language such as \Agda, is that the decomposition step essentially corresponds
 to the pair of mutually recursive functions |load| and |unload1|. As we
-previously saw, \Cref{sec:intro:descr}, the termination checker classifies them
+previously saw in \cref{sec:intro:descr}, the termination checker classifies them
 as possibly non terminating. As we did for our tail-recursive machine, we could
 define a well-founded relation to show that traversing an expression to find its
 leftmost redex terminates. 
@@ -971,9 +972,9 @@ Danvy's machine in \Agda: one to prove that decomposition terminates, one to
 prove that iterating the one step function terminates. Surprisingly, the
 optimization that Danvy applies to the machine, \emph{refocusing}, which removes
 any intermediate expression by fusing the decomposition and recomposition steps,
-makes its more amenable to construct in \Agda. Indeed, is a variation of our
+makes its more amenable to construct in \Agda. Indeed, it is a variation of our
 tail-recursive evaluator with one difference: our one step function contracts
-several redexes at once while Danvy's only one at a time. In the next paragraph,
+several redexes at once while Danvy's contracts only one at a time. In the next paragraph,
 we explore the ramifications of modifying our one-step function to match Danvy's
 abstract machine.
 
@@ -1030,7 +1031,7 @@ a \emph{redex} that is ready to be reduced. The definition of the function
 \end{code}
 %
 In the second clause, instead of recursing over the stack and applying |plusOp|
-to |n| and |n'|, the function |unload1| returns immediately the |Redex|. The
+to |n| and |n'|, the function |unload1| returns the |Redex| immediately. The
 function |step1| will be, in this case, the responsible of triggering the
 reduction: 
 %
@@ -1062,14 +1063,14 @@ two more situations will need to be considered:
 The definition of the type |Config1|, increases the diversity of possibilities
 that have to be dealt with, thus the complexity of functions and proofs. In
 overall, we are trading a simple formulation that takes advantage of the fact
-that the function |unload| provably terminates --it is defined by structural
-recursion over the stack-- for a more complicated one that demands explicit 
+that the function |unload| provably terminates---it is defined by structural
+recursion over the stack---for a more complicated one that demands explicit 
 evidence of the termination.
 
 In this part of the thesis, the main objective is not just to develop a
 tail-recursive evaluator for binary trees, but, to prepare the stage for the
-generic solution that we further present in \Cref{chap:generic}. The simplicity
-of our approach pays off, as later will become clear, because it has a
+generic solution that we further present in \cref{chap:generic}. The simplicity
+of our approach pays off, as it later will become clear that it has a
 straightforward generalization.  However, it is not clear how changing the
 function |unload| to one, that reduces at most one redex at a time, fits in the
 construction as a whole, nor how it scales to the generic case. Certainly, it

@@ -4,9 +4,9 @@
 
 In this master thesis, we presented the derivation of a generic tail-recursive
 machine capable of computing the catamorphism of any algebra for any regular
-datatype. Moreover, we proved Our tail-recursive machine to be both terminating
+datatype. Moreover, we proved our tail-recursive machine to be both terminating
 and correct with respect to the catamorphism. We formalized the work discussed
-in this thesis is in the dependently typed programing language Agda, only using
+in this thesis in the dependently typed programing language \Agda, only using
 the sound and complete parts of the language: our construction does not require
 the utilization of any exotic termination flags or extraneous postulates.
 
@@ -28,18 +28,18 @@ functions that are not obviously structurally recursive, such as the
 Bove-Capretta method\\*\citep{bove}, partiality monad~\citep{partiality}, or
 coinductive traces\\*~\citep{nakata}. In contrast to the well-founded recursion used
 in this thesis, however, these methods do not yield an evaluator that is directly
-executable, but instead defer the termination proof. Given that we can -- and
-indeed have -- shown termination of our tail-recursive abstract machines, the
+executable, but instead defer the termination proof. Given that we can---and
+indeed have---shown termination of our tail-recursive abstract machines, the
 abstract machines are executable directly in \Agda.
 
 The use of \Agda~as the formalization language is not casual. Skipping parts of
 a proof is a standard procedure in hand-written mathematics. However, in a
 theorem prover such as \Agda~we have to be completely honest: to prove every
 theorem and lemma we have to reason up to the most concrete detail. In return,
-we can be certain --as certain as we trust \Agda's implementation to be
-correct-- that when a program (or proof) typechecks then it is
+we can be certain---as certain as we trust \Agda's implementation to be
+correct---that when a program (or proof) typechecks then it is
 \emph{mathematically} true. We know once and for all that the abstract machine
-terminates and is correct; no amounts of testing can ever provide a most
+terminates and is correct; no amounts of testing can ever provide a more
 definite and convincing argument. In addition, the type theory underlying Agda
 is constructive. A theorem can be interpreted as function that transforms inputs
 into outputs. Within our work, we can appreciate this in the fact that the proof
@@ -56,7 +56,7 @@ its application is limited.
 
 There are several directions in which this thesis could be further developed.
 First, the choice of universe. As we mentioned in
-\Cref{subsec:background:regular,chap:generic}, we chose to build our generic
+\cref{subsec:background:regular,chap:generic}, we chose to build our generic
 tail-recursive machine in the regular universe because of practical reasons.
 However, the development presented in this thesis can be taken as a recipe to
 build tail-recursive machines for other universes.  The main insight we provide
@@ -77,7 +77,7 @@ back to Martin-L{\"o}f~\cite{martinloef}. It would be worthwhile exploring how
 to extend our construction to more general universes, such as the context-free
 types~\citep{morris}, containers~\citep{containers,indexed-containers}, or the
 `sigma-of-sigma' universe~\citep{power-of-pi,levitation}.  Doing so would allow
-us to exploit dependent types further in the definition of our evaluators.A long
+us to exploit dependent types further in the definition of our evaluators. A long
 term goal of our work would be to export our development to a generic universe
 capable of representing well-typed lambda calculus terms, and their evaluation
 as a simple fold over the syntax. In such environment, we could derive a
@@ -102,12 +102,12 @@ function is executed by the recursor, but its result is then used to show
 termination before actually recursing on the accessibility predicate. Ideally,
 the derived machine should have the same runtime impact as if it was implemented
 in a general purpose functional programming language, such as \Haskell.  At the
-end of both \Cref{chap:expression,chap:generic} we discussed about the
+end of both \cref{chap:expression,chap:generic} we discussed about the
 shortcomings of using irrelevance directly in \Agda. However, it should be
 possible to export our construction to a more mature proof system such as
 \emph{Coq} where the distinction between the parts of the code used for proving
 and those used for computing can be clearly separated.  We could use the
-impredicative universe \textbf{Prop} for the former, while, the predicative
+impredicative universe \textbf{Prop} for the former while using the predicative
 universe, \textbf{Type}, for the latter.  Nevertheless, it is well-known that
 \emph{Coq} as a theorem prover excels for its capability of using the
 dependently typed part of the language to prove properties about programs
