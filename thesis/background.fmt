@@ -258,8 +258,8 @@
 %format b          = "\AB{\ensuremath{\beta}}"
 %format i          = "\AB{\ensuremath{i}}"
 %format j          = "\AB{\ensuremath{j}}"
-%format smaller          = "\AB{smaller}"
-%format bigger          = "\AB{bigger}"
+%format smaller          = "\AB{lesser}"
+%format bigger          = "\AB{greater}"
 
 %format ??    = "\hole{}"
 %format ??1    = "\hole{1}"

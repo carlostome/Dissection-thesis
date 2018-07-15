@@ -16,18 +16,20 @@ in the context of this thesis.
 \section{A broader perspective}
 \label{sec:background:fold}
 
-There are two main approaches for formalizing the semantics of a programming
+There are three main approaches for formalizing the semantics of a programming
 language: small-step --or operational-- semantics, where for each construct of
 the language it is specified how the abstract machine, which is evaluating the
-program, evolves; and denotational semantics, where each construct is mapped by
+program, evolves; denotational semantics, where each construct is mapped by
 a \emph{mathematical} function to the value it evaluates in the denotational
-domain of the language. 
+domain of the language; and big-step operational semantics, where the overall
+results of the computation are characterized by a relation over the terms of the
+language.
 
-The connection between both style of formalizing the semantics has been
-extensively exploited, for example see \cite{Ager:2003:FCE:888251.888254}, to
-derive well-known abstract machines, such as the \cite{krivine2007call} machine,
-from a denotational semantics specification and vice versa. However, as they
-state in the article:
+The connection between the first two styles of formalizing the semantics has
+been extensively exploited, for example see \cite{Ager:2003:FCE:888251.888254},
+to derive well-known abstract machines, such as the \cite{krivine2007call}
+machine, from a denotational semantics specification and vice versa. However, as
+they state in the article:
 
 \begin{displayquote}
 Most of our implementations of the abstract machines raise compiler warnings
@@ -134,7 +136,7 @@ two terminating functions when combined together may give rise to a divergent
 function. 
 
 The rest of this section is devoted to show how using the aforementioned
-techniques, we can convince \Agda~that |quickSort| terminates on any input.
+techniques, we can convince \Agda~that quicksort terminates on any input.
 
 \subsection{Sized types} 
 \label{subsec:background:sized}
@@ -142,8 +144,8 @@ techniques, we can convince \Agda~that |quickSort| terminates on any input.
 Sized types \citep{abel2010miniagda} is a type system extension that allows to
 track structural information on the type level. Terms can be annotated with a
 type index that represents an \textbf{upper bound} of the actual \textit{size}
-of the term being annotated. By size of an inductive datatype it is
-understood the number of constructors used to build a value of the type.
+of the term being annotated. The size of a term is the number of
+constructors used to build it.
 
 Functions can quantify over size variables to relate the size of its
 parameters to the size of its result. A term is only well-typed if the 
@@ -152,12 +154,11 @@ annotation of a term conforms to its actual size. Size annotations are
 gathered during typechecking and passed to a linear inequality solver to check
 their validity. The type |Size| used to annotate sizes can be understood as the
 type of ordinal numbers without a base element. Its definition is built-in in the
-\Agda~compiler, but informally corresponds to the following type:\footnote{The
-type |Size| it lives in its own universe |SizeUniv|, this reiterates the special
-treatment that is given by the typechecker.}
-%
+\Agda~compiler, and corresponds to the following:%
+
 \begin{code}
-  data Size : SizeUniv where
+  postulate
+    Size   : Set
     omega  : Size 
     upOp   : Size -> Size
 \end{code}
@@ -180,7 +181,7 @@ order to show that the \emph{quicksort} function always terminates.
   difference with the regular definition of list, |List|, is that its signature
   has a new type index of type |Size|. The return type of every constructor
   explicitly instantiates the |Size| index in such a way that the size of the
-  recursive occurrences are related to the size of the value being constructed.
+  recursive occurrences is related to the size of the value being constructed.
   The definition of sized lists is as follows:
   %
   \begin{code}
@@ -192,32 +193,39 @@ order to show that the \emph{quicksort} function always terminates.
   In the constructor |SNil| there are no recursive occurrences, thus the |Size|
   type-index is universally quantified. On the other hand, in the constructor
   |SCons| the returned |Size| is the size of the recursive parameter, |i|, increased
-  by one , |up i|. Indeed, the constructor is adding a new `layer' on top
+  by one, |up i|. Indeed, the constructor is adding a new `layer' on top
   of its parameter.
 
   Using the sized type |SList| we define a |filter| function that is guaranteed
-  to preserve the size of its input list. We do so by explicitly declaring in
-  its type signature that the size of the result does not exceed the size of the
-  parameter --the result list does not gain new elements:
+  to preserve the size of its input list: the result list does not gain new
+  elements. We do so by explicitly declaring in its type signature that the size
+  of the result does not exceed --recall that the size is an upper bound-- the
+  size of the parameter:
   %
   \begin{code}
   filterS : {i : Size} -> (a -> Bool) -> List a i -> List a i
-  filterS p SNil          = SNil
-  filterS p (SCons x xs)  = if p x  then SCons x (filterS p xs)
-                                    else filterS p xs  
+  filterS {.. i}      p (SNil {i})        = SNil
+  filterS {..(up i)}  p (SCons {i} x xs)  = if p x  then SCons x (filterS {i} p xs)
+                                                    else filterS {i} p xs
   \end{code}
   %
-  With this definition of |filter| in hand, we are ready to define the function
+  The second clause of the definition is interesting. In the |else| branch the
+  type of the recursive call is |List a i|, but, the expected type, from the
+  signature of the function, is |List a (up
+  i)|. Sized types come with a subtyping relation which states that |List a i <S
+  List a (up i)|, thus the recursive call is well-typed.
+
+  With the definition of |filterS| in hand, we are ready to define the function
   quicksort over the type of sized lists such that it is catalogued as
   terminating by the termination checker:
   %
   \begin{code}
     quickSortS : {i : Size} -> (a -> a -> Bool) -> List a i -> List a omega
-    quickSortS {..(i)}     p (SNil   {i})       = SNil
+    quickSortS {.. i}     p (SNil   {i})       = SNil
     quickSortS {..(up i)}  p (SCons  {i} x xs)  
-      =  quickSortS {i} p (filter {i} (p x) xs)
+      =  quickSortS {i} p (filterS {i} (p x) xs)
            ++ [ x ] ++
-         quickSortS {i} p (filter {i} (not ∘ p x) xs)
+         quickSortS {i} p (filterS {i} (not ∘ p x) xs)
   \end{code}
   %
   The first thing to note is the use of |omega| as the size annotation in the
@@ -230,7 +238,7 @@ order to show that the \emph{quicksort} function always terminates.
   type such as | {i j : Size} -> List a i -> List a j -> List a (i + j)|. Nevertheless,
   it is enough to demonstrate to \Agda~ that the implementation of quicksort terminates. 
   Specifically, in the second clause of the definition, the information about the size of the
-  input, |up i|, is propagated to the function |filter| that it is known to
+  input, |up i|, is propagated to the function |filterS| that it is known to
   preserve the size of its input. The recursive call is now provably
   terminating. 
   
@@ -246,7 +254,7 @@ order to show that the \emph{quicksort} function always terminates.
   termination. As we showed in the previous example, termination based on sized
   types is modular because it works across the boundaries of function
   definitions. However, the expressivity of the system is somewhat limited and in
-  general sized types are not first class entities in the language, rather
+  general sized types are not first class entities in the language, but rather
   built-in objects with special treatment subject to some restrictions.
 
 \subsection{Bove-Capretta predicate}
@@ -254,7 +262,7 @@ order to show that the \emph{quicksort} function always terminates.
 
 Another commonly used technique in type theory to encode general recursive
 functions is the Bove-Capretta~\citep{Bove2001} transformation. The call graph of
-any function, even if is not defined by structural recursion, posses an inductive 
+any function, even if is not defined by structural recursion, poses an inductive 
 structure that can be exploited to show termination. Instead of directly
 defining the function, the call graph of the original function is added as a new
 parameter so the function can be defined by structural recursion over it.
@@ -320,9 +328,11 @@ that is |forall (x : a) -> P x|.
     qsPred-true = ...
   \end{code}
   %
-  However, proving the previous theorem is not possible just by structural
-  recursion. In order to complete the proof we need a more advanced technique,
-  such as \emph{well-founded} recursion (\Cref{subsec:background:wellfounded}).
+  Proving the previous theorem, however, is not possible just by structural
+  recursion. Basically, we would fall in the same problem as before but this time
+  manipulating lists at the type level. In order to complete the proof, we need a
+  more advanced technique, such as \emph{well-founded} recursion
+  (\Cref{subsec:background:wellfounded}).
 \end{example}
 
 The Bove-Capretta transformation allows the programmer to decouple the task of
@@ -346,7 +356,7 @@ gets `smaller' in each invocation of a function, and show that the relation has
 the property of not decreasing indefinitely.
 
 Formally, for a given binary relation over elements of type |a|, | <Op : a -> a
--> Set|, an element |x : a| is \emph{accessible} if there are not infinite descending
+-> Set|, an element |x : a| is \emph{accessible} if there are no infinite descending
 chains starting from it by repeated decrements, |x0 < x1 < ... <
 xn1 < xn < x|. A more constructive characterization of the accessibility
 predicate in type theory, due to \Citet{nordstrom1988terminating}, is
@@ -422,8 +432,8 @@ well-founded as follows:
   % 
   The holes that are left, |??1 : filter (p x) xs <L (x :: xs)| and
   |??2 : filter (not . p x) xs <L (x :: xs)|, necessitate of an ancillary lemma
-  expressing that the function filter, no matter what predicate is passed, always
-  returns a smaller list: 
+  expressing that the function filter always
+  returns a smaller list by the relation: 
   %
   \begin{code}
   filter-<L : ∀ (p : a -> Bool) (x : a) (xs : List a) -> filter p xs <L (x :: xs)
@@ -448,9 +458,9 @@ well-founded as follows:
   requirement, specially when is clear that |quickSort| terminates for every
   possible input. To solve this undesirable situation, we can show once and for
   all that every element is accessible. The constructive nature of the
-  \emph{well-foundedness} proof (it is an algorithm) serves as procedure to
-  build the accessibility predicate without human intervention. The proof of the
-  theorem is as follows:
+  \emph{well-foundedness} proof (it is an algorithm) serves as the procedure to
+  build the accessibility predicate proofs for every input in the domain. The
+  proof of the theorem is as follows:
   %
   \begin{code}
   <L-Well-founded : Well-founded <LOp
@@ -495,7 +505,7 @@ well-founded as follows:
 The previous example is well engineered to be straightforward. We declare a
 relation over lists and the proof of well-foundedness follows almost immediately
 from the definition of the relation. Well-founded proofs are not always that
-simple, in the next example we examine how the proof is very dependent of the
+simple, in the next example we examine how the proof is very dependent on the
 inductive structure of the
 relation.
 
@@ -511,18 +521,18 @@ relation.
     suc   : Nat -> Nat
 
   data <1Op (m : Nat) : Nat -> Set where
-    Base1 :                        m <1 suc m
+    Base1 :                         m <1 suc m
     Step1 : (n : Nat) -> m <1 n ->  m <1 suc n
 
   data <2Op : Nat -> Nat -> Set where
     Base2 : (n : Nat)                  -> zero   <2 suc n
-    Step2 : (n m : Nat)  -> n <2 m      -> suc n  <2 suc m
+    Step2 : (n m : Nat)  -> n <2 m     -> suc n  <2 suc m
   \end{code}
   % 
   In the first relation, constructors are peeled off from the first argument
   until there is a difference of one which constitutes the base case. On the
-  other hand, in the second relation, the constructors are removed from the left
-  argument until |zero| is reached.
+  other hand, in the second relation, the constructors are removed from both
+  arguments until the left reaches |zero|.
 
   It should be clear that both definitions are equivalent. However, the first is
   more suitable to prove well-foundedness due to the explicit \emph{structural
@@ -661,7 +671,8 @@ We can interpret the inhabitants of |Reg| as a functor of type |Set -> Set|:
   interpl (R O* Q) interpr X   = interpl R interpr X * interpl Q interpr X
 \end{code}
 To show that this interpretation is indeed functorial, we define the
-following law abiding |fmap| operation:
+following law abiding |fmap| operation:\footnote{The proof is left as an
+exercise.}
 \begin{code}
   fmap : (R : Reg) -> (X -> Y) -> interpl R interpr X -> interpl R interpr Y
   fmap Zero f Empty
@@ -701,9 +712,9 @@ functor associated with an element of our universe is defined as follows:
 A functor layer given by the code |R| is interpreted by substituting the
 recursive positions, marked by the constructor |I|, with generic trees of type
 |mu R|. The definition of the fixed point is constrained to functors built
-within the universe. In general, the fixed point of a non positive\footnote{The
+within the universe. In general, the fixed point of a non-positive\footnote{The
 type being defined appears in negative positions --as a function argument-- in
-its own constructors.} type can be used to build non normalizing terms, 
+its own constructors.} type can be used to build non-normalizing terms, 
 leading to inconsistency.
 
 \begin{example}

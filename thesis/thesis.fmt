@@ -1,5 +1,6 @@
 %% Agda keywords
 %format data   = "\AK{data}"
+%format postulate   = "\AK{postulate}"
 %format where  = "\AK{where}"
 %format record = "\AK{record}"
 %format field  = "\AK{field}"
@@ -37,6 +38,7 @@
 %format String = "\AD{\ensuremath{String}}"
 %format Sigma  = "\AD{\ensuremath{\Sigma}}"
 %format lambda = "\AK{\ensuremath{\lambda}}"
+%format <S = "\AK{\ensuremath{\leq_{S}}}"
 
 %% Constructors of the above types
 %format ::       = "\hspace{.4em}\AI{:\hspace{-.1em}:}\hspace{.4em}"

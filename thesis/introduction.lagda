@@ -20,7 +20,7 @@ organization of the rest of this document.
 
 The |foldr| function is one of the first higher-order functions that any
 functional programmer learns. Many simple functions over lists such as |map|,
-|reverse|, |take|, |sum|, and many more can be expressed in terms of
+|reverse|, |take|, |sum|, and more can be expressed in terms of
 |foldr|.  However, if not used carefully, |foldr| may cause a \emph{well-typed
 program go wrong} by dynamically failing with a stack overflow. In order to
 understand the problem, let us review the definition of |foldr|:\footnote{Code
@@ -35,12 +35,15 @@ language \Agda~\citep{norell}}
 %
 In the second clause of the definition, the parameter function |f| can not
 reduce further before the result of the recursive call on the argument |xs| is
-available. If we think about it in terms of the execution of a stack machine,
-before the control flow is passed to the recursive call, a new frame has to be
-allocated on the top of the stack to resume with the reduction of |f|.
-Only a finite number of frames may be ever pushed on the stack
-before it reaches its limit. Performing a few steps of the evaluation of adding
-a very big list of numbers illustrates the issue:
+available. This is a problem both of strict languages and non-strict languages
+with strict functions. 
+
+If we think about it in terms of the execution of a stack machine, before the
+control flow is passed to the recursive call, a new frame has to be allocated on
+the top of the stack to resume with the reduction of |f|.  Only a finite number
+of frames may be ever pushed on the stack before it reaches its limit.
+Performing a few steps of the evaluation of adding a very big list of numbers
+illustrates the issue:
 %
 \begin{code}
 foldr  plusOp 0 [ 1..1000000 ] 
@@ -67,11 +70,10 @@ to be performed. Modern compilers typically map tail-recursive functions to
 machine code that runs in constant stack space~\citep{Steele:1977:DLP:800179.810196}.
 
 In the case of the function |foldr|, a possible implementation of an equivalent
-tail-recursive function would be a left fold, |foldl|.\footnote{Imposing further
-restrictions on the function |f : (a -> b -> b)| (see
-\citep{Hutton93atutorial}).} However, for inductive datatypes with constructors
-that have more than one recursive subtree, recovering a tail-recursive fold
-from the regular fold is not as straightforward.
+tail-recursive function would be a left fold, |foldl|. However, for inductive
+datatypes with constructors that have more than one recursive subtree,
+recovering a tail-recursive fold from the regular fold is not as
+straightforward.
 
 \paragraph{Folds for binary trees}
 
@@ -168,13 +170,13 @@ spell the research questions that this master thesis is set out to answer:
 \begin{enumerate}
   \item \textbf{Termination} \Agda's termination checker cannot verify that the
     functions |load| and |unload|, as previously defined, terminate for every
-    possible input. How can we demonstrate that the functions terminate, so as a
-    corollary the tail-recursive evaluator terminates?
+    possible input. How can we demonstrate that the functions terminate, so
+    that as a corollary the tail-recursive evaluator terminates?
 
   \item \textbf{Correctness} In the case the tail-recursive evaluator
     terminates, it is correct? By correct it is understood that both the
     evaluation function, |eval|, and  its tail-recursive counterpart,
-    |tail-rec-eval|, are extensionally equivalent: for any input both functions
+    |tail-rec-eval|, are equivalent: for any input both functions
     compute the same result.
 
   \item  \textbf{Generalization to the \emph{regular} universe} McBride proposes
@@ -194,7 +196,7 @@ In \Cref{chap:generic}, we answer the third research question. Particularly, we
 generalize the result from \Cref{chap:expression} and develop a terminating
 tail-recursive evaluator that works for any algebra over any regular datatype.
 Additionally, we prove the evaluator to be correct with regard to the
-catamorphism associated with the datatype.
+fold associated with the datatype.
 
 \section{Organization}
 \label{sec:intro:org}
@@ -227,7 +229,7 @@ catamorphism associated with the datatype.
   given, and the body is omitted altogether. All code snippets use \Agda~syntax,
   although not all of them typecheck directly. In the type signatures, any
   mentioned variable of type |Set| is taken as implicitly universally
-  quantified. To differentiate between functions and proofs functions (in
+  quantified. To differentiate between functions and theorems (in
   dependent type theory they are the same) we choose to prepend the type
   signatures of the latter with a explicit |forall| quantifier. The full \Agda~
   formalization is freely available online in:
