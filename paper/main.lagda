@@ -232,8 +232,8 @@ functions resembles an an abstract machine more closely.
 
 Both these functions are now accepted by Agda's termination checker as
 they are clearly structurally recursive. We can use both these functions 
-to define the following evaluator\footnote{We ignore |load|'s impossible case, it
-can always be discharged with \hbox{|bot-elim : forall {X : Set} -> Bot -> X|}.}:
+to define the following evaluator:\footnote{We ignore |load|'s impossible case, it
+can always be discharged with \hbox{|bot-elim : forall {X : Set} -> Bot -> X|}.}
 %{
 %format nrec   = "\nonterm{" rec "}"
 \begin{code}
@@ -339,8 +339,9 @@ Finally we will define the relation over configurations,
 \subsection{Invariant preserving configurations}
 \label{subsec:stack}
 
-A value of type |ZipperType| denotes a leaf in our input expression. In the
-previous example, the following |ZipperType| corresponds to the third leaf:
+A value of type |ZipperType| denotes a leaf in our input expression. The
+|ZipperType| illustrated in \Cref{fig:examplezipper} corresponds to the third
+leaf of the example expression.
 
 \begin{figure}[ht]
   \input{figures/figure3}
@@ -633,8 +634,8 @@ The proof is done by induction over the stack supported; the complete
 proof requires some bookkeeping, covering around 200 lines of code,
 but is conceptually not complicated.
 
-The function |tail-rec-eval| is now completed as follows\footnote{|inspect| is
-an Agda idiom needed to remember that |z'| is the result of the call |step e z|.}:
+The function |tail-rec-eval| is now completed as follows:\footnote{|inspect| is
+an Agda idiom needed to remember that |z'| is the result of the call |step e z|.}
 \begin{code}
   rec  : (e : Expr) -> (z : Zipperup e)
        -> Acc (llcorner e lrcornerLtOp) (Zipperup-to-Zipperdown z) -> Zipperup e U+ Nat
@@ -1067,7 +1068,7 @@ two continuations: the first is used to gradually build the
 \emph{dissection} of |R|; the second continues on another branch once
 one of the leaves have been reached. The last argument of type |Stack
 Q X alg| is the current stack. The entire function will compute the
-initial configuration of our machine of type |Zipper Q X alg| \footnote{As in the introduction, we use a sum type |U+| to align its type with that of |unload|.}:
+initial configuration of our machine of type |Zipper Q X alg|: \footnote{As in the introduction, we use a sum type |U+| to align its type with that of |unload|.}
 
 \begin{code}
 load  : (R : Reg) {alg : interpl R interpr X -> X} -> mu R
@@ -1172,7 +1173,7 @@ we define the order by induction over the \emph{stack}s.
 To reduce clutter in the definition, we give a non type-indexed
 relation over terms of type |Zipper|. We can later use the same technique as in
 \Cref{sec:basic-assembling} to recover a fully type-indexed relation over
-elements of type |Zipperdown t| by requiring that the \emph{zipper}s respect the
+elements of type |Zipperdown t| by requiring that the \emph{configurations} respect the
 invariant, |plugZ-mudown z == t|. The relation is defined by induction over the
 |Stack| part of the configurations as follows.
 \begin{code}
@@ -1233,7 +1234,7 @@ This completes the order relation on configurations; we still need to prove
 our relation is \emph{well-founded}.
 To prove this, we write a type-indexed version of each
 relation. The first relation, |<ZOp|, has to be type-indexed by the tree of
-type |mu R| to which both \emph{zipper} recursively plug through
+type |mu R| to which both \emph{configurations} recursively plug through
 |plugZ-mudown|. The auxiliary relation, |<NablaOp|, needs to be type-indexed by
 the functor of type | interpl R interpr X | to which both \emph{dissections}
 |plug|:
