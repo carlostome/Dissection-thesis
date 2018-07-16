@@ -3,12 +3,12 @@
 
 % Datatypes
 %format Expr  = "\AD{Expr}"
-%format Val   = "\AD{Val}"
-%format Add   = "\AD{Add}"
+%format Val   = "\AI{Val}"
+%format Add   = "\AI{Add}"
 %format Stack = "\AD{Stack}"
-%format Top   = "\AD{Top}"
-%format Left  = "\AD{Left}"
-%format Right = "\AD{Right}"
+%format Top   = "\AI{Top}"
+%format Left  = "\AI{Left}"
+%format Right = "\AI{Right}"
 
 % Functions
 %format load    = "\AF{load}"

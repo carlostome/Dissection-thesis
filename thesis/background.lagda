@@ -66,7 +66,7 @@ terminates.
 The work on this master thesis can be regarded as a step towards exploiting, in
 a formal environment such as \Agda, the connection between high-level
 denotational functions---in the form of folds---and low-level abstract machines.
-Given a language in terms of its generic representation, and an algebra we
+Given a language in terms of its generic representation and an algebra, we
 construct a generic tail-recursive function, i.e. the low-level abstract
 machine, that we later formally proof equal to the fold induced by its
 structure.
@@ -210,7 +210,7 @@ order to show that the \emph{quicksort} function always terminates.
   \end{code}
   %
   The second clause of the definition is interesting. In the |else| branch the
-  type of the recursive call is |List a i|, but, the expected type, from the
+  type of the recursive call is |List a i| but the expected type, from the
   signature of the function, is |List a (up
   i)|. Sized types come with a subtyping relation which states that |List a i <S
   List a (up i)|, thus the recursive call is well-typed.

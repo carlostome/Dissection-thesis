@@ -208,7 +208,7 @@ previous example, the following |ZipperType| corresponds to the third leaf:
 \begin{figure}[ht]
    \centering
   \input{figures/figure3}
-  \caption{Example: \emph{Configuration} of leaf number 3}
+  \caption{\emph{Configuration} of leaf number 3}
   \label{fig:examplezipper}
 \end{figure}
 
