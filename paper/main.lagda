@@ -247,15 +247,14 @@ can always be discharged with \hbox{|bot-elim : forall {X : Set} -> Bot -> X|}.}
       ... | inj2 r             = r
 \end{code}
 %}
-Here we use |load| to compute the initial configuration of our machine
--- that is, it finds the leftmost leaf in our initial expression and its associated stack.
+Here we use |load| to compute the initial configuration of our machine---that is, it finds the leftmost leaf in our initial expression and its associated stack.
 We proceed by
 repeatedly calling |unload1| until it returns a value.  This version of
 our evaluator, however, does not pass the termination checker. The new
-state, |(n' , stk')|, is not structurally smaller than the initial
+state |(n' , stk')| is not structurally smaller than the initial
 state |(n , stk)|. If we work under the assumption that we have a
 relation between the states |Nat * Stack| that decreases after every
-call to |unload1| and a proof that the relation is well-founded -- we know
+call to |unload1| and a proof that the relation is well-founded---we know
 this function will terminate eventually.
 We now define the following version of the tail-recursive evaluator:
 \begin{code}
@@ -263,7 +262,7 @@ We now define the following version of the tail-recursive evaluator:
   tail-rec-eval e with load e Top
   ... | inj1 (n , stk)  = rec (n , stk) ??1
     where
-      rec : (c : Nat * Stack) -> Acc ltOp c -> Nat
+      rec : (z : Nat * Stack) -> Acc ltOp z -> Nat
       rec (n , stk) (acc rs) with unload1 n stk
       ... | inj1 (n' , stk')  = rec (n' , stk') (rs ??2)
       ... | inj2 r            = r
@@ -299,10 +298,10 @@ general. In particular, the configurations presented in the previous
 section \emph{only} ever denote a \emph{leaf} in the input expression.
 
 The tail-recursive evaluator, |tail-rec-eval| processes the leaves of the input
-expression in a left-to-right fashion. The leftmost leaf -- that is the first
-leaf found after the initial call to |load| -- is the greatest element; the
-rightmost leaf is the smallest. In our example expression from
-\Cref{sec:intro}, we would number the leaves as follows:
+expression in a left-to-right fashion. The leftmost leaf---that is the first
+leaf found after the initial call to |load|---is the greatest element; the
+rightmost leaf is the smallest. \Cref{fig:numbered} depicts the numbering of
+the leaves in the example expression from \Cref{sec:intro}.
 
 \begin{figure}[ht]
   \input{figures/figure2}
@@ -372,7 +371,7 @@ The |Right| constructor now not only stores the value |n|, but also
 records the subexpression |e| and the proof that |e| evaluates to
 |n|. Although we are modifying the definition of the |Stack| data
 type, we claim that the expression |e| and equality are not necessary
-at run-time, but only required for the proof of well-foundedness -- a
+at run-time, but only required for the proof of well-foundedness----a
 point we will return to in our discussion (\Cref{sec:discussion}).
 From now onwards, the type |ZipperType| uses |Stack2| as its right 
 component:
@@ -450,8 +449,8 @@ right in the original input expression.
 
 Instead, we would like to compare the \emph{last} elements of both
 stacks.  The common suffix of the stacks shows that both positions are
-in the left subtree of the root. Once these paths -- read from right
-to left -- diverge, we have found the exact node |Add| where one of the
+in the left subtree of the root. Once these paths---read from right
+to left---diverge, we have found the exact node |Add| where one of the
 positions is in the left subtree and the other in the right.
 
 When comparing two |Stack|s, we therefore want to consider them as
@@ -987,7 +986,7 @@ This example also shows how `generic` leaves can be recursive. As long as the
 recursion only happens in the functor layer (code |O+|) and not in the fixpoint
 level (code |I|).
 
-Crucially, any non-recursive subtree is independent of |X| -- as is
+Crucially, any non-recursive subtree is independent of |X|---as is
 exhibited by the following coercion function:
 %
 \begin{code}
@@ -1042,8 +1041,7 @@ We write |load| by appealing to an ancillary definition |first-cps|, that uses
 continuation-passing style
 to keep the definition tail-recursive and obviously structurally recursive.
 If we were to try to define |load| by recursion directly, 
-we would need to find the leftmost subtree and recurse on it --
-but this subtree may not be obviously syntactically smaller.
+we would need to find the leftmost subtree and recurse on it---but this subtree may not be obviously syntactically smaller.
 
 The type of our |first-cps| function is daunting at first:
 \begin{code}
@@ -1059,7 +1057,7 @@ represents the datatype for which we are defining a traversal; the
 code |R| is the code on which we pattern match. In the initial call to
 |first-cps| these two codes will be equal. As we define our function,
 we pattern match on |R|, recursing over the codes in (nested) pairs or
-sums -- yet we still want to remember the original code for our data
+sums---yet we still want to remember the original code for our data
 type, |Q|.
 
 The next argument of type |interpl R interpr (mu Q)| is the data we
@@ -1428,15 +1426,15 @@ functions that are not obviously structurally recursive, such as the
 Bove-Capretta method~\cite{bove}, partiality monad~\cite{partiality}, or
 coinductive traces~\cite{nakata}. In contrast to the well-founded recursion used
 in this paper, however, these methods do not yield an evaluator that is directly
-executable, but instead defer the termination proof. Given that we can -- and
-indeed have -- shown termination of our tail-recursive abstract machines, the
+executable, but instead defer the termination proof. Given that we can---and
+indeed have---shown termination of our tail-recursive abstract machines, the
 abstract machines are executable directly in Agda.
 
 One drawback of our construction is that the stacks now not only store the value
 of evaluating previously visited subtrees, but also records the subtrees
 themselves. Clearly this is undesirable for an efficient implementation. It
 would be worth exploring if these subtrees may be made computationally
-irrelevant -- as they are not needed during execution, but only used to show
+irrelevant---as they are not needed during execution, but only used to show
 termination and correctness. One viable approach might be porting the
 development to Coq, where it is possible to make a clearer distinction between
 values used during execution and the propositions that may be erased.
