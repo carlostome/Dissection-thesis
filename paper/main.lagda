@@ -940,12 +940,12 @@ different \emph{plug} operations on these stacks:
   plug-mudown  : (R : Reg) -> {alg : interpl R interpr X -> X}
                -> mu R -> Stack R X alg -> mu R
   plug-mudown R t []         = t
-  plug-mudown R t (h :: hs)  = In (plug R Computed.Tree h (plug-mudown R t hs))
+  plug-mudown R t (h :: hs)  = In (plug R Computed.Tree (h , plug-mudown R t hs))
 
   plug-muup  : (R : Reg) -> {alg : interpl R interpr X -> X}
              -> mu R -> Stack R X alg -> mu R
   plug-muup R t []         = t
-  plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree h t)) hs
+  plug-muup R t (h :: hs)  = plug-muup R (In (plug R Computed.Tree (h , t))) hs
 \end{code}
 Both functions use the projection, |Computed.Tree|, as an argument to
 |plug| to extract the subtrees that have already been processed.
