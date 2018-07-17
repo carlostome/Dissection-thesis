@@ -55,6 +55,7 @@
 %format Val-NonRec  = "\AF{Val-NonRec}"
 %format +            = "\AF{+}"
 %format phi          = "\AF{\ensuremath{\phi}}"
+%format inspect          = "\AF{inspect}"
 %format el           = "\AF{el}"
 %format expr         = "\AF{exprF}"
 %format interp  = "\AF{\ensuremath{\llbracket\_\rrbracket}}"
