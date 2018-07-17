@@ -4,7 +4,8 @@
 \label{chap:intro}
 
 Folds, or \emph{catamorphisms}, are a pervasive programming pattern. Folds
-generalize many simple traversals over algebraic data types. Functions
+generalize many simple traversals over algebraic data
+types~\citep{meijer1991functional}. Functions
 implemented by means of a fold are both compositional and structurally
 recursive. The fold associated with a datatype, however, is not a tail-recursive
 function.
@@ -19,7 +20,7 @@ organization of the rest of this document.
 \label{sec:intro:descr}
 
 The |foldr| function is one of the first higher-order functions that any
-functional programmer learns. Many simple functions over lists such as |map|,
+functional programmer learns~\citep{hutton2016programming}. Many simple functions over lists such as |map|,
 |reverse|, |take|, |sum|, and more can be expressed in terms of
 |foldr|.  However, if not used carefully, |foldr| may cause a \emph{well-typed
 program go wrong} by dynamically failing with a stack overflow. In order to
@@ -35,7 +36,7 @@ language \Agda~\citep{norell}}
 %
 In the second clause of the definition, the parameter function |f| cannot
 reduce further before the result of the recursive call on the argument |xs| is
-available. This is a problem both of strict languages and non-strict languages
+available. This is a problem of both strict languages and non-strict languages
 with strict functions. 
 
 If we think about it in terms of the execution of a stack machine, before the
@@ -70,10 +71,32 @@ to be performed. Modern compilers typically map tail-recursive functions to
 machine code that runs in constant stack space~\citep{Steele:1977:DLP:800179.810196}.
 
 In the case of the function |foldr|, a possible implementation of an equivalent
-tail-recursive function would be a left fold, |foldl|. However, for inductive
-datatypes with constructors that have more than one recursive subtree,
-recovering a tail-recursive fold from the regular fold is not as
-straightforward.
+tail-recursive function would be a left fold, |foldl|. Its definition is as
+follows:
+%
+\begin{code}
+  foldl : (a -> b -> b) -> b -> List a -> b
+  foldl f e []         = e
+  foldl f e (x :: xs)  = foldl f (f x e) xs
+\end{code}
+%
+Using |foldl|, the addition of the previous list of numbers runs in constant
+stack space:
+%
+\begin{code}
+foldl  plusOp 0 [ 1..1000000 ] 
+       ~> foldl plusOp (1 + 0) [ 2..1000000 ]
+       ~> foldl plusOp 1 [ 2..1000000 ] 
+       ~> foldl plusOp (2 + 1) [ 3..1000000 ]
+       ~> foldl plusOp 3 [ 3..1000000 ]
+       ~> foldl plusOp (3 + 3) [ 4..1000000 ]
+       ~> foldl plusOp 6 [ 4..1000000 ] 
+       ~> ...
+\end{code}
+
+However, for inductive datatypes with constructors that have more than one
+recursive subtree, recovering a tail-recursive fold from the regular fold is not
+as straightforward.
 
 \paragraph{Folds for binary trees}
 
@@ -95,10 +118,10 @@ follows:
   eval (Add e1 e2)  = eval e1 + eval e2
 \end{code}
 %
-In the case for |Add e1 e2|, the |eval| function makes two recursive
-calls and sums their results. Such a function can be implemented using a
-fold, passing the addition and identity functions as the argument
-algebra:
+In the case for |Add e1 e2|, the |eval| function makes two recursive calls and
+sums their results. Such a function can be implemented using a fold, passing the
+addition and identity functions as the argument algebra. The algebra is the pair
+of functions that assigns semantics to both constructors of |Expr|:
 %
 \begin{code}
   foldExpr : (Nat -> a) -> (a -> a -> a) -> Expr -> a
