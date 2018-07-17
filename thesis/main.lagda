@@ -63,7 +63,7 @@
 %% Example frames
 \newcounter{example}[subsection]
 
-\renewcommand{\theexample}{\thesection.\arabic{example}}
+\renewcommand{\theexample}{\thesubsection.\arabic{example}}
 
 \newenvironment{example}[1][]{%
     \refstepcounter{example}

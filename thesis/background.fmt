@@ -96,6 +96,7 @@
 %format first-cps = "\AF{first-cps}"
 %format load = "\AF{load\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format unload = "\AF{unload\ensuremath{^{\scaleto{G}{4pt}}}}"
+%format traverse = "\AF{traverse}"
 %format unload-correct = "\AF{unload\ensuremath{^{\scaleto{G}{4pt}}}-correct}"
 %format correctness = "\AF{correctness\ensuremath{^{\scaleto{G}{4pt}}}}"
 %format step = "\AF{step\ensuremath{^{\scaleto{G}{4pt}}}}"

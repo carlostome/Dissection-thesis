@@ -4,7 +4,7 @@
 \label{chap:background}
 
 In this \namecref{chap:background}, we introduce some of the concepts that are
-mandatory prerequisites for understanding the main parts of this master thesis.
+prerequisites for understanding the main parts of this master thesis.
 The chapter is organized into three different sections, whose content is
 seemingly unrelated. We begin in \cref{sec:background:fold} with a broad
 overview of semantics in programming languages and its relation to the content
@@ -131,9 +131,34 @@ a function to classify it as terminating or possibly non terminating.
 Concretely, it constructs a graph between the parameters of the function and the
 arguments passed to recursive calls and tries to find a well-founded order
 amongst them. In any case, calls to other functions are treated as a blackbox.
-The reason is that syntactically checking termination conditions is not modular:
-two terminating functions when combined together may give rise to a divergent
-function. 
+For instance, let us consider a function that traverses a list of numbers but
+does nothing:
+%
+\begin{code}
+  traverse : List Nat -> List Nat 
+  traverse []           = []
+  traverse (x :: xs)    = x :: traverse (f xs)
+\end{code}
+%
+The following two equations are valid and provably terminating definitions of
+|f|:
+%
+\begin{code}
+  f : List Nat -> List Nat
+  f xs = xs
+
+  f : List Nat -> List Nat
+  f xs = 0 :: xs
+\end{code}
+%
+The function |traverse| terminates if we choose |f|, the identity function on
+|List Nat|, to be the first definition. If we choose the second definition for
+|f|, however, the function |traverse| diverges even though |f| itself
+terminates. The termination of |traverse| does not only depend on the
+termination of |f| but also on the list it returns. The termination checker
+conservatively classifies the function |traverse| as non-terminating because, as
+the example demonstrate, syntactic based checks of termination conditions do not
+compose.
 
 The rest of this section is devoted to show how using the aforementioned
 techniques, we can convince \Agda~that quicksort terminates on any input.
@@ -262,7 +287,7 @@ order to show that the \emph{quicksort} function always terminates.
 
 Another commonly used technique in type theory to encode general recursive
 functions is the Bove-Capretta~\citep{Bove2001} transformation. The call graph of
-any function, even if is not defined by structural recursion, poses an inductive 
+any function, even if is not defined by structural recursion, has an inductive 
 structure that can be exploited to show termination. Instead of directly
 defining the function, the call graph of the original function is added as a new
 parameter so the function can be defined by structural recursion over it.
@@ -768,7 +793,7 @@ assembling the results using the argument algebra:
   cata R alg (In r) = alg (fmap R cataN R alg) r)
 \end{spec}
 %
-Unfortunately, Agda's termination checker does not accept this definition. The
+Unfortunately, \Agda's termination checker does not accept this definition. The
 problem, is that the recursive calls to |cata| are not made to structurally
 smaller trees, but rather |cata| is passed as an argument to the higher-order
 function |fmap|.
@@ -790,7 +815,9 @@ We can now define |cata| in terms of |mapFold| as follows:
   cata : (R : Reg) (interpl R interpr X -> X) -> mu R -> X
   cata R alg (In r) = mapFold R R alg r
 \end{code}
-This definition is indeed accepted by Agda's termination checker.
+Both functions are defined by structural recursion over their arguments, thus,
+the definition of |cata| is accepted as terminating by \Agda's termination
+checker.
 
 \begin{example}
   We can take the type of expressions from the introduction,

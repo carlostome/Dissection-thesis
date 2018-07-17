@@ -181,14 +181,14 @@ two central problems with our choice of |ZipperType| datatype:
 \item The |ZipperType| datatype is too liberal. As we evaluate our input expression
   the configuration of our abstract machine changes constantly, but satisfies
   one important \emph{invariant}: each configuration is a decomposition of the
-  original input. Unless this invariant is captured, we will be hard-pressed
+  original input. Unless we make explicit this invariant, we will be hard-pressed
   to prove the well-foundedness of any relation defined on configurations.
 
 \item The choice of the |Stack| datatype, as a path from the leaf to the
   root is convenient to define the tail-recursive machine, but impractical
   when defining the desired order relation. The top of a stack stores information about
-    neighbouring nodes, but to compare two leaves we need \emph{global} information
-    about their positions relative to the root.
+  neighbouring nodes, but to compare two leaves we need \emph{global} information
+  about their positions relative to the root.
 \end{enumerate}
 
 We will now address these limitations one by one. Firstly, by refining
@@ -237,7 +237,7 @@ The |Right| constructor now not only stores the value |n|, but also
 records the subexpression |e| and the proof that |e| evaluates to
 |n|. Although we are modifying the definition of the |Stack| data
 type, we claim that the expression |e| and equality are not necessary
-at runtime, but only required for the proof of well-foundedness -- a
+at runtime, but only required for the proof of well-foundedness---a
 point we will return to in our discussion (\Cref{sec:expression:discuss}).
 From now onwards, the type |ZipperType| uses |Stack2| as its right 
 component:
@@ -316,15 +316,17 @@ right in the original input expression.
 
 Instead, we would like to compare the \emph{bottom} elements of both
 stacks.  The common suffix of the stacks shows that both positions are
-in the left subtree of the root. Once these paths -- read from right
-to left -- diverge, we have found the exact node |Add| where one of the
+in the left subtree of the root. Once these paths---read from right
+to left---diverge, we have found the exact node |Add| where one of the
 positions is in the left subtree and the other in the right.
 
-When comparing two |Stack|s, we therefore want to consider them as
-paths \emph{from the root}. Fortunately, this observation does not
-require us to change our definition of the |Stack| type; instead, we
-can define a variant of the |plugup| function that interprets our
-contexts top-down rather than bottom-up:
+When comparing two |Stack|s, we therefore want to consider them as paths
+\emph{from the root} to the leaf. In \cref{fig:comparison}, this corresponds
+with reading the \emph{stack}s from right to left---as opposed to their
+current order from left to right.  Fortunately, this observation does not
+require us to change our definition of the |Stack| type; instead, we can define
+a variant of the |plugup| function that interprets our contexts top-down rather
+than bottom-up:
 \begin{code}
   plugdown : Expr -> Stack2 -> Expr
   plugdown e Top                    = e
@@ -689,7 +691,7 @@ of computing the fold for any algebra over any |Expr| would be preferable.
 \item
 Alternatively, we can formulate a provably terminating tail-recursive fold using
     continuations. The idea consists in storing a partially applied recursive
-    call --the continuation-- at the point where the argument is known to be
+    call---the continuation---at the point where the argument is known to be
     structurally smaller than the input. In such approach, however, the execution
     stack is no longer a first-order object, thus, the tail-recursive function
     cannot be longer understood as the formalization of an abstract machine.
@@ -751,7 +753,7 @@ of |Stack2|:
 \end{code}
 %
 In the above definition, the expression |e : Expr| and the proof |eval e == n|
-are irrelevant ---marked with a preceding |..| (dot). Unfortunately, the
+are irrelevant---marked with a preceding |..| (dot). Unfortunately, the
 datatype |Stack3| does not typecheck, the function |eval| expects a non
 irrelevant argument, which is necessary since we defined it by pattern matching
 on its argument. We can tackle this obstacle by reifiying the graph of the function
@@ -899,7 +901,7 @@ uses such argument to perform the tail calls. A explicit |Stack|, however, is no
 for free; the runtime system still has to allocate and manage the stack.
 
 For instance, in a functional language such as \Haskell,
-GHC~\citep{marlow2004glasgow} --the \emph{de facto} \Haskell~implementation--
+GHC~\citep{marlow2004glasgow}---the \emph{de facto} \Haskell~implementation---
 uses the same memory region for the allocation of the heap and the stack; the
 former grows upwards while the latter grows downwards. Then, what do we gain by
 transforming a fold into its tail-recursive counterpart?
@@ -922,7 +924,7 @@ does not terminate while the original |fold| does.
 Danvy~\citeyearpar{Danvy2009} has previously shown how to derive a
 reduction-free evaluation function beginning from a small step reduction
 semantics. Given a term language, a specification of redexes in the language
---i.e. terms the can be immediately reduced in one step--, and a one-step
+---i.e. terms the can be immediately reduced in one step, and a one-step
 contraction function, Danvy shows how to construct an abstract machine to
 evaluate terms, that later turns into a reduction-free evaluation function.
 
@@ -938,7 +940,7 @@ and decompose, \textit{refocusing}.
 
 This concept of a machine is not very dissimilar to how our tail-recursive
 evaluator, |tail-rec-eval|, operates. Danvy's abstract machine iterates the
-one-step reduction function -- decompose, contract, recompose-- until the term
+one-step reduction function---decompose, contract, recompose---until the term
 is fully evaluated, while, our tail-recursive evaluator iterates the function
 |step|. A question is to wonder: how are both machines related for the type of
 expressions, |Expr|? 

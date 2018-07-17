@@ -154,5 +154,5 @@
 
 %format loadN   = "\nonterm{" load "}"
 %format StackKP   = "\nonpos{" StackK "}"
-%format unloadN = "\nonterm{" unload "}"
+%format unloadN = "\nonterm{" unload1 "}"
 %format nrec   = "\nonterm{" rec "}"

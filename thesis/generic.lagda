@@ -295,7 +295,7 @@ i.e. we can build a term of type |NonRec R t|, \emph{iff} it has no occurrences 
 elements of type |X|.
 
 As an example, in the pattern functor for the \AD{Expr} type, |K Nat O+ (I O* I)|,
-terms built using the left injection are not recursive: 
+terms built using the left injection are non-recursive: 
 %
 \begin{code}
 Val-NonRec : forall (n : Nat) -> NonRec (K Nat O+ (I O* I)) (inj1 n)
@@ -391,10 +391,10 @@ load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
 
 We write |load| by appealing to an auxiliary definition |first-cps|, that uses
-continuation passing style (CPS) to keep the definition tail-recursive and obviously
-structurally recursive.  If we were to try to define |load| by recursion
-directly, we would need to find the leftmost subtree and recurse on it---but
-this subtree is not syntactically smaller for the termination checker.
+continuation passing style (CPS) to keep the definition tail-recursive.  If we
+were to try to define |load| by recursion directly, we would need to find the
+leftmost subtree and recurse on it---but this subtree is not syntactically
+smaller for the termination checker.
 
 The type of our |first-cps| function is daunting at first:
 %
@@ -509,7 +509,7 @@ Given a term of type |interpl R interpr (mu Q)|, for any |R| and |Q|, there are
 two possibilities: either the term is a leaf and recursive subtrees do not
 occur; or the term can be \emph{dissected} into a context and the subtree that
 fits in it. We express this in \Agda~as a
-view\citep{wadler1987views}\citep{mcbride2004view}:
+view\citep{wadler1987views,mcbride2004view}:
 %
 \begin{code}
     view  : (R Q : Reg) -> {alg : interpl Q interpr X -> X} -> (r : interpl R interpr (mu Q))
@@ -921,7 +921,7 @@ the above lemmas:
                -> catamorphism R alg t == tail-rec-cata R alg t
 \end{code}
 
-\section{Example}
+\section{Examples}
 \label{sec:generic:example}
 
 To conclude the construction of the generic tail-recursive evaluator, we show
@@ -1022,9 +1022,35 @@ function determines whether a |Mobile| is in equilibrium:
 
 This solution is highly inefficient because it repeatedly traverses the
 |Mobile|s to compute the weight and the equilibrium. In order to reduce the
-number of traversals we can fuse together the weight and the equilibrium.
-Before defining another recursive function over |Mobile|, however, let us
-express the type in the regular universe:
+number of traversals we can fuse together the weight and the equilibrium. We use
+an auxiliary function that returns a |Maybe Nat| indicating whether the |Mobile|
+is in equilibrium, and in the positive case, its weight:
+%
+\begin{code}
+  equilibrium : Mobile → Bool
+  equilibrium m = is-just (go m)
+    where  go : Mobile -> Maybe Nat
+           go (OBJ n)        = just n
+           go (BAR n m1 m2)  =  
+             case (go m1) of lambda
+               { nothing    -> nothing
+               ; (just n1)  -> case (go m2) of lambda
+                                 {  nothing   -> nothing
+                                 ; (just n2)  -> if n1 =Nat n2  then just (n + (n1 + n2)) 
+                                                                else nothing 
+                                 } 
+               }
+\end{code}
+
+The definition of |equilibrium| is rather involved. In the definition of |go|,
+we mix together the recursive calls with the logic of combining their results.
+Moreover, the function |go| is not tail-recursive and its transformation into
+one requires a lot of---manual and error-prone---work. Instead we can use
+generic programming to derive a direct solution that by using our construction
+is tail-recursive for free.
+
+First, let us express the representation of the type |Mobile| in the regular
+universe:
 %
 \begin{code}
   MobileF : Reg
