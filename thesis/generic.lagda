@@ -684,7 +684,7 @@ invariant, |plugZ-mudown z == t|. We define inductively the relation over the
   data <ZOp : Zipper R X alg -> Zipper R X alg -> Set where
     Step  :  (t1 , s1) <Z (t2 ,  s2) -> (t1 , h :: s1) <Z (t2 , h  :: s2)
 
-    Base  : plugZ-mudown R (t1 , s1) == e1 -> plugZ-mudown R (t2 , s2) == e1
+    Base  : plugZ-mudown R (t1 , s1) == e1 -> plugZ-mudown R (t2 , s2) == e2
           -> (h1 , e1) <Nabla (h2 , e2) -> (t1 , h1 :: s1) <Z (t2 , h2 :: s2)
 \end{code}
 

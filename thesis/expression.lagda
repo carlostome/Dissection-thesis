@@ -626,7 +626,7 @@ predicate, thus the proof is done by induction over the same argument:
     with step e z | inspect (step e) z
   ...  | inj1 z'  | [ Is ]
        = rec-correct e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is))
-  ...  | inj2 n   | [ Is ] = step-correct n e eq z
+  ...  | inj2 n   | [ Is ] = step-correct e z n Is
 \end{code}
 %
 While the proof by induction covers the recursion, we still have to prove the
@@ -636,7 +636,7 @@ natural number is equal to evaluating the input expression using |eval|. The lem
 %
 \begin{code}
     step-correct  : forall (e : Expr) -> (z : Zipperup e) 
-                  -> forall (r : Nat) -> step e z ≡ inj2 r -> eval e ≡ r
+                  -> forall (n : Nat) -> step e z ≡ inj2 n -> eval e ≡ n
 \end{code}
 %
 As |step| is a wrapper around the function |unload|, it

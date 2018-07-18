@@ -672,7 +672,7 @@ accessibility predicate:
     with step e z | inspect (step e) z
   ...  | inj1 z'  | [ Is ]
        = rec-correct e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is))
-  ...  | inj2 n   | [ Is ] = step-correct n e eq z
+  ...  | inj2 n   | [ Is ] = step-correct e z n Is
 \end{code}
 At this point, we still need to prove the |step-correct| lemma that it is
 repeatedly applied.  As the |step| function is defined as a wrapper around the
