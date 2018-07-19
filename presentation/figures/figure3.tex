@@ -1,16 +1,16 @@
 \begin{tikzpicture}
   % \tikzstyle{every node}=[font=\footnotesize]
   \tikzstyle{level 1}=[level distance=10mm, sibling distance=24mm]
-  \tikzstyle{level 2}=[level distance=10mm, sibling distance=14mm]
+  \tikzstyle{level 2}=[level distance=10mm, sibling distance=24mm]
   \tikzstyle{level 3}=[level distance=10mm, sibling distance=14mm]
   \tikzstyle{load}=[->,thick,color=blue]
   \tikzstyle{unload}=[->,shorten <=1pt,thick,color=red]
 
   \node (root) {\AI{Add}}
-    child {node (node1) [label=below left:\pgftextcircled{1}] {\AI{Val}\AS{}\AN{1}}} 
+    child {node (node1) [label=below left:\pgftextcircled{3}] {\AI{Val}\AS{}\AN{1}}} 
     child {node (node2) {\AI{Add}} 
            child {node (node3) [label=below left:\pgftextcircled{2}] {\AI{Val}\AS{}\AN{2}}}
-           child {node (node4) [label=below left:\pgftextcircled{3}] {\AI{Val}\AS{}\AN{2}}}};
+           child {node (node4) [label=below left:\pgftextcircled{1}] {\AI{Val}\AS{}\AN{2}}}};
 
 
   {\draw[load] (root) to [ bend right=45] (node1);}

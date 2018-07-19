@@ -1,9 +1,9 @@
 %include lhs2TeX.fmt
-%include lhs2TeX.sty
 %include polycode.fmt
 
 %% Agda keywords
 %format data   = "\AK{data}"
+%format postulate   = "\AK{postulate}"
 %format where  = "\AK{where}"
 %format record = "\AK{record}"
 %format field  = "\AK{field}"
@@ -41,6 +41,7 @@
 %format String = "\AD{\ensuremath{String}}"
 %format Sigma  = "\AD{\ensuremath{\Sigma}}"
 %format lambda = "\AK{\ensuremath{\lambda}}"
+%format <S = "\AK{\ensuremath{\leq_{S}}}"
 
 %% Constructors of the above types
 %format ::       = "\hspace{.4em}\AI{:\hspace{-.1em}:}\hspace{.4em}"
@@ -110,63 +111,5 @@
 %format holderLR  = "\hspace{-.1em}" holder "\hspace{-.1em}"
 
 %format nonterm (a) = "\nonterm{" a "}"
-
-% Datatypes
-%format Expr  = "\AD{Expr}"
-%format Val   = "\AI{Val}"
-%format Add   = "\AI{Add}"
-%format Stack = "\AD{Stack}"
-%format Top   = "\AI{Top}"
-%format Left  = "\AI{Left}"
-%format Right = "\AI{Right}"
-
-% Functions
-%format load    = "\AF{load}"
-%format unload  = "\AF{unload}"
-%format loadN   = "\nonterm{" load "}"
-%format unloadN = "\nonterm{" unload "}"
-%format foldr = "\AF{foldr}"
-%format foldl = "\AF{foldl}"
-%format take = "\AF{take}"
-%format map     = "\AF{map}"
-%format reverse = "\AF{reverse}"
-%format sum     = "\AF{sum}"
-%format foldExpr   = "\AF{fold\ensuremath{_{expr}}}"
-%format eval  = "\AF{eval}"
-%format +     = "\AF{+}"
-%format plusOp = "\AF{\_+\_}"
-%format tail-rec-eval  = "\AF{tail\text{-}rec\text{-}eval}"
-%format expr1  = "\AF{expr\ensuremath{_1}}"
-%format prop1  = "\AF{prop\ensuremath{_1}}"
-
-% Bound variables
-%format n     = "\AB{n}"
-%format e1    = "\AB{\ensuremath{e_1}}"
-%format e2    = "\AB{\ensuremath{e_2}}"
-%format e     = "\AB{e}"
-%format x     = "\AB{x}"
-%format xs    = "\AB{xs}"
-%format f     = "\AB{f}"
-%format a     = "\AB{\ensuremath{\alpha}}"
-%format b     = "\AB{\ensuremath{\beta}}"
-%format v     = "\AB{v}"
-%format v'     = "\AB{v''}"
-%format stk   = "\AB{stk}"
-%format stk'  = "\AB{stk''}"
-%format e1    = "\AB{\ensuremath{e_1}}"
-%format e2    = "\AB{\ensuremath{e_2}}"
-%format alg1 = "\AB{\ensuremath{\phi_1}}"
-%format alg2 = "\AB{\ensuremath{\phi_2}}"
-
-% Symbols
 %format ~> = "\leadsto"
-
-%Numbers
-%format 1 = "\AN{1}"
-%format 2 = "\AN{2}"
-%format 3 = "\AN{3}"
-%format 4 = "\AN{4}"
-%format 5 = "\AN{5}"
-%format 6 = "\AN{6}"
-%format 7 = "\AN{7}"
-
+%format ~= = "\simeq"
