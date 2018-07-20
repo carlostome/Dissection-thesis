@@ -74,6 +74,7 @@
 %format plug-muup      = "\AF{plug-\ensuremath{\mu_{\Uparrow}}}"
 %format plug-mudown    = "\AF{plug-\ensuremath{\mu_{\Downarrow}}}"
 %format plugZ-mudown    = "\AF{plugC-\ensuremath{\mu_{\Downarrow}}}"
+%format plugZ-muup    = "\AF{plugC-\ensuremath{\mu_{\Uparrow}}}"
 %format coerce = "\AF{coerce}"
 %format Leaf   = "\AF{Leaf}"
 %format Stack  = "\AF{Stack\ensuremath{^{\scaleto{G}{4pt}}}}"
@@ -158,9 +159,12 @@
 %format t   = "\AB{t}"
 %format t'   = "\AB{t''}"
 %format z   = "\AB{c}"
+%format z'   = "\AB{c''}"
 %format n   = "\AB{n}"
 %format n'   = "\AB{n''}"
 %format s = "\AB{s}"
+%format e = "\AB{e}"
+%format eq = "\AB{eq}"
 
 % Record fields
 %format Tree  = "\AL{Tree}"

@@ -120,5 +120,5 @@
 %format alg2 = "\AB{\ensuremath{\phi_2}}"
 
 %format loadN   = "\nonterm{" load "}"
-%format unloadN = "\nonterm{" unload "}"
+%format unloadN = "\nonterm{" unload1 "}"
 %format nrec   = "\nonterm{" rec "}"

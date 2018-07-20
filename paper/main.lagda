@@ -199,7 +199,7 @@ depicted in \Cref{fig:load-unload}.
   \label{fig:load-unload}
 \end{figure}
 
-As there are finitely many nodes on a tree, the depicted traversal
+As there are finitely many nodes on a tree, the traversal
 using |load| and |unload1| must terminate -- but how can we convince
 Agda's termination checker of this?
 
@@ -356,10 +356,10 @@ machine that computes the fold.
 There is one problem still: the |Stack| datatype stores the values of the subtrees that have
 been evaluated, but does not store the subtrees themselves.
 In the example in \Cref{fig:examplezipper}, 
-when the traversal has reached the third leaf, all the
+when the traversal has reached the third leaf all the
 subexpressions to its left have been evaluated.
 
-In order to record the necessary information, we redefine the |Stack| type as follows:
+In order to record the necessary information, we redefine the |Stack| datatype as follows:
 %
 \begin{code}
   data Stack2 : Set where
@@ -508,13 +508,15 @@ the input expression |e|:
 \begin{code}
   data IxLtOp : (e : Expr) -> Zipperdown e -> Zipperdown e -> Set where
     <-StepR  : llcorner r lrcorner ((t1 , s1) , ...) < ((t2 , s2) , ...)
-      ->  llcorner Add l r lrcorner ((t1 , Right l n eq s1) , eq1) < ((t2 , Right l n eq s2) , eq2)
+      ->  llcorner Add  l r lrcorner 
+                        ((t1 , Right l n eq s1) , eq1) < ((t2 , Right l n eq s2) , eq2)
     <-StepL  : llcorner l lrcorner ((t1 , s1) , ...) < ((t2 , s2) , ...)
       ->  llcorner Add l r lrcorner ((t1 , Left r s1) , eq1) < ((t2 , Left r s2) , eq2)
 
     <-Base  :   (eq1 : Add e1 e2 == Add e1 (plugZdown t1 s1)) 
       ->        (eq2 : Add e1 e2 == Add (plugZdown t2 s2) e2)
-      ->  llcorner Add e1 e2 lrcorner ((t1 , Right n e1 eq s1) , eq1) < ((t2 , Left e2 s2) , eq2)
+      ->  llcorner Add   e1 e2 lrcorner 
+                         ((t1 , Right n e1 eq s1) , eq1) < ((t2 , Left e2 s2) , eq2)
 \end{code}
 Despite the apparent complexity, the relation is straightforward.
 The constructors |<-StepR| and |<-StepL| cover the inductive cases, consuming
@@ -674,9 +676,10 @@ accessibility predicate:
        = rec-correct e z' (rs (Zipperup-to-Zipperdown z') (step-< e z z' Is))
   ...  | inj2 n   | [ Is ] = step-correct e z n Is
 \end{code}
-At this point, we still need to prove the |step-correct| lemma that it is
-repeatedly applied.  As the |step| function is defined as a wrapper around the
-|unload| function, it suffices to prove the following property of |unload|:
+At this point, we still need to prove the |step-correct| lemma that it is used
+in the base case---when |rec| returns the final value.  As the |step| function
+is defined as a wrapper around the |unload| function, it suffices to prove the
+following property of |unload|:
 \begin{code}
   unload-correct  :  forall (n : Nat) (e : Expr) (eq : eval e == n) (s : Stack2)
                        forall (m : Nat) -> unload n e eq s == inj2 m 
@@ -980,15 +983,15 @@ This corresponds to the idea that the constructor |Val| is a leaf in a tree of
 type |Expr|. 
 
 On the other hand, we cannot prove the predicate |NonRec| for terms using the
-right injection. The occurences of recursive positions disallow us from framing 
+right injection, |inj2|. The occurences of recursive positions disallow us from framing 
 the proof (The type |NonRec| does not have a constructor such as |NonRec-I : (x : X) -> NonRec I x|).
 
 This example also shows how `generic` leaves can be recursive. As long as the
 recursion only happens in the functor layer (code |O+|) and not in the fixpoint
 level (code |I|).
 
-Crucially, any non-recursive subtree is independent of |X|---as is
-exhibited by the following coercion function:
+Crucially, any non-recursive subtree is independent of |X|. This is exhibited by
+the following coercion function:
 %
 \begin{code}
   coerce : (R : Reg) -> (x : interpl R interpr X) -> NonRec R x -> interpl R interpr Y  
@@ -1249,7 +1252,7 @@ the functor of type | interpl R interpr X | to which both \emph{dissections}
 \end{code}
 
 The proof of \emph{well-foundedness} of |IxLtdown| is a straightforward generalization
-of proof given for the example in \Cref{subsec:relation}. 
+of the proof given for the example in \Cref{subsec:relation}. 
 The full proof of the following statement can found in the accompanying code:
 \begin{code}
   <Z-WF : (R : Reg)  -> (t : mu R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
@@ -1317,7 +1320,8 @@ our traversal decreases:
 \begin{code}
   step-<  : (R : Reg) (alg : interpl R interpr X -> X) -> (t : mu R)
           -> (z1 z2 : Zipperup R X alg t)
-          -> step R alg t z1 == inj1 z2 -> llcorner R lrcornerllcorner t lrcorner z2 <ZOp z1
+          -> step R alg t z1 == inj1 z2 
+          -> llcorner R lrcornerllcorner t lrcorner (Zipperup-to-Zipperdown z2) <Z (Zipperup-to-Zipperdown z1)
 \end{code}
 
 Finally, we can write the \emph{tail-recursive machine}, |tail-rec-cata|, as the
@@ -1328,7 +1332,8 @@ function that initiates the computation with suitable arguments:
        -> (z : Zipperup R X alg t) 
        -> Acc (llcorner R lrcornerllcorner t lrcornerIxLtdown ) (Zipperup-to-Zipperdown z) -> X
   rec R alg t z (acc rs) with step R alg t z | inspect (step R alg t) z
-  ... | inj1 z' |  [ Is  ] = rec R alg t z' (rs z' (step-< R alg t z z' Is))
+  ... | inj1 z' |  [ Is  ] = rec R alg t z' (rs  (Zipperup-to-Zipperdown z') 
+                                                 (step-< R alg t z z' Is))
   ... | inj2 x  |  [ _   ] = x
 
   tail-rec-cata : (R : Reg) -> (alg : interpl R interpr X -> X) -> mu R -> X
