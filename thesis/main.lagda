@@ -235,6 +235,7 @@
 
   \vspace*{3em}
   \rule{0.75\textwidth}{1.5pt}\\
+  \vspace*{1em}
 
   Software Technology Group\\
   Department of Information and Computing Sciences\\
@@ -289,7 +290,7 @@ gratitude to my family. Their unconditional support throughout these years of
 studies has given its results. I will finish with some words dedicated to them
 in my mother tongue. \emph{Muchas gracias por todo vuestro apoyo durante estos
 años, siempre me habéis dejado hacer lo que he querido y donde he querido. Por
-ello y vuestro amor os estaré eternamente agradecido.}
+ello y por vuestro amor os estaré eternamente agradecido.}
 
 \tableofcontents
 

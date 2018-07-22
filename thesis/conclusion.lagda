@@ -96,8 +96,8 @@ to encode effects in pure functional languages is to use
 monads~\citep{wadler1998marriage}, thus, a monadic fold would be the
 self-evident choice. However, \cite{fokkinga1994monadic} shows that not all
 monads are suitable for a monadic catamorphism that fulfils some expected laws.
-If we need a more systematic approach to construct the monadic catamorphism
-probably we would also require some extra work to develop an equivalent monadic
+If we need a more systematic approach to construct the monadic catamorphism,
+we would also require some extra work to develop an equivalent monadic
 tail-recursive machine.
 
 Marking some parts of the code as computationally irrelevant, such as the
