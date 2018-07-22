@@ -124,7 +124,17 @@ focus and its context, but, on its own it does not account for the recursivity
 induced by the fixed point. In order to focus on a subtree that may be deeply
 buried within the generic tree, we need to take a list of dissections, where
 each element of the list is a particular dissection of the corresponding
-functorial layer. The type of generics stacks is as follows:
+functorial layer. As an analogy, in the |Expr| datatype each constructor |Add|
+corresponds to a value of the functorial layer where there are recursive
+occurrences---marked with code |I|. Each time we decompose a layer, we select a
+subexpression, or subtree, such that the rest of the stack points to a leaf in
+it. In the case of |Expr| each constructor of the |Stack1| records the specific
+subexpression, left or right, while in the generic case, the value of the
+dissection marks the selected subtree. The |Stack1| for |Expr| is a list of
+|Left| or |Right| constructors that account for all the occurrences of the
+constructor |Add| in a value of type |Expr|. Thus, in the generic case we use a
+list for all the intermediate nodes---that is, functorial layers---that have
+recursive subtrees. The type of generics stacks is as follows:
 
 \begin{code}
   StackG : (R : Reg) -> (X Y : Set) -> Set
@@ -342,8 +352,9 @@ points to it:
 From a configuration of the abstract machine, |Zipper|, we should be able to
 recover the input generic tree that is being folded. Crucially, we can embed the
 value of the leaf into a larger tree by coercing the type |X| in the leaf to |mu
-R|. In a similar fashion as in the concrete case, we define a pair of
-\emph{plugging} functions that recompute the input tree:
+R|. In a similar fashion as in the previous chapter
+(\Cref{sec:expression:wellfounded}), we define a pair of \emph{plugging}
+functions that recompute the input tree:
 
 \begin{code}
   plugZ-mudown : (R : Reg) {alg : interpl R interpr X -> X} -> Zipper R X alg -> mu R ->  Set
@@ -391,10 +402,14 @@ load R (In t) s = first-cps R R t id (lambda l -> inj1 . prodOp l) s
 \end{code}
 
 We write |load| by appealing to an auxiliary definition |first-cps|, that uses
-continuation passing style (CPS) to keep the definition tail-recursive.  If we
-were to try to define |load| by recursion directly, we would need to find the
-leftmost subtree and recurse on it---but this subtree is not syntactically
-smaller for the termination checker.
+continuation passing style (CPS) to keep the definition tail-recursive and
+obviously structurally recursive. If we were to try to define |load| by
+recursion directly, we would need to find the leftmost subtree and recurse on
+it---but this subtree is not syntactically smaller for the termination checker.
+The continuations are also necessary for the function |first-cps| to be
+tail-recursive; we will come back to this point in our discussion
+(\Cref{sec:generic:discussion}).
+
 
 The type of our |first-cps| function is daunting at first:
 %
@@ -472,7 +487,7 @@ discuss this issue further at the end of the chapter
 (\Cref{sec:generic:discussion}).
 
 There is one important property that the function |load| satisfies: it preserves
-the input tree. In the concrete case, we proved such property directly by
+the input tree. In the previous chapter (\Cref{sec:expression:tailrec}), we proved such property directly by
 induction over the stack, however, in the generic case we need a more involved
 construction due to the genericity and CPS nature of the auxiliary 
 function, |first-cps|. The signature of the property is spelled as follows:
@@ -781,7 +796,7 @@ follows:
 \begin{code}
   all-to-plug :  forall {X : Set}  {R Q : Reg} {eta : X -> mu Q} {P : mu Q -> Set}
                  -> (t : interpl R interpr (mu Q)) -> All (mu Q) P R t 
-                 -> forall (r : mu Q) (dr : nabla R X (mu Q)) -> plug eta R dr r == t -> P r
+                 -> forall (r : mu Q) (dr : nabla R X (mu Q)) -> plug R eta (dr , r) == t -> P r
 \end{code}
 %
 The predicate, |All|, is defined by induction over the code.  In the particular
@@ -836,7 +851,8 @@ is called. The required lemma has the following signature:
   step-<  : forall (R : Reg) (alg : interpl R interpr X -> X) -> (t : mu R)
           -> (z1 : Zipperup R X alg t)
           ->  forall (z2 : Zipperup R X alg t)
-              -> stepIx R alg t z1 == inj1 z2 -> llcorner R lrcornerllcorner t lrcorner z2 <Z z1
+              -> stepIx R alg t z1 == inj1 z2 
+              -> llcorner R lrcornerllcorner t lrcorner (Zipperup-to-Zipperdown z2) <Z (Zipperup-to-Zipperdown z1)
 \end{code}
 
 As the function |step| is a wrapper over |unload| (\Cref{sec:generic:onestep}),
@@ -875,8 +891,9 @@ function that initiates the computation with suitable arguments:
        -> (z : Zipperup R X alg t) 
        -> Acc (llcorner R lrcornerllcorner t lrcornerIxLtdown ) (Zipperup-to-Zipperdown z) -> X
   rec R alg t z (acc rs) with step R alg t z | inspect (step R alg t) z
-  ... | inj1 x |  [ Is  ] = rec R alg t x (rs x (step-< R alg t z x Is))
-  ... | inj2 y |  [ _   ] = y
+  ... | inj1 z'  |  [ Is  ] = rec R alg t z' (rs   (Zipperup-to-Zipperdown z') 
+                                                   (step-< R alg t z z' Is))
+  ... | inj2 x   |  [ _   ] = x
 \end{code}
 %
 \begin{code}
@@ -951,12 +968,12 @@ The function |eval| is equivalent to instantiating the \emph{catamorphism} with
 an appropriate algebra:
 %
 \begin{code}
-  alg : expr Nat -> Nat
-  alg (inj1 n)          = n
-  alg (inj2 (e1 , e2))  = e1 + e2
+  phinat : expr Nat -> Nat
+  phinat (inj1 n)          = n
+  phinat (inj2 (e1 , e2))  = e1 + e2
 
   eval : ExprG -> Nat
-  eval = cata expr alg
+  eval = cata expr phinat
 \end{code}
 %
 Finally, we can define a tail-recursive machine \emph{equivalent} to the one we
@@ -964,7 +981,7 @@ derived in \cref{sec:expression:tailrec}, |tail-rec-eval|:
 %
 \begin{code}
   tail-rec-evalG : ExprG -> Nat
-  tail-rec-evalG = tail-rec-cata expr alg
+  tail-rec-evalG = tail-rec-cata expr phinat
 \end{code}
 
 \paragraph{Calder mobiles}
@@ -978,17 +995,17 @@ of a certain weight and two sub-mobiles:
     BAR : Nat -> Mobile -> Mobile -> Mobile 
 \end{code}
 %
-For instance, |m1| and |m2| are two |Mobile|s:
+For instance, |mob1| and |mob2| are two |Mobile|s:
 \begin{code}
-  m1 : Mobile
-  m1 = BAR 1  (BAR 1  (OBJ 2) 
-                      (OBJ 2)) 
-              (OBJ 5)
+  mob1 : Mobile
+  mob1 = BAR 1  (BAR 1  (OBJ 2) 
+                        (OBJ 2)) 
+                (OBJ 5)
 
-  m2 : Mobile
-  m2 = BAR 1  (OBJ 6) 
-              (BAR 1  (OBJ 2) 
-                      (OBJ 9))
+  mob2 : Mobile
+  mob2 = BAR 1  (OBJ 6) 
+                (BAR 1  (OBJ 2) 
+                        (OBJ 9))
 \end{code}
 %
 The weight of a |Mobile| is the sum of the weight of its objects and its bars.
@@ -1000,13 +1017,13 @@ The following function computes recursively the weight of a |Mobile|:
   weight (BAR n m1 m2)  = n + weight m1 + weight m2
 \end{code}
 %
-For example, the |weight| of |m1| is 11 and the |weight| of |m2| is 19:
+For example, the |weight| of |mob1| is 11 and the |weight| of |mob2| is 19:
 %
 \begin{code}
-  prop1 : weight m1 == 11
+  prop1 : weight mob1 == 11
   prop1 = refl
 
-  prop2  : weight m2 == 19
+  prop2  : weight mob2 == 19
   prop2 = refl
 \end{code}
 
@@ -1076,11 +1093,11 @@ n| denotes that the |Mobile| is in equilibrium and has weight |n|, while
 follows:
 %
 \begin{code}
-  alg : interpl MobileF interpr (Maybe Nat) -> Maybe Nat
-  alg (inj1 n)                        = just n
-  alg (inj2 (n , just m1 , just m2))  = if m1 =Nat m2  then  just (n + m1 + m2) 
-                                                       else  nothing
-  alg (inj2 (_ , _ , _))              = nothing
+  phimob : interpl MobileF interpr (Maybe Nat) -> Maybe Nat
+  phimob (inj1 n)                        = just n
+  phimob (inj2 (n , just m1 , just m2))  = if m1 =Nat m2  then  just (n + m1 + m2) 
+                                                          else  nothing
+  phimob (inj2 (_ , _ , _))              = nothing
 \end{code}
 
 We define the tail-recursive function that traverses each |Mobile| only once
@@ -1088,17 +1105,17 @@ using the generic tail-recursive evaluator, |tail-rec-cata|:
 %
 \begin{code}
   equilibriumG : Mobile → Bool
-  equilibriumG = is-just . tail-rec-cata MobileF alg . from
+  equilibriumG = is-just . tail-rec-cata MobileF phimob . from
 \end{code}
 
-Using the generic equilibrium function, we show that the |Mobile| |m1| is in
-equilibrium, but, |m2| is not:
+Using the generic equilibrium function, we show that |mob1| is in
+equilibrium, but |mob2| is not:
 %
 \begin{code}
-  prop3 : equilibriumG m1 == true
+  prop3 : equilibriumG mob1 == true
   prop3 = refl
 
-  prop4 : equilibriumG m2 == false
+  prop4 : equilibriumG mob2 == false
   prop4 = refl
 \end{code}
 
@@ -1116,11 +1133,11 @@ using the algebra.
 \label{sec:generic:discussion}
 
 In this \namecref{chap:generic}, we have explained how to derive a generic
-machine that computes the catamorphism of any algebra over any regular
-datatype. Adhering to the steps we followed in the concrete case,
-\cref{chap:expression}, we derived an abstract machine that we proved to be both
-terminating and correct. Before concluding the chapter there are some open
-questions that are worth discussing:
+machine that computes the catamorphism of any algebra over any regular datatype.
+Adhering to the steps we followed in the construction of the tail-recursive
+evaluator for the |Expr| datatype, \cref{chap:expression}, we derived an
+abstract machine that we proved to be both terminating and correct. Before
+concluding the chapter there are some open questions that are worth discussing:
 
 \paragraph{Choice of universe} The generic tail-recursive machine that we
 implemented in this chapter works over a rather limited universe. The motivation
@@ -1155,6 +1172,16 @@ the leaf |(x , y)| is immediately returned. The problem is that checking whether
 |x| or |y| are leaves requires already to perform recursion over them. If the function
 |first-cps| was to wait until the result of the recursive call is available to
 decide which case is met, the function would not be tail-recursive anymore.
+
+%{
+%format load = "\AF{load}"
+For specific datatypes, we learn by pattern matching whether the constructor has
+recursive subtrees or not. In the former case, we call the |load| function over
+the leftmost subtree and save the rest of the node on the stack. For regular
+datatypes, however, pattern matching on the code does not reveal enough
+information about the term to decide if it has recursive occurrences or not; it
+is necessary to traverse the full term to gain such information.
+%}
 
 \paragraph{Irrelevance} The generic tail-recursive machine should not have extra
 runtime impact due to termination and correctness proofs. The inclusion of

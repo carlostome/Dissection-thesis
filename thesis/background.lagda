@@ -854,8 +854,8 @@ checker.
     eval : ExprG -> Nat
     eval = cata ExprR alg
       where  alg : interpl ExprR interpr Nat -> Nat
-            alg (inj1 n)           = n
-            alg (inj2 (n , n'))    = n + n'
+             alg (inj1 n)           = n
+             alg (inj2 (n , n'))    = n + n'
   \end{code}
 \end{example}
 

@@ -121,7 +121,7 @@ follows:
 In the case for |Add e1 e2|, the |eval| function makes two recursive calls and
 sums their results. Such a function can be implemented using a fold, passing the
 addition and identity functions as the argument algebra. The algebra is the pair
-of functions that assigns semantics to both constructors of |Expr|:
+of functions that assigns semantics to the constructors of |Expr|:
 %
 \begin{code}
   foldExpr : (Nat -> a) -> (a -> a -> a) -> Expr -> a

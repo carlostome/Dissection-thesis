@@ -207,24 +207,39 @@
 
 \title{Verified tail-recursive folds through dissection}
 \date{\today}
-\author{Carlos Tom\'e Corti\~nas}
+\author{Carlos Tomé Cortiñas}
 
 \begin{document}
 
 \newgeometry{hmarginratio=1:1} %% Change geometry for titlepage
 \begin{titlepage}
-  \vspace*{3em}
   \centering
-  \includegraphics[width=.8\textwidth]{img/UU_logo_NL_RGB.jpg}%
+  \includegraphics[width=\textwidth]{img/UU_logo_NL_RGB.jpg}%
 
-  {\Large{Master Thesis in Computing Science}}
+  {\Large Master Thesis in Computing Science}
+
+  \vspace*{6em}
+  {\Huge\bfseries Verified tail-recursive folds\\ through dissection}
+  \vspace*{6em}
+
+  {\LARGE Carlos Tom\'e Corti\~nas}\\{\large ICA-5794854}
 
   \vspace*{3em}
-  {\huge\bfseries Verified tail-recursive folds\\ through dissection}
+
+  {\Large \today}
   \vspace*{3em}
 
-  {\LARGE{Carlos Tomé Cortiñas}}
+  {\large{\textbf{Supervisors}\\
+   dr. Wouter Swierstra\\
+   dr. Alejandro Serrano Mena}}
 
+  \vspace*{3em}
+  \rule{0.75\textwidth}{1.5pt}\\
+
+  Software Technology Group\\
+  Department of Information and Computing Sciences\\
+  Utrecht University\\
+  Utrecht, The Netherlands\\
   
 \end{titlepage}
 \restoregeometry
@@ -252,7 +267,29 @@ the tail-recursive function to work on any algebra over any regular datatype.
 \newpage
 \thispagestyle{empty}
 \section*{Acknowledgements}
-\todo{say something nice}
+First of all, I would like to thank my supervisor Wouter Swierstra for his
+dedicated guidance and support during the completion of this thesis. When Wouter
+and I first discussed the topic of the thesis I was captivated by the simplicity
+and generality of the problem. However, as it turned out the solution was not as
+straightforward as I first thought, and Wouter's advice proved crucial towards
+the completion of the thesis. I am also grateful to him because he gave me the
+opportunity to write a paper about my results and share my work with the
+scientific community.
+
+I would also like to thank Alejandro Serrano Mena for taking the time to asses
+my work and provide useful corrections and comments on early drafts of this
+document. I have had a lot of fun during the master in Utrecht attending the
+Software Technology reading club on a weekly basis. Every paper and every
+discussion kept me motivated specially in the difficult hours inherent in any
+research activity.
+
+Moreover, I would like to thank all my friends from Utrecht for making life
+abroad much more enjoyable. Last by not least, I would like to express my
+gratitude to my family. Their unconditional support throughout these years of
+studies has given its results. I will finish with some words dedicated to them
+in my mother tongue. \emph{Muchas gracias por todo vuestro apoyo durante estos
+años, siempre me habéis dejado hacer lo que he querido y donde he querido. Por
+ello y vuestro amor os estaré eternamente agradecido.}
 
 \tableofcontents
 

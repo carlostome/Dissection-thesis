@@ -120,6 +120,7 @@
 %format Is    = "\AB{Is}"
 %format rs    = "\AB{rs}"
 %format e     = "\AB{e}"
+%format m     = "\AB{m}"
 %format e'    = "\AB{e''}"
 %format s     = "\AB{s}"
 %format s'     = "\AB{s''}"

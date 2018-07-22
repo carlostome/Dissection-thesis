@@ -29,11 +29,15 @@
 %format [ = "\AD{[}"
 %format ] = "\AD{]}"
 %format HetEq = "\AD{[\_]-[\_]\_\ensuremath{\approx}[\_]\_}"
+%format Stack1 = "\AD{Stack}"
 
 % Constructors
 %format Empty   = "()"
 %format OBJ   = "\AI{OBJ}"
 %format BAR   = "\AI{BAR}"
+%format Add = "\AI{Add}"
+%format Left = "\AI{Left}"
+%format Right = "\AI{Right}"
 %format Val = "\AI{Val}"
 %format One   = "\AI{\ensuremath{\mathbb{1}}}"
 %format Zero  = "\AI{\ensuremath{\mathbb{0}}}"
@@ -166,6 +170,17 @@
 %format and         = "\AF{\ensuremath{\wedge}}"
 %format +         = "\AF{\ensuremath{+}}"
 
+%format prop1   = "\AF{\ensuremath{prop_1}}"
+%format prop2   = "\AF{\ensuremath{prop_2}}"
+%format prop3   = "\AF{\ensuremath{prop_3}}"
+%format prop4   = "\AF{\ensuremath{prop_4}}"
+
+%format mob1   = "\AF{\ensuremath{mob_1}}"
+%format mob2   = "\AF{\ensuremath{mob_2}}"
+
+%format phimob = "\AF{\ensuremath{\phi_{M}}}"
+%format phinat = "\AF{\ensuremath{\phi_{\mathbb{N}}}}"
+
 % Bound variables
 %format A   = "\AB{A}"
 %format Z   = "\AB{Z}"
@@ -226,10 +241,6 @@
 %format z2   = "\AB{\ensuremath{c_2}}"
 %format m1   = "\AB{\ensuremath{m_1}}"
 %format m2   = "\AB{\ensuremath{m_2}}"
-%format prop1   = "\AB{\ensuremath{prop_1}}"
-%format prop2   = "\AB{\ensuremath{prop_2}}"
-%format prop3   = "\AB{\ensuremath{prop_3}}"
-%format prop4   = "\AB{\ensuremath{prop_4}}"
 %format s1   = "\AB{\ensuremath{s_1}}"
 %format s2   = "\AB{\ensuremath{s_2}}"
 %format e1   = "\AB{\ensuremath{e_1}}"
@@ -239,6 +250,7 @@
 %format t   = "\AB{t}"
 %format t'   = "\AB{t''}"
 %format z   = "\AB{c}"
+%format z'  = "\AB{c''}"
 %format nr-x   = "\AB{nr-x}"
 %format leaf   = "\AB{leaf}"
 %format x1   = "\AB{\ensuremath{x_1}}"
