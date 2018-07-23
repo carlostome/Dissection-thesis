@@ -1,25 +1,19 @@
-
-module Thesis.Tree.Indexed where
+module Tree.Indexed where
 
   open import Data.Nat
-  open import Data.List
   open import Data.Product
   open import Data.Sum
   open import Relation.Binary.PropositionalEquality
   open import Induction.WellFounded
   open import Function
-  open import Data.List.Reverse
+  open import Data.List
+  open import Data.List.Reverse hiding (reverse)
   open import Data.List.Properties
   open import Data.List.All
   open import Data.List.All.Properties
-  open import Thesis.Data.Sum.Inj
+  open import Data.Sum.Inj
   open import Data.Empty
   
-  private
-    ++-assoc : ∀ {A : Set} (xs ys zs : List A) → (xs ++ ys) ++ zs ≡ xs ++ (ys ++ zs)
-    ++-assoc [] ys zs = refl
-    ++-assoc (x ∷ xs) ys zs = cong (_∷_ x) (++-assoc xs ys zs)
-
   data Tree : Set where
     Tip   : ℕ → Tree
     Node  : (t₁ t₂ : Tree) → Tree
@@ -152,7 +146,9 @@ module Thesis.Tree.Indexed where
                        → [[ l ]]⇓        ((t₁ , s₁)           ,, Node-injₗ eq₁) < ((t₂ , s₂ )               ,, Node-injₗ eq₂)
                        → [[ Node l r ]]⇓ ((t₁ , Left r  ∷ s₁) ,, eq₁)           < ((t₂ , Left r ∷ s₂ ) ,, eq₂)
                     
-         <-Right-Left  : ∀ {a} {l r} {t₁ t₂ s₁ s₂} {eq} {eq₁ : Node l (plug⇓ (Tip t₁) s₁) ≡ Node l r} {eq₂ : ?} → [[ Node l r ]]⇓ ((t₁ , Right a l eq ∷ s₁) ,, eq₁) < ((t₂ , Left r ∷ s₂) ,, eq₂)
+         <-Right-Left  : ∀ {a} {l r} {t₁ t₂ s₁ s₂} {eq} {eq₁ : Node l (plug⇓ (Tip t₁) s₁) ≡ Node l r} 
+                                                      {eq₂ : Node (plug⇓ (Tip t₂) s₂) r ≡ Node l r} 
+                       → [[ Node l r ]]⇓ ((t₁ , Right a l eq ∷ s₁) ,, eq₁) < ((t₂ , Left r ∷ s₂) ,, eq₂)
 
 
     ----------------------------------------------------------------------------------

@@ -1,18 +1,18 @@
 module Regular where
 
   open import Data.Sum     using (_⊎_; inj₁; inj₂)
-  open import Data.Product
+  open import Data.Product using (_×_; _,_; proj₁ ; proj₂ ; Σ)
   open import Data.Unit    using (⊤; tt)
   open import Data.Empty   using (⊥; ⊥-elim)
+
   open import Relation.Binary.PropositionalEquality renaming ([_] to Is_)
-  open import Relation.Nullary
   open import Relation.Nullary
   open import Function
   open import Data.List
-  open import Data.Nat
   open import Data.List.Properties
-  open import Data.List.Reverse
   open import Data.List.All as L
+  open import Data.List.Prefix
+
   open import Induction.WellFounded
 
   open import Regular.Core
@@ -28,8 +28,6 @@ module Regular where
     renaming (proof-irrelevance to NonRec-proof-irrelevance)
   open import Regular.Catamorphism
 
-  open import Data.List.Extra
-  open import Data.List.Prefix
   open import Dissection.Core
   open import Dissection.Load
   open import Dissection.Relation

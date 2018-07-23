@@ -9,10 +9,8 @@ module Dissection.Load where
   open import Relation.Nullary
   open import Function
   open import Data.List
+  open import Data.List.Properties
   open import Induction.WellFounded
-
-  -- open import Data.Sum.Extra
-  open import Data.List.Extra
 
   open import Regular.Core
   open import Regular.Equality

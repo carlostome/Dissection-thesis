@@ -3,12 +3,13 @@ module Example.Mobile where
   open import Data.Nat
   open import Relation.Binary.PropositionalEquality
   open import Data.Bool
-  open import Regular.Core
-  open import Regular
   open import Data.Maybe
   open import Data.Sum
   open import Data.Product
   open import Function
+
+  open import Regular.Core
+  open import Regular
 
   _≟ℕ_ : ℕ → ℕ → Bool
   zero ≟ℕ zero   = true
@@ -41,14 +42,25 @@ module Example.Mobile where
   equil (OBJ x) = true
   equil (BAR _ m₁ m₂) = weight m₁ ≟ℕ weight m₂ ∧ equil m₁ ∧ equil m₂
 
+  -- equil fused
+  equil-fused : Mobile → Bool
+  equil-fused m = is-just (go m)
+    where go : Mobile → Maybe ℕ
+          go (OBJ x)      = just x
+          go (BAR n m₁ m₂) =  
+            case (go m₁) of λ
+              { nothing  → nothing
+              ; (just n₁) → case go m₂ of λ 
+                             {  nothing  → nothing
+                             ; (just n₂) → if n₁ ≟ℕ n₂   then just (n + (n₁ + n₂)) 
+                                                        else nothing } 
+              }
   -- Generic construction
   MobileF : Reg
   MobileF = K ℕ ⨁ (K ℕ ⨂ (I ⨂ I))
   
   Mobileᴳ : Set
   Mobileᴳ = μ MobileF
-
-  
 
   φ : ⟦ MobileF ⟧ (Maybe ℕ) → Maybe ℕ
   φ (inj₁ n)            = just n

@@ -8,7 +8,6 @@ module Dissection.Core where
   open import Relation.Nullary
   open import Function
   open import Data.List
-  open import Data.List.Reverse
   open import Data.List.Properties
   open import Induction.WellFounded
 
@@ -19,7 +18,6 @@ module Dissection.Core where
 
   ----------------------------------------------------------------------------------
   --                              Core definitions                
-
 
   -- A leaf of a generic tree is from a code R is
   -- a tree without recursive positions.
@@ -208,5 +206,3 @@ module Dissection.Core where
     | (rx′ , rp′) , eq₁ | Is is | (qx , qp) , eq₂ | Is is′
     with compute-Fmap R P r rx′ rp′ eq₁ is | compute-Fmap Q P q qx qp eq₂ is′
   ... | fmrp , fmrx | fmqp , fmqx = (Fmap-⨂ fmrp fmqp) , (Fmap-⨂ fmrx fmqx)
-
-  

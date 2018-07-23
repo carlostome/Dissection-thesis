@@ -1,5 +1,4 @@
-
-module Thesis.Tree.Base where
+module Tree.Base where
 
   open import Induction.WellFounded
   open import Relation.Binary.PropositionalEquality
@@ -7,17 +6,16 @@ module Thesis.Tree.Base where
   open import Data.Bool
   open import Function
   open import Data.Sum
-  open import Thesis.Data.Sum.Inj
+  open import Data.Sum.Inj
   open import Data.Empty
   open import Data.Nat hiding (_<_)
   open import Data.Nat.Properties
 
   open import Data.List
   open import Data.List.Properties
-  open import Data.List.Reverse
+  open import Data.List.Reverse hiding (reverse)
   open import Data.List.All
   open import Data.List.All.Properties
-  open import Thesis.Data.List
   open import Data.Unit
 
   -- An algebra for Tree

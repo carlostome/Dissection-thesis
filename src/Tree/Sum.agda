@@ -1,14 +1,11 @@
 
-module Thesis.Tree.Sum where
+module Tree.Sum where
 
   open import Data.Sum
-  open import Thesis.Data.Sum
   open import Data.Product
-  open import Thesis.Data.Product
   open import Data.Unit
   open import Data.Empty
   
-  open import Thesis.Data.List
   
   open import Induction.WellFounded
   open import Relation.Binary.PropositionalEquality
@@ -18,7 +15,7 @@ module Thesis.Tree.Sum where
   open import Data.Nat.Properties
   open import Data.List
   open import Data.List.Properties
-  open import Data.List.Reverse
+  open import Data.List.Reverse hiding (reverse)
   open import Data.List.All
   
   reverse-++ : ∀ {A : Set} (s : List A) (x : A) → reverse (x ∷ s) ≡ reverse s ++ (x ∷ [])
