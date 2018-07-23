@@ -12,6 +12,7 @@ There are three main folders in the repository:
 - `paper` : Files for building the accompanying paper
 - `presentation`: Files for the thesis defense presentation
 - `src`: Formalization in _Agda_
+
   The Agda module structure is the following:
     + `src/Data` contains auxiliary definitions about common types such as List, Sum, Either, etc
     + `src/Tree/Indexed.agda` contains the formalization of the tail-recursive fold for the type of binary trees. The other two files inside the same folder are slight variations of it.
@@ -31,4 +32,9 @@ The code typechecks in _Agda_ version 2.5.3 and standard library version 0.14
 
 ## Build
 
-There is a shake
+To build the documents is neccesary to have [Shake](https://shakebuild.com/) installed.
+The targets are the following:
++ `thesis` : build thesis document
++ `paper`  : build paper
++ `presentation` : build presentation
++ `formal` : Typecheck the Agda formalization (assuming the stdlib can be found in Agda's path)
