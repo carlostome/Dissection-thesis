@@ -82,7 +82,7 @@ main = shakeArgs shakeOptions $ do
     let input  = out -<.> lagda
         dir    = takeDirectory out
         figures    = [ "presentation" </> "figures" </> ("figure" ++ show n) <.> "tex" 
-                     | n <- [1..3]]
+                     | n <- [1..6]]
     need $ [input, "presentation/presentation.fmt"] ++ figures
     cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
      
