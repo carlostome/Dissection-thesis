@@ -1,6 +1,13 @@
 # Dissection-thesis
-This repository contains the source files, Agda and LaTeX for my MSc thesis.
+This repository contains the source files, Agda and LaTeX for my MSc thesis on:
 
+> Verified tail-recursive folds through dissection
+
+## Abstract
+> The functional programming paradigm advocates a style of programming based on higher-order functions over inductively defined datatypes. A fold, which captures their common pattern of recursion, is the prototypical example of such a function. However, its use comes at a price. The definition of a fold is not tail-recursive which means that the size of the stack during execution grows proportionally to the size of the input. McBride has proposed a method called *dissection*, to transform a fold into its tail-recursive counterpart. Nevertheless, it is not clear why the resulting function terminates, nor it is clear that the transformation preserves the fold's semantics.
+> In this thesis, we formalize the construction of such tail-recursive function and prove that it is both terminating and equivalent to the fold. In addition, using McBride's dissection, we generalize the tail-recursive function to work on any algebra over any regular datatype.
+
+## Source files
 The formalization in _Agda_ is stored under the directory `src`, the modules are organized as follows:
 - `src/Data` contains auxiliary definitions about common types such as List, Sum, Either, etc
 - `src/Tree/Indexed.agda` contains the formalization of the tail-recursive fold for the type of binary trees. The other two files inside the same folder are slight variations of it.
