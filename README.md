@@ -13,10 +13,10 @@ There are three main folders in the repository:
 - `presentation`: Files for the thesis defense presentation
 - `src`: Formalization in _Agda_
 
-  The Agda module structure is the following:
+  The module structure is the following:
     + `src/Data` contains auxiliary definitions about common types such as List, Sum, Either, etc
     + `src/Tree/Indexed.agda` contains the formalization of the tail-recursive fold for the type of binary trees. The other two files inside the same folder are slight variations of it.
-    + `src/Regular.agda` contains the formalization of the tail-recursive catamoprhism for the regular universe. It depends on the following modules:
+    + `src/Regular.agda` contains the formalization of the tail-recursive catamorphism for the regular universe. It depends on the following modules:
       - `src/Regular/Core.agda`         : Definition of the _regular_ universe.
       - `src/Regular/Catamorphism.agda` : Definition of catamorphism and auxiliary relations.
       - `src/Regular/Dissection.agda`   : Definition of _dissection_ and relation over _dissections_.
@@ -28,7 +28,7 @@ There are three main folders in the repository:
       - `src/Dissection/Load.agda`      : Function _load_ and related properties.
       - `src/Dissection/Relation.agda`  : Relation over generic Zipper (Configurations in the paper) and the proof of well-foundedness.
 
-The code typechecks in _Agda_ version 2.5.3 and standard library version 0.14
+The code typechecks in _Agda_ version 2.5.4 and standard library version 0.16
 
 ## Build
 

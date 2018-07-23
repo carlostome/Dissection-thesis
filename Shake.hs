@@ -39,6 +39,9 @@ main = shakeArgs shakeOptions $ do
   phony "distclean" $ do
     need ["clean-paper" , "clean-thesis"]
 
+  phony "formal" $ do
+    cmd_ (Cwd "src") "agda Regular.agda"
+
   -- thesis rules
   "thesis/*.tex" %> \out -> do
     let input     = out -<.> lagda
