@@ -133,8 +133,9 @@ subexpression, left or right, while in the generic case, the value of the
 dissection marks the selected subtree. The |Stack1| for |Expr| is a list of
 |Left| or |Right| constructors that account for all the occurrences of the
 constructor |Add| in a value of type |Expr|. Thus, in the generic case we use a
-list for all the intermediate nodes---that is, functorial layers---that have
-recursive subtrees. The type of generics stacks is as follows:
+list of dissections for all the intermediate nodes---that is, functorial
+layers---that have recursive subtrees. The type of generics stacks is as
+follows:
 
 \begin{code}
   StackG : (R : Reg) -> (X Y : Set) -> Set
