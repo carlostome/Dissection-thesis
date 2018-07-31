@@ -105,6 +105,7 @@
 %format right-<  = "\AF{right-<}"
 %format Zipperup-to-Zipperdown = "\AF{Config\ensuremath{_{\Uparrow}^{\scaleto{G}{4pt}}}-to-Config\ensuremath{_{\Downarrow}^{\scaleto{G}{4pt}}}}"
 %format bot-elim = "\AF{\ensuremath{\bot}-elim}"
+%format alg2 = "\AF{\ensuremath{\psi}}"
 
 
 % Bound variables
@@ -135,7 +136,6 @@
 %format dq'   = "\AB{dq''}"
 %format d   = "\AB{d}"
 %format dr'   = "\AB{dr''}"
-%format alg = "\AB{\ensuremath{\psi}}"
 %format eta = "\AB{\ensuremath{\eta}}"
 %format l   = "\AB{l}"
 %format isl   = "\AB{isl}"

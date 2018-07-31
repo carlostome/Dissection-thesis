@@ -1,4 +1,4 @@
-\documentclass[sigplan,review,10pt]{acmart}
+\documentclass[sigplan,10pt]{acmart}
 
 %include preamble.tex
 %include paper.fmt
@@ -43,7 +43,7 @@
 
 \include{ccs}
 
-\keywords{datatype generic programming, catamorphisms, dissection,
+\keywords{generic programming, catamorphisms, dissection,
   dependent types, Agda, well-founded recursion \fixme{Check keywords}}
 
 \maketitle
@@ -1384,18 +1384,18 @@ The |Expr| type is then isomorphic to tying the knot over |expr|:
 The function |eval| is equivalent to instantiating the
 \emph{catamorphism} with an appropriate algebra:
 \begin{code}
-  alg : expr Nat -> Nat
-  alg (inj1 n)          = n
-  alg (inj2 (e1 , e2))  = e1 + e2
+  alg2 : expr Nat -> Nat
+  alg2 (inj1 n)          = n
+  alg2 (inj2 (e1 , e2))  = e1 + e2
 
   eval : ExprG -> Nat
-  eval = cata expr alg
+  eval = cata expr alg2
 \end{code}
 Finally, a tail-recursive machine \emph{equivalent} to the one we derived in \Cref{sec:basic-assembling},
 |tail-rec-eval|, is given by:
 \begin{code}
   tail-rec-evalG : ExprG -> Nat
-  tail-rec-evalG = tail-rec-cata expr alg
+  tail-rec-evalG = tail-rec-cata expr alg2
 \end{code}
 %} end of generic.fmt
 
@@ -1447,9 +1447,9 @@ values used during execution and the propositions that may be erased.
 
 
 %% Acknowledgments
-%\begin{acks}                            %% acks environment is optional
+\begin{acks}                            %% acks environment is optional
 \fixme{Thank reviewers in acks in final version}
-%\end{acks}
+\end{acks}
 
 %% Bibliography
 \bibliography{main}
