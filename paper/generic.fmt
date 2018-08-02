@@ -136,6 +136,7 @@
 %format dq'   = "\AB{dq''}"
 %format d   = "\AB{d}"
 %format dr'   = "\AB{dr''}"
+%format alg = "\AB{\ensuremath{\psi}}"
 %format eta = "\AB{\ensuremath{\eta}}"
 %format l   = "\AB{l}"
 %format isl   = "\AB{isl}"

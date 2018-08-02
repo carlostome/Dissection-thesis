@@ -1446,16 +1446,13 @@ development to Coq, where it is possible to make a clearer distinction between
 values used during execution and the propositions that may be erased.
 
 
-%% Acknowledgments
 \begin{acks}                            %% acks environment is optional
   We would like to thank each of the three anonymous reviewers for taking the
   time to read the paper and provide helpful feedback. We would also like to
   thank the members of the Software Technology reading club at Utrecht
   University for their input on earlier drafts of this paper.
-% \fixme{Thank reviewers in acks in final version}
 \end{acks}
 
-%% Bibliography
 \bibliography{main}
 
 
