@@ -100,7 +100,7 @@ main = shakeArgs shakeOptions $ do
   phony "clean-paper" $ do
     putNormal "Cleaning files in paper"
     cmd_ "latexmk -C -cd paper/main.tex"
-    removeFilesAfter "paper" ["main.tex", "*.bbl", "main.pdf", "main.ptb"]
+    removeFilesAfter "paper" ["comment.cut", "main.tex", "*.bbl", "main.ptb"]
 
   phony "clean-thesis" $ do
     putNormal "Cleaning files in paper"

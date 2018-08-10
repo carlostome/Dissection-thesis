@@ -13,7 +13,7 @@
 
 \title{From Algebra to Abstract Machine: A Verified Generic Construction}
 
-\author{Carlos Tom\'e Corti\~nas}
+\author{Carlos Tomé Cortiñas}
 \affiliation{
   \department{Department of Information and Computing Sciences}
   \institution{Utrecht University}
