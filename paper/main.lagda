@@ -1,4 +1,4 @@
-\documentclass[sigplan,10pt]{acmart}
+\documentclass[sigplan,screen,10pt]{acmart}
 
 %include preamble.tex
 %include paper.fmt
@@ -11,7 +11,7 @@
 
 \begin{document}
 
-\title{From algebra to abstract machine: a verified generic construction}
+\title{From Algebra to Abstract Machine: A Verified Generic Construction}
 
 \author{Carlos Tom\'e Corti\~nas}
 \affiliation{
@@ -168,7 +168,7 @@ All the constructions and proofs presented in this paper have been
 implemented in and checked by Agda. The corresponding code is freely
 available online.\footnote{\url{https://github.com/carlostome/Dissection-thesis}}
 
-\section{Termination and tail-recursion}
+\section{Termination and Tail-recursion}
 \label{sec:basics}
 Before tackling the generic case, we will present the termination
 and correctness proof for the tail-recursive evaluator presented in
@@ -275,7 +275,7 @@ states (|??2 : (n' , stk') < (n , stk)|).
 In the next section, we will define such a relation and prove it is
 well-founded.
 
-\section{Well-founded tree traversals}
+\section{Well-Founded Tree Traversals}
 \label{sec:wf-example}
 The type of configurations of our abstract machine can be seen as a variation
 of Huet's \emph{zippers}~\citeyearpar{huet}. The zipper associated
@@ -336,7 +336,7 @@ the definition of the desired order relation (\Cref{subsec:topdown}).
 Finally we will define the relation over configurations,
 \Cref{subsec:relation}, and sketch the proof that it is well-founded.
 
-\subsection{Invariant preserving configurations}
+\subsection{Invariant Preserving Configurations}
 \label{subsec:stack}
 
 A value of type |ZipperType| denotes a leaf in our input expression. The
@@ -422,7 +422,7 @@ For a given expression |e : Expr|, any two terms of type |Zipperup e| are
 configurations of the same abstract machine during the tail-recursive fold over
 the expression |e|.
 
-\subsection{Up and down configurations}
+\subsection{Up and Down Configurations}
 \label{subsec:topdown}
 
 Next, we would like to formalize the left-to-right order on the configurations
@@ -494,7 +494,7 @@ pair of functions to switch between |Zipperup| and |Zipperdown|:
  Zipperup-to-Zipperdown : (e : Expr) -> Zipperup e -> Zipperdown e
 \end{code}
 
-\subsection{Ordering configurations}
+\subsection{Ordering Configurations}
 \label{subsec:relation}
 
 Finally, we can define the ordering relation over values of type
@@ -548,7 +548,7 @@ related thus a recursive call is not possible. This step in the proof relies on
 only comparing configurations arising from traversing the same initial
 expression |e|.
 
-\subsection{A terminating and correct tail-recursive evaluator}
+\subsection{A Terminating and Correct Tail-recursive Evaluator}
 \label{sec:basic-assembling}
 
 We now have almost all the definitions in place to revise our tail-recursive
@@ -567,7 +567,7 @@ In the remainder of this section, we will reconcile these differences, complete
 the definition of our tail-recursive evaluator and finally prove its
 correctness.
 
-\paragraph{Decreasing recursive calls}
+\paragraph{Decreasing Recursive Calls}
 
 To define our tail-recursive evaluator, we will begin by defining an
 auxiliary |step| function that performs a single step of
@@ -699,7 +699,7 @@ This finally completes the definition and verification of a
 tail-recursive evaluator. 
 %} end of intro.fmt
 
-\section{A generic tail-recursive traversal}
+\section{A Generic Tail-recursive Traversal}
 \label{sec:generic}
 %{ begining of generic.fmt
 The previous section showed how to prove that our hand-written tail-recursive
@@ -724,7 +724,7 @@ In particular, we generalize the following:
 Before we can define any such datatype generic constructions, however, we need
 to fix our universe of discourse.
 
-\subsection{The \emph{regular} universe}
+\subsection{The \emph{Regular} Universe}
 \label{sec:universe}
 
 In a dependently typed programming language such as Agda, we can
@@ -902,7 +902,7 @@ functor to which it \emph{plug}s as a type-indexed type.
     prodOp : (d : Dissection R X Y) -> plug R eta d == tx -> IxDissection R X Y eta tx 
 \end{code}
 
-\subsection{Generic configurations}
+\subsection{Generic Configurations}
 \label{sec:genconf}
 
 While the \emph{dissection} computes the bifunctor \emph{underlying}
@@ -1025,7 +1025,7 @@ Note that the |coerce| function is used to embed a leaf into a larger
 tree. A similar function can be defined for the `bottom-up' zippers,
 that work on a reversed stack.
 
-\subsection{One step of a catamorphism}
+\subsection{One Step of a Catamorphism}
 \label{subsec:onestep}
 
 %{
@@ -1164,7 +1164,7 @@ keep the original subtree where the value came from; Third, the proof that the
 value equals to applying a |catamorphism| over the subtree.  The function
 |compute| massages |r| to adapt the arguments for the recursive call to |unload|.
 
-\subsection{Relation over generic configurations}
+\subsection{Relation Over Generic Configurations}
 \label{subsec:rel-gen}
 
 We can engineer a \emph{well-founded} relation over elements of type |Zipperdown
@@ -1258,7 +1258,7 @@ The full proof of the following statement can found in the accompanying code:
   <Z-WF : (R : Reg)  -> (t : mu R) -> Well-founded (llcorner R lrcornerllcorner t lrcornerIxLtdown)
 \end{code}
 
-\subsection{A generic tail-recursive machine}
+\subsection{A Generic Tail-recursive Machine}
 \label{sec:genmachine}
 
 We are now ready to define a generic tail-recursive machine. To do so we
@@ -1319,9 +1319,9 @@ In this fashion, we can prove the following statement that
 our traversal decreases:
 \begin{code}
   step-<  : (R : Reg) (alg : interpl R interpr X -> X) -> (t : mu R)
-          -> (z1 z2 : Zipperup R X alg t)
-          -> step R alg t z1 == inj1 z2 
-          -> llcorner R lrcornerllcorner t lrcorner (Zipperup-to-Zipperdown z2) <Z (Zipperup-to-Zipperdown z1)
+        -> (z1 z2 : Zipperup R X alg t)
+        -> step R alg t z1 == inj1 z2 
+        -> llcorner R lrcornerllcorner t lrcorner (Zipperup-to-Zipperdown z2) <Z (Zipperup-to-Zipperdown z1)
 \end{code}
 
 Finally, we can write the \emph{tail-recursive machine}, |tail-rec-cata|, as the
@@ -1341,7 +1341,7 @@ function that initiates the computation with suitable arguments:
   ... | inj1 z = rec R alg (z , ...) (<Z-WF R z)
 \end{code}
 
-\subsection{Correctness, generically}
+\subsection{Correctness, Generically}
 \label{sec:correct-gen}
 %{
 %format tail-rec-eval = "\AF{tail-rec-eval}"
