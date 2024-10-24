@@ -1,0 +1,6 @@
+name: thesis
+depend:
+  -- agda-2.5.4.2
+  standard-library -- v0.16.1
+include :
+  src
