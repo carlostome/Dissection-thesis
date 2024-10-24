@@ -36,6 +36,12 @@ main = shakeArgs shakeOptions $ do
   phony "presentation" $ do
     need ["presentation/main" <.> pdf]
 
+  phony "tyde18-presentation" $ do
+    need ["tyde18-presentation/main" <.> pdf]
+
+  phony "chalmers-presentation" $ do
+    need ["chalmers-presentation/main" <.> pdf]
+
   phony "distclean" $ do
     need ["clean-paper" , "clean-thesis"]
 
@@ -54,7 +60,7 @@ main = shakeArgs shakeOptions $ do
     let files = [ "thesis" </> file <.> tex | file <- thesis_lagda_files]
         bib   = "thesis/main.bib"
         sty   = "thesis/agda.sty"
-        figures    = [ "thesis" </> "figures" </> ("figure" ++ show n) <.> "tex" 
+        figures    = [ "thesis" </> "figures" </> ("figure" ++ show n) <.> tex
                      | n <- [1..5]]
     need (bib : sty : files ++ figures)
     cmd_ "latexmk -f -xelatex -pdf -cd thesis/main.tex"
@@ -88,13 +94,42 @@ main = shakeArgs shakeOptions $ do
                      | n <- [1..6]]
     need $ [input, "presentation/presentation.fmt"] ++ figures
     cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
-     
 
   "presentation/main" <.> pdf %> \out -> do
     putNormal "Building presentation"
     let main  = out -<.> tex
     need [main]
     cmd_ "latexmk -xelatex -pdf -cd presentation/main.tex"
+
+  -- tyde presentation
+  "tyde18-presentation/main" <.> tex %> \out -> do
+    putNormal "Building presentation"
+    let input  = out -<.> lagda
+        dir    = takeDirectory out
+        figures    = [ "tyde18-presentation" </> "figure" <.> "tex" ]
+    need $ [input, "tyde18-presentation/presentation.fmt"] ++ figures
+    cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
+
+  "tyde18-presentation/main" <.> pdf %> \out -> do
+    putNormal "Building presentation"
+    let main  = out -<.> tex
+    need [main]
+    cmd_ "latexmk -xelatex -pdf -cd tyde18-presentation/main.tex"
+
+  -- chalmers presentation
+  "chalmers-presentation/main" <.> tex %> \out -> do
+    putNormal "Building presentation"
+    let input  = out -<.> lagda
+        dir    = takeDirectory out
+        figures    = [ "chalmers-presentation" </> "figure" <.> "tex" ]
+    need $ [input, "chalmers-presentation/presentation.fmt"] ++ figures
+    cmd_ (Cwd dir) "lhs2TeX --agda -o" [takeFileName out] (takeFileName input)
+
+  "chalmers-presentation/main" <.> pdf %> \out -> do
+    putNormal "Building presentation"
+    let main  = out -<.> tex
+    need [main]
+    cmd_ "latexmk -xelatex -pdf -cd chalmers-presentation/main.tex"
 
   -- cleaning
   phony "clean-paper" $ do
@@ -110,5 +145,6 @@ main = shakeArgs shakeOptions $ do
 
   phony "clean-presentation" $ do
     putNormal "Cleaning files in paper"
-    cmd_ "latexmk -C -cd presentation/main.tex"
-    removeFilesAfter "presentation" ["*.tex", "*.bbl", "main.pdf", "main.ptb" , "main.nav", "main.snm"]
+    cmd_ "latexmk -C -cd chalmers-presentation/main.tex"
+    removeFilesAfter "chalmers-presentation" 
+      ["main.tex", "*.bbl", "main.pdf", "main.ptb" , "main.nav", "main.snm"]

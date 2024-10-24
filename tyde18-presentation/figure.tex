@@ -1,0 +1,25 @@
+\begin{tikzpicture}
+  % \tikzstyle{every node}=[font=\footnotesize]
+  \tikzstyle{level 1}=[level distance=10mm, sibling distance=24mm]
+  \tikzstyle{level 2}=[level distance=10mm, sibling distance=14mm]
+  \tikzstyle{level 3}=[level distance=10mm, sibling distance=14mm]
+  \tikzstyle{load}=[->,thick,color=blue]
+  \tikzstyle{unload}=[->,shorten <=1pt,thick,color=red]
+
+  \node (root) {\AI{Add}}
+    child {node (node1) {\AI{Val}\AS{}\AN{1}}} 
+    child {node (node2) {\AI{Add}} 
+           child {node (node3) {\AI{Val}\AS{}\AN{2}}}
+           child {node (node4) {\AI{Val}\AS{}\AN{2}}}};
+
+
+  \onslide<2->{\draw[load] (root) to [ bend right=45] (node1);}
+  \onslide<3->{\draw[load] (node1) to [ loop below ] (node1);}
+  \onslide<4->{\draw[unload] (node1) to [ bend left=15] (node2);}
+  \onslide<5->{\draw[load] (node2) to [ bend right=45] (node3);}
+  \onslide<6->{\draw[load] (node3) to [ loop below] (node3);}
+  \onslide<7->{\draw[unload] (node3) to [ bend left=15] (node4);}
+  \onslide<8->{\draw[load] (node4) to [ loop below] (node4);}
+  \onslide<9->{\draw[unload] (node4) to [ bend right=45] (node2);}
+  \onslide<11->{\draw[unload] (node2) to [ bend right=45] (root);}
+\end{tikzpicture}
